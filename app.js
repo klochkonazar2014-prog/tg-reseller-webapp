@@ -2,7 +2,7 @@ const tg = window.Telegram.WebApp;
 
 // Инициализация TON Connect
 const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-    manifestUrl: 'https://marketapp.ws/tonconnect-manifest.json',
+    manifestUrl: 'https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json',
     buttonRootId: 'ton-connect-button'
 });
 
