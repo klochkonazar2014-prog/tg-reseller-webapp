@@ -1,49 +1,73 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Rental888 Checkout</title>
+    <title>NFT Rental</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
-    <div class="glass-container">
-        <header>
-            <h1 id="title">Аренда актива</h1>
-            <p id="item-name">Загрузка...</p>
-        </header>
 
-        <div class="card">
-            <div id="item-image" class="item-visual">
-                <div class="glow"></div>
-                <img src="https://ton.org/download/ton_symbol.png" alt="NFT">
-            </div>
-            
-            <div class="details">
-                <div class="price-row">
-                    <span>Срок:</span>
-                    <span id="duration" class="value">...</span>
-                </div>
-                <div class="price-row">
-                    <span>К оплате:</span>
-                    <span id="total-price" class="value">0 TON</span>
-                </div>
-            </div>
+<body>
+
+    <!-- Шапка -->
+    <div class="header">
+        <button id="back-btn" class="back-btn hidden" onclick="goBack()">
+            ➜
+        </button>
+        <input type="text" id="search-input" class="search-bar" placeholder="Поиск коллекции..."
+            oninput="handleSearch()">
+    </div>
+
+    <div class="container">
+
+        <!-- Загрузчик -->
+        <div id="loader" class="loader">
+            Загрузка каталога...
         </div>
 
-        <div id="ton-connect-button"></div>
-        
-        <button id="main-action" class="action-btn hidden" onclick="handlePayment()">
-            Оплатить аренду
-        </button>
+        <!-- Вид 1: Список Коллекций (Папок) -->
+        <div id="collections-view" class="grid">
+            <!-- Сюда JS вставит карточки моделей -->
+        </div>
 
-        <footer>
-            <button class="secondary-btn" onclick="tg.close()">Отмена</button>
-        </footer>
+        <!-- Вид 2: Список Товаров этой модели -->
+        <div id="items-view" class="grid hidden">
+            <!-- Сюда JS вставит карточки NFT -->
+        </div>
+
+    </div>
+
+    <!-- Модалка Оплаты -->
+    <div id="payment-modal" class="modal-overlay">
+        <div class="modal">
+            <img id="modal-img" src="" class="modal-img">
+            <h2 id="modal-title" class="card-title" style="font-size: 20px;">NFT Name</h2>
+            <p id="modal-desc" class="card-subtitle" style="font-size: 14px; margin-bottom: 20px;">Collection Name</p>
+
+            <div style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 12px; margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span style="color: #8b9bb4;">Срок аренды:</span>
+                    <span>1 день</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span style="color: #8b9bb4;">Цена:</span>
+                    <span id="modal-price" style="color: #0098ea; font-weight: bold;">0 TON</span>
+                </div>
+            </div>
+
+            <div id="ton-connect-btn" class="pay-btn-container"></div>
+
+            <button onclick="closeModal()"
+                style="background: none; border: none; color: #8b9bb4; margin-top: 16px; font-size: 14px; padding: 10px; width: 100%;">
+                Отмена
+            </button>
+        </div>
     </div>
 
     <script src="app.js"></script>
 </body>
+
 </html>
