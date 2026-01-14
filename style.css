@@ -22,6 +22,11 @@ body {
     color: var(--text-primary);
     -webkit-font-smoothing: antialiased;
     padding-bottom: 80px;
+    touch-action: pan-x pan-y;
+    /* Prevent pinch-zoom, allow normal pan */
+    overflow-x: hidden;
+    user-select: none;
+    /* Prevent text selection for a more app-like feel */
 }
 
 /* --- HEADER --- */
@@ -69,8 +74,15 @@ body {
     display: flex;
     gap: 8px;
     overflow-x: auto;
-    padding-bottom: 4px;
+    padding: 2px 16px 8px 0;
+    /* Add right padding for last chip */
     scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    /* Smooth scroll on iOS */
+    margin: 0 -16px;
+    /* Negative margin to bleed to edges */
+    padding-left: 16px;
+    padding-right: 16px;
 }
 
 .chips-row::-webkit-scrollbar {
