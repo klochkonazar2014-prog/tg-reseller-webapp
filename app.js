@@ -30,6 +30,20 @@ document.addEventListener("DOMContentLoaded", async () => {
         const modalSearch = document.getElementById('mrkt-modal-search');
         if (modalSearch) modalSearch.addEventListener('input', (e) => filterModalList(e.target.value));
 
+        // Prevent Zoom (Pinch & Double-tap)
+        document.addEventListener('touchstart', (e) => {
+            if (e.touches.length > 1) e.preventDefault();
+        }, { passive: false });
+
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', (e) => {
+            const now = Date.now();
+            if (now - lastTouchEnd <= 300) e.preventDefault();
+            lastTouchEnd = now;
+        }, false);
+
+        document.addEventListener('gesturestart', (e) => e.preventDefault());
+
     } catch (e) { alert("Init Error: " + e.message); }
 });
 
