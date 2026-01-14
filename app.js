@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL (localtunnel)
-const BACKEND_URL = "https://solid-nails-fail.loca.lt";
+const BACKEND_URL = "https://3fd05644380583f3-176-119-99-6.serveousercontent.com";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -38,11 +38,7 @@ async function loadLiveItems() {
     if (loader) loader.innerText = "Connecting to market via tunnel...";
 
     try {
-        const response = await fetch(`${BACKEND_URL}/api/items?limit=80`, {
-            headers: {
-                "bypass-tunnel-reminder": "true"
-            }
-        });
+        const response = await fetch(`${BACKEND_URL}/api/items?limit=80`);
         const data = await response.json();
 
         if (data.items) {
@@ -337,8 +333,7 @@ async function openPaymentModal(item, finalPrice, imgSrc) {
                 await fetch(`${BACKEND_URL}/api/mark_rented`, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'bypass-tunnel-reminder': 'true'
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({ nft_address: item.nft_address })
                 });
