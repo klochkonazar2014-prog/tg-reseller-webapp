@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>MRKT</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+    <script src="lottie.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- Header MRKT -->
+    <div class="header-column">
+        <!-- Search -->
+        <div class="search-row">
+            <div class="search-wrapper">
+                <svg style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #8b9bb4;"
+                    width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input type="text" id="search-input" class="search-bar" placeholder="Search items...">
+            </div>
+        </div>
+
+        <!-- Chips -->
+        <div class="chips-row">
+            <button class="chip-btn icon-only" onclick="toggleGenericModal('sort')">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="4" y1="21" x2="4" y2="14"></line>
+                    <line x1="4" y1="10" x2="4" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12" y2="3"></line>
+                    <line x1="20" y1="21" x2="20" y2="16"></line>
+                    <line x1="20" y1="12" x2="20" y2="3"></line>
+                    <line x1="1" y1="14" x2="7" y2="14"></line>
+                    <line x1="9" y1="8" x2="15" y2="8"></line>
+                    <line x1="17" y1="16" x2="23" y2="16"></line>
+                </svg>
+            </button>
+
+            <button class="chip-btn" onclick="toggleGenericModal('nft')">
+                Collection <span>▼</span>
+            </button>
+
+            <button class="chip-btn" onclick="toggleGenericModal('model')">
+                Model <span>▼</span>
+            </button>
+            <button class="chip-btn" onclick="toggleGenericModal('bg')">
+                Background <span>▼</span>
+            </button>
+
+            <button class="chip-btn" onclick="toggleGenericModal('symbol')">
+                Pattern <span>▼</span>
+            </button>
+        </div>
+
+        <input type="hidden" id="filter-nft" value="all">
+        <input type="hidden" id="filter-sort" value="price_asc">
+    </div>
+
+    <!-- Filter Modal -->
+    <div id="mrkt-modal-overlay" class="modal-overlay" onclick="closeMrktModal()"></div>
+    <div id="mrkt-modal" class="filter-panel">
+        <div class="mrkt-modal-header">
+            <h3 id="mrkt-modal-title">Filter</h3>
+            <button onclick="closeMrktModal()"
+                style="background:none; border:none; color:white; font-size:24px; cursor: pointer;">✕</button>
+        </div>
+
+        <input type="text" class="mrkt-search" placeholder="Search..." id="mrkt-modal-search">
+
+        <div class="filter-content" id="mrkt-list-container">
+            <!-- List populated by JS -->
+        </div>
+
+        <div class="mrkt-footer">
+            <button class="btn-gray" onclick="resetMrktModal()">Reset</button>
+            <button class="btn-yellow" onclick="applyMrktModal()">Show Results</button>
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div class="container">
+        <div id="top-loader" class="loader">Loading market data...</div>
+        <div id="items-view" class="grid"></div>
+        <div id="loader-trigger" style="height: 40px;"></div>
+    </div>
+
+    <!-- Bottom Nav -->
+    <div class="bottom-nav">
+        <div class="nav-item active">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+            <span>Market</span>
+        </div>
+        <div class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <path d="M16 10a4 4 0 0 1-8 0"></path>
+            </svg>
+            <span>Assets</span>
+        </div>
+        <div class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+            <span>Help</span>
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div class="modal" id="payment-modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <div id="modal-img-container" style="text-align: center; margin-bottom: 20px;">
+                <img id="modal-img" src="" class="modal-img" style="display:none;">
+            </div>
+            <h2 id="modal-title" style="margin-bottom: 5px;">NFT</h2>
+            <div style="color:#8b9bb4; font-size:14px; margin-bottom:15px;">Rental per day</div>
+            <p class="modal-price"><span id="modal-price">10 TON</span></p>
+            <button id="confirm-pay-btn" class="btn-yellow"
+                style="width: 100%; margin-bottom: 10px; display: none;">Confirm & Pay</button>
+            <div id="ton-connect-btn" class="ton-btn-wrapper"></div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
