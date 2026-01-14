@@ -44,6 +44,20 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         document.addEventListener('gesturestart', (e) => e.preventDefault());
 
+        // Block Desktop Zoom (Ctrl + Wheel)
+        window.addEventListener('wheel', (e) => {
+            if (e.ctrlKey) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        // Block Desktop Zoom (Ctrl + '+', '-', '0')
+        window.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && (e.key === '=' || e.key === '-' || e.key === '+' || e.key === '0')) {
+                e.preventDefault();
+            }
+        });
+
     } catch (e) { alert("Init Error: " + e.message); }
 });
 
