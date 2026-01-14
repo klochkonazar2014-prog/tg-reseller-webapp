@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL (localtunnel)
-const BACKEND_URL = "https://spotty-wasps-find.loca.lt";
+const BACKEND_URL = "https://smart-tips-follow.loca.lt";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
