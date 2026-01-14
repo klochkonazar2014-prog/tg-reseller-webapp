@@ -19,44 +19,44 @@
         <!-- Search -->
         <div class="search-row">
             <div class="search-wrapper">
-                <svg style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #8b9bb4;"
-                    width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #8b9bb4;"
+                    width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                     <circle cx="11" cy="11" r="8"></circle>
                     <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                 </svg>
-                <input type="text" id="search-input" class="search-bar" placeholder="Search items...">
+                <input type="text" id="search-input" class="search-bar" placeholder="Поиск по названию NFT / номеру">
             </div>
+            <button class="header-cart-btn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <path d="M16 10a4 4 0 0 1-8 0"></path>
+                </svg>
+            </button>
         </div>
 
         <!-- Chips -->
         <div class="chips-row">
-            <button class="chip-btn icon-only" onclick="toggleGenericModal('sort')">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="4" y1="21" x2="4" y2="14"></line>
-                    <line x1="4" y1="10" x2="4" y2="3"></line>
-                    <line x1="12" y1="21" x2="12" y2="12"></line>
-                    <line x1="12" y1="8" x2="12" y2="3"></line>
-                    <line x1="20" y1="21" x2="20" y2="16"></line>
-                    <line x1="20" y1="12" x2="20" y2="3"></line>
-                    <line x1="1" y1="14" x2="7" y2="14"></line>
-                    <line x1="9" y1="8" x2="15" y2="8"></line>
-                    <line x1="17" y1="16" x2="23" y2="16"></line>
+            <button class="chip-btn icon-only" onclick="openAdvancedFilters()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M4 21v-7m0-4V3m8 18v-9m0-4V3m8 18v-5m0-4V3M1 14h6m2-6h6m2 8h6"></path>
                 </svg>
             </button>
 
             <button class="chip-btn" onclick="toggleGenericModal('nft')">
-                Collection <span>▼</span>
+                NFT <span>▼</span>
             </button>
 
             <button class="chip-btn" onclick="toggleGenericModal('model')">
-                Model <span>▼</span>
+                Модель <span>▼</span>
             </button>
+
             <button class="chip-btn" onclick="toggleGenericModal('bg')">
-                Background <span>▼</span>
+                Фон <span>▼</span>
             </button>
 
             <button class="chip-btn" onclick="toggleGenericModal('symbol')">
-                Pattern <span>▼</span>
+                Символ <span>▼</span>
             </button>
         </div>
 
@@ -64,30 +64,89 @@
         <input type="hidden" id="filter-sort" value="price_asc">
     </div>
 
-    <!-- Filter Modal -->
+    <!-- Filter Modal (Advanced) -->
     <div id="mrkt-modal-overlay" class="modal-overlay" onclick="closeMrktModal()"></div>
     <div id="mrkt-modal" class="filter-panel">
         <div class="mrkt-modal-header">
-            <h3 id="mrkt-modal-title">Filter</h3>
+            <h3>Фильтры</h3>
             <button onclick="closeMrktModal()"
-                style="background:none; border:none; color:white; font-size:24px; cursor: pointer;">✕</button>
+                style="background:none; border:none; color:#8b9bb4; font-size:24px; cursor: pointer;">✕</button>
         </div>
 
-        <input type="text" class="mrkt-search" placeholder="Search..." id="mrkt-modal-search">
+        <div class="filter-content">
+            <!-- Gift Number Section -->
+            <div class="filter-section-title">Номер подарка</div>
+            <div class="filter-input-row">
+                <div class="filter-input-wrapper">
+                    <span>#</span>
+                    <input type="number" id="filter-gift-number" placeholder="Номер">
+                </div>
+            </div>
 
-        <div class="filter-content" id="mrkt-list-container">
-            <!-- List populated by JS -->
+            <!-- Sort Section -->
+            <div class="filter-accordion" onclick="toggleGenericModal('sort')">
+                <span>Сортировать по</span>
+                <div class="filter-accordion-arrow">▼</div>
+            </div>
+
+            <!-- Price Section -->
+            <div class="filter-section-title">Цена</div>
+            <div class="filter-input-row">
+                <div class="filter-input-wrapper">
+                    <span>▼</span>
+                    <input type="number" id="filter-price-from" placeholder="От">
+                </div>
+                <div style="color:#555">—</div>
+                <div class="filter-input-wrapper">
+                    <input type="number" id="filter-price-to" placeholder="До">
+                </div>
+            </div>
+
+            <!-- Categories -->
+            <div class="filter-accordion" onclick="toggleGenericModal('tags')">
+                <span>Теги</span>
+                <div class="filter-accordion-arrow">▼</div>
+            </div>
+            <div class="filter-accordion" onclick="toggleGenericModal('nft')">
+                <span>NFT</span>
+                <div class="filter-accordion-arrow">▼</div>
+            </div>
+            <div class="filter-accordion" onclick="toggleGenericModal('model')">
+                <span>Модель</span>
+                <div class="filter-accordion-arrow">▼</div>
+            </div>
+            <div class="filter-accordion" onclick="toggleGenericModal('bg')">
+                <span>Фон</span>
+                <div class="filter-accordion-arrow">▼</div>
+            </div>
+            <div class="filter-accordion" onclick="toggleGenericModal('symbol')">
+                <span>Символ</span>
+                <div class="filter-accordion-arrow">▼</div>
+            </div>
         </div>
 
         <div class="mrkt-footer">
-            <button class="btn-gray" onclick="resetMrktModal()">Reset</button>
-            <button class="btn-yellow" onclick="applyMrktModal()">Show Results</button>
+            <button class="btn-gray" onclick="resetMrktModal()">Очистить все</button>
+            <button class="btn-yellow" onclick="applyMrktModal()">Показать результаты</button>
+        </div>
+    </div>
+
+    <!-- Generic List Modal (for items in accordions) -->
+    <div id="generic-list-modal" class="filter-panel" style="z-index: 1002;">
+        <div class="mrkt-modal-header">
+            <h3 id="generic-modal-title">Выбор</h3>
+            <button onclick="closeGenericModal()"
+                style="background:none; border:none; color:#8b9bb4; font-size:24px; cursor: pointer;">✕</button>
+        </div>
+        <input type="text" class="mrkt-search" placeholder="Поиск..." id="generic-modal-search">
+        <div class="filter-content" id="generic-list-container" style="padding: 0 20px;">
+            <!-- Populated by JS -->
         </div>
     </div>
 
     <!-- Content -->
     <div class="container">
-        <div id="top-loader" class="loader">Loading market data...</div>
+        <div id="top-loader" class="loader">Загрузка данных рынка...</div>
         <div id="items-view" class="grid"></div>
         <div id="loader-trigger" style="height: 40px;"></div>
     </div>
@@ -96,28 +155,42 @@
     <div class="bottom-nav">
         <div class="nav-item active">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <rect x="3" y="3" width="7" height="7"></rect>
-                <rect x="14" y="3" width="7" height="7"></rect>
-                <rect x="14" y="14" width="7" height="7"></rect>
-                <rect x="3" y="14" width="7" height="7"></rect>
-            </svg>
-            <span>Market</span>
-        </div>
-        <div class="nav-item">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
                 <line x1="3" y1="6" x2="21" y2="6"></line>
                 <path d="M16 10a4 4 0 0 1-8 0"></path>
             </svg>
-            <span>Assets</span>
+            <span>Маркет</span>
+        </div>
+        <div class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M9 11l3 3L22 4"></path>
+                <path d="M22 12v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"></path>
+            </svg>
+            <span>Ордеры</span>
+        </div>
+        <div class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <rect x="2" y="6" width="20" height="12" rx="2"></rect>
+                <path d="M6 12h.01"></path>
+                <path d="M10 12h.01"></path>
+                <path d="M15 10l2 2-2 2"></path>
+                <path d="M19 12h.01"></path>
+            </svg>
+            <span>Игровой хаб</span>
         </div>
         <div class="nav-item">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <circle cx="12" cy="12" r="10"></circle>
-                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                <path d="M12 8v8"></path>
+                <path d="M8 12h8"></path>
             </svg>
-            <span>Help</span>
+            <span>Розыгрыши</span>
+        </div>
+        <div class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span>Хранилище</span>
         </div>
     </div>
 
@@ -129,15 +202,15 @@
                 <img id="modal-img" src="" class="modal-img" style="display:none;">
             </div>
             <h2 id="modal-title" style="margin-bottom: 5px;">NFT</h2>
-            <div style="color:#8b9bb4; font-size:14px; margin-bottom:15px;">Rental per day</div>
+            <div style="color:#8b9bb4; font-size:14px; margin-bottom:15px;">Аренда за день</div>
             <p class="modal-price"><span id="modal-price">10 TON</span></p>
             <button id="confirm-pay-btn" class="btn-yellow"
-                style="width: 100%; margin-bottom: 10px; display: none;">Confirm & Pay</button>
+                style="width: 100%; margin-bottom: 10px; display: none;">Подтвердить и Оплатить</button>
             <div id="ton-connect-btn" class="ton-btn-wrapper"></div>
         </div>
     </div>
 
-    <script src="app.js?v=1.0.6"></script>
+    <script src="app.js?v=1.0.7"></script>
 </body>
 
 </html>

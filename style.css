@@ -46,11 +46,14 @@ body {
 
 .search-row {
     width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
 .search-wrapper {
     position: relative;
-    width: 100%;
+    flex: 1;
 }
 
 .search-wrapper input {
@@ -58,8 +61,8 @@ body {
     border: none;
     border-radius: 12px;
     color: #fff;
-    height: 40px;
-    padding-left: 40px !important;
+    height: 48px;
+    padding-left: 44px !important;
     font-size: 16px;
     width: 100%;
     outline: none;
@@ -68,6 +71,20 @@ body {
 
 .search-wrapper input:focus {
     background: #2c2c2e;
+}
+
+.header-cart-btn {
+    background: #1c1c1e;
+    border: none;
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    cursor: pointer;
+    flex-shrink: 0;
 }
 
 .chips-row {
@@ -199,27 +216,60 @@ body {
     text-overflow: ellipsis;
 }
 
-.card-subtitle {
+.card-number {
     font-size: 13px;
     color: var(--text-secondary);
-    margin-bottom: 8px;
+    margin-bottom: 2px;
+}
+
+.card-subtitle {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+}
+
+.card-bottom-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .card-price-btn {
     background: var(--accent-blue);
     color: #fff;
     font-weight: 700;
-    border-radius: 10px;
+    border-radius: 12px;
     padding: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    width: 100%;
+    gap: 4px;
+    flex: 1;
     border: none;
-    font-size: 15px;
+    font-size: 14px;
     cursor: pointer;
-    box-shadow: 0 4px 15px rgba(0, 136, 204, 0.3);
+}
+
+.card-cart-btn {
+    background: #2c2c2e;
+    border: none;
+    color: #fff;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.card-duration {
+    font-size: 11px;
+    color: rgba(0, 136, 204, 0.8);
+    font-weight: 600;
+    margin-top: 6px;
+    text-align: center;
 }
 
 /* --- BOTTOM NAV --- */
@@ -288,16 +338,15 @@ body {
     bottom: 0;
     left: 0;
     right: 0;
-    background: #1c1c1e;
-    border-radius: 24px 24px 0 0;
+    background: #000;
+    border-radius: 20px 20px 0 0;
     z-index: 1001;
-    padding: 20px;
+    padding: 0;
     transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     transform: translateY(110%);
-    max-height: 90vh;
+    max-height: 95vh;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.6);
 }
 
 .filter-panel.active {
@@ -308,12 +357,72 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 20px;
+    padding: 20px 20px 12px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .mrkt-modal-header h3 {
-    font-size: 20px;
+    font-size: 19px;
     font-weight: 700;
+}
+
+.filter-section-title {
+    padding: 20px 20px 10px 20px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.filter-input-row {
+    padding: 0 20px 20px 20px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.filter-input-wrapper {
+    flex: 1;
+    background: #1c1c1e;
+    border-radius: 12px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.filter-input-wrapper input {
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 15px;
+    width: 100%;
+    outline: none;
+}
+
+.filter-input-wrapper span {
+    color: #8b9bb4;
+}
+
+.filter-accordion {
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+}
+
+.filter-accordion span {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.filter-accordion-arrow {
+    color: #8b9bb4;
+    font-size: 14px;
 }
 
 .mrkt-search {
@@ -387,29 +496,31 @@ body {
 .mrkt-footer {
     display: flex;
     gap: 12px;
+    padding: 20px;
+    background: #000;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .btn-gray,
 .btn-yellow {
     border: none;
     border-radius: 14px;
-    padding: 16px;
+    padding: 18px;
     font-size: 16px;
     cursor: pointer;
+    font-weight: 700;
 }
 
 .btn-gray {
-    background: #2c2c2e;
+    background: #1c1c1e;
     color: #fff;
     flex: 1;
-    font-weight: 600;
 }
 
 .btn-yellow {
-    background: var(--accent-blue);
+    background: #0088cc;
     color: #fff;
     flex: 2;
-    font-weight: 700;
 }
 
 /* PAYMENT MODAL */
