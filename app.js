@@ -12,9 +12,7 @@ let ALL_MARKET_ITEMS = [];
 let FILTERED_ITEMS = [];
 let RENDERED_COUNT = 0;
 const BATCH_SIZE = 20;
-let CURRENT_MODAL_TYPE = null;
 
-// ГЛОБАЛЬНЫЙ STATE ФИЛЬТРОВ
 let ACTIVE_FILTERS = {
     nft: 'all',
     model: 'all',
@@ -62,24 +60,24 @@ document.addEventListener("DOMContentLoaded", async () => {
 async function loadLiveItems() {
     const loader = document.getElementById('top-loader');
     try {
-        const response = await fetch(`${BACKEND_URL}/api/items?limit=80`);
+        const response = await fetch(`${BACKEND_URL}/api/items?limit=200`); // Увеличил лимит
         const data = await response.json();
 
         if (data.items) {
             ALL_MARKET_ITEMS = data.items.map(item => {
-                // Извлекаем номер из названия (напр. "Ginger Cookie #1234")
                 const match = item.nft_name.match(/#(\d+)/);
                 item._nftNum = match ? parseInt(match[1]) : 0;
                 return item;
             });
 
-            // Кэшируем уникальные коллекции
+            // Коллекции
             const uniqueCols = new Map();
             ALL_MARKET_ITEMS.forEach(i => {
                 if (i._collection) uniqueCols.set(i._collection.address, i._collection);
             });
             window.STATIC_COLLECTIONS = Array.from(uniqueCols.values());
 
+            initFilterLists();
             applyHeaderSearch();
         }
     } catch (e) {
@@ -94,8 +92,79 @@ function initTonConnect() {
     });
 }
 
+// --- Accordions logic ---
+function toggleAccordion(id, btn) {
+    const content = document.getElementById(id);
+    const isActive = content.classList.contains('active');
+
+    // Close others
+    document.querySelectorAll('.accordion-content').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.filter-accordion').forEach(b => b.classList.remove('active'));
+
+    if (!isActive) {
+        content.classList.add('active');
+        btn.classList.add('active');
+    }
+}
+
+function initFilterLists() {
+    // Сортировка
+    const sortCont = document.getElementById('sort-list-container');
+    const sorts = [
+        { id: 'price_asc', n: 'Цена (По возрастанию)' },
+        { id: 'price_desc', n: 'Цена (По убыванию)' },
+        { id: 'num_asc', n: 'Номер подарка (По возрастанию)' },
+        { id: 'num_desc', n: 'Номер подарка (По убыванию)' },
+        { id: 'model_rare', n: 'Редкость модели' },
+        { id: 'bg_rare', n: 'Редкость фона' },
+        { id: 'symbol_rare', n: 'Редкость символа' }
+    ];
+    sortCont.innerHTML = '';
+    sorts.forEach(s => addFilterItem(sortCont, s.n, s.id, 'sort', ACTIVE_FILTERS.sort === s.id));
+
+    // NFT (Collections)
+    const nftCont = document.getElementById('nft-list-container');
+    nftCont.innerHTML = '';
+    addFilterItem(nftCont, "Все", "all", 'nft', ACTIVE_FILTERS.nft === 'all');
+    (window.STATIC_COLLECTIONS || []).forEach(col => addFilterItem(nftCont, col.name, col.address, 'nft', ACTIVE_FILTERS.nft === col.address, col.image_url));
+
+    // Others
+    const maps = [
+        { id: 'model-list-container', key: 'model', attr: '_modelName' },
+        { id: 'bg-list-container', key: 'bg', attr: '_backdrop' },
+        { id: 'symbol-list-container', key: 'symbol', attr: '_symbol' }
+    ];
+    maps.forEach(m => {
+        const cont = document.getElementById(m.id);
+        const vals = new Set();
+        ALL_MARKET_ITEMS.forEach(i => { if (i[m.attr]) vals.add(i[m.attr]); });
+        cont.innerHTML = '';
+        addFilterItem(cont, "Все", "all", m.key, ACTIVE_FILTERS[m.key] === 'all');
+        Array.from(vals).sort().forEach(v => addFilterItem(cont, v, v, m.key, ACTIVE_FILTERS[m.key] === v));
+    });
+}
+
+function addFilterItem(container, name, value, key, isSelected, imgUrl) {
+    const div = document.createElement('div');
+    div.className = `filter-list-item ${isSelected ? 'selected' : ''}`;
+    div.innerHTML = `
+        <div class="filter-item-left">
+            ${imgUrl ? `<img src="${imgUrl}" class="filter-img">` : `<div style="width:20px;height:20px;border-radius:50%;border:2px solid ${isSelected ? '#0088cc' : '#555'}"></div>`}
+            <span style="color:white; font-weight:600; margin-left:10px; font-size:14px;">${name}</span>
+        </div>
+        ${isSelected ? '<span style="color:#0088cc">●</span>' : ''}
+    `;
+    div.onclick = () => {
+        ACTIVE_FILTERS[key] = value;
+        container.querySelectorAll('.filter-list-item').forEach(el => el.classList.remove('selected'));
+        div.classList.add('selected');
+        // Re-init other lists if needed or just sync UI
+        if (key === 'sort') applyHeaderSearch();
+    };
+    container.appendChild(div);
+}
+
 function applyHeaderSearch() {
-    // 1. Фильтрация
     FILTERED_ITEMS = ALL_MARKET_ITEMS.filter(item => {
         if (ACTIVE_FILTERS.nft !== 'all' && item._collection.address !== ACTIVE_FILTERS.nft) return false;
         if (ACTIVE_FILTERS.model !== 'all' && item._modelName !== ACTIVE_FILTERS.model) return false;
@@ -107,33 +176,26 @@ function applyHeaderSearch() {
         if (ACTIVE_FILTERS.price_to && price > ACTIVE_FILTERS.price_to) return false;
 
         if (ACTIVE_FILTERS.gift_number && item._nftNum !== parseInt(ACTIVE_FILTERS.gift_number)) return false;
-
         if (ACTIVE_FILTERS.search && !item.nft_name.toLowerCase().includes(ACTIVE_FILTERS.search)) return false;
 
         return true;
     });
 
-    // 2. Сортировка
     FILTERED_ITEMS.sort((a, b) => {
         const pA = parseFloat(a.price_per_day);
         const pB = parseFloat(b.price_per_day);
-
         switch (ACTIVE_FILTERS.sort) {
             case 'price_asc': return pA - pB;
             case 'price_desc': return pB - pA;
             case 'num_asc': return a._nftNum - b._nftNum;
             case 'num_desc': return b._nftNum - a._nftNum;
-            case 'model_rare': return a._modelName.localeCompare(b._modelName); // Упрощенно
-            case 'bg_rare': return a._backdrop.localeCompare(b._backdrop);
-            case 'symbol_rare': return a._symbol.localeCompare(b._symbol);
             default: return 0;
         }
     });
 
     RENDERED_COUNT = 0;
     document.getElementById('items-view').innerHTML = "";
-    const loader = document.getElementById('top-loader');
-    if (loader) loader.style.display = 'none';
+    if (document.getElementById('top-loader')) document.getElementById('top-loader').style.display = 'none';
 
     if (FILTERED_ITEMS.length === 0) {
         document.getElementById('items-view').innerHTML = "<p style='text-align:center; color:#8b9bb4; grid-column:1/-1; padding:20px;'>Ничего не найдено :(</p>";
@@ -158,10 +220,8 @@ function appendItems() {
 function createItemCard(item) {
     const card = document.createElement('div');
     card.className = "card";
-
     const price = parseFloat(item.price_per_day) / 1000000000;
     const myPrice = (price * (1 + MY_MARKUP)).toFixed(2);
-
     const match = item.nft_name.match(/^(.*?)\s*(#\d+)$/);
     const baseName = match ? match[1] : item.nft_name;
     const numStr = match ? match[2] : "";
@@ -184,209 +244,88 @@ function createItemCard(item) {
             <div class="card-number">${numStr}</div>
             <div class="card-subtitle">${item._modelName}</div> 
             <div class="card-bottom-row">
-                <button class="card-price-btn">
-                    <span>${myPrice} TON</span>
-                </button>
-                <button class="card-cart-btn">
-                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
-                        <line x1="16" y1="10" x2="16" y2="10.01"></line>
-                        <path d="M12 12a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"></path>
-                        <path d="M12 14v4"></path>
-                        <path d="M10 16h4"></path>
-                     </svg>
-                </button>
+                <button class="card-price-btn"><span>${myPrice} TON</span></button>
+                <button class="card-cart-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><path d="M12 12a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"></path><path d="M12 14v4"></path><path d="M10 16h4"></path></svg></button>
             </div>
             <div class="card-duration">Аренда на 1 день</div>
         </div>
     `;
-
     card.onclick = (e) => {
-        if (e.target.closest('.card-cart-btn')) {
-            e.stopPropagation();
-            alert("Товар добавлен в корзину!");
-            return;
-        }
+        if (e.target.closest('.card-cart-btn')) { e.stopPropagation(); alert("Добавлено в корзину!"); return; }
         openPaymentModal(item, myPrice, imgSrc);
     };
-
-    if (fragmentUrls.lottie) {
-        card.dataset.lottieUrl = fragmentUrls.lottie;
-        card.dataset.lottieId = lottieId;
-        card.classList.add('has-lottie');
-    }
+    if (fragmentUrls.lottie) { card.dataset.lottieUrl = fragmentUrls.lottie; card.dataset.lottieId = lottieId; card.classList.add('has-lottie'); }
     return card;
 }
-
-// --- MODALS ---
 
 function openAdvancedFilters() {
     document.getElementById('mrkt-modal').classList.add('active');
     document.getElementById('mrkt-modal-overlay').classList.add('active');
-
-    // Подгружаем текущие значения в инпуты
-    document.getElementById('filter-gift-number').value = ACTIVE_FILTERS.gift_number || "";
-    document.getElementById('filter-price-from').value = ACTIVE_FILTERS.price_from || "";
-    document.getElementById('filter-price-to').value = ACTIVE_FILTERS.price_to || "";
 }
-
 function closeMrktModal() {
     document.getElementById('mrkt-modal').classList.remove('active');
     document.getElementById('mrkt-modal-overlay').classList.remove('active');
 }
-
-function toggleGenericModal(type) {
-    CURRENT_MODAL_TYPE = type;
-    const modal = document.getElementById('generic-list-modal');
-    const container = document.getElementById('generic-list-container');
-    const title = document.getElementById('generic-modal-title');
-
-    container.innerHTML = '';
-    modal.classList.add('active');
-
-    if (type === 'sort') {
-        title.innerText = 'Сортировка';
-        const sorts = [
-            { id: 'price_asc', n: 'Цена (По возрастанию)' },
-            { id: 'price_desc', n: 'Цена (По убыванию)' },
-            { id: 'num_asc', n: 'Номер подарка (По возрастанию)' },
-            { id: 'num_desc', n: 'Номер подарка (По убыванию)' },
-            { id: 'model_rare', n: 'Редкость модели' },
-            { id: 'bg_rare', n: 'Редкость фона' },
-            { id: 'symbol_rare', n: 'Редкость символа' }
-        ];
-        sorts.forEach(s => addGenericItem(container, s.n, s.id, ACTIVE_FILTERS.sort === s.id));
-    } else if (type === 'nft') {
-        title.innerText = 'Коллекция';
-        addGenericItem(container, "Все", "all", ACTIVE_FILTERS.nft === 'all');
-        (window.STATIC_COLLECTIONS || []).forEach(col => addGenericItem(container, col.name, col.address, col.address === ACTIVE_FILTERS.nft, col.image_url));
-    } else {
-        const titleMap = { 'model': 'Модель', 'bg': 'Фон', 'symbol': 'Символ', 'tags': 'Теги' };
-        title.innerText = titleMap[type] || 'Выбор';
-        const filterKey = type === 'bg' ? '_backdrop' : (type === 'symbol' ? '_symbol' : '_modelName');
-
-        const uniqueVals = new Set();
-        ALL_MARKET_ITEMS.forEach(i => { if (i[filterKey]) uniqueVals.add(i[filterKey]); });
-
-        addGenericItem(container, "Все", "all", ACTIVE_FILTERS[type] === 'all');
-        Array.from(uniqueVals).sort().forEach(v => addGenericItem(container, v, v, v === ACTIVE_FILTERS[type]));
-    }
-}
-
-function addGenericItem(container, name, value, isSelected, imgUrl = null) {
-    const div = document.createElement('div');
-    div.className = `filter-list-item ${isSelected ? 'selected' : ''}`;
-    div.innerHTML = `
-        <div class="filter-item-left">
-            ${imgUrl ? `<img src="${imgUrl}" class="filter-img">` : `<div style="width:22px;height:22px;border-radius:50%;border:2px solid ${isSelected ? '#0088cc' : '#555'}"></div>`}
-            <span style="color:white; font-weight:600; margin-left:10px;">${name}</span>
-        </div>
-        ${isSelected ? '<span style="color:#0088cc">●</span>' : ''}
-    `;
-    div.onclick = () => {
-        ACTIVE_FILTERS[CURRENT_MODAL_TYPE] = value;
-        closeGenericModal();
-        // Если это была сортировка, сразу применяем
-        if (CURRENT_MODAL_TYPE === 'sort') applyHeaderSearch();
-    };
-    container.appendChild(div);
-}
-
-function closeGenericModal() {
-    document.getElementById('generic-list-modal').classList.remove('active');
-}
-
 function resetMrktModal() {
     ACTIVE_FILTERS = { nft: 'all', model: 'all', bg: 'all', symbol: 'all', tags: 'all', sort: 'price_asc', price_from: null, price_to: null, gift_number: null, search: ACTIVE_FILTERS.search };
     document.getElementById('filter-gift-number').value = "";
     document.getElementById('filter-price-from').value = "";
     document.getElementById('filter-price-to').value = "";
+    initFilterLists();
     applyHeaderSearch();
-    closeMrktModal();
 }
-
 function applyMrktModal() {
     ACTIVE_FILTERS.gift_number = document.getElementById('filter-gift-number').value || null;
     ACTIVE_FILTERS.price_from = parseFloat(document.getElementById('filter-price-from').value) || null;
     ACTIVE_FILTERS.price_to = parseFloat(document.getElementById('filter-price-to').value) || null;
-
     applyHeaderSearch();
     closeMrktModal();
 }
 
-// --- UTILS ---
-
 function debounce(func, wait) {
     let timeout;
-    return (...args) => {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => func(...args), wait);
-    };
+    return (...args) => { clearTimeout(timeout); timeout = setTimeout(() => func(...args), wait); };
 }
-
-function generateFragmentUrls(nftName) {
-    if (!nftName) return { image: null, lottie: null };
-    const match = nftName.match(/^(.+?)\s*#(\d+)$/);
+function generateFragmentUrls(n) {
+    const match = n.match(/^(.+?)\s*#(\d+)$/);
     if (!match) return { image: null, lottie: null };
     let name = match[1].trim().toLowerCase().replace(/\s+/g, '');
-    const number = match[2];
-    return {
-        image: `https://nft.fragment.com/gift/${name}-${number}.webp`,
-        lottie: `https://nft.fragment.com/gift/${name}-${number}.lottie.json`
-    };
+    return { image: `https://nft.fragment.com/gift/${name}-${match[2]}.webp`, lottie: `https://nft.fragment.com/gift/${name}-${match[2]}.lottie.json` };
 }
-
 function observeNewCards() {
-    const observer = new IntersectionObserver((entries) => {
+    const ob = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (!entry.target.dataset.lottieUrl) return;
             const container = document.getElementById(entry.target.dataset.lottieId);
             if (entry.isIntersecting) {
-                if (!container.anim) {
-                    container.anim = lottie.loadAnimation({ container: container, renderer: 'svg', loop: true, autoplay: true, path: entry.target.dataset.lottieUrl });
-                } else container.anim.play();
+                if (!container.anim) container.anim = lottie.loadAnimation({ container, renderer: 'svg', loop: true, autoplay: true, path: entry.target.dataset.lottieUrl });
+                else container.anim.play();
             } else if (container.anim) container.anim.pause();
         });
     }, { rootMargin: "100px" });
-    document.querySelectorAll('.card.has-lottie').forEach(c => observer.observe(c));
+    document.querySelectorAll('.card.has-lottie').forEach(c => ob.observe(c));
 }
-
 async function openPaymentModal(item, finalPrice, imgSrc) {
-    const modal = document.getElementById('payment-modal');
-    modal.classList.add('active');
+    document.getElementById('payment-modal').classList.add('active');
     document.getElementById('modal-title').innerText = item.nft_name;
     document.getElementById('modal-price').innerText = `${finalPrice} TON`;
     document.getElementById('modal-img').src = imgSrc;
     document.getElementById('modal-img').style.display = 'block';
-
-    const confirmBtn = document.getElementById('confirm-pay-btn');
-    const tonBtn = document.getElementById('ton-connect-btn');
-
-    const check = () => {
-        if (tonConnectUI.connected) { confirmBtn.style.display = 'block'; tonBtn.style.display = 'none'; }
-        else { confirmBtn.style.display = 'none'; tonBtn.style.display = 'block'; }
-    };
+    const cbtn = document.getElementById('confirm-pay-btn');
+    const tbtn = document.getElementById('ton-connect-btn');
+    const check = () => { if (tonConnectUI.connected) { cbtn.style.display = 'block'; tbtn.style.display = 'none'; } else { cbtn.style.display = 'none'; tbtn.style.display = 'block'; } };
     check();
-
-    confirmBtn.onclick = async () => {
-        const tx = { validUntil: Math.floor(Date.now() / 1000) + 600, messages: [{ address: OWNER_WALLET, amount: (finalPrice * 1000000000).toString() }] };
+    cbtn.onclick = async () => {
         try {
-            confirmBtn.disabled = true;
-            const result = await tonConnectUI.sendTransaction(tx);
-            if (result) {
+            const res = await tonConnectUI.sendTransaction({ validUntil: Math.floor(Date.now() / 1000) + 600, messages: [{ address: OWNER_WALLET, amount: (finalPrice * 1000000000).toString() }] });
+            if (res) {
                 await fetch(`${BACKEND_URL}/api/mark_rented`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nft_address: item.nft_address }) });
                 ALL_MARKET_ITEMS = ALL_MARKET_ITEMS.filter(i => i.nft_address !== item.nft_address);
-                closeModal(); applyHeaderSearch(); alert("Успешно! Аренда активна.");
+                closeModal(); applyHeaderSearch(); alert("Успешно!");
             }
-        } catch (e) { alert("Ошибка оплаты."); }
-        finally { confirmBtn.disabled = false; }
+        } catch (e) { alert("Ошибка!"); }
     };
 }
-
 function closeModal() { document.getElementById('payment-modal').classList.remove('active'); }
-
 const trigger = document.getElementById('loader-trigger');
-if (trigger) {
-    const scrollObserver = new IntersectionObserver((entries) => { if (entries[0].isIntersecting) appendItems(); });
-    scrollObserver.observe(trigger);
-}
+if (trigger) { const so = new IntersectionObserver((e) => { if (e[0].isIntersecting) appendItems(); }); so.observe(trigger); }

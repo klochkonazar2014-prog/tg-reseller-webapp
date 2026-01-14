@@ -84,63 +84,77 @@
             </div>
 
             <!-- Sort Section -->
-            <div class="filter-accordion" onclick="toggleGenericModal('sort')">
+            <div class="filter-accordion" onclick="toggleAccordion('sort-acc', this)">
                 <span>Сортировать по</span>
                 <div class="filter-accordion-arrow">▼</div>
             </div>
+            <div id="sort-acc" class="accordion-content">
+                <div id="sort-list-container" style="padding: 0 20px;"></div>
+            </div>
 
             <!-- Price Section -->
-            <div class="filter-section-title">Цена</div>
-            <div class="filter-input-row">
-                <div class="filter-input-wrapper">
-                    <span>▼</span>
-                    <input type="number" id="filter-price-from" placeholder="От">
-                </div>
-                <div style="color:#555">—</div>
-                <div class="filter-input-wrapper">
-                    <input type="number" id="filter-price-to" placeholder="До">
+            <div class="filter-accordion" onclick="toggleAccordion('price-acc', this)">
+                <span>Цена</span>
+                <div class="filter-accordion-arrow">▼</div>
+            </div>
+            <div id="price-acc" class="accordion-content">
+                <div class="filter-input-row" style="padding-top:10px;">
+                    <div class="filter-input-wrapper">
+                        <span>▼</span>
+                        <input type="number" id="filter-price-from" placeholder="От">
+                    </div>
+                    <div style="color:#555">—</div>
+                    <div class="filter-input-wrapper">
+                        <input type="number" id="filter-price-to" placeholder="До">
+                    </div>
                 </div>
             </div>
 
             <!-- Categories -->
-            <div class="filter-accordion" onclick="toggleGenericModal('tags')">
+            <div class="filter-accordion" onclick="toggleAccordion('tags-acc', this)">
                 <span>Теги</span>
                 <div class="filter-accordion-arrow">▼</div>
             </div>
-            <div class="filter-accordion" onclick="toggleGenericModal('nft')">
+            <div id="tags-acc" class="accordion-content">
+                <div id="tags-list-container" style="padding: 0 20px;"></div>
+            </div>
+
+            <div class="filter-accordion" onclick="toggleAccordion('nft-acc', this)">
                 <span>NFT</span>
                 <div class="filter-accordion-arrow">▼</div>
             </div>
-            <div class="filter-accordion" onclick="toggleGenericModal('model')">
+            <div id="nft-acc" class="accordion-content">
+                <div id="nft-list-container" style="padding: 0 20px;"></div>
+            </div>
+
+            <div class="filter-accordion" onclick="toggleAccordion('model-acc', this)">
                 <span>Модель</span>
                 <div class="filter-accordion-arrow">▼</div>
             </div>
-            <div class="filter-accordion" onclick="toggleGenericModal('bg')">
+            <div id="model-acc" class="accordion-content">
+                <div id="model-list-container" style="padding: 0 20px;"></div>
+            </div>
+
+            <div class="filter-accordion" onclick="toggleAccordion('bg-acc', this)">
                 <span>Фон</span>
                 <div class="filter-accordion-arrow">▼</div>
             </div>
-            <div class="filter-accordion" onclick="toggleGenericModal('symbol')">
+            <div id="bg-acc" class="accordion-content">
+                <div id="bg-list-container" style="padding: 0 20px;"></div>
+            </div>
+
+            <div class="filter-accordion" onclick="toggleAccordion('symbol-acc', this)">
                 <span>Символ</span>
                 <div class="filter-accordion-arrow">▼</div>
+            </div>
+            <div id="symbol-acc" class="accordion-content">
+                <div id="symbol-list-container" style="padding: 0 20px;"></div>
             </div>
         </div>
 
         <div class="mrkt-footer">
             <button class="btn-gray" onclick="resetMrktModal()">Очистить все</button>
             <button class="btn-yellow" onclick="applyMrktModal()">Показать результаты</button>
-        </div>
-    </div>
-
-    <!-- Generic List Modal (for items in accordions) -->
-    <div id="generic-list-modal" class="filter-panel" style="z-index: 1002;">
-        <div class="mrkt-modal-header">
-            <h3 id="generic-modal-title">Выбор</h3>
-            <button onclick="closeGenericModal()"
-                style="background:none; border:none; color:#8b9bb4; font-size:24px; cursor: pointer;">✕</button>
-        </div>
-        <input type="text" class="mrkt-search" placeholder="Поиск..." id="generic-modal-search">
-        <div class="filter-content" id="generic-list-container" style="padding: 0 20px;">
-            <!-- Populated by JS -->
         </div>
     </div>
 
@@ -210,7 +224,7 @@
         </div>
     </div>
 
-    <script src="app.js?v=1.1.1"></script>
+    <script src="app.js?v=1.1.2"></script>
 </body>
 
 </html>
