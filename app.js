@@ -126,6 +126,7 @@ function appendItems() {
 
     container.appendChild(fragment);
     RENDERED_COUNT = end;
+    observeNewCards();
 }
 
 function createItemCard(item) {
@@ -135,11 +136,19 @@ function createItemCard(item) {
     const price = parseFloat(item.price_per_day) / 1000000000;
     const myPrice = (price * (1 + MY_MARKUP)).toFixed(2);
 
-    let imgSrc = item._realImage || item._collection.image_url || "https://cdn-icons-png.flaticon.com/512/4213/4213958.png";
+    let fallbackImg = item._collection.image_url || "https://cdn-icons-png.flaticon.com/512/4213/4213958.png";
+    const fragmentUrls = generateFragmentUrls(item.nft_name);
+    const lottieId = `lottie-${item.nft_address}`;
+
+    let imgSrc = item._realImage || fragmentUrls.image || fallbackImg;
+
+    // Media HTML
+    let mediaHTML = `<img src="${imgSrc}" class="card-img" id="img-${lottieId}" loading="lazy" onerror="this.src='${fallbackImg}'">`;
+    if (fragmentUrls.lottie) mediaHTML += `<div id="${lottieId}" class="card-img lottie-container" style="z-index: 2;"></div>`;
 
     card.innerHTML = `
         <div class="card-image-wrapper">
-             <img src="${imgSrc}" class="card-img" loading="lazy">
+             ${mediaHTML}
              <div class="sweep-btn">Live</div>
         </div>
         <div class="card-content">
@@ -152,6 +161,13 @@ function createItemCard(item) {
     `;
 
     card.onclick = () => openPaymentModal(item, myPrice, imgSrc);
+
+    if (fragmentUrls.lottie) {
+        card.dataset.lottieUrl = fragmentUrls.lottie;
+        card.dataset.lottieId = lottieId;
+        card.classList.add('has-lottie');
+    }
+
     return card;
 }
 
@@ -251,6 +267,40 @@ function applyMrktModal() {
 function cycleSort() {
     ACTIVE_FILTERS.sort = ACTIVE_FILTERS.sort === 'price_asc' ? 'price_desc' : 'price_asc';
     applyHeaderSearch();
+}
+
+function observeNewCards() {
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (!entry.target.dataset.lottieUrl) return;
+            const container = document.getElementById(entry.target.dataset.lottieId);
+            if (!container) return;
+            if (entry.isIntersecting) {
+                if (!container.anim) {
+                    try {
+                        container.anim = lottie.loadAnimation({
+                            container: container, renderer: 'svg', loop: true, autoplay: true, path: entry.target.dataset.lottieUrl
+                        });
+                    } catch (e) { }
+                } else container.anim.play();
+            } else {
+                if (container.anim) container.anim.pause();
+            }
+        });
+    }, { rootMargin: "100px" });
+    document.querySelectorAll('.card.has-lottie').forEach(c => observer.observe(c));
+}
+
+function generateFragmentUrls(nftName) {
+    if (!nftName) return { image: null, lottie: null };
+    const match = nftName.match(/^(.+?)\s*#(\d+)$/);
+    if (!match) return { image: null, lottie: null };
+    let name = match[1].trim().toLowerCase().replace(/\s+/g, '');
+    const number = match[2];
+    return {
+        image: `https://nft.fragment.com/gift/${name}-${number}.webp`,
+        lottie: `https://nft.fragment.com/gift/${name}-${number}.lottie.json`
+    };
 }
 
 async function openPaymentModal(item, finalPrice, imgSrc) {
