@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://egdfll-ip-193-187-150-124.tunnelmole.net";
+const BACKEND_URL = "https://zttgfb-ip-193-187-150-124.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -248,13 +248,17 @@ function initFilterLists() {
 
         // If NFT is "all", we show a placeholder for models/attributes to enforce order
         if (ACTIVE_FILTERS.nft === 'all' && m.key === 'model') {
-            cont.innerHTML = '<div style="padding:20px; text-align:center; color:#555; font-size:14px;">Сначала выберите NFT коллекцию</div>';
+            cont.innerHTML = `
+                <div style="padding:30px 20px; text-align:center;">
+                    <span style="color:#ff5500; font-size:18px; font-weight:700;">Сначала выберите NFT</span>
+                    <div style="height:1px; background:rgba(255,255,255,0.05); margin-top:20px;"></div>
+                </div>`;
             return;
         }
 
-        const vals = new Map(); // Use Map to store name -> representative image
+        const stats = new Map(); // Name -> { img, count, minPrice }
 
-        // Filter items based on selected NFT to show only relevant attributes
+        // Use all items for accurate counts (rarity)
         const relevantItems = ALL_MARKET_ITEMS.filter(i => {
             if (ACTIVE_FILTERS.nft !== 'all' && i._collection.address !== ACTIVE_FILTERS.nft) return false;
             return true;
@@ -262,24 +266,33 @@ function initFilterLists() {
 
         relevantItems.forEach(i => {
             const val = i[m.attr];
-            if (val && !vals.has(val)) {
-                vals.set(val, i._realImage || i._collection.image_url);
+            if (!val) return;
+            const p = parseFloat(i.price_per_day) / 1e9;
+            if (!stats.has(val)) {
+                stats.set(val, { img: i._realImage || i._collection.image_url, count: 0, minPrice: p });
             }
+            const s = stats.get(val);
+            s.count++;
+            if (p < s.minPrice) s.minPrice = p;
         });
 
-        addFilterItem(cont, "Все", "all", m.key, ACTIVE_FILTERS[m.key] === 'all');
-        Array.from(vals.keys()).sort().forEach(v => {
-            // ONLY show icons for BG (colors) and SYMBOL (patterns) and NFT (collections). NOT for models.
-            let icon = null;
-            if (m.key === 'nft') icon = vals.get(v);
-            if (m.key === 'bg' || m.key === 'symbol') icon = VISUAL_MAP[m.key][v] || null;
+        // Add "Select All" item
+        addFilterItem(cont, "Выбрать все", "all", m.key, ACTIVE_FILTERS[m.key] === 'all');
 
-            addFilterItem(cont, v, v, m.key, ACTIVE_FILTERS[m.key] === v, icon);
+        Array.from(stats.entries()).sort((a, b) => a[0].localeCompare(b[0])).forEach(([name, data]) => {
+            const rarity = ((data.count / relevantItems.length) * 100).toFixed(1);
+            let icon = null;
+            if (m.key === 'nft' || m.key === 'model') icon = data.img;
+            if (m.key === 'bg' || m.key === 'symbol') icon = VISUAL_MAP[m.key][name] || null;
+
+            // Extra display string for rarity and price
+            const subtext = m.key !== 'nft' ? ` (${rarity}%) <span style="color:#0088cc; margin-left:8px;">▽ ${data.minPrice}</span>` : "";
+            addFilterItem(cont, name, name, m.key, ACTIVE_FILTERS[m.key] === name, icon, subtext);
         });
     });
 }
 
-function addFilterItem(container, name, value, key, isSelected, imgUrl) {
+function addFilterItem(container, name, value, key, isSelected, imgUrl, subtext) {
     const div = document.createElement('div');
     div.className = `filter-list-item ${isSelected ? 'selected' : ''}`;
 
@@ -291,21 +304,24 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl) {
     } else if (imgUrl) {
         visualHTML = `<img src="${imgUrl}" class="filter-img">`;
     } else {
-        // Simple but elegant circle for generic items
-        visualHTML = `<div style="width:20px;height:20px;border-radius:50%;border:2px solid ${isSelected ? '#0088cc' : '#444'}; flex-shrink:0;"></div>`;
+        visualHTML = `<div style="width:22px;height:22px;border-radius:10px;border:2px solid ${isSelected ? '#0088cc' : '#333'};"></div>`;
     }
 
     div.innerHTML = `
         <div class="filter-item-left">
             ${visualHTML}
-            <span class="filter-item-name">${name}</span>
+            <div style="display:flex; flex-direction:column; margin-left:14px;">
+                <span class="filter-item-name" style="font-size:16px;">${name}${subtext || ''}</span>
+            </div>
         </div>
-        ${isSelected ? '<div class="selection-dot"></div>' : ''}
+        <div class="checkbox-box" style="width:24px; height:24px; border-radius:8px; border:2px solid ${isSelected ? '#0088cc' : '#333'}; display:flex; align-items:center; justify-content:center;">
+            ${isSelected ? '<div style="width:12px; height:12px; background:#0088cc; border-radius:3px;"></div>' : ''}
+        </div>
     `;
     div.onclick = (e) => {
         e.stopPropagation();
         ACTIVE_FILTERS[key] = value;
-        initFilterLists(); // Re-render lists to update radio buttons
+        initFilterLists();
         applyHeaderSearch();
     };
     container.appendChild(div);
