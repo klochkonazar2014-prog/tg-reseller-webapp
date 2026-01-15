@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://fvabdk-ip-176-119-99-6.tunnelmole.net";
+const BACKEND_URL = "https://fqqugf-ip-37-54-235-228.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -551,9 +551,10 @@ async function openProductView(item, finalPrice, imgSrc) {
         });
     }
 
+    const colName = (item._collection && item._collection.name) ? item._collection.name : "Gifts";
     document.getElementById('view-title').innerText = item.nft_name;
-    document.getElementById('view-collection').innerText = `${item._collection.name} >`;
-    document.getElementById('view-col-name').innerText = `${item._collection.name} >`;
+    document.getElementById('view-collection').innerText = `${colName} >`;
+    document.getElementById('view-col-name').innerText = `${colName} >`;
     document.getElementById('view-desc-title').innerText = item.nft_name;
 
     // Ownership
@@ -634,7 +635,8 @@ async function openProductView(item, finalPrice, imgSrc) {
     checkStatus();
 
     cbtn.onclick = async () => {
-        const days = parseInt(durationInput.value);
+        const input = document.getElementById('rent-duration-input');
+        const days = parseInt(input.value) || 1;
         const total = (dailyPrice * days).toFixed(2);
         try {
             const res = await tonConnectUI.sendTransaction({
