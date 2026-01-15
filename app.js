@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://wxtznz-ip-193-187-150-124.tunnelmole.net";
+const BACKEND_URL = "https://vkhb0e-ip-193-187-150-124.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -22,9 +22,9 @@ const VISUAL_MAP = {
         'Pink': '#FF2D55', 'Indigo': '#5856D6', 'Orange': '#FF9500', 'Cyan': '#32ADE6'
     },
     symbol: {
-        'Candle': 'https://nft.fragment.com/guide/candle.svg',
-        'Heart': 'https://nft.fragment.com/guide/heart.svg',
-        'Star': 'https://nft.fragment.com/guide/star.svg'
+        'Candle': 'https://raw.githubusercontent.com/ton-blockchain/token-logos/main/nft/gift/candle.svg',
+        'Heart': 'https://raw.githubusercontent.com/ton-blockchain/token-logos/main/nft/gift/heart.svg',
+        'Star': 'https://raw.githubusercontent.com/ton-blockchain/token-logos/main/nft/gift/star.svg'
     }
 };
 
@@ -262,7 +262,12 @@ function initFilterLists() {
 
         addFilterItem(cont, "Все", "all", m.key, ACTIVE_FILTERS[m.key] === 'all');
         Array.from(vals.keys()).sort().forEach(v => {
-            addFilterItem(cont, v, v, m.key, ACTIVE_FILTERS[m.key] === v, vals.get(v));
+            // ONLY show icons for BG (colors) and SYMBOL (patterns) and NFT (collections). NOT for models.
+            let icon = null;
+            if (m.key === 'nft') icon = vals.get(v);
+            if (m.key === 'bg' || m.key === 'symbol') icon = VISUAL_MAP[m.key][v] || null;
+
+            addFilterItem(cont, v, v, m.key, ACTIVE_FILTERS[m.key] === v, icon);
         });
     });
 }
@@ -274,6 +279,8 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl) {
     let visualHTML = '';
     if (key === 'bg' && VISUAL_MAP.bg[name]) {
         visualHTML = `<div class="filter-color-circle" style="background: ${VISUAL_MAP.bg[name]}"></div>`;
+    } else if (key === 'symbol' && VISUAL_MAP.symbol[name]) {
+        visualHTML = `<img src="${VISUAL_MAP.symbol[name]}" class="filter-img" style="filter: invert(1); background: rgba(255,255,255,0.1); padding:4px;">`;
     } else if (imgUrl) {
         visualHTML = `<img src="${imgUrl}" class="filter-img">`;
     } else {
