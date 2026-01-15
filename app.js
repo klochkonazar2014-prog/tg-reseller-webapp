@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://free-forks-notice.loca.lt";
+const BACKEND_URL = "https://chatty-clocks-pay.loca.lt";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
