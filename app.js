@@ -5,14 +5,14 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://rfvhdb-ip-176-119-99-6.tunnelmole.net";
+const BACKEND_URL = "https://4alhpw-ip-176-119-99-6.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
 let FILTERED_ITEMS = [];
 let RENDERED_COUNT = 0;
 const BATCH_SIZE = 40;
-const TON_SVG = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="margin-bottom:-2px;"><path d="M12 24C18.6274 24 24 18.6274 24 12C24 5.37258 18.6274 0 12 0C5.37258 0 0 5.37258 0 12C0 18.6274 5.37258 24 12 24Z" fill="#0088CC"/><path d="M11.9999 18.5144L6.96582 13.4802L8.2241 12.2219L11.9999 15.9977L15.7758 12.2219L17.034 13.4802L11.9999 18.5144ZM11.9999 14.5029L5.45117 7.9541L6.70945 6.69584L11.9999 11.9863L17.2904 6.69584L18.5486 7.9541L11.9999 14.5029Z" fill="white"/></svg>`;
+const TON_SVG = `<svg width="18" height="18" viewBox="0 0 562 562" fill="none" style="margin-bottom:-3px;"><path d="M280.407 126.046L130.638 275.815L144.17 289.347L280.407 153.111L416.645 289.347L430.177 275.815L280.407 126.046Z" fill="#0088CC"/><path d="M280.407 435.438L30.177 185.207L16.6445 198.74L280.407 462.502L544.17 198.74L530.638 185.207L280.407 435.438Z" fill="#0088CC"/></svg>`;
 let ATTR_STATS = { model: {}, bg: {}, symbol: {} };
 let CURRENT_PAYMENT_ITEM = null; // Store item during modal interaction
 
@@ -534,6 +534,19 @@ async function openProductView(item, finalPrice, imgSrc) {
 
     // Header & Media
     document.getElementById('view-img').src = imgSrc;
+    const lottieCont = document.getElementById('view-lottie');
+    lottieCont.innerHTML = '';
+    const fUrls = generateFragmentUrls(item.nft_name);
+    if (fUrls.lottie) {
+        lottie.loadAnimation({
+            container: lottieCont,
+            renderer: 'svg',
+            loop: true,
+            autoplay: true,
+            path: fUrls.lottie
+        });
+    }
+
     document.getElementById('view-title').innerText = item.nft_name;
     document.getElementById('view-collection').innerText = `${item._collection.name} >`;
     document.getElementById('view-col-name').innerText = `${item._collection.name} >`;
