@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://vkhb0e-ip-193-187-150-124.tunnelmole.net";
+const BACKEND_URL = "https://egdfll-ip-193-187-150-124.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -105,6 +105,13 @@ async function loadLiveItems() {
         // Fetching more items to ensure "all" are there
         const response = await fetch(`${BACKEND_URL}/api/items?limit=1000&t=${Date.now()}`);
         const data = await response.json();
+
+        // Hide global loading screen
+        const screen = document.getElementById('loading-screen');
+        if (screen) {
+            screen.style.opacity = '0';
+            setTimeout(() => screen.style.display = 'none', 500);
+        }
 
         if (data.items) {
             ALL_MARKET_ITEMS = data.items.map(item => {
@@ -345,7 +352,16 @@ function applyHeaderSearch() {
     if (document.getElementById('top-loader')) document.getElementById('top-loader').style.display = 'none';
 
     if (FILTERED_ITEMS.length === 0) {
-        document.getElementById('items-view').innerHTML = "<p style='text-align:center; color:#8b9bb4; grid-column:1/-1; padding:20px;'>Ничего не найдено :(</p>";
+        const view = document.getElementById('items-view');
+        view.innerHTML = `
+            <div class="error-msg" style="padding-top: 100px;">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: #333; margin-bottom: 20px;">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="8" y1="12" x2="16" y2="12"></line>
+                </svg>
+                <div style="font-size: 18px; font-weight: 700; color: #fff;">Ничего не найдено</div>
+                <div style="color: #8b9bb4; margin-top: 8px;">Попробуйте сбросить фильтры</div>
+            </div>`;
         return;
     }
     appendItems();
