@@ -5,14 +5,14 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://s6tpei-ip-176-119-99-6.tunnelmole.net";
+const BACKEND_URL = "https://dpv5vt-ip-176-119-99-6.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
 let FILTERED_ITEMS = [];
 let RENDERED_COUNT = 0;
 const BATCH_SIZE = 40;
-const TON_SVG = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="margin-bottom:-3px;"><circle cx="12" cy="12" r="11" fill="#0088CC"/><path d="M12.0009 19.3414L3.89941 11.2399L5.59292 9.54639L12.0009 15.9544L18.4089 9.54639L20.1024 11.2399L12.0009 19.3414ZM12.0009 14.4539L2.83447 5.28741L4.52798 3.5939L12.0009 11.0669L19.4738 3.5939L21.1673 5.28741L12.0009 14.4539Z" fill="white"/></svg>`;
+const TON_SVG = `<svg width="18" height="18" viewBox="0 0 562 562" fill="none" style="margin-bottom:-3px;"><path d="M280.407 126.046L430.177 275.815L280.407 425.585L130.637 275.815L280.407 126.046Z" fill="#0088CC"/><path d="M280.407 126.046L30.177 376.277L280.407 462.502L530.637 376.277L280.407 126.046Z" fill="#0088CC"/></svg>`;
 let ATTR_STATS = { model: {}, bg: {}, symbol: {} };
 let CURRENT_PAYMENT_ITEM = null; // Store item during modal interaction
 
@@ -128,18 +128,17 @@ async function loadLiveItems() {
                 if (item.attributes && Array.isArray(item.attributes)) {
                     item.attributes.forEach(attr => {
                         const t = attr.trait_type.toLowerCase();
-                        if (t.includes('model')) item._modelName = attr.value;
-                        if (t.includes('backdrop')) item._backdrop = attr.value;
-                        if (t.includes('symbol') || t.includes('pattern')) item._symbol = attr.value;
+                        const v = attr.value;
+                        if (t.includes('model')) item._modelName = v;
+                        else if (t.includes('backdrop')) item._backdrop = v;
+                        else if (t.includes('symbol') || t.includes('pattern')) item._symbol = v;
                     });
                 }
 
-                // Fallback for names if model is still generic
+                // Super-duper fallback for name
                 if (item._modelName === 'Gift') {
-                    const titleMatch = item.nft_name.match(/^(.*?)\s*(#\d+)?$/);
-                    if (titleMatch && titleMatch[1]) {
-                        item._modelName = titleMatch[1].trim();
-                    }
+                    const cleanName = item.nft_name.split('#')[0].trim();
+                    if (cleanName) item._modelName = cleanName;
                 }
 
                 item._realImage = item.image || item.image_url || (item._collection ? item._collection.image_url : null);
@@ -600,9 +599,9 @@ async function openProductView(item, finalPrice, imgSrc) {
     };
 
     const rows = [
-        getPropRow('Модель', item._modelName, 'model'),
-        getPropRow('Фон', item._backdrop, 'bg'),
-        getPropRow('Узор', item._symbol, 'symbol')
+        getPropRow('Модель', item._modelName || 'Gift', 'model'),
+        getPropRow('Фон', item._backdrop || 'Common', 'bg'),
+        getPropRow('Узор', item._symbol || 'Common', 'symbol')
     ];
     rows.forEach(r => { if (r) propCont.appendChild(r); });
 
