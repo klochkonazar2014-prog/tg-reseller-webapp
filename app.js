@@ -5,13 +5,14 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://odd-planes-win.loca.lt";
+const BACKEND_URL = "https://funny-jeans-switch.loca.lt";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
 let FILTERED_ITEMS = [];
 let RENDERED_COUNT = 0;
-const BATCH_SIZE = 40; // Increased batch size
+const BATCH_SIZE = 40;
+let ATTR_STATS = { model: {}, bg: {}, symbol: {} }; // Frequency stats for rarity sorting
 
 let ACTIVE_FILTERS = {
     nft: 'all',
@@ -64,8 +65,25 @@ document.addEventListener("DOMContentLoaded", async () => {
             if (e.ctrlKey && (e.key === '=' || e.key === '-' || e.key === '+' || e.key === '0')) e.preventDefault();
         });
 
+        // Tab Navigation
+        document.querySelectorAll('.nav-item').forEach((item, index) => {
+            item.onclick = () => {
+                document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+                item.classList.add('active');
+                switchTab(index);
+            };
+        });
+
     } catch (e) { alert("Init Error: " + e.message); }
 });
+
+function switchTab(index) {
+    const containers = ['market-container', 'orders-container', 'hub-container', 'raffle-container', 'storage-container'];
+    containers.forEach((id, i) => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = (i === index) ? 'block' : 'none';
+    });
+}
 
 async function loadLiveItems() {
     const loader = document.getElementById('top-loader');
@@ -91,11 +109,21 @@ async function loadLiveItems() {
             window.STATIC_COLLECTIONS = Array.from(uniqueCols.values());
 
             initFilterLists();
+            calculateStats(); // Calculate rarity after loading items
             applyHeaderSearch();
         }
     } catch (e) {
         if (loader) loader.innerText = "Ошибка подключения к рынку.";
     }
+}
+
+function calculateStats() {
+    ATTR_STATS = { model: {}, bg: {}, symbol: {} };
+    ALL_MARKET_ITEMS.forEach(item => {
+        if (item._modelName) ATTR_STATS.model[item._modelName] = (ATTR_STATS.model[item._modelName] || 0) + 1;
+        if (item._backdrop) ATTR_STATS.bg[item._backdrop] = (ATTR_STATS.bg[item._backdrop] || 0) + 1;
+        if (item._symbol) ATTR_STATS.symbol[item._symbol] = (ATTR_STATS.symbol[item._symbol] || 0) + 1;
+    });
 }
 
 function initTonConnect() {
@@ -117,6 +145,21 @@ function toggleAccordion(id, btn) {
     if (!isActive) {
         content.classList.add('active');
         btn.classList.add('active');
+    }
+}
+
+function toggleGenericModal(key) {
+    openAdvancedFilters();
+    const accMap = {
+        'nft': 'nft-acc',
+        'model': 'model-acc',
+        'bg': 'bg-acc',
+        'symbol': 'symbol-acc'
+    };
+    const targetId = accMap[key];
+    if (targetId) {
+        const btn = document.querySelector(`.filter-accordion[onclick*="${targetId}"]`);
+        toggleAccordion(targetId, btn);
     }
 }
 
@@ -194,11 +237,18 @@ function applyHeaderSearch() {
     FILTERED_ITEMS.sort((a, b) => {
         const pA = parseFloat(a.price_per_day);
         const pB = parseFloat(b.price_per_day);
+
         switch (ACTIVE_FILTERS.sort) {
             case 'price_asc': return pA - pB;
             case 'price_desc': return pB - pA;
             case 'num_asc': return a._nftNum - b._nftNum;
             case 'num_desc': return b._nftNum - a._nftNum;
+            case 'model_rare':
+                return (ATTR_STATS.model[a._modelName] || 9999) - (ATTR_STATS.model[b._modelName] || 9999);
+            case 'bg_rare':
+                return (ATTR_STATS.bg[a._backdrop] || 9999) - (ATTR_STATS.bg[b._backdrop] || 9999);
+            case 'symbol_rare':
+                return (ATTR_STATS.symbol[a._symbol] || 9999) - (ATTR_STATS.symbol[b._symbol] || 9999);
             default: return 0;
         }
     });

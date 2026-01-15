@@ -160,9 +160,36 @@
 
     <!-- Content -->
     <div class="container">
-        <div id="top-loader" class="loader">Загрузка данных рынка...</div>
-        <div id="items-view" class="grid"></div>
-        <div id="loader-trigger" style="height: 40px;"></div>
+        <!-- Market Tab -->
+        <div id="market-container">
+            <div id="top-loader" class="loader">Загрузка данных рынка...</div>
+            <div id="items-view" class="grid"></div>
+            <div id="loader-trigger" style="height: 40px;"></div>
+        </div>
+
+        <!-- Orders Tab -->
+        <div id="orders-container" style="display: none; padding: 20px; text-align: center; color: #8b9bb4;">
+            <h3>Ваши ордеры</h3>
+            <p style="margin-top: 10px; font-size: 14px;">У вас пока нет активных аренд.</p>
+        </div>
+
+        <!-- Hub Tab -->
+        <div id="hub-container" style="display: none; padding: 20px; text-align: center; color: #8b9bb4;">
+            <h3>Игровой хаб</h3>
+            <p style="margin-top: 10px; font-size: 14px;">Скоро здесь появятся игры!</p>
+        </div>
+
+        <!-- Raffle Tab -->
+        <div id="raffle-container" style="display: none; padding: 20px; text-align: center; color: #8b9bb4;">
+            <h3>Розыгрыши</h3>
+            <p style="margin-top: 10px; font-size: 14px;">Активных розыгрышей нет.</p>
+        </div>
+
+        <!-- Storage Tab -->
+        <div id="storage-container" style="display: none; padding: 20px; text-align: center; color: #8b9bb4;">
+            <h3>Хранилище</h3>
+            <p style="margin-top: 10px; font-size: 14px;">Ваше хранилище пусто.</p>
+        </div>
     </div>
 
     <!-- Bottom Nav -->
@@ -224,7 +251,7 @@
         </div>
     </div>
 
-    <script src="app.js?v=1.1.51"></script>
+    <script src="app.js?v=1.1.52"></script>
 </body>
 
 </html>
