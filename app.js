@@ -11,7 +11,7 @@ let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
 let FILTERED_ITEMS = [];
 let RENDERED_COUNT = 0;
-const BATCH_SIZE = 20;
+const BATCH_SIZE = 40; // Increased batch size
 
 let ACTIVE_FILTERS = {
     nft: 'all',
@@ -41,14 +41,24 @@ document.addEventListener("DOMContentLoaded", async () => {
             applyHeaderSearch();
         }, 500));
 
-        // Block Zoom
-        document.addEventListener('touchstart', (e) => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
+        // Block Zoom BUT allow scrolling
+        document.addEventListener('touchstart', (e) => {
+            if (e.touches.length > 1) e.preventDefault();
+        }, { passive: false });
+
+        // Prevent double tap zoom
         let lastTouchEnd = 0;
         document.addEventListener('touchend', (e) => {
             const now = Date.now();
-            if (now - lastTouchEnd <= 300) e.preventDefault();
+            if (now - lastTouchEnd <= 300) {
+                // Check if target is scrollable or input
+                if (!e.target.closest('.chips-row') && !e.target.closest('input')) {
+                    // e.preventDefault(); // Removed to avoid blocking clicks
+                }
+            }
             lastTouchEnd = now;
         }, false);
+
         window.addEventListener('wheel', (e) => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
         window.addEventListener('keydown', (e) => {
             if (e.ctrlKey && (e.key === '=' || e.key === '-' || e.key === '+' || e.key === '0')) e.preventDefault();
@@ -60,7 +70,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 async function loadLiveItems() {
     const loader = document.getElementById('top-loader');
     try {
-        const response = await fetch(`${BACKEND_URL}/api/items?limit=200`); // Увеличил лимит
+        // Fetching more items to ensure "all" are there
+        const response = await fetch(`${BACKEND_URL}/api/items?limit=1000`);
         const data = await response.json();
 
         if (data.items) {
@@ -70,7 +81,7 @@ async function loadLiveItems() {
                 return item;
             });
 
-            // Коллекции
+            // Collections
             const uniqueCols = new Map();
             ALL_MARKET_ITEMS.forEach(i => {
                 if (i._collection) uniqueCols.set(i._collection.address, i._collection);
@@ -108,7 +119,6 @@ function toggleAccordion(id, btn) {
 }
 
 function initFilterLists() {
-    // Сортировка
     const sortCont = document.getElementById('sort-list-container');
     const sorts = [
         { id: 'price_asc', n: 'Цена (По возрастанию)' },
@@ -122,13 +132,11 @@ function initFilterLists() {
     sortCont.innerHTML = '';
     sorts.forEach(s => addFilterItem(sortCont, s.n, s.id, 'sort', ACTIVE_FILTERS.sort === s.id));
 
-    // NFT (Collections)
     const nftCont = document.getElementById('nft-list-container');
     nftCont.innerHTML = '';
     addFilterItem(nftCont, "Все", "all", 'nft', ACTIVE_FILTERS.nft === 'all');
     (window.STATIC_COLLECTIONS || []).forEach(col => addFilterItem(nftCont, col.name, col.address, 'nft', ACTIVE_FILTERS.nft === col.address, col.image_url));
 
-    // Others
     const maps = [
         { id: 'model-list-container', key: 'model', attr: '_modelName' },
         { id: 'bg-list-container', key: 'bg', attr: '_backdrop' },
@@ -154,11 +162,11 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl) {
         </div>
         ${isSelected ? '<span style="color:#0088cc">●</span>' : ''}
     `;
-    div.onclick = () => {
+    div.onclick = (e) => {
+        e.stopPropagation();
         ACTIVE_FILTERS[key] = value;
         container.querySelectorAll('.filter-list-item').forEach(el => el.classList.remove('selected'));
         div.classList.add('selected');
-        // Re-init other lists if needed or just sync UI
         if (key === 'sort') applyHeaderSearch();
     };
     container.appendChild(div);
@@ -226,12 +234,23 @@ function createItemCard(item) {
     const baseName = match ? match[1] : item.nft_name;
     const numStr = match ? match[2] : "";
 
+    // Determine max days based on name or type
+    // Fallback logic for demo
+    let maxDays = 30;
+    if (item.nft_name.toLowerCase().includes("basket")) maxDays = 180;
+    if (item.nft_name.toLowerCase().includes("frog")) maxDays = 15;
+    if (item.nft_name.toLowerCase().includes("voodoo")) maxDays = 100;
+    if (item.nft_name.toLowerCase().includes("jelly")) maxDays = 34;
+
     let fallbackImg = item._collection.image_url || "https://cdn-icons-png.flaticon.com/512/4213/4213958.png";
     const fragmentUrls = generateFragmentUrls(item.nft_name);
     const lottieId = `lottie-${item.nft_address}`;
     let imgSrc = item._realImage || fragmentUrls.image || fallbackImg;
 
-    let mediaHTML = `<img src="${imgSrc}" class="card-img" id="img-${lottieId}" loading="lazy" onerror="this.src='${fallbackImg}'">`;
+    let mediaHTML = `
+        <div class="card-days-badge">Days: 1 – ${maxDays}</div>
+        <img src="${imgSrc}" class="card-img" id="img-${lottieId}" loading="lazy" onerror="this.src='${fallbackImg}'">
+    `;
     if (fragmentUrls.lottie) mediaHTML += `<div id="${lottieId}" class="card-img lottie-container" style="z-index: 2;"></div>`;
 
     card.innerHTML = `
