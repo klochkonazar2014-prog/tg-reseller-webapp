@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://a4y2w2-ip-193-187-150-124.tunnelmole.net";
+const BACKEND_URL = "https://w78jvr-ip-193-187-150-124.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -456,7 +456,7 @@ function createItemCard(item) {
     `;
     card.onclick = (e) => {
         if (e.target.closest('.card-cart-btn')) { e.stopPropagation(); alert("Добавлено в корзину!"); return; }
-        openPaymentModal(item, myPrice, imgSrc);
+        openProductView(item, myPrice, imgSrc);
     };
     if (fragmentUrls.lottie) { card.dataset.lottieUrl = fragmentUrls.lottie; card.dataset.lottieId = lottieId; card.classList.add('has-lottie'); }
     return card;
@@ -509,48 +509,72 @@ function observeNewCards() {
     }, { rootMargin: "100px" });
     document.querySelectorAll('.card.has-lottie').forEach(c => ob.observe(c));
 }
-async function openPaymentModal(item, finalPrice, imgSrc) {
+async function openProductView(item, finalPrice, imgSrc) {
     CURRENT_PAYMENT_ITEM = item;
-    const modal = document.getElementById('payment-modal');
-    modal.classList.add('active');
+    const view = document.getElementById('product-view');
+    view.classList.add('active');
 
-    // Header
-    document.getElementById('modal-img').src = imgSrc;
-    document.getElementById('modal-title').innerText = item.nft_name;
-    document.getElementById('modal-collection').innerText = item._collection.name;
+    // Header & Media
+    document.getElementById('view-img').src = imgSrc;
+    document.getElementById('view-title').innerText = item.nft_name;
+    document.getElementById('view-collection').innerText = `${item._collection.name} >`;
+    document.getElementById('view-col-name').innerText = `${item._collection.name} >`;
+    document.getElementById('view-desc-title').innerText = item.nft_name;
 
-    // Grid
+    // Ownership (Simulation)
+    document.getElementById('view-owner').innerText = (item.owner_name || "fragment.ton") + " >";
+    const shortAddr = item.nft_address.slice(0, 6) + "..." + item.nft_address.slice(-4);
+    document.getElementById('view-address').innerText = shortAddr;
+
+    // Pricing
     const dailyPrice = parseFloat(item.price_per_day) / 1e9;
-    document.getElementById('modal-daily-price').innerText = `${dailyPrice.toFixed(2)} TON`;
+    document.getElementById('view-daily-price').innerText = `▼ ${dailyPrice.toFixed(2)}`;
 
     const maxDays = Math.floor(item.max_duration / 86400);
-    document.getElementById('modal-duration-range').innerText = `1 — ${maxDays} дн.`;
+    document.getElementById('view-duration-range').innerText = `1 — ${maxDays}`;
 
     // Duration Logic
     const durationInput = document.getElementById('rent-duration-input');
     durationInput.value = 1;
     updateTotalPrice();
 
-    // Attributes
-    const attrCont = document.getElementById('modal-attributes');
-    attrCont.innerHTML = '';
-    const attrs = [
-        { label: 'Model', val: item._modelName },
-        { label: 'Backdrop', val: item._backdrop },
-        { label: 'Symbol', val: item._symbol }
+    // Properties (Attributes) with Rarity & Floor
+    const propCont = document.getElementById('view-properties');
+    propCont.innerHTML = '';
+
+    // We calculate percentages based on ATTR_STATS
+    const getPropRow = (label, val, key) => {
+        if (!val || val === 'Unknown' || val === 'Gift' || val === 'Common') return null;
+        const total = ALL_MARKET_ITEMS.length;
+        const count = ATTR_STATS[key][val] || 1;
+        const percent = ((count / total) * 100).toFixed(1);
+
+        const row = document.createElement('div');
+        row.className = 'property-item';
+        row.innerHTML = `
+            <div class="prop-left">
+                <div class="prop-name">${label}</div>
+                <div class="prop-value">${val}</div>
+            </div>
+            <div class="prop-right">
+                <div class="prop-percent">${percent}%</div>
+                <div class="prop-floor">▼ ${dailyPrice.toFixed(2)}</div>
+            </div>
+        `;
+        return row;
+    };
+
+    const rows = [
+        getPropRow('Модель', item._modelName, 'model'),
+        getPropRow('Фон', item._backdrop, 'bg'),
+        getPropRow('Символ', item._symbol, 'symbol')
     ];
-    attrs.forEach(a => {
-        if (a.val && a.val !== 'Unknown' && a.val !== 'Gift' && a.val !== 'Common') {
-            const tag = document.createElement('div');
-            tag.className = 'attr-tag';
-            tag.innerHTML = `<span>${a.label}:</span> <strong>${a.val}</strong>`;
-            attrCont.appendChild(tag);
-        }
-    });
+    rows.forEach(r => { if (r) propCont.appendChild(r); });
 
     const cbtn = document.getElementById('confirm-pay-btn');
     const tbtn = document.getElementById('ton-connect-btn');
-    const check = () => {
+
+    const checkStatus = () => {
         if (tonConnectUI.connected) {
             cbtn.style.display = 'block';
             tbtn.style.display = 'none';
@@ -559,7 +583,7 @@ async function openPaymentModal(item, finalPrice, imgSrc) {
             tbtn.style.display = 'block';
         }
     };
-    check();
+    checkStatus();
 
     cbtn.onclick = async () => {
         const days = parseInt(durationInput.value);
@@ -579,7 +603,7 @@ async function openPaymentModal(item, finalPrice, imgSrc) {
                     body: JSON.stringify({ nft_address: item.nft_address })
                 });
                 ALL_MARKET_ITEMS = ALL_MARKET_ITEMS.filter(i => i.nft_address !== item.nft_address);
-                closeModal();
+                closeProductView();
                 applyHeaderSearch();
                 tg.showAlert("Аренда оформлена успешно!");
             }
@@ -606,8 +630,12 @@ function updateTotalPrice() {
     const dailyPrice = parseFloat(CURRENT_PAYMENT_ITEM.price_per_day) / 1e9;
     const total = (dailyPrice * parseInt(input.value)).toFixed(2);
     document.getElementById('modal-total-price').innerText = `${total} TON`;
-    document.getElementById('confirm-pay-btn').innerText = `Арендовать за ${total} TON`;
+    document.getElementById('confirm-pay-btn').innerText = `Арендовать за ▼ ${total}`;
 }
-function closeModal() { document.getElementById('payment-modal').classList.remove('active'); }
+
+function closeProductView() {
+    document.getElementById('product-view').classList.remove('active');
+    CURRENT_PAYMENT_ITEM = null;
+}
 const trigger = document.getElementById('loader-trigger');
 if (trigger) { const so = new IntersectionObserver((e) => { if (e[0].isIntersecting) appendItems(); }); so.observe(trigger); }
