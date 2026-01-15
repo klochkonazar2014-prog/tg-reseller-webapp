@@ -470,8 +470,11 @@ body {
 .filter-content {
     flex: 1;
     overflow-y: auto;
-    padding-bottom: 40px;
+    overflow-x: hidden;
+    /* Fix "scroll with shift" on PC */
+    padding-bottom: 60px;
     -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
 }
 
 /* Premium Scrollbar */
@@ -544,8 +547,10 @@ body {
 }
 
 .accordion-content.active {
-    max-height: 1000px;
+    max-height: 2000px;
+    /* Big enough for 100+ items */
     padding-bottom: 10px;
+    overflow-y: visible;
 }
 
 .filter-list-item {
@@ -592,7 +597,9 @@ body {
     color: white;
     font-weight: 600;
     font-size: 15px;
-    white-space: nowrap;
+    white-space: normal;
+    /* Allow wrapping if needed, but we try to fit */
+    word-break: break-word;
 }
 
 .selection-dot {

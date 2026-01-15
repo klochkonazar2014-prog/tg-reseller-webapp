@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://zttgfb-ip-193-187-150-124.tunnelmole.net";
+const BACKEND_URL = "https://4cnh9l-ip-193-187-150-124.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -300,21 +300,21 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, subtext)
     if (key === 'bg' && VISUAL_MAP.bg[name]) {
         visualHTML = `<div class="filter-color-circle" style="background: ${VISUAL_MAP.bg[name]}"></div>`;
     } else if (key === 'symbol' && VISUAL_MAP.symbol[name]) {
-        visualHTML = `<img src="${VISUAL_MAP.symbol[name]}" class="filter-img" style="filter: invert(1); background: rgba(255,255,255,0.1); padding:4px;">`;
+        visualHTML = `<img src="${VISUAL_MAP.symbol[name]}" class="filter-img" style="filter: invert(1); background: rgba(255,255,255,0.1); padding:4px;" onerror="this.style.display='none'">`;
     } else if (imgUrl) {
-        visualHTML = `<img src="${imgUrl}" class="filter-img">`;
+        visualHTML = `<img src="${imgUrl}" class="filter-img" onerror="this.src='https://nft.fragment.com/guide/gift.svg'">`;
     } else {
         visualHTML = `<div style="width:22px;height:22px;border-radius:10px;border:2px solid ${isSelected ? '#0088cc' : '#333'};"></div>`;
     }
 
     div.innerHTML = `
-        <div class="filter-item-left">
+        <div class="filter-item-left" style="overflow: hidden;">
             ${visualHTML}
-            <div style="display:flex; flex-direction:column; margin-left:14px;">
-                <span class="filter-item-name" style="font-size:16px;">${name}${subtext || ''}</span>
+            <div style="display:flex; flex-direction:column; margin-left:14px; overflow: hidden;">
+                <span class="filter-item-name">${name}${subtext || ''}</span>
             </div>
         </div>
-        <div class="checkbox-box" style="width:24px; height:24px; border-radius:8px; border:2px solid ${isSelected ? '#0088cc' : '#333'}; display:flex; align-items:center; justify-content:center;">
+        <div class="checkbox-box" style="flex-shrink:0; width:24px; height:24px; border-radius:8px; border:2px solid ${isSelected ? '#0088cc' : '#333'}; display:flex; align-items:center; justify-content:center; margin-left:10px;">
             ${isSelected ? '<div style="width:12px; height:12px; background:#0088cc; border-radius:3px;"></div>' : ''}
         </div>
     `;
