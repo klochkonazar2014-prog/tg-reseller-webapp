@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://n6wkpx-ip-193-187-150-124.tunnelmole.net";
+const BACKEND_URL = "https://76vrdd-ip-193-187-150-124.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -466,7 +466,7 @@ function createItemCard(item) {
             <div class="card-number">${numStr}</div>
             <div class="card-subtitle">${item._modelName}</div> 
             <div class="card-bottom-row">
-                <button class="card-price-btn"><span>${myPrice > 0 ? myPrice : "0.01"} TON</span></button>
+                <button class="card-price-btn"><span>${TON_SVG} ${myPrice > 0 ? myPrice : "0.01"}</span></button>
                 <button class="card-cart-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><path d="M12 12a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"></path><path d="M12 14v4"></path><path d="M10 16h4"></path></svg></button>
             </div>
             <div class="card-duration">Аренда на 1 – ${maxDays} дн.</div>
@@ -562,7 +562,7 @@ async function openProductView(item, finalPrice, imgSrc) {
 
     // We calculate percentages based on ATTR_STATS
     const getPropRow = (label, val, key) => {
-        if (!val || val === 'Unknown' || val === 'Gift' || val === 'Common') return null;
+        if (!val || val === 'Unknown') return null;
         const total = ALL_MARKET_ITEMS.length || 1;
         const count = ATTR_STATS[key][val] || 1;
         const percent = ((count / total) * 100).toFixed(1);
