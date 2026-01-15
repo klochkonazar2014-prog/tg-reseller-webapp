@@ -5,13 +5,14 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://ujqnbd-ip-193-187-150-124.tunnelmole.net";
+const BACKEND_URL = "https://n6wkpx-ip-193-187-150-124.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
 let FILTERED_ITEMS = [];
 let RENDERED_COUNT = 0;
 const BATCH_SIZE = 40;
+const TON_SVG = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="margin-bottom:-2px;"><path d="M12 24C18.6274 24 24 18.6274 24 12C24 5.37258 18.6274 0 12 0C5.37258 0 0 5.37258 0 12C0 18.6274 5.37258 24 12 24Z" fill="#0088CC"/><path d="M11.9999 18.5144L6.96582 13.4802L8.2241 12.2219L11.9999 15.9977L15.7758 12.2219L17.034 13.4802L11.9999 18.5144ZM11.9999 14.5029L5.45117 7.9541L6.70945 6.69584L11.9999 11.9863L17.2904 6.69584L18.5486 7.9541L11.9999 14.5029Z" fill="white"/></svg>`;
 let ATTR_STATS = { model: {}, bg: {}, symbol: {} };
 let CURRENT_PAYMENT_ITEM = null; // Store item during modal interaction
 
@@ -118,7 +119,24 @@ async function loadLiveItems() {
             ALL_MARKET_ITEMS = data.items.map(item => {
                 const match = item.nft_name.match(/#(\d+)/);
                 item._nftNum = match ? parseInt(match[1]) : 0;
-                // Aggressively find the best image
+
+                // Parse attributes
+                item._modelName = 'Gift';
+                item._backdrop = 'Common';
+                item._symbol = 'Common';
+
+                if (item.attributes && Array.isArray(item.attributes)) {
+                    item.attributes.forEach(attr => {
+                        const t = attr.trait_type.toLowerCase();
+                        if (t === 'model') item._modelName = attr.value;
+                        if (t === 'backdrop') item._backdrop = attr.value;
+                        if (t === 'symbol') item._symbol = attr.value;
+                    });
+                }
+
+                // Fallback for names like "Snoop Dogg" where model might be different
+                if (item.nft_name.includes("Snoop Dogg") && item._modelName === 'Gift') item._modelName = "Snoop Dogg";
+
                 item._realImage = item.image || item.image_url || (item._collection ? item._collection.image_url : null);
                 return item;
             });
@@ -521,14 +539,14 @@ async function openProductView(item, finalPrice, imgSrc) {
     document.getElementById('view-col-name').innerText = `${item._collection.name} >`;
     document.getElementById('view-desc-title').innerText = item.nft_name;
 
-    // Ownership (Simulation)
+    // Ownership
     document.getElementById('view-owner').innerText = (item.owner_name || "fragment.ton") + " >";
     const shortAddr = item.nft_address.slice(0, 6) + "..." + item.nft_address.slice(-4);
-    document.getElementById('view-address').innerText = shortAddr;
+    document.getElementById('view-address').innerHTML = `${shortAddr} <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom:-2px; cursor:pointer;" onclick="copyToClipboard('${item.nft_address}')"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
 
     // Pricing
     const dailyPrice = parseFloat(item.price_per_day) / 1e9;
-    document.getElementById('view-daily-price').innerText = `▼ ${dailyPrice.toFixed(2)}`;
+    document.getElementById('view-daily-price').innerHTML = `${TON_SVG} ${dailyPrice.toFixed(2)}`;
 
     const maxDays = Math.floor(item.max_duration / 86400);
     document.getElementById('view-duration-range').innerText = `1 — ${maxDays}`;
@@ -545,7 +563,7 @@ async function openProductView(item, finalPrice, imgSrc) {
     // We calculate percentages based on ATTR_STATS
     const getPropRow = (label, val, key) => {
         if (!val || val === 'Unknown' || val === 'Gift' || val === 'Common') return null;
-        const total = ALL_MARKET_ITEMS.length;
+        const total = ALL_MARKET_ITEMS.length || 1;
         const count = ATTR_STATS[key][val] || 1;
         const percent = ((count / total) * 100).toFixed(1);
 
@@ -554,11 +572,11 @@ async function openProductView(item, finalPrice, imgSrc) {
         row.innerHTML = `
             <div class="prop-left">
                 <div class="prop-name">${label}</div>
-                <div class="prop-value">${val}</div>
             </div>
             <div class="prop-right">
-                <div class="prop-percent">${percent}%</div>
-                <div class="prop-floor">▼ ${dailyPrice.toFixed(2)}</div>
+                <span class="prop-value-text">${val}</span>
+                <span class="prop-percent-text">${percent}%</span>
+                <span class="prop-floor-text">${TON_SVG} ${dailyPrice.toFixed(2)}</span>
             </div>
         `;
         return row;

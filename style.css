@@ -921,7 +921,6 @@ body {
 .prop-left {
     display: flex;
     flex-direction: column;
-    gap: 4px;
 }
 
 .prop-name {
@@ -930,28 +929,31 @@ body {
     font-weight: 600;
 }
 
-.prop-value {
+.prop-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.prop-value-text {
     font-size: 15px;
     color: var(--accent-blue);
     font-weight: 700;
 }
 
-.prop-right {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.prop-percent {
+.prop-percent-text {
     font-size: 13px;
     color: #8b9bb4;
     font-weight: 600;
 }
 
-.prop-floor {
+.prop-floor-text {
     font-size: 14px;
     color: #fff;
     font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .product-desc-card {
