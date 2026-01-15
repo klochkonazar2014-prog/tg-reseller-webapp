@@ -959,35 +959,45 @@ body {
 
 .prop-name {
     font-size: 13px;
-    color: #fff;
-    font-weight: 700;
+    color: #8794a1;
+    /* More muted gray like original */
+    font-weight: 600;
 }
 
 .prop-right {
     display: flex;
     align-items: center;
     gap: 10px;
+    text-align: right;
 }
 
 .prop-value-text {
-    font-size: 15px;
+    font-size: 14px;
     color: var(--accent-blue);
-    font-weight: 700;
+    font-weight: 600;
 }
 
 .prop-percent-text {
-    font-size: 13px;
-    color: #8b9bb4;
-    font-weight: 600;
+    font-size: 12px;
+    color: #8794a1;
 }
 
 .prop-floor-text {
     font-size: 13px;
     color: #fff;
-    font-weight: 600;
+    font-weight: 700;
     display: flex;
     align-items: center;
     gap: 4px;
+}
+
+/* Stepper refinement */
+.rent-period-stepper button {
+    cursor: pointer;
+}
+
+.rent-period-stepper button:active {
+    opacity: 0.5;
 }
 
 .product-desc-card {

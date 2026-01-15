@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://caame1-ip-176-119-99-6.tunnelmole.net";
+const BACKEND_URL = "https://fvabdk-ip-176-119-99-6.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -565,10 +565,15 @@ async function openProductView(item, finalPrice, imgSrc) {
     const dailyPrice = (parseFloat(item.price_per_day) / 1e9).toFixed(2);
     document.getElementById('view-daily-price').innerHTML = renderTonAmount(dailyPrice);
 
+    // Approximate USD (1 TON = 7 USD)
+    const usdPrice = (parseFloat(dailyPrice) * 7.0).toFixed(2);
+    document.getElementById('view-daily-price-usd').innerText = `~$${usdPrice}`;
+
     const maxDays = Math.floor((item.max_duration || 2592000) / 86400);
     document.getElementById('view-duration-range').innerText = `1 — ${maxDays}`;
-    document.getElementById('view-discount').innerText = "0.1%"; // Static for now
+    document.getElementById('view-discount').innerText = "0.1%";
 
+    document.getElementById('rent-duration-input').value = 1;
     updateTotalPrice();
 
     // Attributes (Properties)
@@ -596,7 +601,6 @@ async function openProductView(item, finalPrice, imgSrc) {
         return row;
     };
 
-    // Add Rarity Row at start
     // Add Rarity Row at start
     const rarityRow = document.createElement('div');
     rarityRow.className = 'property-item';
@@ -670,11 +674,14 @@ function adjustDuration(delta) {
 
 function updateTotalPrice() {
     if (!CURRENT_PAYMENT_ITEM) return;
-    const dur = 1; // Simplification for exact visual match
+    const input = document.getElementById('rent-duration-input');
+    const dur = parseInt(input.value) || 1;
     const dp = (parseFloat(CURRENT_PAYMENT_ITEM.price_per_day) / 1e9);
     const total = (dp * dur).toFixed(2);
     const btn = document.getElementById('confirm-pay-btn');
-    if (btn) btn.innerHTML = `Rent for ${renderTonAmount(total)}`;
+    if (btn) {
+        btn.innerHTML = `Rent for ${renderTonAmount(total)}`;
+    }
 }
 
 function closeProductView() {
