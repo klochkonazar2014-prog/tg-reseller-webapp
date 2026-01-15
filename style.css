@@ -23,10 +23,34 @@ body {
     -webkit-font-smoothing: antialiased;
     padding-bottom: 80px;
     touch-action: pan-x pan-y;
-    /* Prevent pinch-zoom, allow normal pan */
     overflow-x: hidden;
     user-select: none;
-    /* Prevent text selection for a more app-like feel */
+}
+
+/* --- TON ICON & AMOUNT (Fragment Style) --- */
+.tm-amount {
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+}
+
+.icon-ton::before {
+    content: "";
+    display: inline-block;
+    width: 13px;
+    height: 16px;
+    margin-right: 4px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='16' viewBox='0 0 15 19' fill='none'%3E%3Cpath d='m1.74 4.5h11.51c.24 0 .44.2.44.44 0 .08-.02.15-.05.22l-5.46 9.9c-.24.43-.78.59-1.21.35-.15-.08-.27-.21-.36-.36l-5.26-9.9c-.12-.21-.04-.48.18-.6.07-.03.14-.05.21-.05zm5.76 10.67v-10.67z' stroke='%234db2ff' stroke-width='1.5'/%3E%3C/svg%3E");
+    background-size: contain;
+    background-repeat: no-repeat;
+    vertical-align: middle;
+}
+
+.icon-before::before {
+    margin-left: 0;
 }
 
 /* --- HEADER --- */

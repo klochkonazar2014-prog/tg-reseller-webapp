@@ -5,14 +5,14 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://dpv5vt-ip-176-119-99-6.tunnelmole.net";
+const BACKEND_URL = "https://qpeehi-ip-176-119-99-6.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
 let FILTERED_ITEMS = [];
 let RENDERED_COUNT = 0;
 const BATCH_SIZE = 40;
-const TON_SVG = `<svg width="18" height="18" viewBox="0 0 562 562" fill="none" style="margin-bottom:-3px;"><path d="M280.407 126.046L430.177 275.815L280.407 425.585L130.637 275.815L280.407 126.046Z" fill="#0088CC"/><path d="M280.407 126.046L30.177 376.277L280.407 462.502L530.637 376.277L280.407 126.046Z" fill="#0088CC"/></svg>`;
+const renderTonAmount = (val) => `<span class="icon-before icon-ton tm-amount">${val}</span>`;
 let ATTR_STATS = { model: {}, bg: {}, symbol: {} };
 let CURRENT_PAYMENT_ITEM = null; // Store item during modal interaction
 
@@ -470,7 +470,7 @@ function createItemCard(item) {
             <div class="card-number">${numStr}</div>
             <div class="card-subtitle">${item._modelName}</div> 
             <div class="card-bottom-row">
-                <button class="card-price-btn"><span>${TON_SVG} ${myPrice > 0 ? myPrice : "0.01"}</span></button>
+                <button class="card-price-btn">${renderTonAmount(myPrice > 0 ? myPrice : "0.01")}</button>
                 <button class="card-cart-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><path d="M12 12a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"></path><path d="M12 14v4"></path><path d="M10 16h4"></path></svg></button>
             </div>
             <div class="card-duration">Аренда на 1 – ${maxDays} дн.</div>
@@ -562,8 +562,8 @@ async function openProductView(item, finalPrice, imgSrc) {
     document.getElementById('view-address').innerHTML = `${shortAddr} <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom:-2px; cursor:pointer;" onclick="copyToClipboard('${item.nft_address}')"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
 
     // Pricing
-    const dailyPrice = parseFloat(item.price_per_day) / 1e9;
-    document.getElementById('view-daily-price').innerHTML = `${TON_SVG} ${dailyPrice.toFixed(2)}`;
+    const dailyPrice = (parseFloat(item.price_per_day) / 1e9).toFixed(2);
+    document.getElementById('view-daily-price').innerHTML = renderTonAmount(dailyPrice);
 
     const maxDays = Math.floor(item.max_duration / 86400);
     document.getElementById('view-duration-range').innerText = `1 — ${maxDays}`;
@@ -581,7 +581,7 @@ async function openProductView(item, finalPrice, imgSrc) {
         if (!val || val === 'Unknown') return null;
         const total = ALL_MARKET_ITEMS.length || 1;
         const count = ATTR_STATS[key][val] || 1;
-        const percent = ((count / total) * 100).toFixed(1);
+        const percent = ((count / total) * 100).toFixed(2);
 
         const row = document.createElement('div');
         row.className = 'property-item';
@@ -590,13 +590,24 @@ async function openProductView(item, finalPrice, imgSrc) {
                 <div class="prop-name">${label}</div>
             </div>
             <div class="prop-right">
-                <span class="prop-value-text">${val}</span>
-                <span class="prop-percent-text">${percent}%</span>
-                <span class="prop-floor-text">${TON_SVG} ${dailyPrice.toFixed(2)}</span>
+                <span class="prop-value-text" style="color:var(--accent-blue); font-weight:600;">${val}</span>
+                <span class="prop-percent-text" style="font-size:12px; color:rgba(77,178,255,0.7); margin: 0 8px;">${percent}%</span>
+                <span class="prop-floor-text">${renderTonAmount(dailyPrice)}</span>
             </div>
         `;
         return row;
     };
+
+    // Add Rarity Row at start
+    const rarityRow = document.createElement('div');
+    rarityRow.className = 'property-item';
+    rarityRow.innerHTML = `
+        <div class="prop-left"><div class="prop-name">Редкость</div></div>
+        <div class="prop-right">
+            <span class="prop-value-text">${item._nftNum || "1"}/76562</span>
+        </div>
+    `;
+    propCont.appendChild(rarityRow);
 
     const rows = [
         getPropRow('Модель', item._modelName || 'Gift', 'model'),
