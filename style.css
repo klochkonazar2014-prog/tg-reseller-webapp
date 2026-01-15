@@ -469,10 +469,11 @@ body {
 
 .filter-content {
     flex: 1;
-    overflow-y: hidden;
-    /* Content itself doesn't scroll, only accordions do */
-    /* Fix "scroll with shift" on PC */
-    padding-bottom: 20px;
+    overflow-y: auto;
+    /* Restored main scroll */
+    overflow-x: hidden;
+    padding-bottom: 60px;
+    -webkit-overflow-scrolling: touch;
 }
 
 /* Premium Scrollbar */
@@ -545,11 +546,10 @@ body {
 }
 
 .accordion-content.active {
-    max-height: 320px;
-    /* Fixed height for 5-6 items */
+    max-height: 450px;
+    /* Slightly taller for better view */
     padding-bottom: 10px;
     overflow-y: auto;
-    /* Internal scrolling! */
     -webkit-overflow-scrolling: touch;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
