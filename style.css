@@ -445,7 +445,7 @@ body {
     flex-direction: column;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     overflow: hidden;
-    /* Ensure nothing leaks out */
+    /* Main panel NEVER scrolls */
 }
 
 .filter-panel.active {
@@ -469,12 +469,10 @@ body {
 
 .filter-content {
     flex: 1;
-    overflow-y: auto;
-    overflow-x: hidden;
+    overflow-y: hidden;
+    /* Content itself doesn't scroll, only accordions do */
     /* Fix "scroll with shift" on PC */
-    padding-bottom: 60px;
-    -webkit-overflow-scrolling: touch;
-    touch-action: pan-y;
+    padding-bottom: 20px;
 }
 
 /* Premium Scrollbar */
@@ -547,10 +545,23 @@ body {
 }
 
 .accordion-content.active {
-    max-height: 2000px;
-    /* Big enough for 100+ items */
+    max-height: 320px;
+    /* Fixed height for 5-6 items */
     padding-bottom: 10px;
-    overflow-y: visible;
+    overflow-y: auto;
+    /* Internal scrolling! */
+    -webkit-overflow-scrolling: touch;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Internal scrollbar for accordion */
+.accordion-content::-webkit-scrollbar {
+    width: 3px;
+}
+
+.accordion-content::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
 }
 
 .filter-list-item {

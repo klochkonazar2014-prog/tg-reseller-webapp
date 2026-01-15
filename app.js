@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://ccfba3-ip-193-187-150-124.tunnelmole.net";
+const BACKEND_URL = "https://vgqr4z-ip-193-187-150-124.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -117,13 +117,23 @@ async function loadLiveItems() {
             ALL_MARKET_ITEMS = data.items.map(item => {
                 const match = item.nft_name.match(/#(\d+)/);
                 item._nftNum = match ? parseInt(match[1]) : 0;
+                // Aggressively find the best image
+                item._realImage = item.image || item.image_url || (item._collection ? item._collection.image_url : null);
                 return item;
             });
 
-            // Collections
+            // Collections with images
             const uniqueCols = new Map();
             ALL_MARKET_ITEMS.forEach(i => {
-                if (i._collection) uniqueCols.set(i._collection.address, i._collection);
+                if (i._collection) {
+                    const addr = i._collection.address;
+                    if (!uniqueCols.has(addr)) {
+                        uniqueCols.set(addr, {
+                            ...i._collection,
+                            image_url: i._collection.image_url || i._realImage
+                        });
+                    }
+                }
             });
             window.STATIC_COLLECTIONS = Array.from(uniqueCols.values());
 
