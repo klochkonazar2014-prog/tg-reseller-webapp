@@ -242,9 +242,11 @@ function createItemCard(item) {
     else if (lowerName.includes("frog")) maxDays = 15;
     else if (lowerName.includes("voodoo")) maxDays = 100;
     else if (lowerName.includes("jelly")) maxDays = 34;
-    else if (lowerName.includes("trapped heart")) maxDays = 34; // Added Trapped Heart support
+    else if (lowerName.includes("heart")) maxDays = 34; // Matches "Trapped Heart"
     else if (lowerName.includes("duck")) maxDays = 14;
     else if (lowerName.includes("magic ball")) maxDays = 29;
+    else if (lowerName.includes("pumpkin")) maxDays = 39;
+    else if (lowerName.includes("ghost")) maxDays = 29;
 
     let fallbackImg = item._collection.image_url || "https://cdn-icons-png.flaticon.com/512/4213/4213958.png";
     const fragmentUrls = generateFragmentUrls(item.nft_name);
