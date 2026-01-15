@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://4cnh9l-ip-193-187-150-124.tunnelmole.net";
+const BACKEND_URL = "https://ccfba3-ip-193-187-150-124.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -280,19 +280,16 @@ function initFilterLists() {
         addFilterItem(cont, "Выбрать все", "all", m.key, ACTIVE_FILTERS[m.key] === 'all');
 
         Array.from(stats.entries()).sort((a, b) => a[0].localeCompare(b[0])).forEach(([name, data]) => {
-            const rarity = ((data.count / relevantItems.length) * 100).toFixed(1);
             let icon = null;
-            if (m.key === 'nft' || m.key === 'model') icon = data.img;
+            if (m.key === 'nft') icon = data.img;
             if (m.key === 'bg' || m.key === 'symbol') icon = VISUAL_MAP[m.key][name] || null;
 
-            // Extra display string for rarity and price
-            const subtext = m.key !== 'nft' ? ` (${rarity}%) <span style="color:#0088cc; margin-left:8px;">▽ ${data.minPrice}</span>` : "";
-            addFilterItem(cont, name, name, m.key, ACTIVE_FILTERS[m.key] === name, icon, subtext);
+            addFilterItem(cont, name, name, m.key, ACTIVE_FILTERS[m.key] === name, icon);
         });
     });
 }
 
-function addFilterItem(container, name, value, key, isSelected, imgUrl, subtext) {
+function addFilterItem(container, name, value, key, isSelected, imgUrl) {
     const div = document.createElement('div');
     div.className = `filter-list-item ${isSelected ? 'selected' : ''}`;
 
@@ -300,22 +297,22 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, subtext)
     if (key === 'bg' && VISUAL_MAP.bg[name]) {
         visualHTML = `<div class="filter-color-circle" style="background: ${VISUAL_MAP.bg[name]}"></div>`;
     } else if (key === 'symbol' && VISUAL_MAP.symbol[name]) {
-        visualHTML = `<img src="${VISUAL_MAP.symbol[name]}" class="filter-img" style="filter: invert(1); background: rgba(255,255,255,0.1); padding:4px;" onerror="this.style.display='none'">`;
+        visualHTML = `<img src="${VISUAL_MAP.symbol[name]}" class="filter-img" style="filter: invert(1); background: rgba(255,255,255,0.08); padding:4px;" onerror="this.style.display='none'">`;
     } else if (imgUrl) {
         visualHTML = `<img src="${imgUrl}" class="filter-img" onerror="this.src='https://nft.fragment.com/guide/gift.svg'">`;
     } else {
-        visualHTML = `<div style="width:22px;height:22px;border-radius:10px;border:2px solid ${isSelected ? '#0088cc' : '#333'};"></div>`;
+        visualHTML = `<div style="width:20px;height:20px;border-radius:50%;border:2px solid ${isSelected ? '#0088cc' : '#333'};"></div>`;
     }
 
     div.innerHTML = `
         <div class="filter-item-left" style="overflow: hidden;">
             ${visualHTML}
             <div style="display:flex; flex-direction:column; margin-left:14px; overflow: hidden;">
-                <span class="filter-item-name">${name}${subtext || ''}</span>
+                <span class="filter-item-name">${name}</span>
             </div>
         </div>
-        <div class="checkbox-box" style="flex-shrink:0; width:24px; height:24px; border-radius:8px; border:2px solid ${isSelected ? '#0088cc' : '#333'}; display:flex; align-items:center; justify-content:center; margin-left:10px;">
-            ${isSelected ? '<div style="width:12px; height:12px; background:#0088cc; border-radius:3px;"></div>' : ''}
+        <div class="checkbox-box" style="flex-shrink:0; width:22px; height:22px; border-radius:6px; border:2px solid ${isSelected ? '#0088cc' : '#333'}; display:flex; align-items:center; justify-content:center; margin-left:10px;">
+            ${isSelected ? '<div style="width:10px; height:10px; background:#0088cc; border-radius:2px;"></div>' : ''}
         </div>
     `;
     div.onclick = (e) => {
