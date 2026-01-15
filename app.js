@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://upset-comics-start.loca.lt";
+const BACKEND_URL = "https://odd-planes-win.loca.lt";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -71,7 +71,9 @@ async function loadLiveItems() {
     const loader = document.getElementById('top-loader');
     try {
         // Fetching more items to ensure "all" are there
-        const response = await fetch(`${BACKEND_URL}/api/items?limit=1000`);
+        const response = await fetch(`${BACKEND_URL}/api/items?limit=1000`, {
+            headers: { 'bypass-tunnel-reminder': 'true' }
+        });
         const data = await response.json();
 
         if (data.items) {
