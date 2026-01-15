@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://funny-jeans-switch.loca.lt";
+const BACKEND_URL = "https://free-forks-notice.loca.lt";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -13,6 +13,20 @@ let FILTERED_ITEMS = [];
 let RENDERED_COUNT = 0;
 const BATCH_SIZE = 40;
 let ATTR_STATS = { model: {}, bg: {}, symbol: {} }; // Frequency stats for rarity sorting
+
+// NEW: Visual mapping for premium look
+const VISUAL_MAP = {
+    bg: {
+        'Amber': '#FFBF00', 'Red': '#FF3B30', 'Blue': '#007AFF', 'Green': '#34C759',
+        'Gold': '#FFD700', 'Black': '#000000', 'White': '#FFFFFF', 'Purple': '#AF52DE',
+        'Pink': '#FF2D55', 'Indigo': '#5856D6', 'Orange': '#FF9500', 'Cyan': '#32ADE6'
+    },
+    symbol: {
+        'Candle': 'https://nft.fragment.com/guide/candle.svg',
+        'Heart': 'https://nft.fragment.com/guide/heart.svg',
+        'Star': 'https://nft.fragment.com/guide/star.svg'
+    }
+};
 
 let ACTIVE_FILTERS = {
     nft: 'all',
@@ -109,12 +123,46 @@ async function loadLiveItems() {
             window.STATIC_COLLECTIONS = Array.from(uniqueCols.values());
 
             initFilterLists();
-            calculateStats(); // Calculate rarity after loading items
+            initVisualChips(); // NEW: Visual scroll for collections
+            calculateStats();
             applyHeaderSearch();
         }
     } catch (e) {
         if (loader) loader.innerText = "Ошибка подключения к рынку.";
     }
+}
+
+function initVisualChips() {
+    const chipsCont = document.getElementById('chips-row');
+    if (!chipsCont) return;
+
+    // Save the filter button
+    const filterBtn = chipsCont.querySelector('.chip-btn.icon-only');
+    chipsCont.innerHTML = '';
+    if (filterBtn) chipsCont.appendChild(filterBtn);
+
+    // Add "All" chip
+    const allBtn = document.createElement('button');
+    allBtn.className = `chip-btn ${ACTIVE_FILTERS.nft === 'all' ? 'active' : ''}`;
+    allBtn.innerHTML = 'Все';
+    allBtn.onclick = () => { selectNftChip('all', allBtn); };
+    chipsCont.appendChild(allBtn);
+
+    // Add visual chips for each collection
+    (window.STATIC_COLLECTIONS || []).forEach(col => {
+        const btn = document.createElement('button');
+        btn.className = `chip-btn ${ACTIVE_FILTERS.nft === col.address ? 'active' : ''}`;
+        btn.innerHTML = `${col.image_url ? `<img src="${col.image_url}" class="chip-img">` : ''} ${col.name}`;
+        btn.onclick = () => { selectNftChip(col.address, btn); };
+        chipsCont.appendChild(btn);
+    });
+}
+
+function selectNftChip(addr, btn) {
+    ACTIVE_FILTERS.nft = addr;
+    document.querySelectorAll('.chip-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    applyHeaderSearch();
 }
 
 function calculateStats() {
@@ -200,19 +248,29 @@ function initFilterLists() {
 function addFilterItem(container, name, value, key, isSelected, imgUrl) {
     const div = document.createElement('div');
     div.className = `filter-list-item ${isSelected ? 'selected' : ''}`;
+
+    let visualHTML = '';
+    if (key === 'bg' && VISUAL_MAP.bg[name]) {
+        visualHTML = `<div class="filter-color-circle" style="background: ${VISUAL_MAP.bg[name]}"></div>`;
+    } else if (imgUrl) {
+        visualHTML = `<img src="${imgUrl}" class="filter-img">`;
+    } else {
+        visualHTML = `<div style="width:24px;height:24px;border-radius:50%;border:2px solid ${isSelected ? '#0088cc' : '#555'}"></div>`;
+    }
+
     div.innerHTML = `
         <div class="filter-item-left">
-            ${imgUrl ? `<img src="${imgUrl}" class="filter-img">` : `<div style="width:20px;height:20px;border-radius:50%;border:2px solid ${isSelected ? '#0088cc' : '#555'}"></div>`}
-            <span style="color:white; font-weight:600; margin-left:10px; font-size:14px;">${name}</span>
+            ${visualHTML}
+            <span style="color:white; font-weight:600; margin-left:12px; font-size:15px;">${name}</span>
         </div>
-        ${isSelected ? '<span style="color:#0088cc">●</span>' : ''}
+        ${isSelected ? '<div class="selection-dot"></div>' : ''}
     `;
     div.onclick = (e) => {
         e.stopPropagation();
         ACTIVE_FILTERS[key] = value;
-        container.querySelectorAll('.filter-list-item').forEach(el => el.classList.remove('selected'));
-        div.classList.add('selected');
-        if (key === 'sort') applyHeaderSearch();
+        // Visual refresh
+        initFilterLists();
+        if (key === 'sort' || key === 'nft' || key === 'model' || key === 'bg' || key === 'symbol') applyHeaderSearch();
     };
     container.appendChild(div);
 }
@@ -286,8 +344,8 @@ function createItemCard(item) {
     const baseName = match ? match[1] : item.nft_name;
     const numStr = match ? match[2] : "";
 
-    // Determine max days based on name or type
-    let maxDays = 30; // Default
+    // Determine max days based on API or name fallback
+    let maxDays = Math.floor((item.max_duration || 2592000) / 86400);
     const lowerName = item.nft_name.toLowerCase();
 
     if (lowerName.includes("basket")) maxDays = 180;
@@ -321,10 +379,10 @@ function createItemCard(item) {
             <div class="card-number">${numStr}</div>
             <div class="card-subtitle">${item._modelName}</div> 
             <div class="card-bottom-row">
-                <button class="card-price-btn"><span>${myPrice} TON</span></button>
+                <button class="card-price-btn"><span>${myPrice > 0 ? myPrice : "0.01"} TON</span></button>
                 <button class="card-cart-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><path d="M12 12a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"></path><path d="M12 14v4"></path><path d="M10 16h4"></path></svg></button>
             </div>
-            <div class="card-duration">Аренда на 1 день</div>
+            <div class="card-duration">Аренда на 1 – ${maxDays} дн.</div>
         </div>
     `;
     card.onclick = (e) => {

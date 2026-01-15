@@ -108,33 +108,45 @@ body {
 }
 
 .chip-btn {
-    background: #2c2c2e;
-    border: none;
+    background: #1c1c1e;
+    border: 1px solid rgba(255, 255, 255, 0.05);
     color: #fff;
-    padding: 8px 14px;
-    border-radius: 18px;
-    font-size: 13px;
+    padding: 8px 16px;
+    border-radius: 14px;
+    font-size: 14px;
     font-weight: 600;
     white-space: nowrap;
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 6px;
-    transition: background 0.2s;
+    gap: 10px;
+    transition: all 0.2s;
+}
+
+.chip-img {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    object-fit: cover;
+    background: #333;
+}
+
+.chip-btn.active {
+    background: var(--accent-blue);
+    border-color: var(--accent-blue);
 }
 
 .chip-btn.icon-only {
-    padding: 8px;
-    border-radius: 50%;
-    width: 36px;
-    height: 36px;
+    padding: 10px;
+    border-radius: 12px;
+    width: 44px;
+    height: 44px;
     justify-content: center;
     flex-shrink: 0;
 }
 
-.chip-btn:active,
-.chip-btn:hover {
-    background: #3a3a3c;
+.chip-btn:active {
+    transform: scale(0.95);
 }
 
 /* --- GRID & CARDS --- */
@@ -336,12 +348,13 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.84);
-    backdrop-filter: blur(4px);
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     z-index: 1000;
     display: none;
     opacity: 0;
-    transition: opacity 0.3s;
+    transition: opacity 0.4s ease;
 }
 
 .modal-overlay.active {
@@ -354,171 +367,71 @@ body {
     bottom: 0;
     left: 0;
     right: 0;
-    background: #000;
-    border-radius: 20px 20px 0 0;
+    background: #0f0f12;
+    border-radius: 28px 28px 0 0;
     z-index: 1001;
     padding: 0;
-    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    /* Premium sliding animation */
+    transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1);
     transform: translateY(110%);
-    max-height: 95vh;
+    max-height: 90vh;
     display: flex;
     flex-direction: column;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .filter-panel.active {
     transform: translateY(0);
 }
 
-.mrkt-modal-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 20px 20px 12px 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+.filter-color-circle {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
 }
 
-.mrkt-modal-header h3 {
-    font-size: 19px;
-    font-weight: 700;
-}
-
-.filter-section-title {
-    padding: 20px 20px 10px 20px;
-    font-size: 16px;
-    font-weight: 700;
-    color: #fff;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.filter-input-row {
-    padding: 0 20px 20px 20px;
-    display: flex;
-    gap: 12px;
-    align-items: center;
-}
-
-.filter-input-wrapper {
-    flex: 1;
-    background: #1c1c1e;
-    border-radius: 12px;
-    padding: 8px 12px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.filter-input-wrapper input {
-    background: transparent;
-    border: none;
-    color: #fff;
-    font-size: 15px;
-    width: 100%;
-    outline: none;
-}
-
-.filter-input-wrapper span {
-    color: #8b9bb4;
-}
-
-.filter-accordion {
-    padding: 16px 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    cursor: pointer;
-}
-
-.accordion-content {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.3s ease-out, padding 0.3s;
-    background: #000;
-}
-
-.accordion-content.active {
-    max-height: 500px;
-    /* Adjust as needed */
-}
-
-.filter-accordion.active .filter-accordion-arrow {
-    transform: rotate(180deg);
-}
-
-.filter-accordion-arrow {
-    color: #8b9bb4;
-    font-size: 14px;
-    transition: transform 0.3s;
-}
-
-.mrkt-search {
-    background: #2c2c2e;
-    border: none;
-    border-radius: 12px;
-    padding: 12px 16px;
-    width: 100%;
-    color: #fff;
-    font-size: 16px;
-    margin-bottom: 16px;
-    outline: none;
-}
-
-.filter-content {
-    flex: 1;
-    overflow-y: auto;
-    margin-bottom: 20px;
-    -webkit-overflow-scrolling: touch;
+.filter-item-left .filter-img {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
 }
 
 .filter-list-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 14px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    cursor: pointer;
+    padding: 16px 20px;
+    margin: 4px 12px;
+    border-radius: 16px;
+    transition: all 0.2s;
+    border-bottom: none !important;
 }
 
-.filter-item-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+.filter-list-item:active {
+    background: rgba(255, 255, 255, 0.05);
+    transform: scale(0.97);
 }
 
-.filter-img {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    background: #333;
-    object-fit: cover;
+.filter-list-item.selected {
+    background: rgba(0, 136, 204, 0.1);
 }
 
-.checkbox-circle {
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    border: 2px solid #555;
-    transition: 0.2s;
-    position: relative;
-    box-sizing: border-box;
-}
-
-.filter-list-item.selected .checkbox-circle {
+.selection-dot {
+    width: 8px;
+    height: 8px;
     background: var(--accent-blue);
-    border-color: var(--accent-blue);
+    border-radius: 50%;
+    box-shadow: 0 0 12px var(--accent-blue);
 }
 
-.filter-list-item.selected .checkbox-circle::after {
-    content: '✓';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: #fff;
-    font-weight: 800;
-    font-size: 12px;
+/* More card styles for "Life" */
+.card {
+    background: #151518;
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    will-change: transform;
+}
+
+.card:active {
+    transform: scale(0.95) translateY(2px);
 }
 
 .mrkt-footer {
