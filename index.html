@@ -9,7 +9,7 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <script src="lottie.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=1.1.75">
+    <link rel="stylesheet" href="style.css?v=1.1.80">
 </head>
 
 <body>
@@ -68,6 +68,13 @@
                 </div>
             </div>
 
+            <div class="properties-tabs" style="margin-top: 24px;">
+                <div class="tab-item">Свойства</div>
+            </div>
+            <div id="view-properties" style="margin-bottom: 24px;">
+                <!-- Dynamic props here -->
+            </div>
+
             <div class="duration-stepper-row">
                 <button class="stepper-btn" onclick="adjustDuration(-1)">−</button>
                 <input type="number" id="rent-duration-input" class="stepper-input" value="1" readonly>
@@ -96,13 +103,6 @@
                     <span id="view-address" class="detail-value">EQAmL...SEv</span>
                 </div>
 
-                <div class="properties-tabs">
-                    <div class="tab-item">Свойства</div>
-                </div>
-
-                <div id="view-properties">
-                    <!-- Dynamic props here -->
-                </div>
 
                 <div class="product-desc-card">
                     <div id="view-desc-title" class="desc-title">Name #000</div>
@@ -339,7 +339,7 @@
         </div>
     </div>
 
-    <script src="app.js?v=1.1.79"></script>
+    <script src="app.js?v=1.1.81"></script>
 </body>
 
 </html>

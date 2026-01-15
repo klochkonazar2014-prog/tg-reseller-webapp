@@ -5,14 +5,14 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://9buigm-ip-176-119-99-6.tunnelmole.net";
+const BACKEND_URL = "https://etf9cr-ip-176-119-99-6.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
 let FILTERED_ITEMS = [];
 let RENDERED_COUNT = 0;
 const BATCH_SIZE = 40;
-const TON_SVG = `<svg width="18" height="18" viewBox="0 0 562 562" fill="none" style="margin-bottom:-3px;"><path d="M280.407 126.046L130.638 275.815L144.17 289.347L280.407 153.111L416.645 289.347L430.177 275.815L280.407 126.046Z" fill="#0088CC"/><path d="M280.407 435.438L30.177 185.207L16.6445 198.74L280.407 462.502L544.17 198.74L530.638 185.207L280.407 435.438Z" fill="#0088CC"/></svg>`;
+const TON_SVG = `<svg width="16" height="16" viewBox="0 0 562 562" fill="none" style="margin-bottom:-2px;"><path d="M280.407 126.046L130.638 275.815L144.17 289.347L280.407 153.111L416.645 289.347L430.177 275.815L280.407 126.046Z" fill="#0088CC"/><path d="M280.407 126.046L30.177 376.277L43.7095 389.81L280.407 153.111L517.104 389.81L530.637 376.277L280.407 126.046Z" fill="#0088CC"/><path d="M280.407 435.438L30.177 185.207L16.6445 198.74L280.407 462.502L544.17 198.74L530.638 185.207L280.407 435.438Z" fill="#0088CC"/></svg>`;
 let ATTR_STATS = { model: {}, bg: {}, symbol: {} };
 let CURRENT_PAYMENT_ITEM = null; // Store item during modal interaction
 
@@ -130,7 +130,7 @@ async function loadLiveItems() {
                         const t = attr.trait_type.toLowerCase();
                         if (t === 'model') item._modelName = attr.value;
                         if (t === 'backdrop') item._backdrop = attr.value;
-                        if (t === 'symbol') item._symbol = attr.value;
+                        if (t === 'symbol' || t === 'pattern') item._symbol = attr.value;
                     });
                 }
 
@@ -569,11 +569,10 @@ async function openProductView(item, finalPrice, imgSrc) {
     durationInput.value = 1;
     updateTotalPrice();
 
-    // Properties (Attributes) with Rarity & Floor
+    // Attributes (Properties)
     const propCont = document.getElementById('view-properties');
     propCont.innerHTML = '';
 
-    // We calculate percentages based on ATTR_STATS
     const getPropRow = (label, val, key) => {
         if (!val || val === 'Unknown') return null;
         const total = ALL_MARKET_ITEMS.length || 1;
@@ -598,7 +597,7 @@ async function openProductView(item, finalPrice, imgSrc) {
     const rows = [
         getPropRow('Модель', item._modelName, 'model'),
         getPropRow('Фон', item._backdrop, 'bg'),
-        getPropRow('Символ', item._symbol, 'symbol')
+        getPropRow('Узор', item._symbol, 'symbol')
     ];
     rows.forEach(r => { if (r) propCont.appendChild(r); });
 
