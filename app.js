@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://pz9dmw-ip-193-187-150-124.tunnelmole.net";
+const BACKEND_URL = "https://hs4rno-ip-193-187-150-124.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -253,22 +253,22 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl) {
     } else if (imgUrl) {
         visualHTML = `<img src="${imgUrl}" class="filter-img">`;
     } else {
-        visualHTML = `<div style="width:24px;height:24px;border-radius:50%;border:2px solid ${isSelected ? '#0088cc' : '#555'}"></div>`;
+        // Simple but elegant circle for generic items
+        visualHTML = `<div style="width:20px;height:20px;border-radius:50%;border:2px solid ${isSelected ? '#0088cc' : '#444'}; flex-shrink:0;"></div>`;
     }
 
     div.innerHTML = `
         <div class="filter-item-left">
             ${visualHTML}
-            <span style="color:white; font-weight:600; margin-left:12px; font-size:15px;">${name}</span>
+            <span class="filter-item-name">${name}</span>
         </div>
         ${isSelected ? '<div class="selection-dot"></div>' : ''}
     `;
     div.onclick = (e) => {
         e.stopPropagation();
         ACTIVE_FILTERS[key] = value;
-        // Visual refresh
-        initFilterLists();
-        if (key === 'sort' || key === 'nft' || key === 'model' || key === 'bg' || key === 'symbol') applyHeaderSearch();
+        initFilterLists(); // Re-render lists to update radio buttons
+        applyHeaderSearch();
     };
     container.appendChild(div);
 }
