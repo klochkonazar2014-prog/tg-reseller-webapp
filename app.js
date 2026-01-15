@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://hs4rno-ip-193-187-150-124.tunnelmole.net";
+const BACKEND_URL = "https://wxtznz-ip-193-187-150-124.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -229,17 +229,41 @@ function initFilterLists() {
     (window.STATIC_COLLECTIONS || []).forEach(col => addFilterItem(nftCont, col.name, col.address, 'nft', ACTIVE_FILTERS.nft === col.address, col.image_url));
 
     const maps = [
-        { id: 'model-list-container', key: 'model', attr: '_modelName' },
-        { id: 'bg-list-container', key: 'bg', attr: '_backdrop' },
-        { id: 'symbol-list-container', key: 'symbol', attr: '_symbol' }
+        { id: 'model-list-container', key: 'model', attr: '_modelName', accordion: 'model-acc' },
+        { id: 'bg-list-container', key: 'bg', attr: '_backdrop', accordion: 'bg-acc' },
+        { id: 'symbol-list-container', key: 'symbol', attr: '_symbol', accordion: 'symbol-acc' }
     ];
+
     maps.forEach(m => {
         const cont = document.getElementById(m.id);
-        const vals = new Set();
-        ALL_MARKET_ITEMS.forEach(i => { if (i[m.attr]) vals.add(i[m.attr]); });
+        if (!cont) return;
         cont.innerHTML = '';
+
+        // If NFT is "all", we show a placeholder for models/attributes to enforce order
+        if (ACTIVE_FILTERS.nft === 'all' && m.key === 'model') {
+            cont.innerHTML = '<div style="padding:20px; text-align:center; color:#555; font-size:14px;">Сначала выберите NFT коллекцию</div>';
+            return;
+        }
+
+        const vals = new Map(); // Use Map to store name -> representative image
+
+        // Filter items based on selected NFT to show only relevant attributes
+        const relevantItems = ALL_MARKET_ITEMS.filter(i => {
+            if (ACTIVE_FILTERS.nft !== 'all' && i._collection.address !== ACTIVE_FILTERS.nft) return false;
+            return true;
+        });
+
+        relevantItems.forEach(i => {
+            const val = i[m.attr];
+            if (val && !vals.has(val)) {
+                vals.set(val, i._realImage || i._collection.image_url);
+            }
+        });
+
         addFilterItem(cont, "Все", "all", m.key, ACTIVE_FILTERS[m.key] === 'all');
-        Array.from(vals).sort().forEach(v => addFilterItem(cont, v, v, m.key, ACTIVE_FILTERS[m.key] === v));
+        Array.from(vals.keys()).sort().forEach(v => {
+            addFilterItem(cont, v, v, m.key, ACTIVE_FILTERS[m.key] === v, vals.get(v));
+        });
     });
 }
 
