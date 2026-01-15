@@ -546,8 +546,8 @@ body {
 }
 
 .accordion-content.active {
-    max-height: 450px;
-    /* Slightly taller for better view */
+    max-height: 250px;
+    /* Reduced to show following buttons */
     padding-bottom: 10px;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
