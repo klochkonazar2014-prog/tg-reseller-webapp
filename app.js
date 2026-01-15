@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://qpeehi-ip-176-119-99-6.tunnelmole.net";
+const BACKEND_URL = "https://caame1-ip-176-119-99-6.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -565,12 +565,10 @@ async function openProductView(item, finalPrice, imgSrc) {
     const dailyPrice = (parseFloat(item.price_per_day) / 1e9).toFixed(2);
     document.getElementById('view-daily-price').innerHTML = renderTonAmount(dailyPrice);
 
-    const maxDays = Math.floor(item.max_duration / 86400);
+    const maxDays = Math.floor((item.max_duration || 2592000) / 86400);
     document.getElementById('view-duration-range').innerText = `1 — ${maxDays}`;
+    document.getElementById('view-discount').innerText = "0.1%"; // Static for now
 
-    // Duration Logic
-    const durationInput = document.getElementById('rent-duration-input');
-    durationInput.value = 1;
     updateTotalPrice();
 
     // Attributes (Properties)
@@ -599,20 +597,21 @@ async function openProductView(item, finalPrice, imgSrc) {
     };
 
     // Add Rarity Row at start
+    // Add Rarity Row at start
     const rarityRow = document.createElement('div');
     rarityRow.className = 'property-item';
     rarityRow.innerHTML = `
-        <div class="prop-left"><div class="prop-name">Редкость</div></div>
+        <div class="prop-left"><div class="prop-name">Rarity</div></div>
         <div class="prop-right">
-            <span class="prop-value-text">${item._nftNum || "1"}/76562</span>
+            <span class="prop-value-text" style="color:#fff;">${item._nftNum || "1"}/76562</span> <span style="color:var(--accent-blue);">(i)</span>
         </div>
     `;
     propCont.appendChild(rarityRow);
 
     const rows = [
-        getPropRow('Модель', item._modelName || 'Gift', 'model'),
-        getPropRow('Фон', item._backdrop || 'Common', 'bg'),
-        getPropRow('Узор', item._symbol || 'Common', 'symbol')
+        getPropRow('Model', item._modelName || 'Gift', 'model'),
+        getPropRow('Backdrop', item._backdrop || 'Common', 'bg'),
+        getPropRow('Symbol', item._symbol || 'Common', 'symbol')
     ];
     rows.forEach(r => { if (r) propCont.appendChild(r); });
 
@@ -671,11 +670,11 @@ function adjustDuration(delta) {
 
 function updateTotalPrice() {
     if (!CURRENT_PAYMENT_ITEM) return;
-    const input = document.getElementById('rent-duration-input');
-    const dailyPrice = parseFloat(CURRENT_PAYMENT_ITEM.price_per_day) / 1e9;
-    const total = (dailyPrice * parseInt(input.value)).toFixed(2);
-    document.getElementById('modal-total-price').innerText = `${total} TON`;
-    document.getElementById('confirm-pay-btn').innerText = `Арендовать за ▼ ${total}`;
+    const dur = 1; // Simplification for exact visual match
+    const dp = (parseFloat(CURRENT_PAYMENT_ITEM.price_per_day) / 1e9);
+    const total = (dp * dur).toFixed(2);
+    const btn = document.getElementById('confirm-pay-btn');
+    if (btn) btn.innerHTML = `Rent for ${renderTonAmount(total)}`;
 }
 
 function closeProductView() {
