@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://c13da8f141a9ea3b-176-119-99-6.serveousercontent.com";
+const BACKEND_URL = "https://6d4358c65de580ec-176-119-99-6.serveousercontent.com";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -235,12 +235,16 @@ function createItemCard(item) {
     const numStr = match ? match[2] : "";
 
     // Determine max days based on name or type
-    // Fallback logic for demo
-    let maxDays = 30;
-    if (item.nft_name.toLowerCase().includes("basket")) maxDays = 180;
-    if (item.nft_name.toLowerCase().includes("frog")) maxDays = 15;
-    if (item.nft_name.toLowerCase().includes("voodoo")) maxDays = 100;
-    if (item.nft_name.toLowerCase().includes("jelly")) maxDays = 34;
+    let maxDays = 30; // Default
+    const lowerName = item.nft_name.toLowerCase();
+
+    if (lowerName.includes("basket")) maxDays = 180;
+    else if (lowerName.includes("frog")) maxDays = 15;
+    else if (lowerName.includes("voodoo")) maxDays = 100;
+    else if (lowerName.includes("jelly")) maxDays = 34;
+    else if (lowerName.includes("trapped heart")) maxDays = 34; // Added Trapped Heart support
+    else if (lowerName.includes("duck")) maxDays = 14;
+    else if (lowerName.includes("magic ball")) maxDays = 29;
 
     let fallbackImg = item._collection.image_url || "https://cdn-icons-png.flaticon.com/512/4213/4213958.png";
     const fragmentUrls = generateFragmentUrls(item.nft_name);
