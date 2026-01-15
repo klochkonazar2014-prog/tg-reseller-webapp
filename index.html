@@ -240,23 +240,61 @@
         </div>
     </div>
 
-    <!-- Payment Modal -->
     <div class="modal" id="payment-modal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="closeModal()">&times;</span>
-            <div id="modal-img-container" style="text-align: center; margin-bottom: 20px;">
-                <img id="modal-img" src="" class="modal-img" style="display:none;">
+        <div class="modal-content premium-modal">
+            <span class="close-btn" onclick="closeModal()">✕</span>
+
+            <div class="modal-header-info">
+                <img id="modal-img" src="" class="payment-thumbnail">
+                <div class="modal-titles">
+                    <h2 id="modal-title">NFT Name</h2>
+                    <div id="modal-collection" class="modal-collection-link">Collection</div>
+                </div>
             </div>
-            <h2 id="modal-title" style="margin-bottom: 5px;">NFT</h2>
-            <div style="color:#8b9bb4; font-size:14px; margin-bottom:15px;">Аренда за день</div>
-            <p class="modal-price"><span id="modal-price">10 TON</span></p>
-            <button id="confirm-pay-btn" class="btn-yellow"
-                style="width: 100%; margin-bottom: 10px; display: none;">Подтвердить и Оплатить</button>
-            <div id="ton-connect-btn" class="ton-btn-wrapper"></div>
+
+            <div class="payment-info-grid">
+                <div class="info-item">
+                    <span class="info-label">Цена в день</span>
+                    <span id="modal-daily-price" class="info-val">0.01 TON</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Период</span>
+                    <span id="modal-duration-range" class="info-val">1 — 30 дн.</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Скидка</span>
+                    <span class="info-val" style="color:#34C759">0%</span>
+                </div>
+            </div>
+
+            <div class="duration-selector">
+                <span class="duration-title">Срок аренды (дни)</span>
+                <div class="stepper">
+                    <button class="step-btn" onclick="adjustDuration(-1)">−</button>
+                    <input type="number" id="rent-duration-input" value="1" readonly>
+                    <button class="step-btn" onclick="adjustDuration(1)">+</button>
+                </div>
+            </div>
+
+            <div id="modal-attributes" class="modal-attributes-list">
+                <!-- Attributes like Model, Backdrop here -->
+            </div>
+
+            <div class="total-summary">
+                <div class="total-row">
+                    <span>Итого к оплате:</span>
+                    <span id="modal-total-price" class="total-val">0.01 TON</span>
+                </div>
+            </div>
+
+            <div id="payment-actions">
+                <button id="confirm-pay-btn" class="btn-yellow pay-main-btn" style="display: none;">Арендовать</button>
+                <div id="ton-connect-btn" class="ton-btn-wrapper"></div>
+            </div>
         </div>
     </div>
 
-    <script src="app.js?v=1.1.68"></script>
+    <script src="app.js?v=1.1.69"></script>
 </body>
 
 </html>

@@ -5,14 +5,14 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://qa6io7-ip-193-187-150-124.tunnelmole.net";
+const BACKEND_URL = "https://htfbc2-ip-193-187-150-124.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
 let FILTERED_ITEMS = [];
 let RENDERED_COUNT = 0;
-const BATCH_SIZE = 40;
-let ATTR_STATS = { model: {}, bg: {}, symbol: {} }; // Frequency stats for rarity sorting
+let ATTR_STATS = { model: {}, bg: {}, symbol: {} };
+let CURRENT_PAYMENT_ITEM = null; // Store item during modal interaction
 
 // NEW: Visual mapping for premium look
 const VISUAL_MAP = {
@@ -509,25 +509,103 @@ function observeNewCards() {
     document.querySelectorAll('.card.has-lottie').forEach(c => ob.observe(c));
 }
 async function openPaymentModal(item, finalPrice, imgSrc) {
-    document.getElementById('payment-modal').classList.add('active');
-    document.getElementById('modal-title').innerText = item.nft_name;
-    document.getElementById('modal-price').innerText = `${finalPrice} TON`;
+    CURRENT_PAYMENT_ITEM = item;
+    const modal = document.getElementById('payment-modal');
+    modal.classList.add('active');
+
+    // Header
     document.getElementById('modal-img').src = imgSrc;
-    document.getElementById('modal-img').style.display = 'block';
+    document.getElementById('modal-title').innerText = item.nft_name;
+    document.getElementById('modal-collection').innerText = item._collection.name;
+
+    // Grid
+    const dailyPrice = parseFloat(item.price_per_day) / 1e9;
+    document.getElementById('modal-daily-price').innerText = `${dailyPrice.toFixed(2)} TON`;
+
+    const maxDays = Math.floor(item.max_duration / 86400);
+    document.getElementById('modal-duration-range').innerText = `1 — ${maxDays} дн.`;
+
+    // Duration Logic
+    const durationInput = document.getElementById('rent-duration-input');
+    durationInput.value = 1;
+    updateTotalPrice();
+
+    // Attributes
+    const attrCont = document.getElementById('modal-attributes');
+    attrCont.innerHTML = '';
+    const attrs = [
+        { label: 'Model', val: item._modelName },
+        { label: 'Backdrop', val: item._backdrop },
+        { label: 'Symbol', val: item._symbol }
+    ];
+    attrs.forEach(a => {
+        if (a.val && a.val !== 'Unknown' && a.val !== 'Gift' && a.val !== 'Common') {
+            const tag = document.createElement('div');
+            tag.className = 'attr-tag';
+            tag.innerHTML = `<span>${a.label}:</span> <strong>${a.val}</strong>`;
+            attrCont.appendChild(tag);
+        }
+    });
+
     const cbtn = document.getElementById('confirm-pay-btn');
     const tbtn = document.getElementById('ton-connect-btn');
-    const check = () => { if (tonConnectUI.connected) { cbtn.style.display = 'block'; tbtn.style.display = 'none'; } else { cbtn.style.display = 'none'; tbtn.style.display = 'block'; } };
-    check();
-    cbtn.onclick = async () => {
-        try {
-            const res = await tonConnectUI.sendTransaction({ validUntil: Math.floor(Date.now() / 1000) + 600, messages: [{ address: OWNER_WALLET, amount: (finalPrice * 1000000000).toString() }] });
-            if (res) {
-                await fetch(`${BACKEND_URL}/api/mark_rented`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nft_address: item.nft_address }) });
-                ALL_MARKET_ITEMS = ALL_MARKET_ITEMS.filter(i => i.nft_address !== item.nft_address);
-                closeModal(); applyHeaderSearch(); alert("Успешно!");
-            }
-        } catch (e) { alert("Ошибка!"); }
+    const check = () => {
+        if (tonConnectUI.connected) {
+            cbtn.style.display = 'block';
+            tbtn.style.display = 'none';
+        } else {
+            cbtn.style.display = 'none';
+            tbtn.style.display = 'block';
+        }
     };
+    check();
+
+    cbtn.onclick = async () => {
+        const days = parseInt(durationInput.value);
+        const total = (dailyPrice * days).toFixed(2);
+        try {
+            const res = await tonConnectUI.sendTransaction({
+                validUntil: Math.floor(Date.now() / 1000) + 600,
+                messages: [{
+                    address: OWNER_WALLET,
+                    amount: (parseFloat(total) * 1e9).toString()
+                }]
+            });
+            if (res) {
+                await fetch(`${BACKEND_URL}/api/mark_rented`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nft_address: item.nft_address })
+                });
+                ALL_MARKET_ITEMS = ALL_MARKET_ITEMS.filter(i => i.nft_address !== item.nft_address);
+                closeModal();
+                applyHeaderSearch();
+                tg.showAlert("Аренда оформлена успешно!");
+            }
+        } catch (e) {
+            tg.showAlert("Ошибка оплаты или отмена.");
+        }
+    };
+}
+
+function adjustDuration(delta) {
+    if (!CURRENT_PAYMENT_ITEM) return;
+    const input = document.getElementById('rent-duration-input');
+    const maxDays = Math.floor(CURRENT_PAYMENT_ITEM.max_duration / 86400);
+    let val = parseInt(input.value) + delta;
+    if (val < 1) val = 1;
+    if (val > maxDays) val = maxDays;
+    input.value = val;
+    updateTotalPrice();
+}
+
+function updateTotalPrice() {
+    if (!CURRENT_PAYMENT_ITEM) return;
+    const input = document.getElementById('rent-duration-input');
+    const dailyPrice = parseFloat(CURRENT_PAYMENT_ITEM.price_per_day) / 1e9;
+    const total = (dailyPrice * parseInt(input.value)).toFixed(2);
+    document.getElementById('modal-total-price').innerText = `${total} TON`;
+    document.getElementById('confirm-pay-btn').innerText = `Арендовать за ${total} TON`;
 }
 function closeModal() { document.getElementById('payment-modal').classList.remove('active'); }
 const trigger = document.getElementById('loader-trigger');
