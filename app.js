@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://me8dpj-ip-176-119-99-6.tunnelmole.net";
+const BACKEND_URL = "https://cynlob-ip-176-119-99-6.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -120,10 +120,10 @@ async function loadLiveItems() {
                 const match = item.nft_name.match(/#(\d+)/);
                 item._nftNum = match ? parseInt(match[1]) : 0;
 
-                // Parse attributes
-                item._modelName = 'Gift';
-                item._backdrop = 'Common';
-                item._symbol = 'Common';
+                // FIX: Respect backend provided DB data if available, don't overwrite with 'Gift'
+                if (!item._modelName) item._modelName = 'Gift';
+                if (!item._backdrop) item._backdrop = 'Common';
+                if (!item._symbol) item._symbol = 'Common';
 
                 if (item.attributes && Array.isArray(item.attributes)) {
                     item.attributes.forEach(attr => {
