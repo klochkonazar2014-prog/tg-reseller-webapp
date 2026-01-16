@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://9lfa7l-ip-176-119-99-6.tunnelmole.net";
+const BACKEND_URL = "https://bdkvyz-ip-176-119-99-6.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -104,8 +104,8 @@ function switchTab(index) {
 async function loadLiveItems() {
     const loader = document.getElementById('top-loader');
     try {
-        // Fetching more items to ensure "all" are there
-        const response = await fetch(`${BACKEND_URL}/api/items?limit=1000&t=${Date.now()}`);
+        // Increased limit to 50k to ensure we see ALL items from ALL collections
+        const response = await fetch(`${BACKEND_URL}/api/items?limit=50000&t=${Date.now()}`);
         const data = await response.json();
 
         // Hide global loading screen
@@ -817,12 +817,39 @@ async function openProductView(item, finalPrice, imgSrc) {
 
     // Setup the main rent button
     const rentBtn = document.getElementById('main-rent-action-btn');
-    // Ensure we update price immediately
-    updateTotalPrice();
+
+    const updateBtnState = () => {
+        if (!tonConnectUI.connected) {
+            rentBtn.innerHTML = `
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                Подключить кошелек
+            `;
+        } else {
+            rentBtn.innerHTML = `
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M14.1839 17.7069C13.6405 18.6507 13.3688 19.1226 13.0591 19.348C12.4278 19.8074 11.5723 19.8074 10.941 19.348C10.6312 19.1226 10.3595 18.6507 9.81613 17.7069L5.52066 10.2464C4.76864 8.94024 4.39263 8.28717 4.33762 7.75894C4.2255 6.68236 4.81894 5.65591 5.80788 5.21589C6.29309 5 7.04667 5 8.55383 5H15.4462C16.9534 5 17.7069 5 18.1922 5.21589C19.1811 5.65591 19.7745 6.68236 19.6624 7.75894C19.6074 8.28717 19.2314 8.94024 18.4794 10.2464L14.1839 17.7069ZM11.1 16.3412L6.56139 8.48002C6.31995 8.06185 6.19924 7.85276 6.18146 7.68365C6.14523 7.33896 6.33507 7.01015 6.65169 6.86919C6.80703 6.80002 7.04847 6.80002 7.53133 6.80002H7.53134L11.1 6.80002V16.3412ZM12.9 16.3412L17.4387 8.48002C17.6801 8.06185 17.8008 7.85276 17.8186 7.68365C17.8548 7.33896 17.665 7.01015 17.3484 6.86919C17.193 6.80002 16.9516 6.80002 16.4687 6.80002L12.9 6.80002V16.3412Z" fill="#FFFFFF" />
+                </svg>
+                Арендовать за <span id="rent-btn-price">0.00</span>
+            `;
+            updateTotalPrice();
+        }
+    };
+
+    updateBtnState();
 
     rentBtn.onclick = async () => {
         if (!tonConnectUI.connected) {
             await tonConnectUI.openModal();
+            // Listen for connection change to update button text
+            const unsubscribe = tonConnectUI.onStatusChange(wallet => {
+                if (wallet) {
+                    updateBtnState();
+                    unsubscribe();
+                }
+            });
             return;
         }
         const durInput = document.getElementById('rent-duration-input');

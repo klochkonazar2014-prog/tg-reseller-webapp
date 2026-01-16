@@ -6,12 +6,11 @@
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>MRKT</title>
-    <script src="https://telegram.org/js/telegram-web-app.js?v=1.1.39"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js?v=1.1.40"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <script src="lottie.min.js"></script>
     <link rel="stylesheet" href="style.css?v=3.0.9">
     <style>
-        /* CRITICAL OVERRIDES - DO NOT REMOVE */
         /* CRITICAL OVERRIDES - DO NOT REMOVE */
         .main-rent-btn svg,
         .main-rent-btn svg path,
@@ -30,11 +29,21 @@
         }
 
         .main-rent-btn,
-        .card-price-btn,
+        .card-price-btn {
+            background: linear-gradient(135deg, #0098EA 0%, #0077CC 100%) !important;
+            color: #ffffff !important;
+            border: none !important;
+        }
+
         .card-cart-btn {
             background: #1c1c1e !important;
-            /* Dark button */
             color: #ffffff !important;
+        }
+
+        /* Ensure icon-ton is white on blue buttons */
+        .card-price-btn .icon-ton::before,
+        .main-rent-btn .icon-ton::before {
+            filter: brightness(0) invert(1) !important;
         }
     </style>
 </head>
