@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://pp9etz-ip-176-119-99-6.tunnelmole.net";
+const BACKEND_URL = "https://trvyl3-ip-176-119-99-6.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -164,7 +164,8 @@ async function loadLiveItems() {
             window.STATIC_COLLECTIONS = Array.from(uniqueCols.values());
 
             initFilterLists();
-            initVisualChips(); // NEW: Visual scroll for collections
+            initFilterLists();
+            // initVisualChips(); // DISABLED: Takes up too much space and kills dropdowns
             calculateStats();
             applyHeaderSearch();
         }
@@ -173,31 +174,7 @@ async function loadLiveItems() {
     }
 }
 
-function initVisualChips() {
-    const chipsCont = document.getElementById('chips-row');
-    if (!chipsCont) return;
 
-    // Save the filter button
-    const filterBtn = chipsCont.querySelector('.chip-btn.icon-only');
-    chipsCont.innerHTML = '';
-    if (filterBtn) chipsCont.appendChild(filterBtn);
-
-    // Add "All" chip
-    const allBtn = document.createElement('button');
-    allBtn.className = `chip-btn ${ACTIVE_FILTERS.nft === 'all' ? 'active' : ''}`;
-    allBtn.innerHTML = 'Все';
-    allBtn.onclick = () => { selectNftChip('all', allBtn); };
-    chipsCont.appendChild(allBtn);
-
-    // Add visual chips for each collection
-    (window.STATIC_COLLECTIONS || []).forEach(col => {
-        const btn = document.createElement('button');
-        btn.className = `chip-btn ${ACTIVE_FILTERS.nft === col.address ? 'active' : ''}`;
-        btn.innerHTML = `${col.image_url ? `<img src="${col.image_url}" class="chip-img">` : ''} ${col.name}`;
-        btn.onclick = () => { selectNftChip(col.address, btn); };
-        chipsCont.appendChild(btn);
-    });
-}
 
 function selectNftChip(addr, btn) {
     ACTIVE_FILTERS.nft = addr;
@@ -577,7 +554,13 @@ async function openProductView(item, finalPrice, imgSrc) {
         .then(r => r.json())
         .then(details => {
             let realOwnerName = 'Unknown';
-            if (details.owner) {
+            // CHECK 'real_owner' field first (MarketApp specific)
+            if (details.real_owner) {
+                realOwnerName = details.real_owner;
+                if (realOwnerName.length > 15) {
+                    realOwnerName = realOwnerName.substring(0, 4) + '...' + realOwnerName.substring(realOwnerName.length - 4);
+                }
+            } else if (details.owner) {
                 if (typeof details.owner === 'object') {
                     realOwnerName = details.owner.name || details.owner.address || 'Unknown';
                     // Shorten address if it is one
