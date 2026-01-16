@@ -5,16 +5,18 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://w8sqhg-ip-176-119-99-6.tunnelmole.net";
+const BACKEND_URL = "https://hpfjua-ip-176-119-99-6.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
-let FILTERED_ITEMS = [];
 let RENDERED_COUNT = 0;
-const BATCH_SIZE = 40;
+let BATCH_SIZE = 30; // Better for mobile grid
+let IS_LOADING = false;
+let GLOBAL_OFFSET = 0;
+let HAS_MORE = true;
 const renderTonAmount = (val) => `<span class="icon-before icon-ton tm-amount">${val}</span>`;
 let ATTR_STATS = { model: {}, bg: {}, symbol: {} };
-let CURRENT_PAYMENT_ITEM = null; // Store item during modal interaction
+let CURRENT_PAYMENT_ITEM = null;
 
 // NEW: Visual mapping for premium look
 const VISUAL_MAP = {
@@ -51,7 +53,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             tg.MainButton.hide();
         }
         initTonConnect();
-        await loadLiveItems();
+        loadFilterData();
+        await loadLiveItems(true);
 
         document.getElementById('search-input').addEventListener('input', debounce((e) => {
             ACTIVE_FILTERS.search = e.target.value.toLowerCase();
@@ -101,8 +104,20 @@ function switchTab(index) {
     });
 }
 
-async function loadLiveItems() {
+async function loadLiveItems(reset = true) {
+    if (IS_LOADING) return;
+    if (!HAS_MORE && !reset) return;
+
+    if (reset) {
+        GLOBAL_OFFSET = 0;
+        HAS_MORE = true;
+        document.getElementById('items-view').innerHTML = '';
+        document.getElementById('top-loader').style.display = 'block';
+    }
+
+    IS_LOADING = true;
     const loader = document.getElementById('top-loader');
+
     const hideLoading = () => {
         const screen = document.getElementById('loading-screen');
         if (screen) {
@@ -112,80 +127,61 @@ async function loadLiveItems() {
     };
 
     try {
-        // Limit to 5k - enough for a massive catalog, but safe for all phones
-        const response = await fetch(`${BACKEND_URL}/api/items?limit=5000&t=${Date.now()}`);
+        const params = new URLSearchParams({
+            limit: BATCH_SIZE,
+            offset: GLOBAL_OFFSET,
+            nft: ACTIVE_FILTERS.nft,
+            model: ACTIVE_FILTERS.model,
+            bg: ACTIVE_FILTERS.bg,
+            symbol: ACTIVE_FILTERS.symbol,
+            search: ACTIVE_FILTERS.search,
+            price_from: ACTIVE_FILTERS.price_from || "",
+            price_to: ACTIVE_FILTERS.price_to || "",
+            gift_number: ACTIVE_FILTERS.gift_number || "",
+            t: Date.now()
+        });
+
+        const response = await fetch(`${BACKEND_URL}/api/items?${params.toString()}`);
         if (!response.ok) throw new Error("Server Error");
         const data = await response.json();
 
-        if (data.items) {
-            ALL_MARKET_ITEMS = data.items.map(item => {
+        if (data && data.items) {
+            const items = data.items;
+            if (items.length < BATCH_SIZE) HAS_MORE = false;
+            GLOBAL_OFFSET += items.length;
+
+            const processed = items.map(item => {
                 const match = item.nft_name.match(/#(\d+)/);
                 item._nftNum = match ? parseInt(match[1]) : 0;
-
-                // FIX: Respect backend provided DB data if available, don't overwrite with 'Gift'
-                if (!item._modelName) item._modelName = 'Gift';
-                if (!item._backdrop) item._backdrop = 'Common';
-                if (!item._symbol) item._symbol = 'Common';
-
-                if (item.attributes && Array.isArray(item.attributes)) {
-                    item.attributes.forEach(attr => {
-                        const t = attr.trait_type.toLowerCase();
-                        const v = attr.value;
-                        if (t.includes('model') || t === 'модель') item._modelName = v;
-                        else if (t.includes('backdrop') || t === 'фон') item._backdrop = v;
-                        else if (t.includes('symbol') || t.includes('pattern') || t === 'узор') item._symbol = v;
-                    });
-                }
-
-                // IMPROVED FALLBACK FOR FILTERS
-                // If API didn't give us the Model (common in bulk list), use the Gift Name!
-                // This populates the Filter with "Party Sparkler", "Blue Star", etc. instead of "Gift".
-                if (item._modelName === 'Gift' || item._modelName === 'Unknown') {
-                    const nameMatch = item.nft_name.match(/^(.*?)\s*(#\d+)?$/);
-                    if (nameMatch && nameMatch[1]) {
-                        item._modelName = nameMatch[1].trim();
-                    } else {
-                        item._modelName = item.nft_name; // Absolute fallback
-                    }
-                }
-
-                // Super-duper fallback for name
-                // Extract owner address safely
-                let finalOwner = null;
-                if (item.owner_address) finalOwner = item.owner_address;
-                else if (item.owner && item.owner.address) finalOwner = item.owner.address;
-                else if (typeof item.owner === 'string') finalOwner = item.owner;
-
-                item._realOwner = finalOwner; // Store explicitly
-
-                item._realImage = item.image || item.image_url || (item._collection ? item._collection.image_url : null);
+                item._realImage = item.image || item.image_url;
                 return item;
             });
 
-            // Collections with images
-            const uniqueCols = new Map();
-            ALL_MARKET_ITEMS.forEach(i => {
-                if (i._collection) {
-                    const addr = i._collection.address;
-                    if (!uniqueCols.has(addr)) {
-                        uniqueCols.set(addr, {
-                            ...i._collection,
-                            image_url: i._collection.image_url || i._realImage
-                        });
-                    }
-                }
-            });
-            window.STATIC_COLLECTIONS = Array.from(uniqueCols.values());
+            if (reset && items.length === 0) {
+                document.getElementById('items-view').innerHTML = `
+                    <div class="error-msg" style="padding-top: 100px; text-align:center;">
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: #333; margin-bottom: 20px;">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="8" y1="12" x2="16" y2="12"></line>
+                        </svg>
+                        <div style="font-size: 18px; font-weight: 700; color: #fff;">Ничего не найдено</div>
+                        <div style="color: #8b9bb4; margin-top: 8px;">Попробуйте сбросить фильтры</div>
+                    </div>`;
+            } else {
+                renderItemsBatch(processed);
+            }
 
-            initFilterLists();
-            calculateStats();
-            applyHeaderSearch();
+            if (reset) initFilterLists();
         }
+
+        if (loader) loader.style.display = 'none';
         hideLoading();
     } catch (e) {
         console.error("Load Error:", e);
-        if (loader) loader.innerText = "Ошибка подключения к рынку.";
+        if (loader) loader.innerText = "Ошибка загрузки.";
         hideLoading();
+    } finally {
+        IS_LOADING = false;
     }
 }
 
@@ -195,25 +191,25 @@ function selectNftChip(addr, btn) {
     ACTIVE_FILTERS.nft = addr;
     document.querySelectorAll('.chip-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    applyHeaderSearch();
+    loadLiveItems(true); // Trigger server-side refresh
 }
 
-function calculateStats() {
-    ATTR_STATS = { model: {}, bg: {}, symbol: {} };
-    ALL_MARKET_ITEMS.forEach(item => {
-        if (item._modelName) ATTR_STATS.model[item._modelName] = (ATTR_STATS.model[item._modelName] || 0) + 1;
-        if (item._backdrop) ATTR_STATS.bg[item._backdrop] = (ATTR_STATS.bg[item._backdrop] || 0) + 1;
-        if (item._symbol) ATTR_STATS.symbol[item._symbol] = (ATTR_STATS.symbol[item._symbol] || 0) + 1;
-
-        // Also track all other attributes
-        if (item.attributes && Array.isArray(item.attributes)) {
-            item.attributes.forEach(attr => {
-                const key = attr.trait_type.toLowerCase();
-                if (!ATTR_STATS[key]) ATTR_STATS[key] = {};
-                ATTR_STATS[key][attr.value] = (ATTR_STATS[key][attr.value] || 0) + 1;
-            });
+async function loadFilterData() {
+    try {
+        const res = await fetch(`${BACKEND_URL}/api/filters`);
+        const data = await res.json();
+        if (data) {
+            window.STATIC_COLLECTIONS = data.collections.map(c => ({ name: c, address: c }));
+            ATTR_STATS = {
+                model: data.models.reduce((a, v) => ({ ...a, [v]: 1 }), {}),
+                bg: data.backdrops.reduce((a, v) => ({ ...a, [v]: 1 }), {}),
+                symbol: data.symbols.reduce((a, v) => ({ ...a, [v]: 1 }), {})
+            };
+            initFilterLists();
         }
-    });
+    } catch (e) {
+        console.error("Filter Load Error:", e);
+    }
 }
 
 function initTonConnect() {
@@ -270,12 +266,14 @@ function initFilterLists() {
     const nftCont = document.getElementById('nft-list-container');
     nftCont.innerHTML = '';
     addFilterItem(nftCont, "Все", "all", 'nft', ACTIVE_FILTERS.nft === 'all');
-    (window.STATIC_COLLECTIONS || []).forEach(col => addFilterItem(nftCont, col.name, col.address, 'nft', ACTIVE_FILTERS.nft === col.address, col.image_url));
+    (window.STATIC_COLLECTIONS || []).forEach(col => {
+        addFilterItem(nftCont, col.name, col.address, 'nft', ACTIVE_FILTERS.nft === col.address, col.image_url);
+    });
 
     const maps = [
-        { id: 'model-list-container', key: 'model', attr: '_modelName', accordion: 'model-acc' },
-        { id: 'bg-list-container', key: 'bg', attr: '_backdrop', accordion: 'bg-acc' },
-        { id: 'symbol-list-container', key: 'symbol', attr: '_symbol', accordion: 'symbol-acc' }
+        { id: 'model-list-container', key: 'model' },
+        { id: 'bg-list-container', key: 'bg' },
+        { id: 'symbol-list-container', key: 'symbol' }
     ];
 
     maps.forEach(m => {
@@ -283,44 +281,12 @@ function initFilterLists() {
         if (!cont) return;
         cont.innerHTML = '';
 
-        // If NFT is "all", we show a placeholder for models/attributes to enforce order
-        if (ACTIVE_FILTERS.nft === 'all' && m.key === 'model') {
-            cont.innerHTML = `
-                <div style="padding:30px 20px; text-align:center;">
-                    <span style="color:#ff5500; font-size:18px; font-weight:700;">Сначала выберите NFT</span>
-                    <div style="height:1px; background:rgba(255,255,255,0.05); margin-top:20px;"></div>
-                </div>`;
-            return;
-        }
-
-        const stats = new Map(); // Name -> { img, count, minPrice }
-
-        // Use all items for accurate counts (rarity)
-        const relevantItems = ALL_MARKET_ITEMS.filter(i => {
-            if (ACTIVE_FILTERS.nft !== 'all' && i._collection.address !== ACTIVE_FILTERS.nft) return false;
-            return true;
-        });
-
-        relevantItems.forEach(i => {
-            const val = i[m.attr];
-            if (!val) return;
-            const p = parseFloat(i.price_per_day) / 1e9;
-            if (!stats.has(val)) {
-                stats.set(val, { img: i._realImage || i._collection.image_url, count: 0, minPrice: p });
-            }
-            const s = stats.get(val);
-            s.count++;
-            if (p < s.minPrice) s.minPrice = p;
-        });
-
-        // Add "Select All" item
         addFilterItem(cont, "Выбрать все", "all", m.key, ACTIVE_FILTERS[m.key] === 'all');
 
-        Array.from(stats.entries()).sort((a, b) => a[0].localeCompare(b[0])).forEach(([name, data]) => {
+        const keys = Object.keys(ATTR_STATS[m.key] || {}).sort();
+        keys.forEach(name => {
             let icon = null;
-            if (m.key === 'nft') icon = data.img;
             if (m.key === 'bg' || m.key === 'symbol') icon = VISUAL_MAP[m.key][name] || null;
-
             addFilterItem(cont, name, name, m.key, ACTIVE_FILTERS[m.key] === name, icon);
         });
     });
@@ -362,72 +328,25 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl) {
 }
 
 function applyHeaderSearch() {
-    FILTERED_ITEMS = ALL_MARKET_ITEMS.filter(item => {
-        if (ACTIVE_FILTERS.nft !== 'all' && item._collection.address !== ACTIVE_FILTERS.nft) return false;
-        if (ACTIVE_FILTERS.model !== 'all' && item._modelName !== ACTIVE_FILTERS.model) return false;
-        if (ACTIVE_FILTERS.bg !== 'all' && item._backdrop !== ACTIVE_FILTERS.bg) return false;
-        if (ACTIVE_FILTERS.symbol !== 'all' && item._symbol !== ACTIVE_FILTERS.symbol) return false;
-
-        const price = parseFloat(item.price_per_day) / 1000000000 * (1 + MY_MARKUP);
-        if (ACTIVE_FILTERS.price_from && price < ACTIVE_FILTERS.price_from) return false;
-        if (ACTIVE_FILTERS.price_to && price > ACTIVE_FILTERS.price_to) return false;
-
-        if (ACTIVE_FILTERS.gift_number && item._nftNum !== parseInt(ACTIVE_FILTERS.gift_number)) return false;
-        if (ACTIVE_FILTERS.search && !item.nft_name.toLowerCase().includes(ACTIVE_FILTERS.search)) return false;
-
-        return true;
-    });
-
-    FILTERED_ITEMS.sort((a, b) => {
-        const pA = parseFloat(a.price_per_day);
-        const pB = parseFloat(b.price_per_day);
-
-        switch (ACTIVE_FILTERS.sort) {
-            case 'price_asc': return pA - pB;
-            case 'price_desc': return pB - pA;
-            case 'num_asc': return a._nftNum - b._nftNum;
-            case 'num_desc': return b._nftNum - a._nftNum;
-            case 'model_rare':
-                return (ATTR_STATS.model[a._modelName] || 9999) - (ATTR_STATS.model[b._modelName] || 9999);
-            case 'bg_rare':
-                return (ATTR_STATS.bg[a._backdrop] || 9999) - (ATTR_STATS.bg[b._backdrop] || 9999);
-            case 'symbol_rare':
-                return (ATTR_STATS.symbol[a._symbol] || 9999) - (ATTR_STATS.symbol[b._symbol] || 9999);
-            default: return 0;
-        }
-    });
-
-    RENDERED_COUNT = 0;
-    document.getElementById('items-view').innerHTML = "";
-    if (document.getElementById('top-loader')) document.getElementById('top-loader').style.display = 'none';
-
-    if (FILTERED_ITEMS.length === 0) {
-        const view = document.getElementById('items-view');
-        view.innerHTML = `
-            <div class="error-msg" style="padding-top: 100px;">
-                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: #333; margin-bottom: 20px;">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="8" y1="12" x2="16" y2="12"></line>
-                </svg>
-                <div style="font-size: 18px; font-weight: 700; color: #fff;">Ничего не найдено</div>
-                <div style="color: #8b9bb4; margin-top: 8px;">Попробуйте сбросить фильтры</div>
-            </div>`;
-        return;
-    }
-    appendItems();
+    loadLiveItems(true);
 }
 
-function appendItems() {
-    const container = document.getElementById('items-view');
-    const fragment = document.createDocumentFragment();
-    const start = RENDERED_COUNT;
-    const end = Math.min(RENDERED_COUNT + BATCH_SIZE, FILTERED_ITEMS.length);
-    for (let i = start; i < end; i++) {
-        fragment.appendChild(createItemCard(FILTERED_ITEMS[i]));
-    }
-    container.appendChild(fragment);
-    RENDERED_COUNT = end;
-    observeNewCards();
+function observeNewCards() {
+    // Legacy mapping to handle lottie animations on new cards
+    document.querySelectorAll('.card.has-lottie:not(.lottie-inited)').forEach(card => {
+        card.classList.add('lottie-inited');
+        const url = card.dataset.lottieUrl;
+        const id = card.dataset.lottieId;
+        if (url && id) {
+            lottie.loadAnimation({
+                container: document.getElementById(id),
+                renderer: 'svg',
+                loop: true,
+                autoplay: true,
+                path: url
+            });
+        }
+    });
 }
 
 function createItemCard(item) {
@@ -505,11 +424,13 @@ function resetMrktModal() {
     applyHeaderSearch();
 }
 function applyMrktModal() {
-    ACTIVE_FILTERS.gift_number = document.getElementById('filter-gift-number').value || null;
-    ACTIVE_FILTERS.price_from = parseFloat(document.getElementById('filter-price-from').value) || null;
-    ACTIVE_FILTERS.price_to = parseFloat(document.getElementById('filter-price-to').value) || null;
-    applyHeaderSearch();
+    // Collect from inputs
+    ACTIVE_FILTERS.gift_number = document.getElementById('filter-gift-number').value;
+    ACTIVE_FILTERS.price_from = document.getElementById('filter-price-from').value;
+    ACTIVE_FILTERS.price_to = document.getElementById('filter-price-to').value;
+
     closeMrktModal();
+    loadLiveItems(true); // Trigger server-side refresh
 }
 
 function debounce(func, wait) {
@@ -821,38 +742,19 @@ async function openProductView(item, finalPrice, imgSrc) {
     // Setup the main rent button
     const rentBtn = document.getElementById('main-rent-action-btn');
 
-    const updateBtnState = () => {
-        if (!tonConnectUI.connected) {
-            rentBtn.innerHTML = `
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="12" cy="7" r="4"></circle>
-                </svg>
-                Подключить кошелек
-            `;
-        } else {
-            rentBtn.innerHTML = `
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path fill-rule="evenodd" clip-rule="evenodd" d="M14.1839 17.7069C13.6405 18.6507 13.3688 19.1226 13.0591 19.348C12.4278 19.8074 11.5723 19.8074 10.941 19.348C10.6312 19.1226 10.3595 18.6507 9.81613 17.7069L5.52066 10.2464C4.76864 8.94024 4.39263 8.28717 4.33762 7.75894C4.2255 6.68236 4.81894 5.65591 5.80788 5.21589C6.29309 5 7.04667 5 8.55383 5H15.4462C16.9534 5 17.7069 5 18.1922 5.21589C19.1811 5.65591 19.7745 6.68236 19.6624 7.75894C19.6074 8.28717 19.2314 8.94024 18.4794 10.2464L14.1839 17.7069ZM11.1 16.3412L6.56139 8.48002C6.31995 8.06185 6.19924 7.85276 6.18146 7.68365C6.14523 7.33896 6.33507 7.01015 6.65169 6.86919C6.80703 6.80002 7.04847 6.80002 7.53133 6.80002H7.53134L11.1 6.80002V16.3412ZM12.9 16.3412L17.4387 8.48002C17.6801 8.06185 17.8008 7.85276 17.8186 7.68365C17.8548 7.33896 17.665 7.01015 17.3484 6.86919C17.193 6.80002 16.9516 6.80002 16.4687 6.80002L12.9 6.80002V16.3412Z" fill="#FFFFFF" />
-                </svg>
-                Арендовать за <span id="rent-btn-price">0.00</span>
-            `;
-            updateTotalPrice();
-        }
-    };
+    // Set static text back as requested
+    rentBtn.innerHTML = `
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M14.1839 17.7069C13.6405 18.6507 13.3688 19.1226 13.0591 19.348C12.4278 19.8074 11.5723 19.8074 10.941 19.348C10.6312 19.1226 10.3595 18.6507 9.81613 17.7069L5.52066 10.2464C4.76864 8.94024 4.39263 8.28717 4.33762 7.75894C4.2255 6.68236 4.81894 5.65591 5.80788 5.21589C6.29309 5 7.04667 5 8.55383 5H15.4462C16.9534 5 17.7069 5 18.1922 5.21589C19.1811 5.65591 19.7745 6.68236 19.6624 7.75894C19.6074 8.28717 19.2314 8.94024 18.4794 10.2464L14.1839 17.7069ZM11.1 16.3412L6.56139 8.48002C6.31995 8.06185 6.19924 7.85276 6.18146 7.68365C6.14523 7.33896 6.33507 7.01015 6.65169 6.86919C6.80703 6.80002 7.04847 6.80002 7.53133 6.80002H7.53134L11.1 6.80002V16.3412ZM12.9 16.3412L17.4387 8.48002C17.6801 8.06185 17.8008 7.85276 17.8186 7.68365C17.8548 7.33896 17.665 7.01015 17.3484 6.86919C17.193 6.80002 16.9516 6.80002 16.4687 6.80002L12.9 6.80002V16.3412Z" fill="#FFFFFF" />
+        </svg>
+        Арендовать за <span id="rent-btn-price">0.00</span>
+    `;
 
-    updateBtnState();
+    updateTotalPrice();
 
     rentBtn.onclick = async () => {
         if (!tonConnectUI.connected) {
             await tonConnectUI.openModal();
-            // Listen for connection change to update button text
-            const unsubscribe = tonConnectUI.onStatusChange(wallet => {
-                if (wallet) {
-                    updateBtnState();
-                    unsubscribe();
-                }
-            });
             return;
         }
         const durInput = document.getElementById('rent-duration-input');
@@ -907,9 +809,23 @@ function updateTotalPrice() {
     }
 }
 
+function renderItemsBatch(items) {
+    const container = document.getElementById('items-view');
+    items.forEach(item => {
+        const card = createItemCard(item);
+        if (card) container.appendChild(card);
+    });
+    observeNewCards();
+}
+
 function closeProductView() {
     document.getElementById('product-view').classList.remove('active');
     CURRENT_PAYMENT_ITEM = null;
 }
 const trigger = document.getElementById('loader-trigger');
-if (trigger) { const so = new IntersectionObserver((e) => { if (e[0].isIntersecting) appendItems(); }); so.observe(trigger); }
+if (trigger) {
+    const so = new IntersectionObserver((e) => {
+        if (e[0].isIntersecting && HAS_MORE && !IS_LOADING) loadLiveItems(false);
+    });
+    so.observe(trigger);
+}
