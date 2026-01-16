@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://mtrrch-ip-176-119-99-6.tunnelmole.net";
+const BACKEND_URL = "https://mps4a6-ip-176-119-99-6.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -600,37 +600,54 @@ async function openProductView(item, finalPrice, imgSrc) {
     const giftSlug = giftBaseName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join('');
     const tgNftLink = `https://t.me/nft/${giftSlug}-${nftNum}`;
 
-    // Helper to create property row
-    const createPropRow = (label, value, showFloor = false) => {
-        if (!value || value === 'Unknown') return null;
+    // Helper to calculate percentage
+    const getPercent = (statKey, value) => {
+        const total = ALL_MARKET_ITEMS.length || 1;
+        const count = (ATTR_STATS[statKey] && ATTR_STATS[statKey][value]) || 1;
+        return ((count / total) * 100).toFixed(1);
+    };
+
+    // Helper to create property row with percent
+    const createPropRow = (label, value, statKey, showFloor = false) => {
+        if (!value || value === 'Unknown' || value === 'Gift') return null;
+        const percent = getPercent(statKey, value);
         const row = document.createElement('div');
         row.className = 'property-item';
         row.innerHTML = `
             <div class="prop-left"><div class="prop-name">${label}</div></div>
             <div class="prop-right">
                 <span class="prop-value-text" style="color:var(--accent-blue); font-weight:600;">${value}</span>
+                <span class="prop-percent-text" style="font-size:11px; color:rgba(77,178,255,0.7); margin-left:6px;">${percent}%</span>
                 ${showFloor ? `<span class="prop-floor-text" style="margin-left:8px;">${renderTonAmount(dailyPrice)}</span>` : ''}
             </div>
         `;
         return row;
     };
 
-    // Add Telegram Link row (clickable)
+    // Add Telegram Link row (using Telegram WebApp API to not close the app)
     const tgRow = document.createElement('div');
     tgRow.className = 'property-item';
+    tgRow.style.cursor = 'pointer';
     tgRow.innerHTML = `
         <div class="prop-left"><div class="prop-name">Telegram</div></div>
         <div class="prop-right">
-            <a href="${tgNftLink}" target="_blank" rel="noopener" style="color:var(--accent-blue); font-weight:600; text-decoration:none;">
+            <span style="color:var(--accent-blue); font-weight:600;">
                 ${giftBaseName} #${nftNum} 
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left:4px;vertical-align:middle;">
                     <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
                     <polyline points="15 3 21 3 21 9"></polyline>
                     <line x1="10" y1="14" x2="21" y2="3"></line>
                 </svg>
-            </a>
+            </span>
         </div>
     `;
+    tgRow.onclick = () => {
+        if (tg && tg.openTelegramLink) {
+            tg.openTelegramLink(tgNftLink);
+        } else {
+            window.open(tgNftLink, '_blank');
+        }
+    };
     propCont.appendChild(tgRow);
 
     // Add Rarity Row
@@ -646,25 +663,48 @@ async function openProductView(item, finalPrice, imgSrc) {
     `;
     propCont.appendChild(rarityRow);
 
-    // Add Model row
-    const modelRow = createPropRow('Model', item._modelName || giftBaseName, true);
-    if (modelRow) propCont.appendChild(modelRow);
+    // Get REAL model, backdrop, pattern from item attributes (not the NFT name!)
+    // These are parsed during loadLiveItems() into item._modelName, item._backdrop, item._symbol
+    // But we need to make sure they come from actual API attributes, not fallbacks
 
-    // Add Backdrop row  
-    const backdropRow = createPropRow('Backdrop', item._backdrop || 'Default', true);
-    if (backdropRow) propCont.appendChild(backdropRow);
+    let realModel = null;
+    let realBackdrop = null;
+    let realPattern = null;
 
-    // Add Pattern row
-    const patternRow = createPropRow('Pattern', item._symbol || 'Default', true);
-    if (patternRow) propCont.appendChild(patternRow);
-
-    // Add any additional attributes from API
     if (item.attributes && Array.isArray(item.attributes)) {
         item.attributes.forEach(attr => {
-            // Skip already shown attributes
             const t = attr.trait_type.toLowerCase();
-            if (t.includes('model') || t.includes('backdrop') || t.includes('pattern') || t.includes('symbol')) return;
-            const row = createPropRow(attr.trait_type, attr.value, true);
+            if (t.includes('model') || t === 'модель') realModel = attr.value;
+            else if (t.includes('backdrop') || t === 'фон') realBackdrop = attr.value;
+            else if (t.includes('pattern') || t.includes('symbol') || t === 'узор') realPattern = attr.value;
+        });
+    }
+
+    // Add Model row (e.g., "Ninja Turtle", NOT "Party Sparkler")
+    if (realModel) {
+        const modelRow = createPropRow('Model', realModel, 'model', true);
+        if (modelRow) propCont.appendChild(modelRow);
+    }
+
+    // Add Pattern/Symbol row (e.g., "Champagne")
+    if (realPattern) {
+        const patternRow = createPropRow('Pattern', realPattern, 'symbol', true);
+        if (patternRow) propCont.appendChild(patternRow);
+    }
+
+    // Add Backdrop row (e.g., "French Blue")
+    if (realBackdrop) {
+        const backdropRow = createPropRow('Backdrop', realBackdrop, 'bg', true);
+        if (backdropRow) propCont.appendChild(backdropRow);
+    }
+
+    // Add any additional attributes from API that we haven't shown yet
+    if (item.attributes && Array.isArray(item.attributes)) {
+        item.attributes.forEach(attr => {
+            const t = attr.trait_type.toLowerCase();
+            // Skip already shown
+            if (t.includes('model') || t.includes('backdrop') || t.includes('pattern') || t.includes('symbol') || t === 'модель' || t === 'фон' || t === 'узор') return;
+            const row = createPropRow(attr.trait_type, attr.value, t, true);
             if (row) propCont.appendChild(row);
         });
     }
