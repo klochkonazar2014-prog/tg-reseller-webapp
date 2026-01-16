@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://yhqbrm-ip-176-119-99-6.tunnelmole.net";
+const BACKEND_URL = "https://l8o345-ip-176-119-99-6.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -686,14 +686,26 @@ async function openProductView(item, finalPrice, imgSrc) {
 
     // 4. FALLBACK if attributes are missing (User requested this)
     // If we didn't find them in attributes loop, use the computed values from loadLiveItems
-    if (!realModel && item._modelName && item._modelName !== 'Gift' && item._modelName !== 'Unknown') {
-        realModel = item._modelName;
+    // OR fallback to the gift name itself (e.g. "Whip Cupcake") which is better than "Gift" or "Unknown"
+
+    if (!realModel) {
+        if (item._modelName && item._modelName !== 'Gift' && item._modelName !== 'Unknown') {
+            realModel = item._modelName;
+        } else {
+            realModel = giftBaseName; // Ultimate fallback: "Whip Cupcake"
+        }
     }
-    if (!realBackdrop && item._backdrop && item._backdrop !== 'Default' && item._backdrop !== 'Unknown') {
-        realBackdrop = item._backdrop;
+
+    if (!realBackdrop) {
+        if (item._backdrop && item._backdrop !== 'Default' && item._backdrop !== 'Unknown') {
+            realBackdrop = item._backdrop;
+        }
     }
-    if (!realPattern && item._symbol && item._symbol !== 'Default' && item._symbol !== 'Unknown') {
-        realPattern = item._symbol;
+
+    if (!realPattern) {
+        if (item._symbol && item._symbol !== 'Default' && item._symbol !== 'Unknown') {
+            realPattern = item._symbol;
+        }
     }
 
     // Add Model row (e.g., "Ninja Turtle")
