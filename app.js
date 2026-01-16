@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://nephd5-ip-176-119-99-6.tunnelmole.net";
+const BACKEND_URL = "https://yhqbrm-ip-176-119-99-6.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -684,7 +684,19 @@ async function openProductView(item, finalPrice, imgSrc) {
         });
     }
 
-    // Add Model row (e.g., "Ninja Turtle", NOT "Party Sparkler")
+    // 4. FALLBACK if attributes are missing (User requested this)
+    // If we didn't find them in attributes loop, use the computed values from loadLiveItems
+    if (!realModel && item._modelName && item._modelName !== 'Gift' && item._modelName !== 'Unknown') {
+        realModel = item._modelName;
+    }
+    if (!realBackdrop && item._backdrop && item._backdrop !== 'Default' && item._backdrop !== 'Unknown') {
+        realBackdrop = item._backdrop;
+    }
+    if (!realPattern && item._symbol && item._symbol !== 'Default' && item._symbol !== 'Unknown') {
+        realPattern = item._symbol;
+    }
+
+    // Add Model row (e.g., "Ninja Turtle")
     if (realModel) {
         const modelRow = createPropRow('Model', realModel, 'model', true);
         if (modelRow) propCont.appendChild(modelRow);
@@ -715,6 +727,8 @@ async function openProductView(item, finalPrice, imgSrc) {
 
     // Setup the main rent button
     const rentBtn = document.getElementById('main-rent-action-btn');
+    // Ensure we update price immediately
+    updateTotalPrice();
 
     rentBtn.onclick = async () => {
         if (!tonConnectUI.connected) {
