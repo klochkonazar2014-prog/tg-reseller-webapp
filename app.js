@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://pbl1hl-ip-176-119-99-6.tunnelmole.net";
+const BACKEND_URL = "https://9lfa7l-ip-176-119-99-6.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -516,7 +516,8 @@ function debounce(func, wait) {
 function generateFragmentUrls(n) {
     const match = n.match(/^(.+?)\s*#(\d+)$/);
     if (!match) return { image: null, lottie: null };
-    let name = match[1].trim().toLowerCase().replace(/\s+/g, '');
+    // Remove all non-alphanumeric characters except spaces, then remove spaces
+    let name = match[1].trim().toLowerCase().replace(/[^a-z0-9]/g, '');
     return { image: `https://nft.fragment.com/gift/${name}-${match[2]}.webp`, lottie: `https://nft.fragment.com/gift/${name}-${match[2]}.lottie.json` };
 }
 function observeNewCards() {
