@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://jpit4g-ip-176-119-99-6.tunnelmole.net";
+const BACKEND_URL = "https://t16ooq-ip-176-119-99-6.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -558,17 +558,31 @@ async function openProductView(item, finalPrice, imgSrc) {
     document.getElementById('view-col-name').innerText = `${colName} >`;
 
     // Ownership: Use the pre-calculated _realOwner or explicit fields. NEVER fallback to nft_address or "fragment.ton" unless    // Reset Owner to Loading...
-    const ownerEl = document.getElementById('view-owner');
-    if (ownerEl) ownerEl.textContent = 'Loading...';
+    // Ownership: Try to show Lender/Seller immediately from list item
+    let initialOwner = item.lender_address || item.seller_address || item._realOwner || 'Loading...';
 
-    // Fetch REAL Details to get Owner
+    // Fix format: EQ -> UQ
+    if (initialOwner.startsWith && initialOwner.startsWith('EQ')) {
+        initialOwner = 'UQ' + initialOwner.substring(2);
+    }
+    // Truncate
+    if (initialOwner.length > 15) {
+        initialOwner = initialOwner.substring(0, 4) + '...' + initialOwner.substring(initialOwner.length - 4);
+    }
+
+    const ownerEl = document.getElementById('view-owner');
+    if (ownerEl) ownerEl.textContent = initialOwner === 'Loading...' ? 'Loading...' : (initialOwner + ' >');
+
+    // Fetch REAL Details to get attributes and confirm Owner
     fetch(`${BACKEND_URL}/api/nft_details?nft_address=${item.nft_address}`)
         .then(r => r.json())
         .then(details => {
             let realOwnerName = 'Unknown';
 
-            // PRIORITY: Lender > Real Owner > Owner
-            if (details.lender_address || details.lender) {
+            // PRIORITY: List Item Lender (Most accurate for rentals) > API Lender > API Real Owner > API Owner
+            if (item.lender_address || item.seller_address) {
+                realOwnerName = item.lender_address || item.seller_address;
+            } else if (details.lender_address || details.lender) {
                 realOwnerName = details.lender_address || details.lender;
             } else if (details.real_owner) {
                 realOwnerName = details.real_owner;
