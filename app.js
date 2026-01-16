@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://xopzzy-ip-176-119-99-6.tunnelmole.net";
+const BACKEND_URL = "https://ye13ac-ip-176-119-99-6.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -599,6 +599,51 @@ async function openProductView(item, finalPrice, imgSrc) {
             }
 
             if (ownerEl) ownerEl.textContent = realOwnerName + ' >';
+
+            // ALSO UPDATE ATTRIBUTES (Model, Backdrop, Pattern) from detailed response
+            if (details.attributes && Array.isArray(details.attributes)) {
+                // Clear existing props to rebuild or just find specific rows?
+                // Easier to update if we search for them, but our props are dynamic.
+                // Let's try to map them to variables and re-run logic, or direct DOM manipulation if rows exist.
+
+                // Strategy: Parse new stats and update text content if row exists.
+                // We need to match "Model", "Backdrop", "Theme" etc.
+
+                details.attributes.forEach(attr => {
+                    const type = attr.trait_type;
+                    const val = attr.value;
+                    let targetLabel = null;
+
+                    if (type === 'Model' || type === 'Character') targetLabel = 'Model';
+                    else if (type === 'Backdrop' || type === 'Background') targetLabel = 'Backdrop';
+                    else if (type === 'Pattern' || type === 'Theme' || type === 'Symbol') targetLabel = 'Pattern';
+
+                    if (targetLabel) {
+                        // Find the row with this label
+                        const propRows = document.querySelectorAll('.property-item');
+                        propRows.forEach(row => {
+                            const nameSpan = row.querySelector('.prop-name');
+                            if (nameSpan && nameSpan.textContent.includes(targetLabel)) {
+                                const valSpan = row.querySelector('.prop-value-text');
+                                if (valSpan) valSpan.textContent = val;
+
+                                // Reset percent to empty or try to calc? 
+                                // For now, keep existing percent or hide if unknown. 
+                                // Real app has global stats, we might mismatch if we change value.
+                                // But correctness of Name is more important.
+                            }
+                        });
+                    }
+                });
+            }
+
+            // FORCE WHITE ICON AGAIN just in case
+            const svgs = document.querySelectorAll('.main-rent-btn svg, .main-rent-btn svg path');
+            svgs.forEach(s => {
+                s.style.fill = '#FFFFFF';
+                s.style.filter = 'brightness(0) invert(1)';
+            });
+
         })
         .catch(err => {
             console.error("Failed to fetch details", err);
