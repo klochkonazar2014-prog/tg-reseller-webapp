@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://trvyl3-ip-176-119-99-6.tunnelmole.net";
+const BACKEND_URL = "https://nakhj7-ip-176-119-99-6.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -129,10 +129,22 @@ async function loadLiveItems() {
                     item.attributes.forEach(attr => {
                         const t = attr.trait_type.toLowerCase();
                         const v = attr.value;
-                        if (t.includes('model')) item._modelName = v;
-                        else if (t.includes('backdrop')) item._backdrop = v;
-                        else if (t.includes('symbol') || t.includes('pattern')) item._symbol = v;
+                        if (t.includes('model') || t === 'модель') item._modelName = v;
+                        else if (t.includes('backdrop') || t === 'фон') item._backdrop = v;
+                        else if (t.includes('symbol') || t.includes('pattern') || t === 'узор') item._symbol = v;
                     });
+                }
+
+                // IMPROVED FALLBACK FOR FILTERS
+                // If API didn't give us the Model (common in bulk list), use the Gift Name!
+                // This populates the Filter with "Party Sparkler", "Blue Star", etc. instead of "Gift".
+                if (item._modelName === 'Gift' || item._modelName === 'Unknown') {
+                    const nameMatch = item.nft_name.match(/^(.*?)\s*(#\d+)?$/);
+                    if (nameMatch && nameMatch[1]) {
+                        item._modelName = nameMatch[1].trim();
+                    } else {
+                        item._modelName = item.nft_name; // Absolute fallback
+                    }
                 }
 
                 // Super-duper fallback for name
