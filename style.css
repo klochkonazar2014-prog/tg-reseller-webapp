@@ -1029,3 +1029,10 @@ body {
     filter: brightness(0) invert(1);
     -webkit-filter: brightness(0) invert(1);
 }
+
+
+/* Rounded Lottie animation corners */
+#view-lottie {
+    border-radius: 24px;
+    overflow: hidden;
+}

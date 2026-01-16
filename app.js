@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://fvnrw9-ip-176-119-99-6.tunnelmole.net";
+const BACKEND_URL = "https://wlcu9l-ip-176-119-99-6.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -591,73 +591,76 @@ async function openProductView(item, finalPrice, imgSrc) {
     const propCont = document.getElementById('view-properties');
     propCont.innerHTML = '';
 
-    const getPropRow = (label, val, key) => {
+    // Helper to create a simple detail row (no percent/floor)
+    const getSimpleRow = (label, val, isLink = false, linkUrl = '') => {
         if (!val || val === 'Unknown') return null;
-
-        // Use global stats or calculate on the fly for better counts
-        const total = ALL_MARKET_ITEMS.length || 1;
-        // Search in ATTR_STATS if key matches, otherwise fallback to 1
-        const statKey = key || label.toLowerCase();
-        const count = (ATTR_STATS[statKey] && ATTR_STATS[statKey][val]) || 1;
-        const percent = ((count / total) * 100).toFixed(2);
-
         const row = document.createElement('div');
         row.className = 'property-item';
-        row.innerHTML = `
-            <div class="prop-left">
-                <div class="prop-name">${label}</div>
-            </div>
-            <div class="prop-right">
-                <span class="prop-value-text" style="color:var(--accent-blue); font-weight:600;">${val}</span>
-                <span class="prop-percent-text" style="font-size:12px; color:rgba(77,178,255,0.7); margin: 0 8px;">${percent}%</span>
-                <span class="prop-floor-text">${renderTonAmount(dailyPrice)}</span>
-            </div>
-        `;
+        if (isLink && linkUrl) {
+            row.innerHTML = `
+                <div class="prop-left"><div class="prop-name">${label}</div></div>
+                <div class="prop-right">
+                    <a href="${linkUrl}" target="_blank" style="color:var(--accent-blue); font-weight:600; text-decoration:none;">${val} ↗</a>
+                </div>
+            `;
+        } else {
+            row.innerHTML = `
+                <div class="prop-left"><div class="prop-name">${label}</div></div>
+                <div class="prop-right">
+                    <span class="prop-value-text" style="color:var(--accent-blue); font-weight:600;">${val}</span>
+                </div>
+            `;
+        }
         return row;
     };
 
-    // Add Rarity Row at start
+    // Extract NFT number from name (e.g., "Party Sparkler #129702" -> 129702)
+    const nftNumMatch = item.nft_name.match(/#(\d+)/);
+    const nftNum = nftNumMatch ? nftNumMatch[1] : '1';
+
+    // Extract gift type from name (e.g., "Party Sparkler #129702" -> "Party Sparkler")
+    const giftType = item.nft_name.replace(/#\d+/, '').trim().replace(/\s+/g, '-').toLowerCase();
+    const tgNftLink = `https://t.me/nft/${giftType}-${nftNum}`;
+
+    // Add Telegram Link row
+    const tgRow = getSimpleRow('Telegram', item.nft_name, true, tgNftLink);
+    if (tgRow) propCont.appendChild(tgRow);
+
+    // Add Rarity Row
     const rarityRow = document.createElement('div');
     rarityRow.className = 'property-item';
     rarityRow.innerHTML = `
         <div class="prop-left"><div class="prop-name">Rarity</div></div>
         <div class="prop-right">
-            <span class="prop-value-text" style="color:#fff;">${item._nftNum || "1"}/76562</span> <span style="color:var(--accent-blue);">(i)</span>
+            <span class="prop-value-text" style="color:#fff;">${nftNum}/76562</span> <span style="color:var(--accent-blue);">(i)</span>
         </div>
     `;
     propCont.appendChild(rarityRow);
 
-    // Dynamic properties from item.attributes
+    // Add Model, Backdrop, Pattern from attributes or fallback
     if (item.attributes && Array.isArray(item.attributes)) {
         item.attributes.forEach(attr => {
-            const row = getPropRow(attr.trait_type, attr.value);
+            const row = getSimpleRow(attr.trait_type, attr.value);
             if (row) propCont.appendChild(row);
         });
     } else {
-        // Fallback to basic details if no attributes array
-        const rows = [
-            getPropRow('Model', item._modelName || 'Gift', 'model'),
-            getPropRow('Backdrop', item._backdrop || 'Common', 'bg'),
-            getPropRow('Symbol', item._symbol || 'Common', 'symbol')
-        ];
-        rows.forEach(r => { if (r) propCont.appendChild(r); });
+        // Fallback to computed properties
+        const modelRow = getSimpleRow('Model', item._modelName || colName);
+        const backdropRow = getSimpleRow('Backdrop', item._backdrop || 'Default');
+        const patternRow = getSimpleRow('Pattern', item._symbol || 'Default');
+        if (modelRow) propCont.appendChild(modelRow);
+        if (backdropRow) propCont.appendChild(backdropRow);
+        if (patternRow) propCont.appendChild(patternRow);
     }
 
-    const cbtn = document.getElementById('confirm-pay-btn');
-    const tbtn = document.getElementById('ton-connect-btn');
+    // Setup the main rent button
+    const rentBtn = document.getElementById('main-rent-action-btn');
 
-    const checkStatus = () => {
-        if (tonConnectUI.connected) {
-            cbtn.style.display = 'block';
-            tbtn.style.display = 'none';
-        } else {
-            cbtn.style.display = 'none';
-            tbtn.style.display = 'block';
+    rentBtn.onclick = async () => {
+        if (!tonConnectUI.connected) {
+            await tonConnectUI.openModal();
+            return;
         }
-    };
-    checkStatus();
-
-    cbtn.onclick = async () => {
         const durInput = document.getElementById('rent-duration-input');
         const days = parseInt(durInput.value) || 1;
         const total = (dailyPrice * days).toFixed(2);
@@ -684,6 +687,7 @@ async function openProductView(item, finalPrice, imgSrc) {
             tg.showAlert("Ошибка оплаты или отмена.");
         }
     };
+
 }
 
 function adjustDuration(delta) {
@@ -703,9 +707,9 @@ function updateTotalPrice() {
     const dur = parseInt(input.value) || 1;
     const dp = (parseFloat(CURRENT_PAYMENT_ITEM.price_per_day) / 1e9);
     const total = (dp * dur).toFixed(2);
-    const btn = document.getElementById('confirm-pay-btn');
-    if (btn) {
-        btn.innerHTML = `Rent for ${renderTonAmount(total)}`;
+    const priceSpan = document.getElementById('rent-btn-price');
+    if (priceSpan) {
+        priceSpan.innerText = total;
     }
 }
 
