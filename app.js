@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://7lkfm5-ip-176-119-99-6.tunnelmole.net";
+const BACKEND_URL = "https://xopzzy-ip-176-119-99-6.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -568,11 +568,42 @@ async function openProductView(item, finalPrice, imgSrc) {
     document.getElementById('view-collection').innerText = `${colName} >`;
     document.getElementById('view-col-name').innerText = `${colName} >`;
 
-    // Ownership: Use the pre-calculated _realOwner or explicit fields. NEVER fallback to nft_address or "fragment.ton" unless verified
-    const ownerAddr = item._realOwner || item.owner_address || (typeof item.owner === 'string' ? item.owner : null);
-    const ownerName = item.owner_name || (ownerAddr ? (ownerAddr.slice(0, 4) + "..." + ownerAddr.slice(-4)) : "Unknown");
-    document.getElementById('view-owner').innerText = ownerName + " >";
+    // Ownership: Use the pre-calculated _realOwner or explicit fields. NEVER fallback to nft_address or "fragment.ton" unless    // Reset Owner to Loading...
+    const ownerEl = document.getElementById('view-owner');
+    if (ownerEl) ownerEl.textContent = 'Loading...';
 
+    // Fetch REAL Details to get Owner
+    fetch(`${BACKEND_URL}/api/nft_details?nft_address=${item.nft_address}`)
+        .then(r => r.json())
+        .then(details => {
+            let realOwnerName = 'Unknown';
+            if (details.owner) {
+                if (typeof details.owner === 'object') {
+                    realOwnerName = details.owner.name || details.owner.address || 'Unknown';
+                    // Shorten address if it is one
+                    if (realOwnerName.length > 15 && realOwnerName.startsWith('UQ')) {
+                        realOwnerName = realOwnerName.substring(0, 4) + '...' + realOwnerName.substring(realOwnerName.length - 4);
+                    }
+                } else if (typeof details.owner === 'string') {
+                    // It's a string address
+                    realOwnerName = details.owner;
+                    if (realOwnerName.length > 15) {
+                        realOwnerName = realOwnerName.substring(0, 4) + '...' + realOwnerName.substring(realOwnerName.length - 4);
+                    }
+                }
+            } else if (details.owner_address) {
+                realOwnerName = details.owner_address;
+                if (realOwnerName.length > 15) {
+                    realOwnerName = realOwnerName.substring(0, 4) + '...' + realOwnerName.substring(realOwnerName.length - 4);
+                }
+            }
+
+            if (ownerEl) ownerEl.textContent = realOwnerName + ' >';
+        })
+        .catch(err => {
+            console.error("Failed to fetch details", err);
+            if (ownerEl) ownerEl.textContent = 'Unknown >';
+        });
     const shortAddr = item.nft_address.slice(0, 6) + "..." + item.nft_address.slice(-4);
     document.getElementById('view-address').innerHTML = `${shortAddr} <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom:-2px; cursor:pointer;" onclick="copyToClipboard('${item.nft_address}')"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
 
