@@ -102,7 +102,7 @@ body {
     border: none;
     width: 48px;
     height: 48px;
-    border-radius: 12px;
+    border-radius: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -357,7 +357,7 @@ body {
     background: var(--accent-blue);
     color: #fff;
     font-weight: 700;
-    border-radius: 12px;
+    border-radius: 20px;
     padding: 10px;
     display: flex;
     align-items: center;
@@ -1022,4 +1022,10 @@ body {
     font-size: 14px;
     color: #8b9bb4;
     line-height: 1.6;
+}
+
+/* White TON icon override for Blue Button */
+.main-rent-btn .icon-ton::before {
+    filter: brightness(0) invert(1);
+    -webkit-filter: brightness(0) invert(1);
 }
