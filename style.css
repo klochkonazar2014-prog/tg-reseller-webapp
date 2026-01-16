@@ -40,10 +40,10 @@ body {
 .icon-ton::before {
     content: "";
     display: inline-block;
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     margin-right: 4px;
-    background-image: url("data:image/svg+xml,%3Csvg width='56' height='56' viewBox='0 0 56 56' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M28 48C41.2548 48 52 39.0457 52 28C52 16.9543 41.2548 8 28 8C14.7452 8 4 16.9543 4 28C4 39.0457 14.7452 48 28 48Z' fill='%230098EA'/%3E%3Cpath d='M28.0001 13.9189L15.9395 24.4784L28.0001 42.0811L40.0606 24.4784L28.0001 13.9189ZM39.3789 23.3213L28.0001 14.6133L15.4431 22.3168L28.0001 10.9575L40.5571 22.3168L39.3789 23.3213Z' fill='white'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg width='32' height='32' viewBox='0 0 32 32' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M16 30C23.732 30 30 23.732 30 16C30 8.26801 23.732 2 16 2C8.26801 2 2 8.26801 2 16C2 23.732 8.26801 30 16 30Z' fill='%230098EA'/%3E%3Cpath d='M16 10L9 16L16 26L23 16L16 10Z' fill='white'/%3E%3C/svg%3E");
     background-size: contain;
     background-repeat: no-repeat;
     vertical-align: middle;
