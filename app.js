@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://bdkvyz-ip-176-119-99-6.tunnelmole.net";
+const BACKEND_URL = "https://w8sqhg-ip-176-119-99-6.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -103,17 +103,19 @@ function switchTab(index) {
 
 async function loadLiveItems() {
     const loader = document.getElementById('top-loader');
-    try {
-        // Increased limit to 50k to ensure we see ALL items from ALL collections
-        const response = await fetch(`${BACKEND_URL}/api/items?limit=50000&t=${Date.now()}`);
-        const data = await response.json();
-
-        // Hide global loading screen
+    const hideLoading = () => {
         const screen = document.getElementById('loading-screen');
         if (screen) {
             screen.style.opacity = '0';
             setTimeout(() => screen.style.display = 'none', 500);
         }
+    };
+
+    try {
+        // Limit to 5k - enough for a massive catalog, but safe for all phones
+        const response = await fetch(`${BACKEND_URL}/api/items?limit=5000&t=${Date.now()}`);
+        if (!response.ok) throw new Error("Server Error");
+        const data = await response.json();
 
         if (data.items) {
             ALL_MARKET_ITEMS = data.items.map(item => {
@@ -176,13 +178,14 @@ async function loadLiveItems() {
             window.STATIC_COLLECTIONS = Array.from(uniqueCols.values());
 
             initFilterLists();
-            initFilterLists();
-            // initVisualChips(); // DISABLED: Takes up too much space and kills dropdowns
             calculateStats();
             applyHeaderSearch();
         }
+        hideLoading();
     } catch (e) {
+        console.error("Load Error:", e);
         if (loader) loader.innerText = "Ошибка подключения к рынку.";
+        hideLoading();
     }
 }
 
