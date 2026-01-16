@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://mps4a6-ip-176-119-99-6.tunnelmole.net";
+const BACKEND_URL = "https://nephd5-ip-176-119-99-6.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -136,10 +136,13 @@ async function loadLiveItems() {
                 }
 
                 // Super-duper fallback for name
-                if (item._modelName === 'Gift') {
-                    const cleanName = item.nft_name.split('#')[0].trim();
-                    if (cleanName) item._modelName = cleanName;
-                }
+                // Extract owner address safely
+                let finalOwner = null;
+                if (item.owner_address) finalOwner = item.owner_address;
+                else if (item.owner && item.owner.address) finalOwner = item.owner.address;
+                else if (typeof item.owner === 'string') finalOwner = item.owner;
+
+                item._realOwner = finalOwner; // Store explicitly
 
                 item._realImage = item.image || item.image_url || (item._collection ? item._collection.image_url : null);
                 return item;
@@ -565,8 +568,9 @@ async function openProductView(item, finalPrice, imgSrc) {
     document.getElementById('view-collection').innerText = `${colName} >`;
     document.getElementById('view-col-name').innerText = `${colName} >`;
 
-    // Ownership
-    const ownerName = item.owner_name || (item.nft_address.slice(0, 4) + "..." + item.nft_address.slice(-4));
+    // Ownership: Use the pre-calculated _realOwner or explicit fields. NEVER fallback to nft_address or "fragment.ton" unless verified
+    const ownerAddr = item._realOwner || item.owner_address || (typeof item.owner === 'string' ? item.owner : null);
+    const ownerName = item.owner_name || (ownerAddr ? (ownerAddr.slice(0, 4) + "..." + ownerAddr.slice(-4)) : "Unknown");
     document.getElementById('view-owner').innerText = ownerName + " >";
 
     const shortAddr = item.nft_address.slice(0, 6) + "..." + item.nft_address.slice(-4);

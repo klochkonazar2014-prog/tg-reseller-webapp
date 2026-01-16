@@ -1036,3 +1036,12 @@ body {
     border-radius: 24px;
     overflow: hidden;
 }
+
+
+/* White TON icon override for Blue Button (Backup) */
+.main-rent-btn .icon-ton::before,
+.main-rent-btn svg path {
+    fill: #FFFFFF !important;
+    filter: brightness(0) invert(1);
+    -webkit-filter: brightness(0) invert(1);
+}
