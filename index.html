@@ -97,17 +97,22 @@
 
             <div class="rent-action-row" style="display: flex; gap: 12px; margin-top: 16px;">
                 <div class="rent-period-stepper"
-                    style="display: flex; background: rgba(255, 255, 255, 0.1); border-radius: 20px; height: 52px; flex: 0.35; overflow: hidden;">
+                    style="display: flex; background: rgba(36, 46, 56, 0.9); border-radius: 16px; height: 52px; flex: 0.3; overflow: hidden; align-items:center;">
                     <button class="step-minus" onclick="adjustDuration(-1)"
-                        style="flex:1; border:none; background:none; color:#8b9bb4; font-size:24px; cursor:pointer;">−</button>
+                        style="flex:1; border:none; background:none; color:#8b9bb4; font-size:22px; cursor:pointer; height:100%;">−</button>
                     <input type="number" id="rent-duration-input" value="1" readonly
-                        style="width:40px; background:none; border:none; color:#fff; text-align:center; font-weight:700; font-size:15px; pointer-events:none;">
+                        style="width:32px; background:none; border:none; color:#fff; text-align:center; font-weight:700; font-size:15px; pointer-events:none;">
                     <button class="step-plus" onclick="adjustDuration(1)"
-                        style="flex:1; border:none; background:none; color:#8b9bb4; font-size:24px; cursor:pointer;">+</button>
+                        style="flex:1; border:none; background:none; color:#8b9bb4; font-size:22px; cursor:pointer; height:100%;">+</button>
                 </div>
                 <button id="main-rent-action-btn" class="main-rent-btn"
-                    style="flex: 1; background: linear-gradient(135deg, #0098EA 0%, #0077CC 100%); border:none; border-radius:20px; height:52px; color:#fff; font-weight:700; font-size:14px; display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer;">
-                    <span class="icon-ton"></span> Арендовать за <span id="rent-btn-price">0.00</span>
+                    style="flex: 1; background: linear-gradient(135deg, #0098EA 0%, #0077CC 100%); border:none; border-radius:16px; height:52px; color:#fff; font-weight:700; font-size:14px; display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" clip-rule="evenodd"
+                            d="M14.1839 17.7069C13.6405 18.6507 13.3688 19.1226 13.0591 19.348C12.4278 19.8074 11.5723 19.8074 10.941 19.348C10.6312 19.1226 10.3595 18.6507 9.81613 17.7069L5.52066 10.2464C4.76864 8.94024 4.39263 8.28717 4.33762 7.75894C4.2255 6.68236 4.81894 5.65591 5.80788 5.21589C6.29309 5 7.04667 5 8.55383 5H15.4462C16.9534 5 17.7069 5 18.1922 5.21589C19.1811 5.65591 19.7745 6.68236 19.6624 7.75894C19.6074 8.28717 19.2314 8.94024 18.4794 10.2464L14.1839 17.7069ZM11.1 16.3412L6.56139 8.48002C6.31995 8.06185 6.19924 7.85276 6.18146 7.68365C6.14523 7.33896 6.33507 7.01015 6.65169 6.86919C6.80703 6.80002 7.04847 6.80002 7.53133 6.80002H7.53134L11.1 6.80002V16.3412ZM12.9 16.3412L17.4387 8.48002C17.6801 8.06185 17.8008 7.85276 17.8186 7.68365C17.8548 7.33896 17.665 7.01015 17.3484 6.86919C17.193 6.80002 16.9516 6.80002 16.4687 6.80002L12.9 6.80002V16.3412Z"
+                            fill="#FFFFFF" />
+                    </svg>
+                    Арендовать за <span id="rent-btn-price">0.00</span>
                 </button>
                 <!-- Hidden TonConnect button for SDK initialization -->
                 <div id="ton-connect-btn" style="display:none;"></div>
@@ -385,7 +390,7 @@
         </div>
     </div>
 
-    <script src="app.js?v=1.1.138"></script>
+    <script src="app.js?v=1.1.141"></script>
 </body>
 
 </html>

@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://hd6tny-ip-176-119-99-6.tunnelmole.net";
+const BACKEND_URL = "https://mtrrch-ip-176-119-99-6.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -591,66 +591,82 @@ async function openProductView(item, finalPrice, imgSrc) {
     const propCont = document.getElementById('view-properties');
     propCont.innerHTML = '';
 
-    // Helper to create a simple detail row (no percent/floor)
-    const getSimpleRow = (label, val, isLink = false, linkUrl = '') => {
-        if (!val || val === 'Unknown') return null;
-        const row = document.createElement('div');
-        row.className = 'property-item';
-        if (isLink && linkUrl) {
-            row.innerHTML = `
-                <div class="prop-left"><div class="prop-name">${label}</div></div>
-                <div class="prop-right">
-                    <a href="${linkUrl}" target="_blank" style="color:var(--accent-blue); font-weight:600; text-decoration:none;">${val} ↗</a>
-                </div>
-            `;
-        } else {
-            row.innerHTML = `
-                <div class="prop-left"><div class="prop-name">${label}</div></div>
-                <div class="prop-right">
-                    <span class="prop-value-text" style="color:var(--accent-blue); font-weight:600;">${val}</span>
-                </div>
-            `;
-        }
-        return row;
-    };
-
     // Extract NFT number from name (e.g., "Party Sparkler #129702" -> 129702)
     const nftNumMatch = item.nft_name.match(/#(\d+)/);
     const nftNum = nftNumMatch ? nftNumMatch[1] : '1';
 
-    // Extract gift type from name (e.g., "Party Sparkler #129702" -> "Party Sparkler")
-    const giftType = item.nft_name.replace(/#\d+/, '').trim().replace(/\s+/g, '-').toLowerCase();
-    const tgNftLink = `https://t.me/nft/${giftType}-${nftNum}`;
+    // Build Telegram NFT link - format: t.me/nft/GiftSlug-Number
+    const giftBaseName = item.nft_name.replace(/#\d+/, '').trim();
+    const giftSlug = giftBaseName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join('');
+    const tgNftLink = `https://t.me/nft/${giftSlug}-${nftNum}`;
 
-    // Add Telegram Link row
-    const tgRow = getSimpleRow('Telegram', item.nft_name, true, tgNftLink);
-    if (tgRow) propCont.appendChild(tgRow);
+    // Helper to create property row
+    const createPropRow = (label, value, showFloor = false) => {
+        if (!value || value === 'Unknown') return null;
+        const row = document.createElement('div');
+        row.className = 'property-item';
+        row.innerHTML = `
+            <div class="prop-left"><div class="prop-name">${label}</div></div>
+            <div class="prop-right">
+                <span class="prop-value-text" style="color:var(--accent-blue); font-weight:600;">${value}</span>
+                ${showFloor ? `<span class="prop-floor-text" style="margin-left:8px;">${renderTonAmount(dailyPrice)}</span>` : ''}
+            </div>
+        `;
+        return row;
+    };
+
+    // Add Telegram Link row (clickable)
+    const tgRow = document.createElement('div');
+    tgRow.className = 'property-item';
+    tgRow.innerHTML = `
+        <div class="prop-left"><div class="prop-name">Telegram</div></div>
+        <div class="prop-right">
+            <a href="${tgNftLink}" target="_blank" rel="noopener" style="color:var(--accent-blue); font-weight:600; text-decoration:none;">
+                ${giftBaseName} #${nftNum} 
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left:4px;vertical-align:middle;">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                    <polyline points="15 3 21 3 21 9"></polyline>
+                    <line x1="10" y1="14" x2="21" y2="3"></line>
+                </svg>
+            </a>
+        </div>
+    `;
+    propCont.appendChild(tgRow);
 
     // Add Rarity Row
+    const totalSupply = item._collection?.total_supply || 76562;
     const rarityRow = document.createElement('div');
     rarityRow.className = 'property-item';
     rarityRow.innerHTML = `
         <div class="prop-left"><div class="prop-name">Rarity</div></div>
         <div class="prop-right">
-            <span class="prop-value-text" style="color:#fff;">${nftNum}/76562</span> <span style="color:var(--accent-blue);">(i)</span>
+            <span class="prop-value-text" style="color:#fff;">${nftNum}/${totalSupply}</span>
+            <span style="color:var(--accent-blue); margin-left:6px; cursor:pointer;">(i)</span>
         </div>
     `;
     propCont.appendChild(rarityRow);
 
-    // Add Model, Backdrop, Pattern from attributes or fallback
+    // Add Model row
+    const modelRow = createPropRow('Model', item._modelName || giftBaseName, true);
+    if (modelRow) propCont.appendChild(modelRow);
+
+    // Add Backdrop row  
+    const backdropRow = createPropRow('Backdrop', item._backdrop || 'Default', true);
+    if (backdropRow) propCont.appendChild(backdropRow);
+
+    // Add Pattern row
+    const patternRow = createPropRow('Pattern', item._symbol || 'Default', true);
+    if (patternRow) propCont.appendChild(patternRow);
+
+    // Add any additional attributes from API
     if (item.attributes && Array.isArray(item.attributes)) {
         item.attributes.forEach(attr => {
-            const row = getSimpleRow(attr.trait_type, attr.value);
+            // Skip already shown attributes
+            const t = attr.trait_type.toLowerCase();
+            if (t.includes('model') || t.includes('backdrop') || t.includes('pattern') || t.includes('symbol')) return;
+            const row = createPropRow(attr.trait_type, attr.value, true);
             if (row) propCont.appendChild(row);
         });
-    } else {
-        // Fallback to computed properties
-        const modelRow = getSimpleRow('Model', item._modelName || colName);
-        const backdropRow = getSimpleRow('Backdrop', item._backdrop || 'Default');
-        const patternRow = getSimpleRow('Pattern', item._symbol || 'Default');
-        if (modelRow) propCont.appendChild(modelRow);
-        if (backdropRow) propCont.appendChild(backdropRow);
-        if (patternRow) propCont.appendChild(patternRow);
     }
 
     // Setup the main rent button
