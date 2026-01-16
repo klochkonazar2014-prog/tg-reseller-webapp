@@ -6,17 +6,22 @@
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>MRKT</title>
-    <script src="https://telegram.org/js/telegram-web-app.js?v=1.1.32"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js?v=1.1.33"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <script src="lottie.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=3.0.7">
+    <link rel="stylesheet" href="style.css?v=3.0.8">
     <style>
+        /* CRITICAL OVERRIDES - DO NOT REMOVE */
         /* CRITICAL OVERRIDES - DO NOT REMOVE */
         .main-rent-btn svg,
         .main-rent-btn svg path,
         .main-rent-btn .icon-ton::before,
         #main-rent-action-btn svg,
-        #main-rent-action-btn svg path {
+        #main-rent-action-btn svg path,
+        .card-price-btn svg,
+        .card-price-btn svg path,
+        .card-cart-btn svg,
+        .card-cart-btn svg path {
             fill: #FFFFFF !important;
             stroke: #FFFFFF !important;
             filter: brightness(0) invert(1) !important;
@@ -24,7 +29,9 @@
             opacity: 1 !important;
         }
 
-        .main-rent-btn {
+        .main-rent-btn,
+        .card-price-btn,
+        .card-cart-btn {
             background: #1c1c1e !important;
             /* Dark button */
             color: #ffffff !important;
@@ -410,7 +417,7 @@
         </div>
     </div>
 
-    <script src="app.js?v=3.0.7"></script>
+    <script src="app.js?v=3.0.8"></script>
 </body>
 
 </html>

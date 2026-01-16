@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://t16ooq-ip-176-119-99-6.tunnelmole.net";
+const BACKEND_URL = "https://2twc3p-ip-176-119-99-6.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -579,35 +579,29 @@ async function openProductView(item, finalPrice, imgSrc) {
         .then(details => {
             let realOwnerName = 'Unknown';
 
-            // PRIORITY: List Item Lender (Most accurate for rentals) > API Lender > API Real Owner > API Owner
-            if (item.lender_address || item.seller_address) {
-                realOwnerName = item.lender_address || item.seller_address;
-            } else if (details.lender_address || details.lender) {
-                realOwnerName = details.lender_address || details.lender;
-            } else if (details.real_owner) {
-                realOwnerName = details.real_owner;
-            } else if (details.owner) {
-                if (typeof details.owner === 'object') {
-                    realOwnerName = details.owner.name || details.owner.address || 'Unknown';
-                } else {
-                    realOwnerName = details.owner;
-                }
-            } else if (details.owner_address) {
-                realOwnerName = details.owner_address;
-            }
+            // PRIORITY: Lender (Name/Addr) > Owner Name > Real Owner > Owner Address
+            if (details.lender) realOwnerName = details.lender;
+            else if (details.lender_address) realOwnerName = details.lender_address;
+            else if (details.owner && details.owner.name) realOwnerName = details.owner.name;
+            else if (details.real_owner) realOwnerName = details.real_owner;
+            else if (details.owner) {
+                realOwnerName = (typeof details.owner === 'object') ? (details.owner.address || 'Unknown') : details.owner;
+            } else if (details.owner_address) realOwnerName = details.owner_address;
 
-            // Fix format: EQ -> UQ (User Friendly)
-            if (realOwnerName && realOwnerName.startsWith('EQ')) {
+            // EQ -> UQ conversion for addresses
+            if (realOwnerName && realOwnerName.startsWith('EQ') && realOwnerName.length > 30) {
                 realOwnerName = 'UQ' + realOwnerName.substring(2);
             }
 
-            if (realOwnerName.length > 15) {
+            // Truncate only if it looks like an address (long, no dots usually)
+            // Preserves "user.ton" or names
+            if (realOwnerName.length > 15 && !realOwnerName.includes('.')) {
                 realOwnerName = realOwnerName.substring(0, 4) + '...' + realOwnerName.substring(realOwnerName.length - 4);
             }
 
             if (ownerEl) ownerEl.textContent = realOwnerName + ' >';
 
-            // ALSO UPDATE ATTRIBUTES (Model, Backdrop, Pattern) from detailed response
+            // ALSO UPDATE ATTRIBUTES from detailed response
             if (details.attributes && Array.isArray(details.attributes)) {
                 // Clear existing props to rebuild or just find specific rows?
                 // Easier to update if we search for them, but our props are dynamic.
