@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://ygfkyb-ip-176-119-99-6.tunnelmole.net";
+const BACKEND_URL = "https://bipefb-ip-176-119-99-6.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -209,6 +209,15 @@ function calculateStats() {
         if (item._modelName) ATTR_STATS.model[item._modelName] = (ATTR_STATS.model[item._modelName] || 0) + 1;
         if (item._backdrop) ATTR_STATS.bg[item._backdrop] = (ATTR_STATS.bg[item._backdrop] || 0) + 1;
         if (item._symbol) ATTR_STATS.symbol[item._symbol] = (ATTR_STATS.symbol[item._symbol] || 0) + 1;
+
+        // Also track all other attributes
+        if (item.attributes && Array.isArray(item.attributes)) {
+            item.attributes.forEach(attr => {
+                const key = attr.trait_type.toLowerCase();
+                if (!ATTR_STATS[key]) ATTR_STATS[key] = {};
+                ATTR_STATS[key][attr.value] = (ATTR_STATS[key][attr.value] || 0) + 1;
+            });
+        }
     });
 }
 
@@ -582,8 +591,12 @@ async function openProductView(item, finalPrice, imgSrc) {
 
     const getPropRow = (label, val, key) => {
         if (!val || val === 'Unknown') return null;
+
+        // Use global stats or calculate on the fly for better counts
         const total = ALL_MARKET_ITEMS.length || 1;
-        const count = ATTR_STATS[key][val] || 1;
+        // Search in ATTR_STATS if key matches, otherwise fallback to 1
+        const statKey = key || label.toLowerCase();
+        const count = (ATTR_STATS[statKey] && ATTR_STATS[statKey][val]) || 1;
         const percent = ((count / total) * 100).toFixed(2);
 
         const row = document.createElement('div');
@@ -612,12 +625,21 @@ async function openProductView(item, finalPrice, imgSrc) {
     `;
     propCont.appendChild(rarityRow);
 
-    const rows = [
-        getPropRow('Model', item._modelName || 'Gift', 'model'),
-        getPropRow('Backdrop', item._backdrop || 'Common', 'bg'),
-        getPropRow('Symbol', item._symbol || 'Common', 'symbol')
-    ];
-    rows.forEach(r => { if (r) propCont.appendChild(r); });
+    // Dynamic properties from item.attributes
+    if (item.attributes && Array.isArray(item.attributes)) {
+        item.attributes.forEach(attr => {
+            const row = getPropRow(attr.trait_type, attr.value);
+            if (row) propCont.appendChild(row);
+        });
+    } else {
+        // Fallback to basic details if no attributes array
+        const rows = [
+            getPropRow('Model', item._modelName || 'Gift', 'model'),
+            getPropRow('Backdrop', item._backdrop || 'Common', 'bg'),
+            getPropRow('Symbol', item._symbol || 'Common', 'symbol')
+        ];
+        rows.forEach(r => { if (r) propCont.appendChild(r); });
+    }
 
     const cbtn = document.getElementById('confirm-pay-btn');
     const tbtn = document.getElementById('ton-connect-btn');
