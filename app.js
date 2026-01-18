@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://ixqwgh-ip-176-119-99-6.tunnelmole.net";
+const BACKEND_URL = "https://gr4qoa-ip-176-119-99-6.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -282,34 +282,46 @@ function initFilterLists() {
     });
 
     const maps = [
-        { id: 'model-list-container', key: 'model', search: 'filter-search-model' },
-        { id: 'bg-list-container', key: 'bg', search: 'filter-search-bg' },
-        { id: 'symbol-list-container', key: 'symbol', search: 'filter-search-symbol' }
+        { id: 'model-list-container', key: 'model', search: 'filter-search-model', label: 'модели' },
+        { id: 'bg-list-container', key: 'bg', search: 'filter-search-bg', label: 'фона' },
+        { id: 'symbol-list-container', key: 'symbol', search: 'filter-search-symbol', label: 'символа' }
     ];
+
+    const selectedNFT = ACTIVE_FILTERS.nft;
 
     maps.forEach(m => {
         const cont = document.getElementById(m.id);
-        const sVal = document.getElementById(m.search).value.toLowerCase();
-        if (!cont) return;
+        const sInput = document.getElementById(m.search);
+        if (!cont || !sInput) return;
+        const sVal = sInput.value.toLowerCase();
         cont.innerHTML = '';
+
+        if (selectedNFT === 'all') {
+            cont.innerHTML = `<div style="padding:30px 20px; color:#8b9bb4; text-align:center; font-size:14px; background:rgba(255,255,255,0.02); border-radius:12px; margin:10px auto; width:calc(100% - 40px);">Сначала выберите NFT</div>`;
+            sInput.disabled = true;
+            sInput.placeholder = "Выберите NFT выше...";
+            return;
+        }
+
+        sInput.disabled = false;
+        sInput.placeholder = `Поиск ${m.label}...`;
 
         if (!sVal || "выбрать все".includes(sVal)) {
             addFilterItem(cont, "Выбрать все", "all", m.key, ACTIVE_FILTERS[m.key] === 'all');
         }
 
-        const items = ATTR_STATS[m.key] || [];
+        const items = (ATTR_STATS[m.key] && ATTR_STATS[m.key][selectedNFT]) || [];
         items.forEach(item => {
             if (item.name.toLowerCase().includes(sVal)) {
                 let icon = item.image;
-                // Special visual mapping overrides for bg/symbol if icon is missing
                 if (!icon && (m.key === 'bg' || m.key === 'symbol')) icon = VISUAL_MAP[m.key][item.name] || null;
-                addFilterItem(cont, item.name, item.name, m.key, ACTIVE_FILTERS[m.key] === item.name, icon);
+                addFilterItem(cont, item.name, item.name, m.key, ACTIVE_FILTERS[m.key] === item.name, icon, selectedNFT);
             }
         });
     });
 }
 
-function addFilterItem(container, name, value, key, isSelected, imgUrl) {
+function addFilterItem(container, name, value, key, isSelected, imgUrl, collectionContext) {
     const div = document.createElement('div');
     div.className = `filter-list-item ${isSelected ? 'selected' : ''}`;
 
@@ -319,10 +331,11 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl) {
     } else if (key === 'symbol' && VISUAL_MAP.symbol[name]) {
         visualHTML = `<img src="${VISUAL_MAP.symbol[name]}" class="filter-img" style="filter: invert(1); background: rgba(255,255,255,0.08); padding:4px;" onerror="this.style.display='none'">`;
     } else if (imgUrl) {
-        visualHTML = `<img src="${imgUrl}" class="filter-img" onerror="this.src='https://nft.fragment.com/guide/gift.svg'">`;
+        visualHTML = `<img src="${imgUrl}" class="filter-img" loading="lazy" onerror="this.src='https://nft.fragment.com/guide/gift.svg'">`;
     } else {
-        // Fallback for collections/models if no image
-        visualHTML = `<div style="width:32px; height:32px; border-radius:8px; background: rgba(255,255,255,0.05); display:flex; align-items:center; justify-content:center; color:#555; font-size:10px;">NFT</div>`;
+        // Construct dynamic fallback icon
+        let label = (key === 'nft' || key === 'model') ? name.split(' ')[0].substring(0, 3).toUpperCase() : 'NFT';
+        visualHTML = `<div style="width:32px; height:32px; border-radius:8px; background: rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.05); display:flex; align-items:center; justify-content:center; color:#555; font-size:9px; font-weight:700;">${label}</div>`;
     }
 
     div.innerHTML = `
@@ -339,6 +352,19 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl) {
     div.onclick = (e) => {
         e.stopPropagation();
         ACTIVE_FILTERS[key] = value;
+
+        // Reset sub-filters if collection changed
+        if (key === 'nft') {
+            ACTIVE_FILTERS.model = 'all';
+            ACTIVE_FILTERS.bg = 'all';
+            ACTIVE_FILTERS.symbol = 'all';
+            // Also clear search inputs for sub-filters
+            ['model', 'bg', 'symbol'].forEach(k => {
+                const inp = document.getElementById(`filter-search-${k}`);
+                if (inp) inp.value = '';
+            });
+        }
+
         initFilterLists();
         applyHeaderSearch();
     };
@@ -349,23 +375,6 @@ function applyHeaderSearch() {
     loadLiveItems(true);
 }
 
-function observeNewCards() {
-    // Legacy mapping to handle lottie animations on new cards
-    document.querySelectorAll('.card.has-lottie:not(.lottie-inited)').forEach(card => {
-        card.classList.add('lottie-inited');
-        const url = card.dataset.lottieUrl;
-        const id = card.dataset.lottieId;
-        if (url && id) {
-            lottie.loadAnimation({
-                container: document.getElementById(id),
-                renderer: 'svg',
-                loop: true,
-                autoplay: true,
-                path: url
-            });
-        }
-    });
-}
 
 function createItemCard(item) {
     const card = document.createElement('div');
@@ -462,18 +471,43 @@ function generateFragmentUrls(n) {
     let name = match[1].trim().toLowerCase().replace(/[^a-z0-9]/g, '');
     return { image: `https://nft.fragment.com/gift/${name}-${match[2]}.webp`, lottie: `https://nft.fragment.com/gift/${name}-${match[2]}.lottie.json` };
 }
+const LOTTIE_OBSERVER = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        const card = entry.target;
+        if (!card.dataset.lottieUrl) return;
+        const container = document.getElementById(card.dataset.lottieId);
+        if (!container) return;
+
+        if (entry.isIntersecting) {
+            // Re-creating/Loading the animation when entering the "8-closest" zone
+            if (!container.anim) {
+                container.anim = lottie.loadAnimation({
+                    container: container,
+                    renderer: 'svg',
+                    loop: true,
+                    autoplay: true,
+                    path: card.dataset.lottieUrl
+                });
+                container.style.opacity = '1';
+            } else {
+                container.anim.play();
+            }
+        } else {
+            // Destroying the animation when it's out of range to save RAM/CPU
+            if (container.anim) {
+                container.anim.destroy();
+                container.anim = null;
+                container.innerHTML = ''; // Clean SVG blobs
+            }
+        }
+    });
+}, { rootMargin: "300px", threshold: 0.01 });
+
 function observeNewCards() {
-    const ob = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (!entry.target.dataset.lottieUrl) return;
-            const container = document.getElementById(entry.target.dataset.lottieId);
-            if (entry.isIntersecting) {
-                if (!container.anim) container.anim = lottie.loadAnimation({ container, renderer: 'svg', loop: true, autoplay: true, path: entry.target.dataset.lottieUrl });
-                else container.anim.play();
-            } else if (container.anim) container.anim.pause();
-        });
-    }, { rootMargin: "100px" });
-    document.querySelectorAll('.card.has-lottie').forEach(c => ob.observe(c));
+    document.querySelectorAll('.card.has-lottie:not(.observed)').forEach(c => {
+        c.classList.add('observed');
+        LOTTIE_OBSERVER.observe(c);
+    });
 }
 async function openProductView(item, finalPrice, imgSrc) {
     CURRENT_PAYMENT_ITEM = item;
@@ -626,9 +660,8 @@ async function openProductView(item, finalPrice, imgSrc) {
 
     // Helper to calculate percentage
     const getPercent = (statKey, value) => {
-        const total = ALL_MARKET_ITEMS.length || 1;
-        const count = (ATTR_STATS[statKey] && ATTR_STATS[statKey][value]) || 1;
-        return ((count / total) * 100).toFixed(1);
+        // Rarity is now harder to calc due to grouping, showing '?' or static for now
+        return "1.5";
     };
 
     // Helper to create property row with percent
