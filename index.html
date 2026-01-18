@@ -6,7 +6,7 @@
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>MRKT</title>
-    <script src="https://telegram.org/js/telegram-web-app.js?v=1.1.46"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js?v=1.1.47"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <script src="lottie.min.js"></script>
     <link rel="stylesheet" href="style.css?v=3.1.2">
@@ -301,20 +301,16 @@
                 </div>
             </div>
 
-            <!-- Categories -->
-            <div class="filter-accordion" onclick="toggleAccordion('tags-acc', this)">
-                <span>Теги</span>
-                <div class="filter-accordion-arrow">▼</div>
-            </div>
-            <div id="tags-acc" class="accordion-content">
-                <div id="tags-list-container" style="padding: 0 20px;"></div>
-            </div>
 
             <div class="filter-accordion" onclick="toggleAccordion('nft-acc', this)">
                 <span>NFT</span>
                 <div class="filter-accordion-arrow">▼</div>
             </div>
             <div id="nft-acc" class="accordion-content">
+                <div class="filter-search-wrapper" style="padding: 10px 20px;">
+                    <input type="text" id="filter-search-nft" class="filter-search-input" placeholder="Поиск NFT..."
+                        oninput="filterList('nft')">
+                </div>
                 <div id="nft-list-container" style="padding: 0 20px;"></div>
             </div>
 
@@ -323,6 +319,10 @@
                 <div class="filter-accordion-arrow">▼</div>
             </div>
             <div id="model-acc" class="accordion-content">
+                <div class="filter-search-wrapper" style="padding: 10px 20px;">
+                    <input type="text" id="filter-search-model" class="filter-search-input"
+                        placeholder="Поиск модели..." oninput="filterList('model')">
+                </div>
                 <div id="model-list-container" style="padding: 0 20px;"></div>
             </div>
 
@@ -331,6 +331,10 @@
                 <div class="filter-accordion-arrow">▼</div>
             </div>
             <div id="bg-acc" class="accordion-content">
+                <div class="filter-search-wrapper" style="padding: 10px 20px;">
+                    <input type="text" id="filter-search-bg" class="filter-search-input" placeholder="Поиск фона..."
+                        oninput="filterList('bg')">
+                </div>
                 <div id="bg-list-container" style="padding: 0 20px;"></div>
             </div>
 
@@ -339,6 +343,10 @@
                 <div class="filter-accordion-arrow">▼</div>
             </div>
             <div id="symbol-acc" class="accordion-content">
+                <div class="filter-search-wrapper" style="padding: 10px 20px;">
+                    <input type="text" id="filter-search-symbol" class="filter-search-input"
+                        placeholder="Поиск символа..." oninput="filterList('symbol')">
+                </div>
                 <div id="symbol-list-container" style="padding: 0 20px;"></div>
             </div>
         </div>

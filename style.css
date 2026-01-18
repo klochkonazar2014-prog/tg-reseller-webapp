@@ -1045,3 +1045,4 @@ body {
     filter: brightness(0) invert(1);
     -webkit-filter: brightness(0) invert(1);
 }
+.filter-search-input { width: 100%; background: #1c1c1e; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 12px 16px; color: #fff; font-size: 14px; outline: none; transition: all 0.2s; margin-bottom: 5px; } .filter-search-input:focus { border-color: #0088cc; background: rgba(255, 255, 255, 0.03); } .filter-img { width: 32px; height: 32px; border-radius: 8px; object-fit: cover; background: rgba(255, 255, 255, 0.05); } .filter-color-circle { width: 32px !important; height: 32px !important; border-radius: 8px !important; border: 1px solid rgba(255, 255, 255, 0.1) !important; } .filter-list-item { padding: 8px 12px !important; margin: 4px 8px !important; border-radius: 14px !important; }

@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://p0wby6-ip-176-119-99-6.tunnelmole.net";
+const BACKEND_URL = "https://ixqwgh-ip-176-119-99-6.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -199,11 +199,11 @@ async function loadFilterData() {
         const res = await fetch(`${BACKEND_URL}/api/filters`);
         const data = await res.json();
         if (data) {
-            window.STATIC_COLLECTIONS = data.collections.map(c => ({ name: c, address: c }));
+            window.STATIC_COLLECTIONS = data.collections; // now they have {name, image}
             ATTR_STATS = {
-                model: data.models.reduce((a, v) => ({ ...a, [v]: 1 }), {}),
-                bg: data.backdrops.reduce((a, v) => ({ ...a, [v]: 1 }), {}),
-                symbol: data.symbols.reduce((a, v) => ({ ...a, [v]: 1 }), {})
+                model: data.models, // {name, image}
+                bg: data.backdrops,
+                symbol: data.symbols
             };
             initFilterLists();
         }
@@ -232,6 +232,10 @@ function toggleAccordion(id, btn) {
         content.classList.add('active');
         btn.classList.add('active');
     }
+}
+
+function filterList(key) {
+    initFilterLists();
 }
 
 function toggleGenericModal(key) {
@@ -264,30 +268,43 @@ function initFilterLists() {
     sorts.forEach(s => addFilterItem(sortCont, s.n, s.id, 'sort', ACTIVE_FILTERS.sort === s.id));
 
     const nftCont = document.getElementById('nft-list-container');
+    const nftSearch = document.getElementById('filter-search-nft').value.toLowerCase();
     nftCont.innerHTML = '';
-    addFilterItem(nftCont, "Все", "all", 'nft', ACTIVE_FILTERS.nft === 'all');
+
+    if (!nftSearch || "все".includes(nftSearch)) {
+        addFilterItem(nftCont, "Все", "all", 'nft', ACTIVE_FILTERS.nft === 'all');
+    }
+
     (window.STATIC_COLLECTIONS || []).forEach(col => {
-        addFilterItem(nftCont, col.name, col.address, 'nft', ACTIVE_FILTERS.nft === col.address, col.image_url);
+        if (col.name.toLowerCase().includes(nftSearch)) {
+            addFilterItem(nftCont, col.name, col.name, 'nft', ACTIVE_FILTERS.nft === col.name, col.image);
+        }
     });
 
     const maps = [
-        { id: 'model-list-container', key: 'model' },
-        { id: 'bg-list-container', key: 'bg' },
-        { id: 'symbol-list-container', key: 'symbol' }
+        { id: 'model-list-container', key: 'model', search: 'filter-search-model' },
+        { id: 'bg-list-container', key: 'bg', search: 'filter-search-bg' },
+        { id: 'symbol-list-container', key: 'symbol', search: 'filter-search-symbol' }
     ];
 
     maps.forEach(m => {
         const cont = document.getElementById(m.id);
+        const sVal = document.getElementById(m.search).value.toLowerCase();
         if (!cont) return;
         cont.innerHTML = '';
 
-        addFilterItem(cont, "Выбрать все", "all", m.key, ACTIVE_FILTERS[m.key] === 'all');
+        if (!sVal || "выбрать все".includes(sVal)) {
+            addFilterItem(cont, "Выбрать все", "all", m.key, ACTIVE_FILTERS[m.key] === 'all');
+        }
 
-        const keys = Object.keys(ATTR_STATS[m.key] || {}).sort();
-        keys.forEach(name => {
-            let icon = null;
-            if (m.key === 'bg' || m.key === 'symbol') icon = VISUAL_MAP[m.key][name] || null;
-            addFilterItem(cont, name, name, m.key, ACTIVE_FILTERS[m.key] === name, icon);
+        const items = ATTR_STATS[m.key] || [];
+        items.forEach(item => {
+            if (item.name.toLowerCase().includes(sVal)) {
+                let icon = item.image;
+                // Special visual mapping overrides for bg/symbol if icon is missing
+                if (!icon && (m.key === 'bg' || m.key === 'symbol')) icon = VISUAL_MAP[m.key][item.name] || null;
+                addFilterItem(cont, item.name, item.name, m.key, ACTIVE_FILTERS[m.key] === item.name, icon);
+            }
         });
     });
 }
@@ -304,7 +321,8 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl) {
     } else if (imgUrl) {
         visualHTML = `<img src="${imgUrl}" class="filter-img" onerror="this.src='https://nft.fragment.com/guide/gift.svg'">`;
     } else {
-        visualHTML = `<div style="width:20px;height:20px;border-radius:50%;border:2px solid ${isSelected ? '#0088cc' : '#333'};"></div>`;
+        // Fallback for collections/models if no image
+        visualHTML = `<div style="width:32px; height:32px; border-radius:8px; background: rgba(255,255,255,0.05); display:flex; align-items:center; justify-content:center; color:#555; font-size:10px;">NFT</div>`;
     }
 
     div.innerHTML = `
