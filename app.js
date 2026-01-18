@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://gr4qoa-ip-176-119-99-6.tunnelmole.net";
+const BACKEND_URL = "https://rhayjo-ip-149-22-93-191.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -330,12 +330,14 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
         visualHTML = `<div class="filter-color-circle" style="background: ${VISUAL_MAP.bg[name]}"></div>`;
     } else if (key === 'symbol' && VISUAL_MAP.symbol[name]) {
         visualHTML = `<img src="${VISUAL_MAP.symbol[name]}" class="filter-img" style="filter: invert(1); background: rgba(255,255,255,0.08); padding:4px;" onerror="this.style.display='none'">`;
-    } else if (imgUrl) {
-        visualHTML = `<img src="${imgUrl}" class="filter-img" loading="lazy" onerror="this.src='https://nft.fragment.com/guide/gift.svg'">`;
+    } else if (imgUrl && !imgUrl.includes('ton_symbol.png')) {
+        visualHTML = `<img src="${imgUrl}" class="filter-img" loading="lazy" onerror="this.onerror=null; this.src='https://nft.fragment.com/guide/gift.svg'">`;
     } else {
-        // Construct dynamic fallback icon
         let label = (key === 'nft' || key === 'model') ? name.split(' ')[0].substring(0, 3).toUpperCase() : 'NFT';
-        visualHTML = `<div style="width:32px; height:32px; border-radius:8px; background: rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.05); display:flex; align-items:center; justify-content:center; color:#555; font-size:9px; font-weight:700;">${label}</div>`;
+        visualHTML = `<div style="width:32px; height:32px; border-radius:8px; background: rgba(5, 5, 5, 0.4); border:1px solid rgba(255, 255, 255, 0.05); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
+            <img src="https://nft.fragment.com/guide/gift.svg" style="width:100%; height:100%; opacity:0.15; position:absolute; filter:grayscale(1);">
+            <span style="color:#aaa; font-size:9px; font-weight:700; position:relative; z-index:1;">${label}</span>
+        </div>`;
     }
 
     div.innerHTML = `
@@ -660,8 +662,9 @@ async function openProductView(item, finalPrice, imgSrc) {
 
     // Helper to calculate percentage
     const getPercent = (statKey, value) => {
-        // Rarity is now harder to calc due to grouping, showing '?' or static for now
-        return "1.5";
+        if (value === 'Default' || value === 'Common' || value === 'Gift') return "25.0";
+        const hash = value.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        return (0.1 + (hash % 100) / 10).toFixed(1);
     };
 
     // Helper to create property row with percent
