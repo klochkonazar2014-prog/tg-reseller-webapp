@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://orhsdv-ip-89-116-154-142.tunnelmole.net";
+const BACKEND_URL = "https://xt8qms-ip-89-116-154-142.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -467,11 +467,21 @@ function debounce(func, wait) {
     return (...args) => { clearTimeout(timeout); timeout = setTimeout(() => func(...args), wait); };
 }
 function generateFragmentUrls(n) {
-    const match = n.match(/^(.+?)\s*#(\d+)$/);
+    const match = n.match(/^(.*?)\s*#(\d+)$/);
     if (!match) return { image: null, lottie: null };
-    // Remove all non-alphanumeric characters except spaces, then remove spaces
-    let name = match[1].trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-    return { image: `https://nft.fragment.com/gift/${name}-${match[2]}.webp`, lottie: `https://nft.fragment.com/gift/${name}-${match[2]}.lottie.json` };
+
+    // Improved slug generation for Fragment
+    let name = match[1].trim().toLowerCase()
+        .replace(/\s+/g, '-') // spaces to dashes
+        .replace(/[^a-z0-9-]/g, ''); // keep alphanumeric and dashes
+
+    // If it ends with 's' (plural like 'Kissed Frogs'), Fragment often uses singular
+    let singular = name.endsWith('s') ? name.slice(0, -1) : name;
+
+    return {
+        image: `https://nft.fragment.com/gift/${singular}-${match[2]}.webp`,
+        lottie: `https://nft.fragment.com/gift/${singular}-${match[2]}.lottie.json`
+    };
 }
 const LOTTIE_OBSERVER = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
