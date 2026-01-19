@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://3pwtkr-ip-89-116-158-62.tunnelmole.net";
+const BACKEND_URL = "https://hrvwnl-ip-89-116-158-62.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -319,6 +319,14 @@ function initFilterLists() {
         cont.innerHTML = '';
 
         if (selectedNFT === 'all') {
+            // MODELS: Require NFT selection first
+            if (m.key === 'model') {
+                cont.innerHTML = `<div style="padding:20px; color:#8b9bb4; text-align:center; font-size:13px; background:rgba(255,255,255,0.03); border-radius:12px; margin-top:10px;">Выберите NFT коллекцию, чтобы увидеть список моделей.</div>`;
+                sInput.disabled = true;
+                return;
+            }
+
+            // BG & SYMBOLS: Global selection allowed
             const allItemsMap = {};
             Object.values(ATTR_STATS[m.key] || {}).forEach(list => {
                 list.forEach(item => {
@@ -384,10 +392,18 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
     div.className = `filter-list-item ${isSelected ? 'selected' : ''}`;
 
     let visualHTML = '';
-    if (key === 'bg' && VISUAL_MAP.bg[name]) {
-        visualHTML = `<div class="filter-color-circle" style="background: ${VISUAL_MAP.bg[name]}"></div>`;
-    } else if (key === 'symbol' && VISUAL_MAP.symbol[name]) {
-        visualHTML = `<img src="${VISUAL_MAP.symbol[name]}" class="filter-img" style="filter: invert(1); background: rgba(255,255,255,0.08); padding:4px;" onerror="this.style.display='none'">`;
+    if (key === 'symbol') {
+        // Try clean visual from Telegifter first
+        const tgSymbol = getTelegifterUrl('symbol', name);
+        const iconSrc = tgSymbol || VISUAL_MAP.symbol[name];
+        // Apply WHITE filter: brightness(0) invert(1)
+        visualHTML = `<img src="${iconSrc}" class="filter-img" style="filter: brightness(0) invert(1); width:24px; height:24px; object-fit:contain;" onerror="this.style.display='none'">`;
+    } else if (key === 'bg') {
+        const bgStyle = VISUAL_MAP.bg[name] || '#333';
+        // Add pattern overlay for BG icons
+        visualHTML = `<div class="filter-color-circle" style="background: ${bgStyle}; position:relative; overflow:hidden;">
+            <div style="position:absolute; top:0; left:0; width:100%; height:100%; background: url('https://telegifter.ru/wp-content/themes/gifts/assets/img/bg-logo-mini.webp'); opacity:0.3; background-size: 20px;"></div>
+        </div>`;
     } else if (imgUrl && !isBadUrl(imgUrl)) {
         // Fix for dashes in Fragment URLs on the fly in the UI
         let fixedImg = imgUrl;
@@ -403,7 +419,10 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
             }
         }
 
-        visualHTML = `<img src="${fixedImg}" class="filter-img" style="width:52px; height:52px; border-radius:12px;" loading="lazy" onerror="this.onerror=null; this.src='https://nft.fragment.com/guide/gift.svg'">`;
+        // Check if it's a model filter to apply getTelegifterUrl logic if needed, 
+        // but typically addFilterItem is called with the correct icon already. 
+        // We just ensure size is correct.
+        visualHTML = `<img src="${fixedImg}" class="filter-img" style="width:52px; height:52px; border-radius:12px; object-fit:contain; background:rgba(255,255,255,0.05);" loading="lazy" onerror="this.onerror=null; this.src='https://nft.fragment.com/guide/gift.svg'">`;
     } else {
         let label = (key === 'nft' || key === 'model') ? name.split(' ')[0].substring(0, 3).toUpperCase() : 'NFT';
         visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: rgba(5, 5, 5, 0.4); border:1px solid rgba(255, 255, 255, 0.05); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
