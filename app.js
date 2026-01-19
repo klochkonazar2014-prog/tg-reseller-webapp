@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://4adqe3-ip-89-116-158-62.tunnelmole.net";
+const BACKEND_URL = "https://so5wfo-ip-89-116-158-62.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -37,6 +37,22 @@ const VISUAL_MAP = {
         'Star': 'https://raw.githubusercontent.com/ton-blockchain/token-logos/main/nft/gift/star.svg'
     }
 };
+
+const TG_ASSETS_URL = "https://telegifter.ru/wp-content/themes/gifts/assets/img/gifts";
+
+function getTelegifterUrl(type, name, collection) {
+    if (!name || name === 'Unknown' || name === 'Default') return null;
+    const cleanName = encodeURIComponent(name); // Spaces are preserved in filename but encoded
+    if (type === 'symbol') {
+        return `${TG_ASSETS_URL}/symbol/${cleanName}.webp`;
+    }
+    if (type === 'model' && collection) {
+        // Collection slug: lowercase, no spaces (e.g. "Pretty Posy" -> "prettyposy")
+        const colSlug = collection.toLowerCase().replace(/[^a-z0-9]/g, '');
+        return `${TG_ASSETS_URL}/${colSlug}/${cleanName}.webp`;
+    }
+    return null;
+}
 
 let ACTIVE_FILTERS = {
     nft: 'all',
@@ -325,7 +341,14 @@ function initFilterLists() {
 
             allItems.forEach(item => {
                 if (item.name.toLowerCase().includes(sVal)) {
-                    let icon = item.image;
+                    // Try to get clean visual first
+                    let visual = null;
+                    if (m.key === 'symbol') visual = getTelegifterUrl('symbol', item.name);
+                    // For global models we don't know the collection easily here without reverse lookup
+                    // So we stick to item.image unless we want to map it back. 
+                    // But for Symbols it's perfect.
+
+                    let icon = visual || item.image;
                     if (!icon && (m.key === 'bg' || m.key === 'symbol')) icon = VISUAL_MAP[m.key][item.name] || null;
                     addFilterItem(cont, item.name, item.name, m.key, ACTIVE_FILTERS[m.key] === item.name, icon);
                 }
@@ -343,7 +366,12 @@ function initFilterLists() {
         const items = (ATTR_STATS[m.key] && ATTR_STATS[m.key][selectedNFT]) || [];
         items.forEach(item => {
             if (item.name.toLowerCase().includes(sVal)) {
-                let icon = item.image;
+                // Try clean visual
+                let visual = null;
+                if (m.key === 'symbol') visual = getTelegifterUrl('symbol', item.name);
+                else if (m.key === 'model') visual = getTelegifterUrl('model', item.name, selectedNFT);
+
+                let icon = visual || item.image;
                 if (!icon && (m.key === 'bg' || m.key === 'symbol')) icon = VISUAL_MAP[m.key][item.name] || null;
                 addFilterItem(cont, item.name, item.name, m.key, ACTIVE_FILTERS[m.key] === item.name, icon, selectedNFT);
             }
