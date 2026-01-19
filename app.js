@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://akv83q-ip-149-22-93-147.tunnelmole.net";
+const BACKEND_URL = "https://k3sytp-ip-89-117-254-94.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -416,9 +416,10 @@ function createItemCard(item) {
 
     let mediaHTML = `
         <div class="card-days-badge">Days: 1 – ${maxDays}</div>
-        <img src="${imgSrc}" class="card-img" id="img-${lottieId}" loading="lazy" onerror="this.src='${fallbackImg}'">
+        <img src="${imgSrc}" class="card-img ${fragmentUrls.lottie ? 'lottie-bg' : ''}" id="img-${lottieId}" loading="lazy" onerror="this.src='${fallbackImg}'">
     `;
-    if (fragmentUrls.lottie) mediaHTML += `<div id="${lottieId}" class="card-img lottie-container" style="z-index: 2;"></div>`;
+    // Set z-index 3 for Lottie to be clearly above img and badge (badge is 1)
+    if (fragmentUrls.lottie) mediaHTML += `<div id="${lottieId}" class="card-img lottie-container" style="z-index: 3;"></div>`;
 
     card.innerHTML = `
         <div class="card-image-wrapper">
@@ -500,6 +501,9 @@ const LOTTIE_OBSERVER = new IntersectionObserver((entries) => {
         if (!container) return;
 
         if (entry.isIntersecting) {
+            const staticImg = document.getElementById(`img-${card.dataset.lottieId}`);
+            if (staticImg) staticImg.style.opacity = '0'; // Hide static image immediately
+
             // Re-creating/Loading the animation when entering the "8-closest" zone
             if (!container.anim) {
                 container.anim = lottie.loadAnimation({
@@ -520,6 +524,8 @@ const LOTTIE_OBSERVER = new IntersectionObserver((entries) => {
                 container.anim = null;
                 container.innerHTML = ''; // Clean SVG blobs
             }
+            const staticImg = document.getElementById(`img-${card.dataset.lottieId}`);
+            if (staticImg) staticImg.style.opacity = '1'; // Show static image again
         }
     });
 }, { rootMargin: "300px", threshold: 0.01 });
@@ -541,6 +547,8 @@ async function openProductView(item, finalPrice, imgSrc) {
     lottieCont.innerHTML = '';
     const fUrls = generateFragmentUrls(item.nft_name);
     if (fUrls.lottie) {
+        // Hide static image if Lottie exists
+        document.getElementById('view-img').style.opacity = '0';
         lottie.loadAnimation({
             container: lottieCont,
             renderer: 'svg',
@@ -548,6 +556,9 @@ async function openProductView(item, finalPrice, imgSrc) {
             autoplay: true,
             path: fUrls.lottie
         });
+    } else {
+        // Ensure static image is visible if no Lottie
+        document.getElementById('view-img').style.opacity = '1';
     }
 
     const colName = (item._collection && item._collection.name) ? item._collection.name : "Gifts";
@@ -894,6 +905,14 @@ function renderItemsBatch(items) {
 function closeProductView() {
     document.getElementById('product-view').classList.remove('active');
     CURRENT_PAYMENT_ITEM = null;
+    // Cleanup Lottie animation in product view
+    const lottieCont = document.getElementById('view-lottie');
+    if (lottieCont && lottieCont.anim) {
+        lottieCont.anim.destroy();
+        lottieCont.anim = null;
+        lottieCont.innerHTML = '';
+    }
+    document.getElementById('view-img').style.opacity = '1';
 }
 const trigger = document.getElementById('loader-trigger');
 if (trigger) {
