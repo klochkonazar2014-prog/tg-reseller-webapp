@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://f79omm-ip-149-22-93-211.tunnelmole.net";
+const BACKEND_URL = "https://nf3eht-ip-149-22-93-211.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -401,10 +401,18 @@ function createItemCard(item) {
     else if (lowerName.includes("pumpkin")) maxDays = 39;
     else if (lowerName.includes("ghost")) maxDays = 29;
 
-    let fallbackImg = item._collection.image_url || "https://cdn-icons-png.flaticon.com/512/4213/4213958.png";
+    let fallbackImg = "https://cdn-icons-png.flaticon.com/512/4213/4213958.png";
     const fragmentUrls = generateFragmentUrls(item.nft_name);
     const lottieId = `lottie-${item.nft_address}`;
-    let imgSrc = item._realImage || fragmentUrls.image || fallbackImg;
+
+    // SMART IMAGE LOGIC:
+    // If server gives us a 'bad' placeholder (gift.svg/ton_symbol), IGNORE IT and use generated Fragment URL.
+    let imgSrc = item._realImage;
+    if (!imgSrc || imgSrc.includes('gift.svg') || imgSrc.includes('ton_symbol')) {
+        imgSrc = fragmentUrls.image;
+    }
+    // Final fallback
+    if (!imgSrc) imgSrc = fallbackImg;
 
     let mediaHTML = `
         <div class="card-days-badge">Days: 1 – ${maxDays}</div>
@@ -475,12 +483,13 @@ function generateFragmentUrls(n) {
         .replace(/\s+/g, '-') // spaces to dashes
         .replace(/[^a-z0-9-]/g, ''); // keep alphanumeric and dashes
 
-    // If it ends with 's' (plural like 'Kissed Frogs'), Fragment often uses singular
-    let singular = name.endsWith('s') ? name.slice(0, -1) : name;
+    // Special handlers for weird plurals/names
+    if (name === 'durovs-cap') name = 'durovs-cap'; // keep as is
+    else if (name.endsWith('s') && !name.endsWith('ss')) name = name.slice(0, -1); // simple plural remove
 
     return {
-        image: `https://nft.fragment.com/gift/${singular}-${match[2]}.webp`,
-        lottie: `https://nft.fragment.com/gift/${singular}-${match[2]}.lottie.json`
+        image: `https://nft.fragment.com/gift/${name}-${match[2]}.webp`,
+        lottie: `https://nft.fragment.com/gift/${name}-${match[2]}.lottie.json`
     };
 }
 const LOTTIE_OBSERVER = new IntersectionObserver((entries) => {
