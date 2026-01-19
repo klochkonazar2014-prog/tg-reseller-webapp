@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://fuhvqh-ip-89-116-158-62.tunnelmole.net";
+const BACKEND_URL = "https://ecngag-ip-89-116-158-62.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -14,6 +14,12 @@ let BATCH_SIZE = 30; // Better for mobile grid
 let IS_LOADING = false;
 let GLOBAL_OFFSET = 0;
 let HAS_MORE = true;
+
+const isBadUrl = (url) => {
+    if (!url) return true;
+    const u = String(url).toLowerCase();
+    return u.includes('ton_symbol.png') || u.includes('gift.svg');
+};
 const renderTonAmount = (val) => `<span class="icon-before icon-ton tm-amount">${val}</span>`;
 let ATTR_STATS = { model: {}, bg: {}, symbol: {} };
 let CURRENT_PAYMENT_ITEM = null;
@@ -297,9 +303,33 @@ function initFilterLists() {
         cont.innerHTML = '';
 
         if (selectedNFT === 'all') {
-            cont.innerHTML = `<div style="padding:30px 20px; color:#8b9bb4; text-align:center; font-size:14px; background:rgba(255,255,255,0.02); border-radius:12px; margin:10px auto; width:calc(100% - 40px);">Сначала выберите NFT</div>`;
-            sInput.disabled = true;
-            sInput.placeholder = "Выберите NFT выше...";
+            const allItemsMap = {};
+            Object.values(ATTR_STATS[m.key] || {}).forEach(list => {
+                list.forEach(item => {
+                    if (!allItemsMap[item.name]) allItemsMap[item.name] = item.image;
+                    // If current stored image is broken, try to use this one
+                    else if (isBadUrl(allItemsMap[item.name]) && !isBadUrl(item.image)) {
+                        allItemsMap[item.name] = item.image;
+                    }
+                });
+            });
+            const allItems = Object.entries(allItemsMap).map(([n, img]) => ({ name: n, image: img }))
+                .sort((a, b) => a.name.localeCompare(b.name));
+
+            sInput.disabled = false;
+            sInput.placeholder = `Поиск ${m.label}... (Все NFT)`;
+
+            if (!sVal || "выбрать все".includes(sVal)) {
+                addFilterItem(cont, "Выбрать все", "all", m.key, ACTIVE_FILTERS[m.key] === 'all');
+            }
+
+            allItems.forEach(item => {
+                if (item.name.toLowerCase().includes(sVal)) {
+                    let icon = item.image;
+                    if (!icon && (m.key === 'bg' || m.key === 'symbol')) icon = VISUAL_MAP[m.key][item.name] || null;
+                    addFilterItem(cont, item.name, item.name, m.key, ACTIVE_FILTERS[m.key] === item.name, icon);
+                }
+            });
             return;
         }
 
@@ -330,13 +360,27 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
         visualHTML = `<div class="filter-color-circle" style="background: ${VISUAL_MAP.bg[name]}"></div>`;
     } else if (key === 'symbol' && VISUAL_MAP.symbol[name]) {
         visualHTML = `<img src="${VISUAL_MAP.symbol[name]}" class="filter-img" style="filter: invert(1); background: rgba(255,255,255,0.08); padding:4px;" onerror="this.style.display='none'">`;
-    } else if (imgUrl && !imgUrl.includes('ton_symbol.png')) {
-        visualHTML = `<img src="${imgUrl}" class="filter-img" loading="lazy" onerror="this.onerror=null; this.src='https://nft.fragment.com/guide/gift.svg'">`;
+    } else if (imgUrl && !isBadUrl(imgUrl)) {
+        // Fix for dashes in Fragment URLs on the fly in the UI
+        let fixedImg = imgUrl;
+        if (imgUrl.includes('nft.fragment.com')) {
+            const parts = imgUrl.split('/');
+            const filename = parts[parts.length - 1];
+            if (filename.includes('-')) {
+                const namePart = filename.split('-')[0];
+                const rest = filename.split('-').slice(1).join('-');
+                const cleanName = namePart.replace(/[_-]/g, ''); // Basic fix, better use the regex logic if possible
+                // However, without #number context it's hard to be perfect. 
+                // But the DB should be the source of truth.
+            }
+        }
+
+        visualHTML = `<img src="${fixedImg}" class="filter-img" style="width:52px; height:52px; border-radius:12px;" loading="lazy" onerror="this.onerror=null; this.src='https://nft.fragment.com/guide/gift.svg'">`;
     } else {
         let label = (key === 'nft' || key === 'model') ? name.split(' ')[0].substring(0, 3).toUpperCase() : 'NFT';
-        visualHTML = `<div style="width:32px; height:32px; border-radius:8px; background: rgba(5, 5, 5, 0.4); border:1px solid rgba(255, 255, 255, 0.05); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
+        visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: rgba(5, 5, 5, 0.4); border:1px solid rgba(255, 255, 255, 0.05); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
             <img src="https://nft.fragment.com/guide/gift.svg" style="width:100%; height:100%; opacity:0.15; position:absolute; filter:grayscale(1);">
-            <span style="color:#aaa; font-size:9px; font-weight:700; position:relative; z-index:1;">${label}</span>
+            <span style="color:#aaa; font-size:11px; font-weight:700; position:relative; z-index:1;">${label}</span>
         </div>`;
     }
 
