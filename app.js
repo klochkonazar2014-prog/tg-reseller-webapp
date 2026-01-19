@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://mroany-ip-89-116-158-62.tunnelmole.net";
+const BACKEND_URL = "https://hx0hez-ip-89-116-158-62.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -28,8 +28,30 @@ let CURRENT_PAYMENT_ITEM = null;
 const VISUAL_MAP = {
     bg: {
         'Amber': '#FFBF00', 'Red': '#FF3B30', 'Blue': '#007AFF', 'Green': '#34C759',
-        'Gold': '#FFD700', 'Black': '#000000', 'White': '#FFFFFF', 'Purple': '#AF52DE',
-        'Pink': '#FF2D55', 'Indigo': '#5856D6', 'Orange': '#FF9500', 'Cyan': '#32ADE6'
+        'Gold': '#FFD700', 'Black': '#1a1a1a', 'White': '#FFFFFF', 'Purple': '#AF52DE',
+        'Pink': '#FF2D55', 'Indigo': '#5856D6', 'Orange': '#FF9500', 'Cyan': '#32ADE6',
+        'Aquamarine': '#7FFFD4', 'Azure Blue': '#007FFF', 'Battleship Grey': '#848482',
+        'Berry': '#990f4b', 'Black Hole': '#0f0f0f', 'Blood Orange': '#CC1100',
+        'Brown': '#964B00', 'Bubblegum': '#FFC1CC', 'Burgundy': '#800020',
+        'Candy Apple': '#FF0800', 'Charcoal': '#36454F', 'Chartreuse': '#7FFF00',
+        'Cherry': '#DE3163', 'Chestnut': '#954535', 'Chocolate': '#7B3F00',
+        'Cobalt': '#0047AB', 'Coral': '#FF7F50', 'Cream': '#FFFDD0',
+        'Crimson': '#DC143C', 'Dark Blue': '#00008B', 'Dark Green': '#013220',
+        'Deep Blue': '#00008B', 'Emerald': '#50C878', 'Forest': '#228B22',
+        'Fuchsia': '#FF00FF', 'Grey': '#808080', 'Hot Pink': '#FF69B4',
+        'Khaki': '#C3B091', 'Lavender': '#E6E6FA', 'Lemon': '#FFF700',
+        'Light Blue': '#ADD8E6', 'Light Green': '#90EE90', 'Lilac': '#C8A2C8',
+        'Lime': '#BFFF00', 'Magenta': '#FF00FF', 'Maroon': '#800000',
+        'Midnight': '#191970', 'Mint': '#3EB489', 'Navy': '#000080',
+        'Neon Blue': '#4D4DFF', 'Neon Green': '#39FF14', 'Olive': '#808000',
+        'Peach': '#FFE5B4', 'Pearl': '#EAE0C8', 'Periwinkle': '#CCCCFF',
+        'Pine': '#01796F', 'Plum': '#8E4585', 'Rose': '#FF007F',
+        'Ruby': '#E0115F', 'Rust': '#B7410E', 'Salmon': '#FA8072',
+        'Sapphire': '#0F52BA', 'Scarlet': '#FF2400', 'Seafoam': '#9FE2BF',
+        'Silver': '#C0C0C0', 'Sky Blue': '#87CEEB', 'Slate': '#708090',
+        'Smoke': '#738276', 'Steel': '#4682B4', 'Tan': '#D2B48C',
+        'Teal': '#008080', 'Turquoise': '#40E0D0', 'Violet': '#8F00FF',
+        'Yellow': '#FFFF00'
     },
     symbol: {
         'Candle': 'https://raw.githubusercontent.com/ton-blockchain/token-logos/main/nft/gift/candle.svg',
@@ -328,16 +350,21 @@ function initFilterLists() {
 
             // BG & SYMBOLS: Global selection allowed
             const allItemsMap = {};
-            Object.values(ATTR_STATS[m.key] || {}).forEach(list => {
+            // Iterate OVER COLLECTIONS to preserve context
+            Object.entries(ATTR_STATS[m.key] || {}).forEach(([colName, list]) => {
                 list.forEach(item => {
-                    if (!allItemsMap[item.name]) allItemsMap[item.name] = item.image;
-                    // If current stored image is broken, try to use this one
-                    else if (isBadUrl(allItemsMap[item.name]) && !isBadUrl(item.image)) {
-                        allItemsMap[item.name] = item.image;
+                    // Store image AND collection for URL generation
+                    if (!allItemsMap[item.name]) {
+                        allItemsMap[item.name] = { image: item.image, collection: colName };
+                    }
+                    else if (isBadUrl(allItemsMap[item.name].image) && !isBadUrl(item.image)) {
+                        allItemsMap[item.name].image = item.image;
+                        allItemsMap[item.name].collection = colName;
                     }
                 });
             });
-            const allItems = Object.entries(allItemsMap).map(([n, img]) => ({ name: n, image: img }))
+            const allItems = Object.entries(allItemsMap)
+                .map(([n, data]) => ({ name: n, image: data.image, collection: data.collection }))
                 .sort((a, b) => a.name.localeCompare(b.name));
 
             sInput.disabled = false;
@@ -352,9 +379,7 @@ function initFilterLists() {
                     // Try to get clean visual first
                     let visual = null;
                     if (m.key === 'symbol') visual = getTelegifterUrl('symbol', item.name);
-                    // For global models we don't know the collection easily here without reverse lookup
-                    // So we stick to item.image unless we want to map it back. 
-                    // But for Symbols it's perfect.
+                    else if (m.key === 'model') visual = getTelegifterUrl('model', item.name, item.collection);
 
                     let icon = visual || item.image;
                     if (!icon && (m.key === 'bg' || m.key === 'symbol')) icon = VISUAL_MAP[m.key][item.name] || null;
