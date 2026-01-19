@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://nuwqto-ip-149-22-93-211.tunnelmole.net";
+const BACKEND_URL = "https://f79omm-ip-149-22-93-211.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
