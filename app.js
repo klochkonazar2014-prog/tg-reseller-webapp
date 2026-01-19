@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://y6aysm-ip-89-116-158-62.tunnelmole.net";
+const BACKEND_URL = "https://wcoaa9-ip-89-116-158-62.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -481,12 +481,7 @@ function generateFragmentUrls(n) {
 
     // Improved slug generation for Fragment
     let name = match[1].trim().toLowerCase()
-        .replace(/\s+/g, '-') // spaces to dashes
-        .replace(/[^a-z0-9-]/g, ''); // keep alphanumeric and dashes
-
-    // Special handlers for weird plurals/names
-    if (name === 'durovs-cap') name = 'durovs-cap'; // keep as is
-    else if (name.endsWith('s') && !name.endsWith('ss')) name = name.slice(0, -1); // simple plural remove
+        .replace(/[^a-z0-9]/g, ''); // keep ONLY alphanumeric (remove spaces, dashes)
 
     return {
         image: `https://nft.fragment.com/gift/${name}-${match[2]}.webp`,
