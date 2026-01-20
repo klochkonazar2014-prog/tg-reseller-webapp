@@ -416,7 +416,8 @@ function initFilterLists() {
 
                     let icon = visual || item.image;
                     if (!icon && (m.key === 'bg' || m.key === 'symbol')) icon = VISUAL_MAP[m.key][item.name] || null;
-                    addFilterItem(cont, item.name, item.name, m.key, ACTIVE_FILTERS[m.key] === item.name, icon, null, item.image);
+                    // FIX: Pass item.collection as collectionContext
+                    addFilterItem(cont, item.name, item.name, m.key, ACTIVE_FILTERS[m.key] === item.name, icon, item.collection, item.image);
                 }
             });
             return;
@@ -468,10 +469,11 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
             <div style="position:absolute; top:0; left:0; width:100%; height:100%; background: url('https://telegifter.ru/wp-content/themes/gifts/assets/img/bg-logo-mini.webp'); opacity:0.3; background-size: 20px;"></div>
         </div>`;
     } else if (imgUrl && !isBadUrl(imgUrl)) {
-        const fallback = (fallbackImgUrl && !isBadUrl(fallbackImgUrl)) ? fallbackImgUrl : 'https://nft.fragment.com/guide/gift.svg';
+        const fallback = (fallbackImgUrl && !isBadUrl(fallbackImgUrl)) ? fallbackImgUrl : null;
 
         visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: rgba(255, 255, 255, 0.05); border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
-            <img src="${imgUrl}" class="filter-img" style="width:100%; height:100%; object-fit:contain; z-index:2; opacity:0;"
+            <span style="color:#8b9bb4; font-size:11px; font-weight:700; position:absolute; z-index:1;">${name.substring(0, 3).toUpperCase()}</span>
+            <img src="${imgUrl}" class="filter-img" style="width:100%; height:100%; object-fit:contain; z-index:2; opacity:0; transition:opacity 0.2s;" 
                 onload="this.style.opacity='1';"
                 onerror="
                     const name = '${name.replace(/'/g, "\\'")}';
@@ -480,21 +482,18 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
                     const nextUrl = getTelegifterUrl('model', name, col, parseInt(this.dataset.slugIndex));
                     if (nextUrl && parseInt(this.dataset.slugIndex) < 12) {
                         this.src = nextUrl;
-                    } else if (this.src !== '${fallback}') {
+                    } else if (this.src !== '${fallback}' && '${fallback}' !== 'null') {
                         this.src = '${fallback}';
                         this.style.opacity = '1';
                     } else {
                         this.style.display = 'none';
                     }
                 ">
-            <img src="https://nft.fragment.com/guide/gift.svg" style="width:100%; height:100%; opacity:0.1; position:absolute; filter:grayscale(1);">
-            <span style="color:#8b9bb4; font-size:11px; font-weight:700; position:absolute;">${name.substring(0, 3).toUpperCase()}</span>
         </div>`;
     } else {
         const labelText = name.substring(0, 3).toUpperCase();
         visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: rgba(255, 255, 255, 0.05); border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
             <span style="color:#8b9bb4; font-size:11px; font-weight:700; z-index:1;">${labelText}</span>
-            <img src="https://nft.fragment.com/guide/gift.svg" style="width:100%; height:100%; opacity:0.1; position:absolute; filter:grayscale(1);">
         </div>`;
     }
 
