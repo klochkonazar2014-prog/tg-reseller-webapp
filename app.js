@@ -955,7 +955,10 @@ async function openProductView(item, finalPrice, imgSrc) {
     document.getElementById('view-address').innerHTML = `${shortAddr} <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom:-2px; cursor:pointer;" onclick="copyToClipboard('${item.nft_address}')"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
 
     // Pricing
-    const dailyPrice = parseFloat(item.price_per_day).toFixed(2);
+    // Ensure dailyPrice is a valid number, fallback to 0.11 if everything fails
+    let rawP = parseFloat(item.price_per_day);
+    if (isNaN(rawP) || rawP <= 0) rawP = 0.11;
+    const dailyPrice = rawP.toFixed(2);
     document.getElementById('view-daily-price').innerHTML = renderTonAmount(dailyPrice);
 
     // Approximate USD (1 TON = 7 USD)
@@ -991,7 +994,8 @@ async function openProductView(item, finalPrice, imgSrc) {
 
     // Helper to create property row with percent
     const createPropRow = (label, value, statKey, showFloor = false) => {
-        if (!value || value === 'Unknown' || value === 'Gift') return null;
+        // Remove Gift/Unknown filter to ensure rows exist for fetch-update to find them
+        const displayValue = (!value || value === 'Unknown' || value === 'Gift') ? 'Loading...' : value;
         const percent = getPercent(statKey, value);
         const row = document.createElement('div');
         row.className = 'property-item';
@@ -1005,18 +1009,19 @@ async function openProductView(item, finalPrice, imgSrc) {
         row.innerHTML = `
             <div class="prop-left"><div class="prop-name">${label}</div></div>
             <div class="prop-right">
-                <span class="prop-value-text" style="color:var(--accent-blue); font-weight:600;">${value}</span>
+                <span class="prop-value-text" style="color:var(--accent-blue); font-weight:600;">${displayValue}</span>
                 <span class="prop-percent-text" style="font-size:11px; color:rgba(77,178,255,0.7); margin-left:6px;">${percent}%</span>
                 ${showFloor ? `<span class="prop-floor-text" style="margin-left:8px;">${renderTonAmount(dailyPrice)}</span>` : ''}
             </div>
         `;
 
         row.onclick = (e) => {
+            if (displayValue === 'Loading...') return;
             e.stopPropagation();
-            console.log(`Filtering by ${statKey}: ${value}`);
+            console.log(`Filtering by ${statKey}: ${displayValue}`);
 
             // Re-apply filters
-            ACTIVE_FILTERS[statKey] = value;
+            ACTIVE_FILTERS[statKey] = displayValue;
 
             // "нфт подтягиваеться в случае с моделью" - if it's a model, link collection too
             if (statKey === 'model' && item.collection_address) {
@@ -1091,25 +1096,9 @@ async function openProductView(item, finalPrice, imgSrc) {
     // If we didn't find them in attributes loop, use the computed values from loadLiveItems
     // OR fallback to the gift name itself (e.g. "Whip Cupcake") which is better than "Gift" or "Unknown"
 
-    if (!realModel) {
-        if (item._modelName && item._modelName !== 'Gift' && item._modelName !== 'Unknown') {
-            realModel = item._modelName;
-        } else {
-            realModel = giftBaseName; // Ultimate fallback: "Whip Cupcake"
-        }
-    }
-
-    if (!realBackdrop) {
-        if (item._backdrop && item._backdrop !== 'Default' && item._backdrop !== 'Unknown') {
-            realBackdrop = item._backdrop;
-        }
-    }
-
-    if (!realPattern) {
-        if (item._symbol && item._symbol !== 'Default' && item._symbol !== 'Unknown') {
-            realPattern = item._symbol;
-        }
-    }
+    if (!realModel) realModel = 'Loading...';
+    if (!realBackdrop) realBackdrop = 'Loading...';
+    if (!realPattern) realPattern = 'Loading...';
 
     // Add Model row (e.g., "Ninja Turtle")
     if (realModel) {
@@ -1222,7 +1211,7 @@ function updateTotalPrice() {
     if (!CURRENT_PAYMENT_ITEM) return;
     const input = document.getElementById('rent-duration-input');
     const dur = parseInt(input.value) || 1;
-    const dp = (parseFloat(CURRENT_PAYMENT_ITEM.price_per_day) / 1e9);
+    const dp = parseFloat(CURRENT_PAYMENT_ITEM.price_per_day);
     const total = (dp * dur).toFixed(2);
     const priceSpan = document.getElementById('rent-btn-price');
     if (priceSpan) {
