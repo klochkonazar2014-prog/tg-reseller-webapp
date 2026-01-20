@@ -83,6 +83,21 @@ const VISUAL_MAP = {
 
 const TG_ASSETS_URL = "https://telegifter.ru/wp-content/themes/gifts/assets/img/gifts";
 
+const TG_COLLECTION_MAP = {
+    "berry boxes": "berrybox",
+    "berry box": "berrybox",
+    "artisan brick": "artisanbrick",
+    "artisan bricks": "artisanbrick",
+    "pretty posy": "prettyposy",
+    "pretty posies": "prettyposy",
+    "alpha dog": "alphadog",
+    "alpha dogs": "alphadog",
+    "money pot": "moneypot",
+    "money pots": "moneypot",
+    "voodoo doll": "voodoodoll",
+    "voodoo dolls": "voodoodoll"
+};
+
 function getTelegifterUrl(type, name, collection) {
     if (!name || name === 'Unknown' || name === 'Default' || name === 'Gift') return null;
     const cleanName = encodeURIComponent(name);
@@ -90,19 +105,18 @@ function getTelegifterUrl(type, name, collection) {
         return `${TG_ASSETS_URL}/symbol/${cleanName}.webp`;
     }
     if (type === 'model' && collection) {
-        // Most common slugs on Telegifter
-        const baseSlug = collection.toLowerCase().replace(/[^a-z0-9]/g, '');
-        // We can't easily check 404 here, but we can return the most likely one
-        // and let the browser handled fallsback. 
-        // Strategy: if collection is 'Alpha Dog' -> 'alphadog' or 'alphadogs'
-        // Let's try to improve the slug for known collections
-        const plurals = ['duck', 'frog', 'turtle', 'dog', 'cat', 'voodoo', 'jelly', 'pot', 'box', 'watch', 'flower', 'sparkler', 'egg', 'pear', 'posy', 'heart'];
-        let slug = baseSlug;
-        for (let p of plurals) {
-            if (baseSlug.includes(p) && !baseSlug.endsWith('s')) {
-                // Many telegifter assets use plural for single-word collections or specific patterns
-                // But specifically for 'alphadog' -> 'alphadog' is usually fine.
-                // However, 'duck' -> 'ducks'
+        let slug = collection.toLowerCase();
+        // Check mapping first
+        if (TG_COLLECTION_MAP[slug]) {
+            slug = TG_COLLECTION_MAP[slug];
+        } else {
+            // Default slug logic
+            slug = slug.replace(/[^a-z0-9]/g, '');
+            // Handle some common suffixes
+            if (slug.endsWith('s') && slug.length > 5) {
+                // If 'boxes' -> 'box', 'posies' -> 'posy'
+                if (slug.endsWith('es')) slug = slug.slice(0, -2);
+                else slug = slug.slice(0, -1);
             }
         }
         return `${TG_ASSETS_URL}/${slug}/${cleanName}.webp`;
@@ -470,18 +484,21 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
             <div style="position:absolute; top:0; left:0; width:100%; height:100%; background: url('https://telegifter.ru/wp-content/themes/gifts/assets/img/bg-logo-mini.webp'); opacity:0.3; background-size: 20px;"></div>
         </div>`;
     } else if (imgUrl && !isBadUrl(imgUrl)) {
-        // Для моделей и символов МЫ НЕ ХОТИМ показывать полное NFT с фоном в качестве запаски
-        // Поэтому для них fallback будет либо прозрачная гифка, либо ничего
-        const isModelOrSymbol = (key === 'model' || key === 'symbol');
-        const fallback = (isModelOrSymbol)
-            ? 'https://nft.fragment.com/guide/gift.svg' // Лучше показать подарок, чем NFT с фоном
-            : (fallbackImgUrl && !isBadUrl(fallbackImgUrl) ? fallbackImgUrl : 'https://nft.fragment.com/guide/gift.svg');
+        const isModel = (key === 'model');
+        const fallback = (fallbackImgUrl && !isBadUrl(fallbackImgUrl)) ? fallbackImgUrl : 'https://nft.fragment.com/guide/gift.svg';
 
-        visualHTML = `<img src="${imgUrl}" class="filter-img" style="width:52px; height:52px; border-radius:12px; object-fit:contain; background:rgba(255,255,255,0.05);" loading="lazy" onerror="if (this.src !== '${fallback}') { this.src = '${fallback}'; }">`;
-    } else {
-        let label = (key === 'nft' || key === 'model') ? name.split(' ')[0].substring(0, 3).toUpperCase() : 'NFT';
+        // Strategy: showing the main imgUrl (which we hope is Telegifter if passed from initFilterLists)
+        // If it fails, try the fallback (which is usually the Fragment image).
         visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: rgba(255, 255, 255, 0.05); border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
-            <span style="color:#8b9bb4; font-size:11px; font-weight:700;">${label}</span>
+            <img src="${imgUrl}" class="filter-img" style="width:100%; height:100%; object-fit:contain; z-index:2;" 
+                onerror="if (this.src !== '${fallback}') { this.src = '${fallback}'; } else { this.style.display='none'; }">
+            <img src="https://nft.fragment.com/guide/gift.svg" style="width:100%; height:100%; opacity:0.1; position:absolute; filter:grayscale(1);">
+        </div>`;
+    } else {
+        const labelText = name.substring(0, 3).toUpperCase();
+        visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: rgba(255, 255, 255, 0.05); border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
+            <span style="color:#8b9bb4; font-size:11px; font-weight:700; z-index:1;">${labelText}</span>
+            <img src="https://nft.fragment.com/guide/gift.svg" style="width:100%; height:100%; opacity:0.1; position:absolute; filter:grayscale(1);">
         </div>`;
     }
 
