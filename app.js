@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://r0jbwy-ip-193-187-150-36.tunnelmole.net";
+const BACKEND_URL = "https://arendabot.pp.ua";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -404,7 +404,7 @@ function initFilterLists() {
 
                     let icon = visual || item.image;
                     if (!icon && (m.key === 'bg' || m.key === 'symbol')) icon = VISUAL_MAP[m.key][item.name] || null;
-                    addFilterItem(cont, item.name, item.name, m.key, ACTIVE_FILTERS[m.key] === item.name, icon);
+                    addFilterItem(cont, item.name, item.name, m.key, ACTIVE_FILTERS[m.key] === item.name, icon, null, item.image);
                 }
             });
             return;
@@ -427,13 +427,13 @@ function initFilterLists() {
 
                 let icon = visual || item.image;
                 if (!icon && (m.key === 'bg' || m.key === 'symbol')) icon = VISUAL_MAP[m.key][item.name] || null;
-                addFilterItem(cont, item.name, item.name, m.key, ACTIVE_FILTERS[m.key] === item.name, icon, selectedNFT);
+                addFilterItem(cont, item.name, item.name, m.key, ACTIVE_FILTERS[m.key] === item.name, icon, selectedNFT, item.image);
             }
         });
     });
 }
 
-function addFilterItem(container, name, value, key, isSelected, imgUrl, collectionContext) {
+function addFilterItem(container, name, value, key, isSelected, imgUrl, collectionContext, fallbackImgUrl) {
     const div = document.createElement('div');
     div.className = `filter-list-item ${isSelected ? 'selected' : ''}`;
 
@@ -460,15 +460,12 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
                 const namePart = filename.split('-')[0];
                 const rest = filename.split('-').slice(1).join('-');
                 const cleanName = namePart.replace(/[_-]/g, ''); // Basic fix, better use the regex logic if possible
-                // However, without #number context it's hard to be perfect. 
-                // But the DB should be the source of truth.
             }
         }
 
-        // Check if it's a model filter to apply getTelegifterUrl logic if needed, 
-        // but typically addFilterItem is called with the correct icon already. 
-        // We just ensure size is correct.
-        visualHTML = `<img src="${fixedImg}" class="filter-img" style="width:52px; height:52px; border-radius:12px; object-fit:contain; background:rgba(255,255,255,0.05);" loading="lazy" onerror="this.onerror=null; this.src='https://nft.fragment.com/guide/gift.svg'">`;
+        const fallback = fallbackImgUrl && !isBadUrl(fallbackImgUrl) ? fallbackImgUrl : 'https://nft.fragment.com/guide/gift.svg';
+
+        visualHTML = `<img src="${fixedImg}" class="filter-img" style="width:52px; height:52px; border-radius:12px; object-fit:contain; background:rgba(255,255,255,0.05);" loading="lazy" onerror="if (this.src !== '${fallback}') { this.src = '${fallback}'; } else { this.src = 'https://nft.fragment.com/guide/gift.svg'; }">`;
     } else {
         let label = (key === 'nft' || key === 'model') ? name.split(' ')[0].substring(0, 3).toUpperCase() : 'NFT';
         visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: rgba(5, 5, 5, 0.4); border:1px solid rgba(255, 255, 255, 0.05); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
