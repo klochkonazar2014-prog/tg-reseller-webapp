@@ -185,6 +185,131 @@ function switchTab(index) {
         const el = document.getElementById(id);
         if (el) el.style.display = (i === index) ? 'block' : 'none';
     });
+
+    // Load orders if switching to the orders tab
+    if (index === 1) {
+        loadUserOrders();
+        window.ordersInterval = setInterval(loadUserOrders, 10000); // Poll every 10s
+    } else {
+        if (window.ordersInterval) clearInterval(window.ordersInterval);
+    }
+}
+
+async function loadUserOrders() {
+    const container = document.getElementById('orders-container');
+    container.innerHTML = '<h3>Загрузка ваших заказов...</h3>';
+
+    // В реальном приложении берем ID из Telegram.WebApp.initDataUnsafe.user.id
+    const userId = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user.id : 0;
+
+    try {
+        const res = await fetch(`${BACKEND_URL}/api/my_orders?user_id=${userId}`);
+        const orders = await res.json();
+
+        if (orders.length === 0) {
+            container.innerHTML = `
+                <h3>Ваши ордеры</h3>
+                <p style="margin-top: 20px; font-size: 14px; opacity: 0.6;">У вас пока нет активных аренд.</p>
+                <div style="margin-top: 30px; opacity: 0.2;">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                    </svg>
+                </div>`;
+            return;
+        }
+
+        container.innerHTML = '<h3 style="margin-bottom: 20px;">Ваши ордеры</h3>';
+        const list = document.createElement('div');
+        list.className = 'orders-list';
+        list.style.display = 'flex';
+        list.style.flexDirection = 'column';
+        list.style.gap = '12px';
+
+        orders.forEach(order => {
+            const card = document.createElement('div');
+            card.className = 'order-card';
+            card.style.background = 'rgba(255,255,255,0.05)';
+            card.style.borderRadius = '16px';
+            card.style.padding = '16px';
+            card.style.textAlign = 'left';
+            card.style.border = '1px solid rgba(255,255,255,0.05)';
+
+            let statusText = order.status;
+            let statusColor = '#8b9bb4';
+            let actionBtn = '';
+
+            if (order.status === 'pending_payment') { statusText = '⏳ Ожидание оплаты'; statusColor = '#ffcc00'; }
+            if (order.status === 'paid') { statusText = '🔄 Оплата получена, выкупаем...'; statusColor = '#007AFF'; }
+            if (order.status === 'rented') {
+                statusText = '💎 Арендовано (нужна привязка)';
+                statusColor = '#34C759';
+                actionBtn = `<button onclick="openTcModal(${order.id})" class="btn-yellow" style="width:100%; height:40px; margin-top:12px; font-size:13px;">Подключить к Fragment</button>`;
+            }
+            if (order.status === 'active') { statusText = '✅ Активно'; statusColor = '#00ffcc'; }
+
+            card.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                    <div style="font-weight: 700; color: #fff;">${order.nft_name}</div>
+                    <div style="font-size: 11px; color: #8b9bb4;">#${order.id}</div>
+                </div>
+                <div style="font-size: 13px; color: ${statusColor}; margin-bottom: 4px;">${statusText}</div>
+                <div style="font-size: 12px; opacity: 0.6;">Срок: ${order.days} дн. | ${order.total_price} TON</div>
+                ${actionBtn}
+            `;
+            list.appendChild(card);
+        });
+        container.appendChild(list);
+    } catch (e) {
+        container.innerHTML = `<h3>Ошибка загрузки</h3><p>${e.message}</p>`;
+    }
+}
+
+function openTcModal(orderId) {
+    document.getElementById('tc-current-order-id').value = orderId;
+    document.getElementById('tc-modal-overlay').classList.add('active');
+    document.getElementById('tc-modal').classList.add('active');
+}
+
+function closeTcModal() {
+    document.getElementById('tc-modal-overlay').classList.remove('active');
+    document.getElementById('tc-modal').classList.remove('active');
+}
+
+async function submitTcLink() {
+    const orderId = document.getElementById('tc-current-order-id').value;
+    const link = document.getElementById('tc-link-input').value.trim();
+
+    if (!link.startsWith('tc://')) {
+        tg.showAlert("Пожалуйста, вставьте корректную ссылку tc:// с Fragment");
+        return;
+    }
+
+    const btn = document.querySelector('#tc-modal .btn-yellow');
+    const originalText = btn.innerText;
+    btn.innerText = "Подключение...";
+    btn.disabled = true;
+
+    try {
+        const res = await fetch(`${BACKEND_URL}/api/submit_tc_link`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order_id: parseInt(orderId), tc_link: link })
+        });
+        const data = await res.json();
+
+        if (data.status === 'ok') {
+            tg.showAlert("Успешно! Теперь вернитесь на Fragment и нажмите Display in Telegram.");
+            closeTcModal();
+            loadUserOrders(); // Refresh status
+        } else {
+            throw new Error(data.error || "Ошибка сервера");
+        }
+    } catch (e) {
+        tg.showAlert("Ошибка: " + e.message);
+    } finally {
+        btn.innerText = originalText;
+        btn.disabled = false;
+    }
 }
 
 async function loadLiveItems(reset = true) {
@@ -1000,30 +1125,50 @@ async function openProductView(item, finalPrice, imgSrc) {
             await tonConnectUI.openModal();
             return;
         }
+
         const durInput = document.getElementById('rent-duration-input');
         const days = parseInt(durInput.value) || 1;
-        const total = (dailyPrice * days).toFixed(2);
+
+        // Show loading state
+        const originalBtnHTML = rentBtn.innerHTML;
+        rentBtn.innerHTML = "Подготовка...";
+        rentBtn.disabled = true;
+
         try {
+            // 1. Получаем параметры транзакции от бэкенда (сплит-платеж)
+            const userId = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user.id : 0;
+            const prepResp = await fetch(`${BACKEND_URL}/api/prepare_rent?nft_address=${item.nft_address}&days=${days}&user_id=${userId}`);
+            const prepData = await prepResp.json();
+
+            if (prepData.error) {
+                throw new Error(prepData.error);
+            }
+
+            // 2. Отправляем транзакцию через TON Connect
             const res = await tonConnectUI.sendTransaction({
                 validUntil: Math.floor(Date.now() / 1000) + 600,
-                messages: [{
-                    address: OWNER_WALLET,
-                    amount: (parseFloat(total) * 1e9).toString()
-                }]
+                messages: prepData.messages
             });
+
             if (res) {
+                // 3. Уведомляем сервер (опционально)
                 await fetch(`${BACKEND_URL}/api/mark_rented`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ nft_address: item.nft_address })
                 });
+
                 ALL_MARKET_ITEMS = ALL_MARKET_ITEMS.filter(i => i.nft_address !== item.nft_address);
                 closeProductView();
                 applyHeaderSearch();
                 tg.showAlert("Аренда оформлена успешно!");
             }
         } catch (e) {
-            tg.showAlert("Ошибка оплаты или отмена.");
+            console.error(e);
+            tg.showAlert("Ошибка: " + (e.message || "Оплата отменена"));
+        } finally {
+            rentBtn.innerHTML = originalBtnHTML;
+            rentBtn.disabled = false;
         }
     };
 
