@@ -109,25 +109,8 @@ function getTelegifterUrl(type, name, collection, slugIndex = 0) {
     }
 
     if (type === 'model') {
-        let slug = "";
-        if (slugIndex === 0 && collection) {
-            const raw = collection.toLowerCase().replace(/[^a-z0-9]/g, '');
-            slug = SLUG_MAPPING[raw] || raw;
-            // Additional heuristics
-            if (!SLUG_MAPPING[raw]) {
-                if (raw.includes('berry')) slug = 'berrybox';
-                else if (raw.includes('artisan')) slug = 'artisanbrick';
-                else if (raw.includes('posy')) slug = 'prettyposy';
-                else if (raw.includes('alpha')) slug = 'alphadogs';
-                else if (raw.includes('voodoo')) slug = 'voodoodoll';
-                else if (raw.includes('candle') || raw.includes('bday')) slug = 'b-daycandle';
-                else if (raw.includes('poop') || raw.includes('brownie')) slug = 'happybrownie';
-                else if (raw.includes('shard')) slug = 'astralshard';
-            }
-        } else {
-            slug = TG_SLUGS[(slugIndex - 1) % TG_SLUGS.length];
-        }
-        return `${TG_ASSETS_URL}/${slug}/${cleanName}.webp`;
+        // Use local caching endpoint (handled by live_server.py + model_cache.py)
+        return `/models/${cleanName}.webp`;
     }
     return null;
 }
