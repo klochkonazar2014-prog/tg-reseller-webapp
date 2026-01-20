@@ -83,10 +83,10 @@ const VISUAL_MAP = {
 
 const TG_ASSETS_URL = "https://telegifter.ru/wp-content/themes/gifts/assets/img/gifts";
 
-const TG_SLUGS = ["berrybox", "artisanbrick", "prettyposy", "alphadogs", "voodoodoll", "ducks", "moneypot", "sparkler", "watch", "flower"];
+const TG_SLUGS = ["berrybox", "artisanbrick", "prettyposy", "alphadogs", "voodoodoll", "ducks", "frog", "moneypot", "sparkler", "watch", "flower", "heart", "egg", "pear", "cocktail", "cactus", "jellyfish", "turtle", "gem", "gift"];
 
 function getTelegifterUrl(type, name, collection, slugIndex = 0) {
-    if (!name || name === 'Unknown' || name === 'Default' || name === 'Gift') return null;
+    if (!name || name === 'Unknown' || name === 'Default' || name === 'Gift' || name === 'Gift #?') return null;
     const cleanName = encodeURIComponent(name);
 
     if (type === 'symbol') {
@@ -96,12 +96,12 @@ function getTelegifterUrl(type, name, collection, slugIndex = 0) {
     if (type === 'model') {
         let slug = "";
         if (slugIndex === 0 && collection) {
-            // First try: direct slug from collection name
             slug = collection.toLowerCase().replace(/[^a-z0-9]/g, '');
-            if (slug.endsWith('boxes')) slug = 'berrybox'; // Special case from user
-            if (slug === 'artisanbricks') slug = 'artisanbrick';
+            if (slug.includes('berry')) slug = 'berrybox';
+            if (slug.includes('artisan')) slug = 'artisanbrick';
+            if (slug.includes('posy')) slug = 'prettyposy';
+            if (slug.includes('alpha')) slug = 'alphadogs';
         } else {
-            // Further tries: cycle through known popular slugs
             slug = TG_SLUGS[(slugIndex - 1) % TG_SLUGS.length];
         }
         return `${TG_ASSETS_URL}/${slug}/${cleanName}.webp`;
@@ -480,12 +480,13 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
                     const col = '${(collectionContext || '').replace(/'/g, "\\'")}';
                     this.dataset.slugIndex = this.dataset.slugIndex ? parseInt(this.dataset.slugIndex) + 1 : 1;
                     const nextUrl = getTelegifterUrl('model', name, col, parseInt(this.dataset.slugIndex));
-                    if (nextUrl && parseInt(this.dataset.slugIndex) < 12) {
+                    if (nextUrl && parseInt(this.dataset.slugIndex) < 20) {
                         this.src = nextUrl;
                     } else if (this.src !== '${fallback}' && '${fallback}' !== 'null') {
                         this.src = '${fallback}';
                         this.style.opacity = '1';
                     } else {
+                        this.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
                         this.style.display = 'none';
                     }
                 ">
