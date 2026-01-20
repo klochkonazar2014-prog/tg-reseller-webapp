@@ -5,7 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
-const BACKEND_URL = "https://uioecg-ip-89-116-158-62.tunnelmole.net";
+const BACKEND_URL = "https://ldzpmz-ip-176-119-99-6.tunnelmole.net";
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -51,7 +51,28 @@ const VISUAL_MAP = {
         'Silver': '#C0C0C0', 'Sky Blue': '#87CEEB', 'Slate': '#708090',
         'Smoke': '#738276', 'Steel': '#4682B4', 'Tan': '#D2B48C',
         'Teal': '#008080', 'Turquoise': '#40E0D0', 'Violet': '#8F00FF',
-        'Yellow': '#FFFF00'
+        'Yellow': '#FFFF00', 'Burnt Sienna': '#E97451', 'Camo Green': '#78866B',
+        'Cappuccino': '#856D4D', 'Caramel': '#FFD59A', 'Carmine': '#960018',
+        'Carrot Juice': '#F8931F', 'Celtic Blue': '#246BCE', 'Cobalt Blue': '#0047AB',
+        'Copper': '#B87333', 'Coral Red': '#FF4040', 'Cyberpunk': '#F400A1',
+        'Dark Lilac': '#9955BB', 'Deep Cyan': '#008B8B', 'Desert Sand': '#EDC9AF',
+        'Electric Indigo': '#6F00FF', 'Electric Purple': '#BF00FF',
+        'English Violet': '#563C5C', 'Fandango': '#B53389', 'Feldgrau': '#4D5D53',
+        'Fire Engine': '#CE2029', 'French Blue': '#0072BB', 'French Violet': '#8806CE',
+        'Grape': '#6F2DA8', 'Gunmetal': '#2A3439', 'Gunship Green': '#3C4039',
+        'Hunter Green': '#355E3B', 'Indigo Dye': '#091F92', 'Ivory White': '#FFFFF0',
+        'Jade Green': '#00A86B', 'Khaki Green': '#8A865D', 'Lemongrass': '#E1EDC9',
+        'Light Olive': '#B8B35A', 'Malachite': '#0BDA51', 'Marine Blue': '#042E4C',
+        'Mexican Pink': '#E4007C', 'Midnight Blue': '#191970', 'Mint Green': '#98FF98',
+        'Moonstone': '#3AA8C1', 'Mustard': '#FFDB58', 'Mystic Pearl': '#D6CFC7',
+        'Navy Blue': '#000080', 'Old Gold': '#CFB53B', 'Onyx Black': '#353839',
+        'Pacific Cyan': '#00BDBB', 'Pacific Green': '#009774', 'Persimmon': '#EC5800',
+        'Pine Green': '#01796F', 'Pistachio': '#93C572', 'Platinum': '#E5E4E2',
+        'Pure Gold': '#F6C700', 'Ranger Green': '#334D41', 'Raspberry': '#E30B5D',
+        'Rifle Green': '#444C38', 'Roman Silver': '#838996', 'Rosewood': '#65000B',
+        'Seal Brown': '#321414', 'Shamrock Green': '#009E60', 'Silver Blue': '#8C9BB0',
+        'Steel Grey': '#71797E', 'Strawberry': '#FC5A8D', 'Tactical Pine': '#2E4C3D',
+        'Tomato': '#FF6347'
     },
     symbol: {
         'Candle': 'https://raw.githubusercontent.com/ton-blockchain/token-logos/main/nft/gift/candle.svg',
