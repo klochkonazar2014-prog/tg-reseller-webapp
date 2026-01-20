@@ -83,7 +83,22 @@ const VISUAL_MAP = {
 
 const TG_ASSETS_URL = "https://telegifter.ru/wp-content/themes/gifts/assets/img/gifts";
 
-const TG_SLUGS = ["berrybox", "artisanbrick", "prettyposy", "alphadogs", "voodoodoll", "ducks", "frog", "moneypot", "sparkler", "watch", "flower", "heart", "egg", "pear", "cocktail", "cactus", "jellyfish", "turtle", "gem", "gift"];
+const TG_SLUGS = ["berrybox", "artisanbrick", "prettyposy", "alphadogs", "voodoodoll", "ducks", "frog", "moneypot", "sparkler", "watch", "flower", "heart", "egg", "pear", "cocktail", "cactus", "jellyfish", "turtle", "gem", "gift", "box", "pot", "shard", "b-daycandle", "happybrownie", "astralshard", "kissedfrog", "plushpepe"];
+
+const SLUG_MAPPING = {
+    'artisanbricks': 'artisanbrick',
+    'berryboxes': 'berrybox',
+    'happybday': 'b-daycandle',
+    'bdaycandle': 'b-daycandle',
+    'thebackyard': 'alphadogs',
+    'prettyposies': 'prettyposy',
+    'astralshards': 'astralshard',
+    'poop': 'happybrownie',
+    'happybrownie': 'happybrownie',
+    'kissedfrog': 'kissedfrog',
+    'plushpepe': 'plushpepe',
+    'ducks': 'ducks'
+};
 
 function getTelegifterUrl(type, name, collection, slugIndex = 0) {
     if (!name || name === 'Unknown' || name === 'Default' || name === 'Gift' || name === 'Gift #?') return null;
@@ -96,11 +111,19 @@ function getTelegifterUrl(type, name, collection, slugIndex = 0) {
     if (type === 'model') {
         let slug = "";
         if (slugIndex === 0 && collection) {
-            slug = collection.toLowerCase().replace(/[^a-z0-9]/g, '');
-            if (slug.includes('berry')) slug = 'berrybox';
-            if (slug.includes('artisan')) slug = 'artisanbrick';
-            if (slug.includes('posy')) slug = 'prettyposy';
-            if (slug.includes('alpha')) slug = 'alphadogs';
+            const raw = collection.toLowerCase().replace(/[^a-z0-9]/g, '');
+            slug = SLUG_MAPPING[raw] || raw;
+            // Additional heuristics
+            if (!SLUG_MAPPING[raw]) {
+                if (raw.includes('berry')) slug = 'berrybox';
+                else if (raw.includes('artisan')) slug = 'artisanbrick';
+                else if (raw.includes('posy')) slug = 'prettyposy';
+                else if (raw.includes('alpha')) slug = 'alphadogs';
+                else if (raw.includes('voodoo')) slug = 'voodoodoll';
+                else if (raw.includes('candle') || raw.includes('bday')) slug = 'b-daycandle';
+                else if (raw.includes('poop') || raw.includes('brownie')) slug = 'happybrownie';
+                else if (raw.includes('shard')) slug = 'astralshard';
+            }
         } else {
             slug = TG_SLUGS[(slugIndex - 1) % TG_SLUGS.length];
         }
@@ -469,7 +492,7 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
             <div style="position:absolute; top:0; left:0; width:100%; height:100%; background: url('https://telegifter.ru/wp-content/themes/gifts/assets/img/bg-logo-mini.webp'); opacity:0.3; background-size: 20px;"></div>
         </div>`;
     } else if (imgUrl && !isBadUrl(imgUrl)) {
-        const fallback = (fallbackImgUrl && !isBadUrl(fallbackImgUrl)) ? fallbackImgUrl : null;
+        const fallback = (fallbackImgUrl && !isBadUrl(fallbackImgUrl)) ? fallbackImgUrl : 'https://nft.fragment.com/guide/gift.svg';
 
         visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: rgba(255, 255, 255, 0.05); border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
             <span style="color:#8b9bb4; font-size:11px; font-weight:700; position:absolute; z-index:1;">${name.substring(0, 3).toUpperCase()}</span>
@@ -482,7 +505,7 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
                     const nextUrl = getTelegifterUrl('model', name, col, parseInt(this.dataset.slugIndex));
                     if (nextUrl && parseInt(this.dataset.slugIndex) < 20) {
                         this.src = nextUrl;
-                    } else if (this.src !== '${fallback}' && '${fallback}' !== 'null') {
+                    } else if (this.src !== '${fallback}') {
                         this.src = '${fallback}';
                         this.style.opacity = '1';
                     } else {
