@@ -6,7 +6,7 @@
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>MRKT</title>
-    <script src="https://telegram.org/js/telegram-web-app.js?v=1.1.117"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js?v=1.1.118"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <script src="lottie.min.js"></script>
     <link rel="stylesheet" href="style.css?v=3.1.2">
@@ -44,6 +44,18 @@
         .card-price-btn .icon-ton::before,
         .main-rent-btn .icon-ton::before {
             filter: brightness(0) invert(1) !important;
+        }
+
+        .arrow-v {
+            font-size: 8px;
+            margin-left: 4px;
+            opacity: 0.5;
+            vertical-align: middle;
+        }
+
+        /* Hide Ownership rows as per request */
+        .ownership-row {
+            display: none !important;
         }
     </style>
 </head>
@@ -157,29 +169,20 @@
 
             <div class="owner-col-section"
                 style="margin-top: 24px; background: rgba(255, 255, 255, 0.1); border-radius: 24px; overflow: hidden;">
+                <!-- Hidden as per user request to hide wallet info -->
                 <div class="detail-row"
-                    style="padding: 14px 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); display: flex; justify-content: space-between; align-items: center;">
+                    style="display: none; padding: 14px 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); justify-content: space-between; align-items: center;">
                     <span style="color: #fff; font-weight: 700; font-size: 13px;">Owner</span>
                     <span id="view-owner" style="color: var(--accent-blue); font-size: 13px;">... ></span>
                 </div>
                 <div class="detail-row"
-                    style="padding: 14px 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); display: flex; justify-content: space-between; align-items: center;">
-                    <span style="color: #fff; font-weight: 700; font-size: 13px;">Collection</span>
-                    <span id="view-col-name" style="color: var(--accent-blue); font-size: 13px;">... ></span>
-                </div>
-                <div class="detail-row"
-                    style="padding: 14px 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); display: flex; justify-content: space-between; align-items: center;">
+                    style="display: none; padding: 14px 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); justify-content: space-between; align-items: center;">
                     <span style="color: #fff; font-weight: 700; font-size: 13px;">NFT address</span>
                     <span id="view-address"
-                        style="color: var(--accent-blue); font-size: 13px; display:flex; align-items:center; gap:6px;">...
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                        </svg></span>
+                        style="color: var(--accent-blue); font-size: 13px; display:flex; align-items:center; gap:6px;">...</span>
                 </div>
                 <div class="detail-row"
-                    style="padding: 14px 16px; display: flex; justify-content: space-between; align-items: center;">
+                    style="display: none; padding: 14px 16px; justify-content: space-between; align-items: center;">
                     <span style="color: #fff; font-weight: 700; font-size: 13px;">Storage</span>
                     <span style="color: #8794a1; font-size: 13px;">The Open Network</span>
                 </div>
@@ -201,23 +204,26 @@
 
     <!-- TC Link Modal -->
     <div id="tc-modal-overlay" class="modal-overlay" onclick="closeTcModal()"></div>
-    <div id="tc-modal" class="filter-panel" style="height: auto; max-height: 80vh; bottom: 0; border-radius: 24px 24px 0 0;">
+    <div id="tc-modal" class="filter-panel"
+        style="height: auto; max-height: 80vh; bottom: 0; border-radius: 24px 24px 0 0;">
         <div class="mrkt-modal-header">
             <h3>Подключить Fragment</h3>
-            <button onclick="closeTcModal()" style="background:none; border:none; color:#8b9bb4; font-size:24px; cursor: pointer;">✕</button>
+            <button onclick="closeTcModal()"
+                style="background:none; border:none; color:#8b9bb4; font-size:24px; cursor: pointer;">✕</button>
         </div>
         <div style="padding: 20px; color: #8b9bb4; font-size: 14px;">
             <p>1. Зайдите на Fragment.com (с компьютера или другого браузера).</p>
             <p>2. Нажмите <b>Connect TON</b>.</p>
             <p>3. Скопируйте ссылку <b>TON Connect Link</b> (кнопка рядом с QR-кодом).</p>
             <p>4. Вставьте её сюда:</p>
-            
-            <input type="text" id="tc-link-input" placeholder="tc://..." 
-                   style="width: 100%; height: 50px; background: rgba(255,255,255,0.05); border: 1px solid #333; border-radius: 12px; margin-top: 15px; color: #fff; padding: 0 15px;">
-            
+
+            <input type="text" id="tc-link-input" placeholder="tc://..."
+                style="width: 100%; height: 50px; background: rgba(255,255,255,0.05); border: 1px solid #333; border-radius: 12px; margin-top: 15px; color: #fff; padding: 0 15px;">
+
             <input type="hidden" id="tc-current-order-id">
-            
-            <button onclick="submitTcLink()" class="btn-yellow" style="width: 100%; margin-top: 20px;">Подключить кошелек</button>
+
+            <button onclick="submitTcLink()" class="btn-yellow" style="width: 100%; margin-top: 20px;">Подключить
+                кошелек</button>
         </div>
     </div>
 
@@ -257,19 +263,16 @@
             </button>
 
             <button class="chip-btn" onclick="toggleGenericModal('nft')">
-                NFT <span>▼</span>
+                NFT <span class="arrow-v">▼</span>
             </button>
-
             <button class="chip-btn" onclick="toggleGenericModal('model')">
-                Модель <span>▼</span>
+                Модель <span class="arrow-v">▼</span>
             </button>
-
             <button class="chip-btn" onclick="toggleGenericModal('bg')">
-                Фон <span>▼</span>
+                Фон <span class="arrow-v">▼</span>
             </button>
-
             <button class="chip-btn" onclick="toggleGenericModal('symbol')">
-                Символ <span>▼</span>
+                Символ <span class="arrow-v">▼</span>
             </button>
         </div>
 

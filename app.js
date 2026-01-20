@@ -454,6 +454,12 @@ function toggleGenericModal(key) {
         'bg': 'bg-acc',
         'symbol': 'symbol-acc'
     };
+
+    // Ensure data is loaded
+    if (!window.STATIC_COLLECTIONS || window.STATIC_COLLECTIONS.length === 0) {
+        loadFilterData();
+    }
+
     const targetId = accMap[key];
     if (targetId) {
         const btn = document.querySelector(`.filter-accordion[onclick*="${targetId}"]`);
@@ -670,8 +676,10 @@ function applyHeaderSearch() {
 function createItemCard(item) {
     const card = document.createElement('div');
     card.className = "card";
-    const price = parseFloat(item.price_per_day) / 1000000000;
-    const myPrice = (price * (1 + MY_MARKUP)).toFixed(2);
+
+    // Price from backend is already in TON and marked up
+    const myPrice = parseFloat(item.price_per_day).toFixed(2);
+
     const match = item.nft_name.match(/^(.*?)\s*(#\d+)$/);
     const baseName = match ? match[1] : item.nft_name;
     const numStr = match ? match[2] : "";
@@ -908,9 +916,9 @@ async function openProductView(item, finalPrice, imgSrc) {
                     const val = attr.value;
                     let targetLabel = null;
 
-                    if (type === 'Model' || type === 'Character') targetLabel = 'Model';
-                    else if (type === 'Backdrop' || type === 'Background') targetLabel = 'Backdrop';
-                    else if (type === 'Pattern' || type === 'Theme' || type === 'Symbol') targetLabel = 'Pattern';
+                    if (type === 'Model' || type === 'Character') targetLabel = 'Модель';
+                    else if (type === 'Backdrop' || type === 'Background') targetLabel = 'Фон';
+                    else if (type === 'Pattern' || type === 'Theme' || type === 'Symbol') targetLabel = 'Символ';
 
                     if (targetLabel) {
                         // Find the row with this label
@@ -947,7 +955,7 @@ async function openProductView(item, finalPrice, imgSrc) {
     document.getElementById('view-address').innerHTML = `${shortAddr} <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom:-2px; cursor:pointer;" onclick="copyToClipboard('${item.nft_address}')"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
 
     // Pricing
-    const dailyPrice = (parseFloat(item.price_per_day) / 1e9).toFixed(2);
+    const dailyPrice = parseFloat(item.price_per_day).toFixed(2);
     document.getElementById('view-daily-price').innerHTML = renderTonAmount(dailyPrice);
 
     // Approximate USD (1 TON = 7 USD)
@@ -987,6 +995,13 @@ async function openProductView(item, finalPrice, imgSrc) {
         const percent = getPercent(statKey, value);
         const row = document.createElement('div');
         row.className = 'property-item';
+        row.style.cursor = 'pointer'; // Make it clickable
+
+        // Hide if it looks like an address or is labelled as such
+        if (label.toLowerCase().includes('owner') || label.toLowerCase().includes('address') || (value.startsWith && (value.startsWith('EQ') || value.startsWith('UQ')) && value.length > 30)) {
+            row.classList.add('ownership-row');
+        }
+
         row.innerHTML = `
             <div class="prop-left"><div class="prop-name">${label}</div></div>
             <div class="prop-right">
@@ -995,6 +1010,24 @@ async function openProductView(item, finalPrice, imgSrc) {
                 ${showFloor ? `<span class="prop-floor-text" style="margin-left:8px;">${renderTonAmount(dailyPrice)}</span>` : ''}
             </div>
         `;
+
+        row.onclick = (e) => {
+            e.stopPropagation();
+            console.log(`Filtering by ${statKey}: ${value}`);
+
+            // Re-apply filters
+            ACTIVE_FILTERS[statKey] = value;
+
+            // "нфт подтягиваеться в случае с моделью" - if it's a model, link collection too
+            if (statKey === 'model' && item.collection_address) {
+                ACTIVE_FILTERS.nft = item.collection_address;
+            }
+
+            closeProductView();
+            loadLiveItems(true); // Refresh with new filters
+            tg.HapticFeedback.impactOccurred('medium');
+        };
+
         return row;
     };
 
@@ -1080,19 +1113,19 @@ async function openProductView(item, finalPrice, imgSrc) {
 
     // Add Model row (e.g., "Ninja Turtle")
     if (realModel) {
-        const modelRow = createPropRow('Model', realModel, 'model', true);
+        const modelRow = createPropRow('Модель', realModel, 'model', true);
         if (modelRow) propCont.appendChild(modelRow);
     }
 
     // Add Pattern/Symbol row (e.g., "Champagne")
     if (realPattern) {
-        const patternRow = createPropRow('Pattern', realPattern, 'symbol', true);
+        const patternRow = createPropRow('Символ', realPattern, 'symbol', true);
         if (patternRow) propCont.appendChild(patternRow);
     }
 
     // Add Backdrop row (e.g., "French Blue")
     if (realBackdrop) {
-        const backdropRow = createPropRow('Backdrop', realBackdrop, 'bg', true);
+        const backdropRow = createPropRow('Фон', realBackdrop, 'bg', true);
         if (backdropRow) propCont.appendChild(backdropRow);
     }
 
