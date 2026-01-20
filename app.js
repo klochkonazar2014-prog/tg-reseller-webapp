@@ -84,15 +84,28 @@ const VISUAL_MAP = {
 const TG_ASSETS_URL = "https://telegifter.ru/wp-content/themes/gifts/assets/img/gifts";
 
 function getTelegifterUrl(type, name, collection) {
-    if (!name || name === 'Unknown' || name === 'Default') return null;
-    const cleanName = encodeURIComponent(name); // Spaces are preserved in filename but encoded
+    if (!name || name === 'Unknown' || name === 'Default' || name === 'Gift') return null;
+    const cleanName = encodeURIComponent(name);
     if (type === 'symbol') {
         return `${TG_ASSETS_URL}/symbol/${cleanName}.webp`;
     }
     if (type === 'model' && collection) {
-        // Collection slug: lowercase, no spaces (e.g. "Pretty Posy" -> "prettyposy")
-        const colSlug = collection.toLowerCase().replace(/[^a-z0-9]/g, '');
-        return `${TG_ASSETS_URL}/${colSlug}/${cleanName}.webp`;
+        // Most common slugs on Telegifter
+        const baseSlug = collection.toLowerCase().replace(/[^a-z0-9]/g, '');
+        // We can't easily check 404 here, but we can return the most likely one
+        // and let the browser handled fallsback. 
+        // Strategy: if collection is 'Alpha Dog' -> 'alphadog' or 'alphadogs'
+        // Let's try to improve the slug for known collections
+        const plurals = ['duck', 'frog', 'turtle', 'dog', 'cat', 'voodoo', 'jelly', 'pot', 'box', 'watch', 'flower', 'sparkler', 'egg', 'pear', 'posy', 'heart'];
+        let slug = baseSlug;
+        for (let p of plurals) {
+            if (baseSlug.includes(p) && !baseSlug.endsWith('s')) {
+                // Many telegifter assets use plural for single-word collections or specific patterns
+                // But specifically for 'alphadog' -> 'alphadog' is usually fine.
+                // However, 'duck' -> 'ducks'
+            }
+        }
+        return `${TG_ASSETS_URL}/${slug}/${cleanName}.webp`;
     }
     return null;
 }
@@ -437,40 +450,38 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
     const div = document.createElement('div');
     div.className = `filter-list-item ${isSelected ? 'selected' : ''}`;
 
+    const isAll = value === 'all';
+
     let visualHTML = '';
-    if (key === 'symbol') {
-        // Try clean visual from Telegifter first
+    if (isAll) {
+        // High quality "ALL" icon
+        visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: linear-gradient(135deg, #2a2a2a, #1a1a1a); border: 1px solid rgba(255,255,255,0.1); display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; overflow:hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+            <div style="font-size:10px; font-weight:900; color:#fff; letter-spacing:1px; z-index:2; font-family: 'Outfit', sans-serif;">ВСЕ</div>
+            <div style="width:16px; height:2px; background: #0088cc; margin-top:4px; border-radius:1px; z-index:2;"></div>
+            <div style="position:absolute; top:0; left:0; width:100%; height:100%; background: url('https://telegifter.ru/wp-content/themes/gifts/assets/img/bg-logo-mini.webp'); opacity:0.1; background-size: 20px;"></div>
+        </div>`;
+    } else if (key === 'symbol') {
         const tgSymbol = getTelegifterUrl('symbol', name);
         const iconSrc = tgSymbol || VISUAL_MAP.symbol[name];
-        // Apply WHITE filter: brightness(0) invert(1)
-        visualHTML = `<img src="${iconSrc}" class="filter-img" style="filter: brightness(0) invert(1); width:24px; height:24px; object-fit:contain;" onerror="this.style.display='none'">`;
+        visualHTML = `<img src="${iconSrc}" class="filter-img" style="filter: brightness(0) invert(1); width:28px; height:28px; object-fit:contain;" onerror="this.style.display='none'">`;
     } else if (key === 'bg') {
         const bgStyle = VISUAL_MAP.bg[name] || '#333';
-        // Add pattern overlay for BG icons
-        visualHTML = `<div class="filter-color-circle" style="background: ${bgStyle}; position:relative; overflow:hidden;">
+        visualHTML = `<div class="filter-color-circle" style="background: ${bgStyle}; position:relative; overflow:hidden; width:52px; height:52px; border-radius:12px;">
             <div style="position:absolute; top:0; left:0; width:100%; height:100%; background: url('https://telegifter.ru/wp-content/themes/gifts/assets/img/bg-logo-mini.webp'); opacity:0.3; background-size: 20px;"></div>
         </div>`;
     } else if (imgUrl && !isBadUrl(imgUrl)) {
-        // Fix for dashes in Fragment URLs on the fly in the UI
-        let fixedImg = imgUrl;
-        if (imgUrl.includes('nft.fragment.com')) {
-            const parts = imgUrl.split('/');
-            const filename = parts[parts.length - 1];
-            if (filename.includes('-')) {
-                const namePart = filename.split('-')[0];
-                const rest = filename.split('-').slice(1).join('-');
-                const cleanName = namePart.replace(/[_-]/g, ''); // Basic fix, better use the regex logic if possible
-            }
-        }
+        // Для моделей и символов МЫ НЕ ХОТИМ показывать полное NFT с фоном в качестве запаски
+        // Поэтому для них fallback будет либо прозрачная гифка, либо ничего
+        const isModelOrSymbol = (key === 'model' || key === 'symbol');
+        const fallback = (isModelOrSymbol)
+            ? 'https://nft.fragment.com/guide/gift.svg' // Лучше показать подарок, чем NFT с фоном
+            : (fallbackImgUrl && !isBadUrl(fallbackImgUrl) ? fallbackImgUrl : 'https://nft.fragment.com/guide/gift.svg');
 
-        const fallback = fallbackImgUrl && !isBadUrl(fallbackImgUrl) ? fallbackImgUrl : 'https://nft.fragment.com/guide/gift.svg';
-
-        visualHTML = `<img src="${fixedImg}" class="filter-img" style="width:52px; height:52px; border-radius:12px; object-fit:contain; background:rgba(255,255,255,0.05);" loading="lazy" onerror="if (this.src !== '${fallback}') { this.src = '${fallback}'; } else { this.src = 'https://nft.fragment.com/guide/gift.svg'; }">`;
+        visualHTML = `<img src="${imgUrl}" class="filter-img" style="width:52px; height:52px; border-radius:12px; object-fit:contain; background:rgba(255,255,255,0.05);" loading="lazy" onerror="if (this.src !== '${fallback}') { this.src = '${fallback}'; }">`;
     } else {
         let label = (key === 'nft' || key === 'model') ? name.split(' ')[0].substring(0, 3).toUpperCase() : 'NFT';
-        visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: rgba(5, 5, 5, 0.4); border:1px solid rgba(255, 255, 255, 0.05); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
-            <img src="https://nft.fragment.com/guide/gift.svg" style="width:100%; height:100%; opacity:0.15; position:absolute; filter:grayscale(1);">
-            <span style="color:#aaa; font-size:11px; font-weight:700; position:relative; z-index:1;">${label}</span>
+        visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: rgba(255, 255, 255, 0.05); border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
+            <span style="color:#8b9bb4; font-size:11px; font-weight:700;">${label}</span>
         </div>`;
     }
 
