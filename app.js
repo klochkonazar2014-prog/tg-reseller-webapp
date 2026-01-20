@@ -856,9 +856,9 @@ async function openProductView(item, finalPrice, imgSrc) {
     const colName = (item._collection && item._collection.name) ? item._collection.name : "Gifts";
     document.getElementById('view-title').innerText = item.nft_name;
     document.getElementById('view-collection').innerText = `${colName} >`;
-    document.getElementById('view-col-name').innerText = `${colName} >`;
 
-    // Ownership: Use the pre-calculated _realOwner or explicit fields. NEVER fallback to nft_address or "fragment.ton" unless    // Reset Owner to Loading...
+    // Ownership: Use the pre-calculated _realOwner or explicit fields.
+    // Reset Owner to Loading...
     // Ownership: Try to show Lender/Seller immediately from list item
     let initialOwner = item.lender_address || item.seller_address || item._realOwner || 'Loading...';
 
