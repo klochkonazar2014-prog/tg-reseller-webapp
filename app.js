@@ -83,41 +83,26 @@ const VISUAL_MAP = {
 
 const TG_ASSETS_URL = "https://telegifter.ru/wp-content/themes/gifts/assets/img/gifts";
 
-const TG_COLLECTION_MAP = {
-    "berry boxes": "berrybox",
-    "berry box": "berrybox",
-    "artisan brick": "artisanbrick",
-    "artisan bricks": "artisanbrick",
-    "pretty posy": "prettyposy",
-    "pretty posies": "prettyposy",
-    "alpha dog": "alphadog",
-    "alpha dogs": "alphadog",
-    "money pot": "moneypot",
-    "money pots": "moneypot",
-    "voodoo doll": "voodoodoll",
-    "voodoo dolls": "voodoodoll"
-};
+const TG_SLUGS = ["berrybox", "artisanbrick", "prettyposy", "alphadogs", "voodoodoll", "ducks", "moneypot", "sparkler", "watch", "flower"];
 
-function getTelegifterUrl(type, name, collection) {
+function getTelegifterUrl(type, name, collection, slugIndex = 0) {
     if (!name || name === 'Unknown' || name === 'Default' || name === 'Gift') return null;
     const cleanName = encodeURIComponent(name);
+
     if (type === 'symbol') {
         return `${TG_ASSETS_URL}/symbol/${cleanName}.webp`;
     }
-    if (type === 'model' && collection) {
-        let slug = collection.toLowerCase();
-        // Check mapping first
-        if (TG_COLLECTION_MAP[slug]) {
-            slug = TG_COLLECTION_MAP[slug];
+
+    if (type === 'model') {
+        let slug = "";
+        if (slugIndex === 0 && collection) {
+            // First try: direct slug from collection name
+            slug = collection.toLowerCase().replace(/[^a-z0-9]/g, '');
+            if (slug.endsWith('boxes')) slug = 'berrybox'; // Special case from user
+            if (slug === 'artisanbricks') slug = 'artisanbrick';
         } else {
-            // Default slug logic
-            slug = slug.replace(/[^a-z0-9]/g, '');
-            // Handle some common suffixes
-            if (slug.endsWith('s') && slug.length > 5) {
-                // If 'boxes' -> 'box', 'posies' -> 'posy'
-                if (slug.endsWith('es')) slug = slug.slice(0, -2);
-                else slug = slug.slice(0, -1);
-            }
+            // Further tries: cycle through known popular slugs
+            slug = TG_SLUGS[(slugIndex - 1) % TG_SLUGS.length];
         }
         return `${TG_ASSETS_URL}/${slug}/${cleanName}.webp`;
     }
@@ -130,7 +115,7 @@ let ACTIVE_FILTERS = {
     bg: 'all',
     symbol: 'all',
     tags: 'all',
-    sort: 'price_asc',
+    sort: 'id_desc',
     price_from: null,
     price_to: null,
     gift_number: null,
@@ -468,8 +453,7 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
 
     let visualHTML = '';
     if (isAll) {
-        // High quality "ALL" icon
-        visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: linear-gradient(135deg, #2a2a2a, #1a1a1a); border: 1px solid rgba(255,255,255,0.1); display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; overflow:hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+        visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: linear-gradient(135deg, #2a2a2a, #1a1a1a); border: 1px solid rgba(255,255,255,0.1); display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; overflow:hidden;">
             <div style="font-size:10px; font-weight:900; color:#fff; letter-spacing:1px; z-index:2; font-family: 'Outfit', sans-serif;">ВСЕ</div>
             <div style="width:16px; height:2px; background: #0088cc; margin-top:4px; border-radius:1px; z-index:2;"></div>
             <div style="position:absolute; top:0; left:0; width:100%; height:100%; background: url('https://telegifter.ru/wp-content/themes/gifts/assets/img/bg-logo-mini.webp'); opacity:0.1; background-size: 20px;"></div>
@@ -484,15 +468,27 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
             <div style="position:absolute; top:0; left:0; width:100%; height:100%; background: url('https://telegifter.ru/wp-content/themes/gifts/assets/img/bg-logo-mini.webp'); opacity:0.3; background-size: 20px;"></div>
         </div>`;
     } else if (imgUrl && !isBadUrl(imgUrl)) {
-        const isModel = (key === 'model');
         const fallback = (fallbackImgUrl && !isBadUrl(fallbackImgUrl)) ? fallbackImgUrl : 'https://nft.fragment.com/guide/gift.svg';
 
-        // Strategy: showing the main imgUrl (which we hope is Telegifter if passed from initFilterLists)
-        // If it fails, try the fallback (which is usually the Fragment image).
         visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: rgba(255, 255, 255, 0.05); border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
-            <img src="${imgUrl}" class="filter-img" style="width:100%; height:100%; object-fit:contain; z-index:2;" 
-                onerror="if (this.src !== '${fallback}') { this.src = '${fallback}'; } else { this.style.display='none'; }">
+            <img src="${imgUrl}" class="filter-img" style="width:100%; height:100%; object-fit:contain; z-index:2; opacity:0;"
+                onload="this.style.opacity='1';"
+                onerror="
+                    const name = '${name.replace(/'/g, "\\'")}';
+                    const col = '${(collectionContext || '').replace(/'/g, "\\'")}';
+                    this.dataset.slugIndex = this.dataset.slugIndex ? parseInt(this.dataset.slugIndex) + 1 : 1;
+                    const nextUrl = getTelegifterUrl('model', name, col, parseInt(this.dataset.slugIndex));
+                    if (nextUrl && parseInt(this.dataset.slugIndex) < 12) {
+                        this.src = nextUrl;
+                    } else if (this.src !== '${fallback}') {
+                        this.src = '${fallback}';
+                        this.style.opacity = '1';
+                    } else {
+                        this.style.display = 'none';
+                    }
+                ">
             <img src="https://nft.fragment.com/guide/gift.svg" style="width:100%; height:100%; opacity:0.1; position:absolute; filter:grayscale(1);">
+            <span style="color:#8b9bb4; font-size:11px; font-weight:700; position:absolute;">${name.substring(0, 3).toUpperCase()}</span>
         </div>`;
     } else {
         const labelText = name.substring(0, 3).toUpperCase();
