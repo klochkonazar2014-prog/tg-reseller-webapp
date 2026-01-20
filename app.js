@@ -20,6 +20,15 @@ const isBadUrl = (url) => {
     const u = String(url).toLowerCase();
     return u.includes('ton_symbol.png') || u.includes('gift.svg');
 };
+const copyToClipboard = (text) => {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+            }
+        }).catch(err => console.error('Copy failed', err));
+    }
+};
 const renderTonAmount = (val) => `<span class="icon-before icon-ton tm-amount">${val}</span>`;
 let ATTR_STATS = { model: {}, bg: {}, symbol: {} };
 let CURRENT_PAYMENT_ITEM = null;
@@ -857,21 +866,22 @@ async function openProductView(item, finalPrice, imgSrc) {
     document.getElementById('view-title').innerText = item.nft_name;
     document.getElementById('view-collection').innerText = `${colName} >`;
 
-    // Ownership: Use the pre-calculated _realOwner or explicit fields.
-    // Reset Owner to Loading...
-    // Ownership: Try to show Lender/Seller immediately from list item
-    let initialOwner = item.lender_address || item.seller_address || item._realOwner || 'Loading...';
-
-    // Fix format: EQ -> UQ
-    if (initialOwner.startsWith && initialOwner.startsWith('EQ')) {
-        initialOwner = 'UQ' + initialOwner.substring(2);
-    }
-    // Truncate
-    if (initialOwner.length > 15) {
-        initialOwner = initialOwner.substring(0, 4) + '...' + initialOwner.substring(initialOwner.length - 4);
-    }
-
     const ownerEl = document.getElementById('view-owner');
+
+    // Safety check for initialOwner
+    let initialOwner = 'Loading...';
+    try {
+        initialOwner = item.lender_address || item.seller_address || item._realOwner || 'Loading...';
+        if (typeof initialOwner === 'string') {
+            if (initialOwner.startsWith('EQ')) {
+                initialOwner = 'UQ' + initialOwner.substring(2);
+            }
+            if (initialOwner.length > 15 && !initialOwner.includes('.')) {
+                initialOwner = initialOwner.substring(0, 4) + '...' + initialOwner.substring(initialOwner.length - 4);
+            }
+        }
+    } catch (e) { console.error("Initial owner error", e); }
+
     if (ownerEl) ownerEl.textContent = initialOwner === 'Loading...' ? 'Loading...' : (initialOwner + ' >');
 
     // Fetch REAL Details to get attributes and confirm Owner
@@ -987,9 +997,14 @@ async function openProductView(item, finalPrice, imgSrc) {
 
     // Helper to calculate percentage
     const getPercent = (statKey, value) => {
-        if (value === 'Default' || value === 'Common' || value === 'Gift') return "25.0";
-        const hash = value.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-        return (0.1 + (hash % 100) / 10).toFixed(1);
+        if (!value || value === 'Default' || value === 'Common' || value === 'Gift' || value === 'Unknown') return "25.0";
+        try {
+            const valStr = String(value);
+            const hash = valStr.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+            return (0.1 + (hash % 100) / 10).toFixed(1);
+        } catch (e) {
+            return "15.0";
+        }
     };
 
     // Helper to create property row with percent
@@ -1002,7 +1017,8 @@ async function openProductView(item, finalPrice, imgSrc) {
         row.style.cursor = 'pointer'; // Make it clickable
 
         // Hide if it looks like an address or is labelled as such
-        if (label.toLowerCase().includes('owner') || label.toLowerCase().includes('address') || (value.startsWith && (value.startsWith('EQ') || value.startsWith('UQ')) && value.length > 30)) {
+        const isAddr = value && typeof value === 'string' && (value.startsWith('EQ') || value.startsWith('UQ')) && value.length > 30;
+        if (label.toLowerCase().includes('owner') || label.toLowerCase().includes('address') || isAddr) {
             row.classList.add('ownership-row');
         }
 
@@ -1079,9 +1095,10 @@ async function openProductView(item, finalPrice, imgSrc) {
     // These are parsed during loadLiveItems() into item._modelName, item._backdrop, item._symbol
     // But we need to make sure they come from actual API attributes, not fallbacks
 
-    let realModel = null;
-    let realBackdrop = null;
-    let realPattern = null;
+    // 4. PRE-FILL from item data if available
+    let realModel = item._modelName || null;
+    let realBackdrop = item._backdrop || null;
+    let realPattern = item._symbol || null;
 
     if (item.attributes && Array.isArray(item.attributes)) {
         item.attributes.forEach(attr => {
@@ -1092,13 +1109,9 @@ async function openProductView(item, finalPrice, imgSrc) {
         });
     }
 
-    // 4. FALLBACK if attributes are missing (User requested this)
-    // If we didn't find them in attributes loop, use the computed values from loadLiveItems
-    // OR fallback to the gift name itself (e.g. "Whip Cupcake") which is better than "Gift" or "Unknown"
-
-    if (!realModel) realModel = 'Loading...';
-    if (!realBackdrop) realBackdrop = 'Loading...';
-    if (!realPattern) realPattern = 'Loading...';
+    if (!realModel || realModel === 'Unknown') realModel = 'Loading...';
+    if (!realBackdrop || realBackdrop === 'Unknown') realBackdrop = 'Loading...';
+    if (!realPattern || realPattern === 'Unknown' || realPattern === 'None') realPattern = 'Loading...';
 
     // Add Model row (e.g., "Ninja Turtle")
     if (realModel) {
