@@ -6,11 +6,10 @@
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>MRKT</title>
-    <script src="https://telegram.org/js/telegram-web-app.js?v=1.1.141"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js?v=1.1.138"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <script src="lottie.min.js"></script>
     <link rel="stylesheet" href="style.css?v=3.1.2">
-    <link rel="stylesheet" href="profile_extra.css">
     <style>
         /* CRITICAL OVERRIDES - DO NOT REMOVE */
         .main-rent-btn svg,
@@ -403,33 +402,27 @@
 
         <!-- Profile Tab -->
         <div id="profile-container" style="display: none; padding: 16px;">
-            <!-- Profile Header with Oval Background -->
-            <div class="profile-oval-bg">
-                <div class="new-profile-header">
-                    <img id="profile-avatar" src="https://ui-avatars.com/api/?name=User&background=0088cc&color=fff"
-                        class="new-profile-avatar">
-
-                    <!-- TON Icon Circle + Balance Box -->
-                    <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
-                        <!-- TON Icon Circle -->
-                        <div class="ton-icon-circle">
-                            <span class="icon-ton"></span>
-                        </div>
-
-                        <!-- Balance Box -->
-                        <div class="balance-box">
-                            <div id="profile-balance">0.00</div>
-                        </div>
-                    </div>
-
-                    <!-- Plus Button Circle -->
-                    <div class="btn-circle-add" onclick="alert('Пополнение скоро!')">+</div>
+            <div class="new-profile-header">
+                <img id="profile-avatar" src="https://ui-avatars.com/api/?name=User&background=0088cc&color=fff"
+                    class="new-profile-avatar">
+                <div style="display: flex; align-items: center; gap: 8px; flex: 1;">
+                    <span class="icon-ton"
+                        style="width: 20px; height: 20px; background-size: contain; flex-shrink: 0;"></span>
+                    <div id="profile-balance" class="new-profile-balance">0.00</div>
                 </div>
+                <div class="btn-circle-add" onclick="alert('Пополнение скоро!')">+</div>
             </div>
 
-            <!-- TonConnect Button (Original, not custom) -->
-            <div style="margin-bottom: 24px; margin-top: 24px;">
-                <div id="ton-connect-btn"></div>
+            <!-- Wallet Connect / Display -->
+            <div style="margin-bottom: 24px;">
+                <div id="ton-connect-btn" style="display: none;"></div>
+                <button onclick="openWalletConnect()" class="wallet-display">
+                    <svg viewBox="0 0 24 24" fill="none" class="wallet-icon">
+                        <path d="M21 12V7H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h16v9z" fill="#fff"></path>
+                        <path d="M3 15v4a2 2 0 0 0 2 2h16v-6H3z" fill="#fff"></path>
+                    </svg>
+                    <span id="profile-wallet-text">Connect Wallet</span>
+                </button>
             </div>
 
             <div class="profile-actions-row">

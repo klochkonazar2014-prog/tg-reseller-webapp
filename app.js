@@ -143,14 +143,9 @@ document.addEventListener("DOMContentLoaded", async () => {
             tg = window.Telegram.WebApp;
             tg.expand();
             tg.MainButton.hide();
+            loadProfileData();
         }
-
-        // Initialize TonConnect FIRST
-        await initTonConnect();
-
-        // Load profile data after TonConnect is ready
-        loadProfileData();
-
+        initTonConnect();
         loadFilterData();
         await loadLiveItems(true);
 
@@ -385,30 +380,32 @@ async function loadFilterData() {
     }
 }
 
-async function initTonConnect() {
-    return new Promise((resolve, reject) => {
-        try {
-            tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-                manifestUrl: MANIFEST_URL,
-                buttonRootId: 'ton-connect-btn',
-                uiOptions: {
-                    twaReturnUrl: 'https://t.me/ArendaLend_bot/app',
-                    modalZIndex: 10000,
-                    uiPreferences: {
-                        theme: 'dark'
-                    }
+function initTonConnect() {
+    try {
+        tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+            manifestUrl: MANIFEST_URL,
+            buttonRootId: 'ton-connect-btn',
+            uiOptions: {
+                twaReturnUrl: 'https://t.me/ArendaLend_bot/app',
+                modalZIndex: 10000,
+                uiPreferences: {
+                    theme: 'dark'
                 }
-            });
+            }
+        });
 
-            // Wait for initialization
-            setTimeout(() => {
-                resolve();
-            }, 500);
-        } catch (error) {
-            console.error('Failed to initialize TonConnect:', error);
-            reject(error);
-        }
-    });
+        // Subscribe to wallet changes
+        tonConnectUI.onStatusChange(wallet => {
+            updateWalletBtnState();
+        });
+
+        // Initial state update
+        setTimeout(() => {
+            updateWalletBtnState();
+        }, 500);
+    } catch (error) {
+        console.error('Failed to initialize TonConnect:', error);
+    }
 }
 
 // --- Accordions logic ---
@@ -1265,12 +1262,8 @@ async function loadHistoryContent() {
 }
 
 function copyWallet() {
-    if (tonConnectUI && tonConnectUI.account && tonConnectUI.account.address) {
-        // Convert to User Friendly Address (UQ...)
-        const rawAddress = tonConnectUI.account.address;
-        const userFriendlyAddress = TON_CONNECT_UI.toUserFriendlyAddress(rawAddress, true); // true for testnet/bounceable
-
-        copyToClipboard(userFriendlyAddress);
+    if (tonConnectUI.account && tonConnectUI.account.address) {
+        copyToClipboard(tonConnectUI.account.address);
         if (tg) tg.showAlert("Адрес скопирован!");
         else alert("Адрес скопирован!");
     } else {
@@ -1299,6 +1292,33 @@ function loadProfileData() {
 
     if (balElBase) balElBase.textContent = balance;
     if (balElMini) balElMini.textContent = balance;
+
+    // 3. Wallet State Sync
+    updateWalletBtnState();
+}
+
+function updateWalletBtnState() {
+    const btnText = document.getElementById('profile-wallet-text');
+    if (!btnText) return;
+
+    if (tonConnectUI && tonConnectUI.connected && tonConnectUI.account) {
+        const addr = tonConnectUI.account.address;
+        // User friendly format
+        const short = addr.slice(0, 4) + '...' + addr.slice(-4);
+        btnText.textContent = short;
+    } else {
+        btnText.textContent = "Connect Wallet";
+    }
+}
+
+// Open Wallet Connection Modal
+function openWalletConnect() {
+    if (tonConnectUI) {
+        tonConnectUI.openModal();
+    } else {
+        console.error('TonConnect UI not initialized');
+        if (tg) tg.showAlert('Ошибка инициализации кошелька');
+    }
 }
 
 
