@@ -432,16 +432,15 @@ async function loadFilterData() {
 function initTonConnect() {
     tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
         manifestUrl: MANIFEST_URL,
-        buttonRootId: 'ton-connect-btn'
-    });
-
-    // Force high z-index for TonConnect UI Modals
-    tonConnectUI.uiOptions = {
-        modalZIndex: 10000,
-        uiPreferences: {
-            theme: 'dark'
+        buttonRootId: 'ton-connect-btn',
+        uiOptions: {
+            twaReturnUrl: 'https://t.me/ArendaLend_bot/app',
+            modalZIndex: 10000,
+            uiPreferences: {
+                theme: 'dark'
+            }
         }
-    };
+    });
 }
 
 // --- Accordions logic ---
