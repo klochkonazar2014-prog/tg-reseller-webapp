@@ -190,88 +190,35 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 function switchTab(index) {
-    const containers = ['market-container', 'orders-container', 'hub-container', 'raffle-container', 'storage-container'];
-    containers.forEach((id, i) => {
+    // Indices: 0 = Market, 1 = Profile
+    const containers = ['market-container', 'profile-container'];
+
+    // Hide all first
+    containers.forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.style.display = (i === index) ? 'block' : 'none';
+        if (el) el.style.display = 'none';
     });
 
-    // Load orders if switching to the orders tab
+    // Show target
+    const targetId = containers[index];
+    const targetEl = document.getElementById(targetId);
+    if (targetEl) targetEl.style.display = 'block';
+
+    // Update Nav
+    document.querySelectorAll('.nav-item').forEach((nav, i) => {
+        if (i === index) nav.classList.add('active');
+        else nav.classList.remove('active');
+    });
+
+    // Profile logic
     if (index === 1) {
-        loadUserOrders();
-        window.ordersInterval = setInterval(loadUserOrders, 10000); // Poll every 10s
-    } else {
-        if (window.ordersInterval) clearInterval(window.ordersInterval);
+        loadProfileData();
     }
 }
 
-async function loadUserOrders() {
-    const container = document.getElementById('orders-container');
-    container.innerHTML = '<h3>Загрузка ваших заказов...</h3>';
-
-    // В реальном приложении берем ID из Telegram.WebApp.initDataUnsafe.user.id
-    const userId = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user.id : 0;
-
-    try {
-        const res = await fetch(`${BACKEND_URL}/api/my_orders?user_id=${userId}`);
-        const orders = await res.json();
-
-        if (orders.length === 0) {
-            container.innerHTML = `
-                <h3>Ваши ордеры</h3>
-                <p style="margin-top: 20px; font-size: 14px; opacity: 0.6;">У вас пока нет активных аренд.</p>
-                <div style="margin-top: 30px; opacity: 0.2;">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
-                    </svg>
-                </div>`;
-            return;
-        }
-
-        container.innerHTML = '<h3 style="margin-bottom: 20px;">Ваши ордеры</h3>';
-        const list = document.createElement('div');
-        list.className = 'orders-list';
-        list.style.display = 'flex';
-        list.style.flexDirection = 'column';
-        list.style.gap = '12px';
-
-        orders.forEach(order => {
-            const card = document.createElement('div');
-            card.className = 'order-card';
-            card.style.background = 'rgba(255,255,255,0.05)';
-            card.style.borderRadius = '16px';
-            card.style.padding = '16px';
-            card.style.textAlign = 'left';
-            card.style.border = '1px solid rgba(255,255,255,0.05)';
-
-            let statusText = order.status;
-            let statusColor = '#8b9bb4';
-            let actionBtn = '';
-
-            if (order.status === 'pending_payment') { statusText = '⏳ Ожидание оплаты'; statusColor = '#ffcc00'; }
-            if (order.status === 'paid') { statusText = '🔄 Оплата получена, выкупаем...'; statusColor = '#007AFF'; }
-            if (order.status === 'rented') {
-                statusText = '💎 Арендовано (нужна привязка)';
-                statusColor = '#34C759';
-                actionBtn = `<button onclick="openTcModal(${order.id})" class="btn-yellow" style="width:100%; height:40px; margin-top:12px; font-size:13px;">Подключить к Fragment</button>`;
-            }
-            if (order.status === 'active') { statusText = '✅ Активно'; statusColor = '#00ffcc'; }
-
-            card.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-                    <div style="font-weight: 700; color: #fff;">${order.nft_name}</div>
-                    <div style="font-size: 11px; color: #8b9bb4;">#${order.id}</div>
-                </div>
-                <div style="font-size: 13px; color: ${statusColor}; margin-bottom: 4px;">${statusText}</div>
-                <div style="font-size: 12px; opacity: 0.6;">Срок: ${order.days} дн. | ${order.total_price} TON</div>
-                ${actionBtn}
-            `;
-            list.appendChild(card);
-        });
-        container.appendChild(list);
-    } catch (e) {
-        container.innerHTML = `<h3>Ошибка загрузки</h3><p>${e.message}</p>`;
-    }
+// Obsolete loadUserOrders removed as tab is gone.
+function loadUserOrders() {
+    // No-op 
 }
 
 function openTcModal(orderId) {
@@ -1270,7 +1217,7 @@ if (trigger) {
 }
 
 function loadProfileData() {
-    if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+    if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
         const u = tg.initDataUnsafe.user;
         const nameEl = document.getElementById('profile-name');
         const userEl = document.getElementById('profile-username');
@@ -1280,32 +1227,15 @@ function loadProfileData() {
         if (userEl) userEl.textContent = u.username ? '@' + u.username : 'ID: ' + u.id;
         if (avaEl && u.photo_url) avaEl.src = u.photo_url;
     }
-}
-
-function switchTab(tabId) {
-    // Hide all containers
-    ['market-container', 'orders-container', 'hub-container', 'raffle-container', 'storage-container', 'profile-container'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.style.display = 'none';
-    });
-
-    // Show target
-    const target = document.getElementById(tabId + '-container');
-    if (target) {
-        target.style.display = 'block';
-        if(tabId === 'market') target.style.display = 'grid'; // Grid for market
+    // Static balance for now (or fetch from API if available)
+    const balEl = document.getElementById('profile-balance');
+    if (balEl && !balEl.dataset.loaded) {
+        balEl.innerText = "0.00";
+        balEl.dataset.loaded = "true";
     }
-
-    // Update nav items
-    document.querySelectorAll('.nav-item').forEach(item => {
-        item.classList.remove('active');
-        if (item.onclick && item.onclick.toString().includes(tabId)) {
-            item.classList.add('active');
-        } else if (tabId === 'market' && item.innerText.includes('')) {
-             item.classList.add('active');
-        }
-    });
 }
 
-// Fix market tab click handler
-document.querySelector('.nav-item').onclick = () => switchTab('market');
+function observeNewCards() {
+    // Placeholder if we add intersection observer for animations later
+    // Currently renderItemsBatch calls this, so it must exist.
+}

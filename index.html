@@ -6,7 +6,7 @@
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>MRKT</title>
-    <script src="https://telegram.org/js/telegram-web-app.js?v=1.1.129"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js?v=1.1.130"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <script src="lottie.min.js"></script>
     <link rel="stylesheet" href="style.css?v=3.1.2">
@@ -249,8 +249,15 @@
                     <circle cx="11" cy="11" r="8"></circle>
                     <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                 </svg>
-                <input type="text" id="search-input" class="search-bar" placeholder="Поиск по названию NFT / номеру">
+                <input type="text" id="search-input" class="search-bar" placeholder="Поиск по названию">
             </div>
+
+            <button onclick="resetMrktModal()"
+                style="background: #1c1c1e; border: 1px solid rgba(255,255,255,0.05); width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #8b9bb4;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M15 18l-6-6 6-6" />
+                </svg>
+            </button>
         </div>
 
         <!-- Chips -->
@@ -390,39 +397,25 @@
             <div id="loader-trigger" style="height: 40px;"></div>
         </div>
 
-        <!-- Orders Tab -->
-        <div id="orders-container" style="display: none; padding: 20px; text-align: center; color: #8b9bb4;">
-            <h3>Ваши ордеры</h3>
-            <p style="margin-top: 10px; font-size: 14px;">У вас пока нет активных аренд.</p>
-        </div>
-
-        <!-- Hub Tab -->
-        <div id="hub-container" style="display: none; padding: 20px; text-align: center; color: #8b9bb4;">
-            <h3>Игровой хаб</h3>
-            <p style="margin-top: 10px; font-size: 14px;">Скоро здесь появятся игры!</p>
-        </div>
-
-        <!-- Raffle Tab -->
-        <div id="raffle-container" style="display: none; padding: 20px; text-align: center; color: #8b9bb4;">
-            <h3>Розыгрыши</h3>
-            <p style="margin-top: 10px; font-size: 14px;">Активных розыгрышей нет.</p>
-        </div>
-
-        <!-- Storage Tab -->
-        <div id="storage-container" style="display: none; padding: 20px; text-align: center; color: #8b9bb4;">
-            <h3>Хранилище</h3>
-            <p style="margin-top: 10px; font-size: 14px;">Ваше хранилище пусто.</p>
-        </div>
-
         <!-- Profile Tab -->
         <div id="profile-container" style="display: none; padding: 16px;">
             <div class="profile-header-card"
-                style="background: #1c1c1e; border-radius: 16px; padding: 20px; display: flex; align-items: center; gap: 16px; margin-bottom: 24px;">
-                <img id="profile-avatar" src="https://ui-avatars.com/api/?name=User&background=0088cc&color=fff"
-                    style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;">
-                <div class="profile-info">
-                    <div id="profile-name" style="color: #fff; font-size: 20px; font-weight: 700;">Loading...</div>
-                    <div id="profile-username" style="color: #8b9bb4; font-size: 14px;">@username</div>
+                style="background: #1c1c1e; border-radius: 20px; padding: 20px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <img id="profile-avatar" src="https://ui-avatars.com/api/?name=User&background=0088cc&color=fff"
+                        style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
+                    <div class="profile-info">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span class="icon-ton"
+                                style="width: 18px; height: 18px; display: inline-block; vertical-align: middle; background-size: contain;"></span>
+                            <span id="profile-balance"
+                                style="color: #fff; font-size: 22px; font-weight: 700;">0.00</span>
+                            <button
+                                style="background: #2c2c2e; border: none; border-radius: 50%; width: 24px; height: 24px; color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer;">+</button>
+                        </div>
+                        <div id="profile-username" style="color: #8b9bb4; font-size: 14px; margin-top: 4px;">@username
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -438,13 +431,18 @@
                     <span style="color: #fff; font-size: 16px; font-weight: 500;">Language</span>
                     <span style="color: #8b9bb4; font-size: 15px;">English ></span>
                 </div>
+                <div class="settings-item" onclick="switchTab(0)"
+                    style="padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+                    <span style="color: #fff; font-size: 16px; font-weight: 500;">Market</span>
+                    <span style="color: #8b9bb4; font-size: 15px;">Go to Market ></span>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Bottom Nav -->
-    <div class="bottom-nav">
-        <div class="nav-item active">
+    <div class="bottom-nav" style="justify-content: space-evenly;">
+        <div class="nav-item active" onclick="switchTab(0)">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
                 <line x1="3" y1="6" x2="21" y2="6"></line>
@@ -452,43 +450,13 @@
             </svg>
             <span>Маркет</span>
         </div>
-        <div class="nav-item">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path d="M9 11l3 3L22 4"></path>
-                <path d="M22 12v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"></path>
-            </svg>
-            <span>Ордеры</span>
-        </div>
-        <div class="nav-item">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <rect x="2" y="6" width="20" height="12" rx="2"></rect>
-                <path d="M6 12h.01"></path>
-                <path d="M10 12h.01"></path>
-                <path d="M15 10l2 2-2 2"></path>
-                <path d="M19 12h.01"></path>
-            </svg>
-            <span>Игровой хаб</span>
-        </div>
-        <div class="nav-item">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <circle cx="12" cy="12" r="10"></circle>
-                <path d="M12 8v8"></path>
-                <path d="M8 12h8"></path>
-            </svg>
-            <span>Розыгрыши</span>
-        </div>
-        <div class="nav-item" onclick="switchTab('profile')">
+
+        <div class="nav-item" onclick="switchTab(1)">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                 <circle cx="12" cy="7" r="4"></circle>
             </svg>
             <span>Профиль</span>
-        </div>
-        <div class="nav-item">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-            </svg>
-            <span>Хранилище</span>
         </div>
     </div>
 
