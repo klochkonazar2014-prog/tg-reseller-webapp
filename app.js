@@ -381,17 +381,31 @@ async function loadFilterData() {
 }
 
 function initTonConnect() {
-    tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-        manifestUrl: MANIFEST_URL,
-        buttonRootId: 'ton-connect-btn',
-        uiOptions: {
-            twaReturnUrl: 'https://t.me/ArendaLend_bot/app',
-            modalZIndex: 10000,
-            uiPreferences: {
-                theme: 'dark'
+    try {
+        tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+            manifestUrl: MANIFEST_URL,
+            buttonRootId: 'ton-connect-btn',
+            uiOptions: {
+                twaReturnUrl: 'https://t.me/ArendaLend_bot/app',
+                modalZIndex: 10000,
+                uiPreferences: {
+                    theme: 'dark'
+                }
             }
-        }
-    });
+        });
+
+        // Subscribe to wallet changes
+        tonConnectUI.onStatusChange(wallet => {
+            updateWalletBtnState();
+        });
+
+        // Initial state update
+        setTimeout(() => {
+            updateWalletBtnState();
+        }, 500);
+    } catch (error) {
+        console.error('Failed to initialize TonConnect:', error);
+    }
 }
 
 // --- Accordions logic ---
@@ -1287,7 +1301,7 @@ function updateWalletBtnState() {
     const btnText = document.getElementById('profile-wallet-text');
     if (!btnText) return;
 
-    if (tonConnectUI.connected && tonConnectUI.account) {
+    if (tonConnectUI && tonConnectUI.connected && tonConnectUI.account) {
         const addr = tonConnectUI.account.address;
         // User friendly format
         const short = addr.slice(0, 4) + '...' + addr.slice(-4);
@@ -1295,13 +1309,6 @@ function updateWalletBtnState() {
     } else {
         btnText.textContent = "Connect Wallet";
     }
-}
-
-// Subscribe to wallet changes
-if (tonConnectUI) {
-    tonConnectUI.onStatusChange(wallet => {
-        updateWalletBtnState();
-    });
 }
 
 // Open Wallet Connection Modal
