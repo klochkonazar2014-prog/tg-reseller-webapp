@@ -1304,6 +1304,17 @@ if (tonConnectUI) {
     });
 }
 
+// Open Wallet Connection Modal
+function openWalletConnect() {
+    if (tonConnectUI) {
+        tonConnectUI.openModal();
+    } else {
+        console.error('TonConnect UI not initialized');
+        if (tg) tg.showAlert('Ошибка инициализации кошелька');
+    }
+}
+
+
 // --- Language Switcher ---
 function switchLanguage() {
     // Simple toggle for now
