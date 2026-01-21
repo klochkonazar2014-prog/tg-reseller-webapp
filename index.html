@@ -6,7 +6,7 @@
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>MRKT</title>
-    <script src="https://telegram.org/js/telegram-web-app.js?v=1.1.126"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js?v=1.1.127"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <script src="lottie.min.js"></script>
     <link rel="stylesheet" href="style.css?v=3.1.2">
@@ -170,8 +170,6 @@
                     </svg>
                     Арендовать за <span id="rent-btn-price">0.00</span>
                 </button>
-                <!-- Hidden TonConnect button for SDK initialization -->
-                <div id="ton-connect-btn" style="display:none;"></div>
             </div>
 
 
@@ -253,13 +251,8 @@
                 </svg>
                 <input type="text" id="search-input" class="search-bar" placeholder="Поиск по названию NFT / номеру">
             </div>
-            <button class="header-cart-btn">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
-                    <line x1="3" y1="6" x2="21" y2="6"></line>
-                    <path d="M16 10a4 4 0 0 1-8 0"></path>
-                </svg>
-            </button>
+            <div id="ton-connect-btn" class="header-cart-btn"
+                style="background: none; border: none; width: auto; height: auto;"></div>
         </div>
 
         <!-- Chips -->
