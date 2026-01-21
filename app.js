@@ -434,6 +434,14 @@ function initTonConnect() {
         manifestUrl: MANIFEST_URL,
         buttonRootId: 'ton-connect-btn'
     });
+
+    // Force high z-index for TonConnect UI Modals
+    tonConnectUI.uiOptions = {
+        modalZIndex: 10000,
+        uiPreferences: {
+            theme: 'dark'
+        }
+    };
 }
 
 // --- Accordions logic ---

@@ -6,7 +6,7 @@
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>MRKT</title>
-    <script src="https://telegram.org/js/telegram-web-app.js?v=1.1.124"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js?v=1.1.125"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <script src="lottie.min.js"></script>
     <link rel="stylesheet" href="style.css?v=3.1.2">
@@ -51,6 +51,13 @@
             margin-left: 4px;
             opacity: 0.5;
             vertical-align: middle;
+        }
+
+        /* Ensure TonConnect UI is always on top of EVERYTHING */
+        #tc-widget-root,
+        .tc-root,
+        .tc-modal-container {
+            z-index: 10000 !important;
         }
 
         /* Hide Ownership rows as per request */
