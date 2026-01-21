@@ -6,7 +6,7 @@
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>MRKT</title>
-    <script src="https://telegram.org/js/telegram-web-app.js?v=1.1.137"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js?v=1.1.138"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <script src="lottie.min.js"></script>
     <link rel="stylesheet" href="style.css?v=3.1.2">
@@ -405,11 +405,21 @@
             <div class="new-profile-header">
                 <img id="profile-avatar" src="https://ui-avatars.com/api/?name=User&background=0088cc&color=fff"
                     class="new-profile-avatar">
-                <div style="display: flex; align-items: center; gap: 8px; flex: 1;">
-                    <span class="icon-ton"
-                        style="width: 20px; height: 20px; background-size: contain; flex-shrink: 0;"></span>
-                    <div id="profile-balance" class="new-profile-balance">0.00</div>
+
+                <!-- TON Icon in Circle + Balance in Box + Plus Button -->
+                <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
+                    <!-- TON Icon Circle -->
+                    <div class="ton-icon-circle">
+                        <span class="icon-ton"></span>
+                    </div>
+
+                    <!-- Balance Box -->
+                    <div class="balance-box">
+                        <div id="profile-balance">0.00</div>
+                    </div>
                 </div>
+
+                <!-- Plus Button Circle -->
                 <div class="btn-circle-add" onclick="alert('Пополнение скоро!')">+</div>
             </div>
 

@@ -143,9 +143,14 @@ document.addEventListener("DOMContentLoaded", async () => {
             tg = window.Telegram.WebApp;
             tg.expand();
             tg.MainButton.hide();
-            loadProfileData();
         }
-        initTonConnect();
+
+        // Initialize TonConnect FIRST
+        await initTonConnect();
+
+        // Load profile data after TonConnect is ready
+        loadProfileData();
+
         loadFilterData();
         await loadLiveItems(true);
 
@@ -380,32 +385,36 @@ async function loadFilterData() {
     }
 }
 
-function initTonConnect() {
-    try {
-        tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-            manifestUrl: MANIFEST_URL,
-            buttonRootId: 'ton-connect-btn',
-            uiOptions: {
-                twaReturnUrl: 'https://t.me/ArendaLend_bot/app',
-                modalZIndex: 10000,
-                uiPreferences: {
-                    theme: 'dark'
+async function initTonConnect() {
+    return new Promise((resolve, reject) => {
+        try {
+            tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+                manifestUrl: MANIFEST_URL,
+                buttonRootId: 'ton-connect-btn',
+                uiOptions: {
+                    twaReturnUrl: 'https://t.me/ArendaLend_bot/app',
+                    modalZIndex: 10000,
+                    uiPreferences: {
+                        theme: 'dark'
+                    }
                 }
-            }
-        });
+            });
 
-        // Subscribe to wallet changes
-        tonConnectUI.onStatusChange(wallet => {
-            updateWalletBtnState();
-        });
+            // Subscribe to wallet changes
+            tonConnectUI.onStatusChange(wallet => {
+                updateWalletBtnState();
+            });
 
-        // Initial state update
-        setTimeout(() => {
-            updateWalletBtnState();
-        }, 500);
-    } catch (error) {
-        console.error('Failed to initialize TonConnect:', error);
-    }
+            // Initial state update
+            setTimeout(() => {
+                updateWalletBtnState();
+                resolve();
+            }, 500);
+        } catch (error) {
+            console.error('Failed to initialize TonConnect:', error);
+            reject(error);
+        }
+    });
 }
 
 // --- Accordions logic ---
