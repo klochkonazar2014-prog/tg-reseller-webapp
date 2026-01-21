@@ -6,7 +6,7 @@
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>MRKT</title>
-    <script src="https://telegram.org/js/telegram-web-app.js?v=1.1.130"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js?v=1.1.131"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <script src="lottie.min.js"></script>
     <link rel="stylesheet" href="style.css?v=3.1.2">
@@ -252,12 +252,15 @@
                 <input type="text" id="search-input" class="search-bar" placeholder="Поиск по названию">
             </div>
 
-            <button onclick="resetMrktModal()"
-                style="background: #1c1c1e; border: 1px solid rgba(255,255,255,0.05); width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #8b9bb4;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M15 18l-6-6 6-6" />
-                </svg>
-            </button>
+            <!-- New Header Widget: [Balance] [Avatar] -->
+            <div class="header-ab-widget" onclick="switchTab(1)" style="cursor: pointer;">
+                <div class="header-ab-balance">
+                    <span class="icon-ton" style="width: 14px; height: 14px; background-size: contain;"></span>
+                    <span id="header-mini-balance">0.00</span>
+                </div>
+                <img id="header-mini-avatar" src="https://ui-avatars.com/api/?name=U&background=2c2c2e&color=fff"
+                    class="header-ab-avatar">
+            </div>
         </div>
 
         <!-- Chips -->
@@ -399,44 +402,62 @@
 
         <!-- Profile Tab -->
         <div id="profile-container" style="display: none; padding: 16px;">
-            <div class="profile-header-card"
-                style="background: #1c1c1e; border-radius: 20px; padding: 20px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <img id="profile-avatar" src="https://ui-avatars.com/api/?name=User&background=0088cc&color=fff"
-                        style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
-                    <div class="profile-info">
-                        <div style="display: flex; align-items: center; gap: 6px;">
-                            <span class="icon-ton"
-                                style="width: 18px; height: 18px; display: inline-block; vertical-align: middle; background-size: contain;"></span>
-                            <span id="profile-balance"
-                                style="color: #fff; font-size: 22px; font-weight: 700;">0.00</span>
-                            <button
-                                style="background: #2c2c2e; border: none; border-radius: 50%; width: 24px; height: 24px; color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer;">+</button>
-                        </div>
-                        <div id="profile-username" style="color: #8b9bb4; font-size: 14px; margin-top: 4px;">@username
-                        </div>
-                    </div>
+            <div class="new-profile-header">
+                <img id="profile-avatar" src="https://ui-avatars.com/api/?name=User&background=0088cc&color=fff"
+                    class="new-profile-avatar">
+                <div class="new-profile-balance-group">
+                    <span class="icon-ton" style="width: 22px; height: 22px; background-size: contain;"></span>
+                    <div id="profile-balance" class="new-profile-balance">0.00</div>
+                    <div class="btn-circle-add">+</div>
                 </div>
             </div>
 
-            <div class="settings-group"
-                style="background: #1c1c1e; border-radius: 16px; overflow: hidden; margin-bottom: 24px;">
-                <div class="settings-item"
-                    style="padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
-                    <span style="color: #fff; font-size: 16px; font-weight: 500;">Wallet</span>
-                    <div id="ton-connect-btn"></div>
+            <!-- Wallet Connect / Display -->
+            <div style="margin-bottom: 24px;">
+                <div id="ton-connect-btn" style="display: none;"></div> <!-- Hidden original -->
+                <button onclick="document.querySelector('#ton-connect-btn button').click()" class="wallet-display">
+                    <svg viewBox="0 0 24 24" fill="none" class="wallet-icon">
+                        <path d="M21 12V7H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h16v9z" fill="#000"></path>
+                        <path d="M3 15v4a2 2 0 0 0 2 2h16v-6H3z" fill="#000"></path>
+                    </svg>
+                    <span id="profile-wallet-text">Connect Wallet</span>
+                </button>
+            </div>
+
+            <div class="profile-actions-row">
+                <button class="action-btn" onclick="alert('Ввод скоро!')">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5">
+                        <path d="M12 5v14M19 12l-7 7-7-7" />
+                    </svg>
+                </button>
+                <button class="action-btn" onclick="alert('Вывод скоро!')">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5">
+                        <path d="M12 19V5M5 12l7-7 7 7" />
+                    </svg>
+                </button>
+                <button class="action-btn" onclick="copyWallet()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="history-section">
+                <div class="history-header" onclick="toggleHistory()">
+                    <span>История аренд</span>
+                    <span id="history-arrow">▼</span>
                 </div>
-                <div class="settings-item"
-                    style="padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;">
-                    <span style="color: #fff; font-size: 16px; font-weight: 500;">Language</span>
-                    <span style="color: #8b9bb4; font-size: 15px;">English ></span>
-                </div>
-                <div class="settings-item" onclick="switchTab(0)"
-                    style="padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
-                    <span style="color: #fff; font-size: 16px; font-weight: 500;">Market</span>
-                    <span style="color: #8b9bb4; font-size: 15px;">Go to Market ></span>
+                <!-- Collapsed content -->
+                <div id="history-content" style="display: none; padding: 0 20px 20px 20px;">
+                    <div id="history-list">Загрузка...</div>
                 </div>
             </div>
+
+            <div class="lang-switch">Смена языка ></div>
         </div>
     </div>
 

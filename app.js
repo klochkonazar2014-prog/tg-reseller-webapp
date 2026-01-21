@@ -1216,26 +1216,91 @@ if (trigger) {
     so.observe(trigger);
 }
 
-function loadProfileData() {
-    if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
-        const u = tg.initDataUnsafe.user;
-        const nameEl = document.getElementById('profile-name');
-        const userEl = document.getElementById('profile-username');
-        const avaEl = document.getElementById('profile-avatar');
+// --- Profile & History Logic ---
+function toggleHistory() {
+    const content = document.getElementById('history-content');
+    const arrow = document.getElementById('history-arrow');
+    const isHidden = content.style.display === 'none';
 
-        if (nameEl) nameEl.textContent = (u.first_name + ' ' + (u.last_name || '')).trim();
-        if (userEl) userEl.textContent = u.username ? '@' + u.username : 'ID: ' + u.id;
-        if (avaEl && u.photo_url) avaEl.src = u.photo_url;
-    }
-    // Static balance for now (or fetch from API if available)
-    const balEl = document.getElementById('profile-balance');
-    if (balEl && !balEl.dataset.loaded) {
-        balEl.innerText = "0.00";
-        balEl.dataset.loaded = "true";
+    content.style.display = isHidden ? 'block' : 'none';
+    arrow.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
+
+    if (isHidden) {
+        loadHistoryContent(); // Load data when opening
     }
 }
 
+async function loadHistoryContent() {
+    const list = document.getElementById('history-list');
+    list.innerHTML = '<div style="color:#8b9bb4; text-align:center; padding:10px;">Загрузка...</div>';
+
+    // Placeholder logic for now, similar to orders
+    // In real usage, fetch active/past rentals
+    // const userId = tg.initDataUnsafe?.user?.id;
+    // const res = await fetch(...) 
+
+    setTimeout(() => {
+        list.innerHTML = '<div style="color:#8b9bb4; text-align:center; padding:10px;">История пуста</div>';
+    }, 500);
+}
+
+function copyWallet() {
+    if (tonConnectUI.account && tonConnectUI.account.address) {
+        copyToClipboard(tonConnectUI.account.address);
+        if (tg) tg.showAlert("Адрес скопирован!");
+        else alert("Адрес скопирован!");
+    } else {
+        if (tg) tg.showAlert("Кошелек не подключен");
+        else alert("Кошелек не подключен");
+    }
+}
+
+function loadProfileData() {
+    // 1. User Info from Telegram
+    if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+        const u = tg.initDataUnsafe.user;
+        const avaEl = document.getElementById('profile-avatar');
+        const headerAva = document.getElementById('header-mini-avatar');
+
+        if (u.photo_url) {
+            if (avaEl) avaEl.src = u.photo_url;
+            if (headerAva) headerAva.src = u.photo_url;
+        }
+    }
+
+    // 2. Balance (Static or API)
+    const balance = "0.00";
+    const balElBase = document.getElementById('profile-balance');
+    const balElMini = document.getElementById('header-mini-balance');
+
+    if (balElBase) balElBase.textContent = balance;
+    if (balElMini) balElMini.textContent = balance;
+
+    // 3. Wallet State Sync
+    updateWalletBtnState();
+}
+
+function updateWalletBtnState() {
+    const btnText = document.getElementById('profile-wallet-text');
+    if (!btnText) return;
+
+    if (tonConnectUI.connected && tonConnectUI.account) {
+        const addr = tonConnectUI.account.address;
+        // User friendly format
+        const short = addr.slice(0, 4) + '...' + addr.slice(-4);
+        btnText.textContent = short;
+    } else {
+        btnText.textContent = "Connect Wallet";
+    }
+}
+
+// Subscribe to wallet changes
+if (tonConnectUI) {
+    tonConnectUI.onStatusChange(wallet => {
+        updateWalletBtnState();
+    });
+}
+
 function observeNewCards() {
-    // Placeholder if we add intersection observer for animations later
-    // Currently renderItemsBatch calls this, so it must exist.
+    // Placeholder
 }
