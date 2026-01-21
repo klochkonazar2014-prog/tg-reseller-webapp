@@ -199,10 +199,13 @@ function switchTab(index) {
         if (el) el.style.display = 'none';
     });
 
-    // Show target
+    // Show target with correct display mode
     const targetId = containers[index];
     const targetEl = document.getElementById(targetId);
-    if (targetEl) targetEl.style.display = 'block';
+    if (targetEl) {
+        // Market uses grid, Profile uses block
+        targetEl.style.display = (index === 0) ? 'grid' : 'block';
+    }
 
     // Update Nav
     document.querySelectorAll('.nav-item').forEach((nav, i) => {

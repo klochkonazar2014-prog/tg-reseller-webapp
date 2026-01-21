@@ -1140,7 +1140,7 @@ body {
 .new-profile-header {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
     margin-bottom: 24px;
 }
 
@@ -1150,21 +1150,23 @@ body {
     border-radius: 50%;
     object-fit: cover;
     border: 2px solid rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
 }
 
 .new-profile-balance-group {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
 }
 
 .new-profile-balance {
     font-size: 24px;
     font-weight: 800;
     color: #fff;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 6px;
+    line-height: 1;
 }
 
 .btn-circle-add {
@@ -1284,12 +1286,13 @@ body {
 
 /* Header Avatar-Balance Widget */
 .header-ab-widget {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 10px;
     background: #1c1c1e;
-    padding: 4px 6px 4px 14px;
-    border-radius: 24px;
+    padding: 4px 8px 4px 12px;
+    height: 40px;
+    border-radius: 20px;
     border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
@@ -1297,9 +1300,10 @@ body {
     font-size: 14px;
     font-weight: 700;
     color: #fff;
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 5px;
+    line-height: 1;
 }
 
 .header-ab-avatar {
@@ -1307,4 +1311,5 @@ body {
     height: 32px;
     border-radius: 50%;
     object-fit: cover;
+    display: block;
 }
