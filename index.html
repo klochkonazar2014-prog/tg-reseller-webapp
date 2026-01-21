@@ -6,7 +6,7 @@
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>MRKT</title>
-    <script src="https://telegram.org/js/telegram-web-app.js?v=1.1.128"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js?v=1.1.129"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <script src="lottie.min.js"></script>
     <link rel="stylesheet" href="style.css?v=3.1.2">
@@ -251,8 +251,6 @@
                 </svg>
                 <input type="text" id="search-input" class="search-bar" placeholder="Поиск по названию NFT / номеру">
             </div>
-            <div id="ton-connect-btn" class="header-cart-btn"
-                style="background: none; border: none; width: auto; height: auto;"></div>
         </div>
 
         <!-- Chips -->
@@ -415,6 +413,33 @@
             <h3>Хранилище</h3>
             <p style="margin-top: 10px; font-size: 14px;">Ваше хранилище пусто.</p>
         </div>
+
+        <!-- Profile Tab -->
+        <div id="profile-container" style="display: none; padding: 16px;">
+            <div class="profile-header-card"
+                style="background: #1c1c1e; border-radius: 16px; padding: 20px; display: flex; align-items: center; gap: 16px; margin-bottom: 24px;">
+                <img id="profile-avatar" src="https://ui-avatars.com/api/?name=User&background=0088cc&color=fff"
+                    style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;">
+                <div class="profile-info">
+                    <div id="profile-name" style="color: #fff; font-size: 20px; font-weight: 700;">Loading...</div>
+                    <div id="profile-username" style="color: #8b9bb4; font-size: 14px;">@username</div>
+                </div>
+            </div>
+
+            <div class="settings-group"
+                style="background: #1c1c1e; border-radius: 16px; overflow: hidden; margin-bottom: 24px;">
+                <div class="settings-item"
+                    style="padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: #fff; font-size: 16px; font-weight: 500;">Wallet</span>
+                    <div id="ton-connect-btn"></div>
+                </div>
+                <div class="settings-item"
+                    style="padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: #fff; font-size: 16px; font-weight: 500;">Language</span>
+                    <span style="color: #8b9bb4; font-size: 15px;">English ></span>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Bottom Nav -->
@@ -451,6 +476,13 @@
                 <path d="M8 12h8"></path>
             </svg>
             <span>Розыгрыши</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('profile')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span>Профиль</span>
         </div>
         <div class="nav-item">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">

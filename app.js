@@ -143,6 +143,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             tg = window.Telegram.WebApp;
             tg.expand();
             tg.MainButton.hide();
+            loadProfileData();
         }
         initTonConnect();
         loadFilterData();
@@ -1267,3 +1268,44 @@ if (trigger) {
     });
     so.observe(trigger);
 }
+
+function loadProfileData() {
+    if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+        const u = tg.initDataUnsafe.user;
+        const nameEl = document.getElementById('profile-name');
+        const userEl = document.getElementById('profile-username');
+        const avaEl = document.getElementById('profile-avatar');
+
+        if (nameEl) nameEl.textContent = (u.first_name + ' ' + (u.last_name || '')).trim();
+        if (userEl) userEl.textContent = u.username ? '@' + u.username : 'ID: ' + u.id;
+        if (avaEl && u.photo_url) avaEl.src = u.photo_url;
+    }
+}
+
+function switchTab(tabId) {
+    // Hide all containers
+    ['market-container', 'orders-container', 'hub-container', 'raffle-container', 'storage-container', 'profile-container'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
+
+    // Show target
+    const target = document.getElementById(tabId + '-container');
+    if (target) {
+        target.style.display = 'block';
+        if(tabId === 'market') target.style.display = 'grid'; // Grid for market
+    }
+
+    // Update nav items
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+        if (item.onclick && item.onclick.toString().includes(tabId)) {
+            item.classList.add('active');
+        } else if (tabId === 'market' && item.innerText.includes('')) {
+             item.classList.add('active');
+        }
+    });
+}
+
+// Fix market tab click handler
+document.querySelector('.nav-item').onclick = () => switchTab('market');
