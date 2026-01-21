@@ -400,14 +400,8 @@ async function initTonConnect() {
                 }
             });
 
-            // Subscribe to wallet changes
-            tonConnectUI.onStatusChange(wallet => {
-                updateWalletBtnState();
-            });
-
-            // Initial state update
+            // Wait for initialization
             setTimeout(() => {
-                updateWalletBtnState();
                 resolve();
             }, 500);
         } catch (error) {
@@ -1301,33 +1295,6 @@ function loadProfileData() {
 
     if (balElBase) balElBase.textContent = balance;
     if (balElMini) balElMini.textContent = balance;
-
-    // 3. Wallet State Sync
-    updateWalletBtnState();
-}
-
-function updateWalletBtnState() {
-    const btnText = document.getElementById('profile-wallet-text');
-    if (!btnText) return;
-
-    if (tonConnectUI && tonConnectUI.connected && tonConnectUI.account) {
-        const addr = tonConnectUI.account.address;
-        // User friendly format
-        const short = addr.slice(0, 4) + '...' + addr.slice(-4);
-        btnText.textContent = short;
-    } else {
-        btnText.textContent = "Connect Wallet";
-    }
-}
-
-// Open Wallet Connection Modal
-function openWalletConnect() {
-    if (tonConnectUI) {
-        tonConnectUI.openModal();
-    } else {
-        console.error('TonConnect UI not initialized');
-        if (tg) tg.showAlert('Ошибка инициализации кошелька');
-    }
 }
 
 
