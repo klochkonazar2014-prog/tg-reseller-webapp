@@ -2,7 +2,8 @@
 .profile-oval-bg {
     background: rgba(255, 255, 255, 0.03);
     border-radius: 24px;
-    padding: 20px;
+    padding: 16px;
+    /* Reduced from 20px */
     margin-bottom: 16px;
 }
 
@@ -16,6 +17,8 @@
     color: #fff !important;
     border-radius: 14px !important;
     width: 100% !important;
+    max-width: 100% !important;
+    /* Force full width */
     height: 48px !important;
     font-size: 16px !important;
     font-weight: 700 !important;
