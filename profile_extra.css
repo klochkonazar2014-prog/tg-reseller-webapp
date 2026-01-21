@@ -1,24 +1,25 @@
-/* Oval Background for Profile Header */
+/* Oval Background for Profile Header - More visible with gradient */
 .profile-oval-bg {
-    background: rgba(255, 255, 255, 0.03);
+    background: linear-gradient(135deg, rgba(0, 152, 234, 0.08) 0%, rgba(0, 119, 204, 0.05) 100%);
+    border: 1px solid rgba(0, 152, 234, 0.15);
     border-radius: 24px;
     padding: 16px;
-    /* Reduced from 20px */
     margin-bottom: 16px;
 }
 
-/* TonConnect Button in Profile - Make it visible and properly styled */
+/* TonConnect Button Container in Profile */
 #profile-container #ton-connect-btn {
     width: 100% !important;
+    display: block !important;
 }
 
+/* TonConnect Button - Full width and properly styled */
 #profile-container #ton-connect-btn button {
     background: linear-gradient(135deg, #0098EA 0%, #0077CC 100%) !important;
     color: #fff !important;
     border-radius: 14px !important;
     width: 100% !important;
-    max-width: 100% !important;
-    /* Force full width */
+    max-width: none !important;
     height: 48px !important;
     font-size: 16px !important;
     font-weight: 700 !important;
@@ -30,13 +31,14 @@
     justify-content: center !important;
     gap: 10px !important;
     min-height: auto !important;
+    box-sizing: border-box !important;
 }
 
 #profile-container #ton-connect-btn button:hover {
     opacity: 0.9;
 }
 
-/* Show all  elements in profile TonConnect button */
+/* Show all elements in profile TonConnect button */
 #profile-container #ton-connect-btn button div {
     display: flex !important;
 }

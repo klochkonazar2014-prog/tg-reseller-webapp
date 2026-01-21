@@ -1265,8 +1265,12 @@ async function loadHistoryContent() {
 }
 
 function copyWallet() {
-    if (tonConnectUI.account && tonConnectUI.account.address) {
-        copyToClipboard(tonConnectUI.account.address);
+    if (tonConnectUI && tonConnectUI.account && tonConnectUI.account.address) {
+        // Convert to User Friendly Address (UQ...)
+        const rawAddress = tonConnectUI.account.address;
+        const userFriendlyAddress = TON_CONNECT_UI.toUserFriendlyAddress(rawAddress, true); // true for testnet/bounceable
+
+        copyToClipboard(userFriendlyAddress);
         if (tg) tg.showAlert("Адрес скопирован!");
         else alert("Адрес скопирован!");
     } else {
