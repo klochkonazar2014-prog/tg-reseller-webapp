@@ -1140,7 +1140,7 @@ body {
 .new-profile-header {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
     margin-bottom: 24px;
 }
 
@@ -1160,21 +1160,13 @@ body {
 }
 
 .new-profile-balance {
-    font-size: 26px;
+    font-size: 24px;
     font-weight: 800;
     color: #fff;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     line-height: 1;
-    display: block;
-}
-
-/* TON Icon */
-.icon-ton {
-    display: inline-block;
-    vertical-align: middle;
-    background-image: url("data:image/svg+xml,%3Csvg width='56' height='56' viewBox='0 0 56 56' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M28 54C42.3594 54 54 42.3594 54 28C54 13.6406 42.3594 2 28 2C13.6406 2 2 13.6406 2 28C2 42.3594 13.6406 54 28 54Z' fill='%230098EA'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M37.5603 15.6277H18.4386C14.9228 15.6277 12.6944 19.4202 14.4632 22.4861L26.2644 42.9409C27.0345 44.2765 28.9644 44.2765 29.7345 42.9409L41.5381 22.4861C43.3045 19.4251 41.0761 15.6277 37.5627 15.6277H37.5603ZM26.2548 36.8068L23.6847 34.2367L17.4833 23.7947C17.0742 23.1231 17.5795 22.2944 18.3428 22.2944H26.2524V36.8092L26.2548 36.8068ZM38.5108 23.7947L32.3118 34.2367L29.7417 36.8068V22.2944H37.6514C38.4147 22.2944 38.9199 23.1231 38.5108 23.7947Z' fill='white'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: contain;
 }
 
 .btn-circle-add {
