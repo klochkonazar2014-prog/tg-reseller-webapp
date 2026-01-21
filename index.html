@@ -6,7 +6,7 @@
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>MRKT</title>
-    <script src="https://telegram.org/js/telegram-web-app.js?v=1.1.132"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js?v=1.1.133"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <script src="lottie.min.js"></script>
     <link rel="stylesheet" href="style.css?v=3.1.2">
@@ -417,8 +417,8 @@
                 <div id="ton-connect-btn" style="display: none;"></div> <!-- Hidden original -->
                 <button onclick="document.querySelector('#ton-connect-btn button').click()" class="wallet-display">
                     <svg viewBox="0 0 24 24" fill="none" class="wallet-icon">
-                        <path d="M21 12V7H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h16v9z" fill="#000"></path>
-                        <path d="M3 15v4a2 2 0 0 0 2 2h16v-6H3z" fill="#000"></path>
+                        <path d="M21 12V7H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h16v9z" fill="#fff"></path>
+                        <path d="M3 15v4a2 2 0 0 0 2 2h16v-6H3z" fill="#fff"></path>
                     </svg>
                     <span id="profile-wallet-text">Connect Wallet</span>
                 </button>
@@ -426,20 +426,17 @@
 
             <div class="profile-actions-row">
                 <button class="action-btn" onclick="alert('Ввод скоро!')">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2.5">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                         <path d="M12 5v14M19 12l-7 7-7-7" />
                     </svg>
                 </button>
                 <button class="action-btn" onclick="alert('Вывод скоро!')">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2.5">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                         <path d="M12 19V5M5 12l7-7 7 7" />
                     </svg>
                 </button>
                 <button class="action-btn" onclick="copyWallet()">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2.5">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                         <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                         <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                     </svg>
@@ -457,7 +454,10 @@
                 </div>
             </div>
 
-            <div class="lang-switch">Смена языка ></div>
+            <div class="lang-switch" onclick="switchLanguage()">
+                <span>Язык / Language</span>
+                <span id="lang-label" style="color: #8b9bb4; font-weight: 500;">Русский ></span>
+            </div>
         </div>
     </div>
 

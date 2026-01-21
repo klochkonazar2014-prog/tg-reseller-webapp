@@ -1301,6 +1301,22 @@ if (tonConnectUI) {
     });
 }
 
-function observeNewCards() {
-    // Placeholder
+// --- Language Switcher ---
+function switchLanguage() {
+    // Simple toggle for now
+    const label = document.getElementById('lang-label');
+    const current = label.innerText;
+
+    if (current.includes('Русский')) {
+        label.innerText = 'English >';
+        tg.showAlert('Language switched to English');
+    } else {
+        label.innerText = 'Русский >';
+        tg.showAlert('Язык изменен на Русский');
+    }
 }
+
+// Ensure correct initial load
+document.addEventListener('DOMContentLoaded', () => {
+    // Initial checks if needed
+});
