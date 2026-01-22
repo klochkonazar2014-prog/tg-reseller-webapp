@@ -392,6 +392,15 @@ function initTonConnect() {
             }
         }
     });
+
+    // Register listener immediately after initialization
+    tonConnectUI.onStatusChange(wallet => {
+        console.log('Wallet status changed:', wallet);
+        updateWalletBtnState();
+    });
+
+    // Initial check to update button text if already connected
+    updateWalletBtnState();
 }
 
 // --- Accordions logic ---
@@ -1307,14 +1316,7 @@ function updateWalletBtnState() {
     }
 }
 
-// Global listener setup (ensure it only happens once)
-if (typeof tonConnectUI !== 'undefined' && tonConnectUI && !window.tcListenerSet) {
-    tonConnectUI.onStatusChange(wallet => {
-        console.log('Wallet status changed:', wallet);
-        updateWalletBtnState();
-    });
-    window.tcListenerSet = true;
-}
+// Redundant listener removed (moved to initTonConnect)
 
 // Fallback in case overlay fails
 function openWalletConnect() {
