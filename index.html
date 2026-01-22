@@ -6,7 +6,7 @@
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>MRKT</title>
-    <script src="https://telegram.org/js/telegram-web-app.js?v=1.1.142"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js?v=1.1.143"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <script src="lottie.min.js"></script>
     <link rel="stylesheet" href="style.css?v=3.1.2">
@@ -256,7 +256,7 @@
             <div class="header-ab-widget" onclick="switchTab(1)">
                 <div class="header-ab-balance">
                     <span class="icon-ton header-icon"></span>
-                    <span id="header-mini-balance">0.00</span>
+                    <span id="header-mini-balance" class="balance-value-box">0.00</span>
                 </div>
                 <img id="header-mini-avatar" src="https://ui-avatars.com/api/?name=U&background=2c2c2e&color=fff"
                     class="header-ab-avatar">
@@ -409,7 +409,7 @@
 
                     <div class="profile-balance-group">
                         <span class="icon-ton large"></span>
-                        <div id="profile-balance" class="new-profile-balance">0.00</div>
+                        <span id="profile-balance" class="new-profile-balance balance-value-box">0.00</span>
                     </div>
 
                     <div class="btn-circle-add" onclick="alert('Пополнение скоро!')">

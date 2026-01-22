@@ -40,24 +40,38 @@ body {
 .icon-ton::before {
     content: "";
     display: inline-block;
-    width: 16px;
-    height: 16px;
-    margin-right: 4px;
+    width: 1.1em;
+    /* Proportional to text */
+    height: 1.1em;
+    margin-right: 6px;
     background-image: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M14.1839 17.7069C13.6405 18.6507 13.3688 19.1226 13.0591 19.348C12.4278 19.8074 11.5723 19.8074 10.941 19.348C10.6312 19.1226 10.3595 18.6507 9.81613 17.7069L5.52066 10.2464C4.76864 8.94024 4.39263 8.28717 4.33762 7.75894C4.2255 6.68236 4.81894 5.65591 5.80788 5.21589C6.29309 5 7.04667 5 8.55383 5H15.4462C16.9534 5 17.7069 5 18.1922 5.21589C19.1811 5.65591 19.7745 6.68236 19.6624 7.75894C19.6074 8.28717 19.2314 8.94024 18.4794 10.2464L14.1839 17.7069ZM11.1 16.3412L6.56139 8.48002C6.31995 8.06185 6.19924 7.85276 6.18146 7.68365C6.14523 7.33896 6.33507 7.01015 6.65169 6.86919C6.80703 6.80002 7.04847 6.80002 7.53133 6.80002H7.53134L11.1 6.80002V16.3412ZM12.9 16.3412L17.4387 8.48002C17.6801 8.06185 17.8008 7.85276 17.8186 7.68365C17.8548 7.33896 17.665 7.01015 17.3484 6.86919C17.193 6.80002 16.9516 6.80002 16.4687 6.80002L12.9 6.80002V16.3412Z' fill='%230098EA'/%3E%3C/svg%3E");
     background-size: contain;
     background-repeat: no-repeat;
     vertical-align: middle;
 }
 
+/* Balance Number Box */
+.balance-value-box {
+    background: #2c2c2e;
+    /* Dark rounded square */
+    border-radius: 8px;
+    padding: 2px 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-variant-numeric: tabular-nums;
+    min-width: 1.5em;
+}
+
 .icon-ton.large::before {
-    width: 38px;
-    height: 38px;
+    width: 1.1em;
+    height: 1.1em;
     margin-right: 8px;
 }
 
 .icon-ton.header-icon::before {
-    width: 18px;
-    height: 18px;
+    width: 1.1em;
+    height: 1.1em;
 }
 
 .icon-before::before {
@@ -1127,19 +1141,28 @@ body {
     margin: 0;
 }
 
-/* Hide text in TonConnect button for icon-only look */
-#ton-connect-btn button div[style*='text'] {
-    display: none !important;
+/* Hide only the button content in TonConnect button for icon-only/invisible look */
+#ton-connect-btn button {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    width: 100% !important;
+    height: 100% !important;
+    padding: 0 !important;
 }
 
-#ton-connect-btn button div {
+#ton-connect-btn button>div {
     display: none !important;
+    /* This hides the internal "Connect Wallet" text and icon */
 }
 
-#ton-connect-btn button svg {
-    display: block !important;
-    margin: 0 !important;
+/* Ensure the popover (menu) is actually visible if it's a sibling or handled by the library */
+/* TonConnect usually appends modals to body, so this shouldn't affect them. 
+   But if it's a dropdown, we need it to be visible. */
+tc-root {
+    z-index: 10001 !important;
 }
+
 
 /* New Blue Wallet Button */
 .blue-wallet-display {
@@ -1152,7 +1175,8 @@ body {
     align-items: center;
     justify-content: center;
     gap: 12px;
-    font-size: 16px;
+    font-size: 18px;
+    /* Slightly larger text */
     font-weight: 700;
     border: none;
     cursor: pointer;
@@ -1160,6 +1184,16 @@ body {
     transition: all 0.2s;
     position: relative;
     z-index: 1;
+    padding: 0 20px;
+}
+
+.blue-wallet-display .icon-ton::before {
+    width: 24px;
+    /* Larger icon for wallet button */
+    height: 24px;
+    margin-right: 12px;
+    filter: brightness(0) invert(1);
+    /* Force white */
 }
 
 .blue-wallet-display:active {
@@ -1171,17 +1205,33 @@ body {
     top: 0;
     left: 0;
     width: 100% !important;
-    height: 54px !important;
-    opacity: 0 !important;
+    height: 100% !important;
     z-index: 10;
-    cursor: pointer;
 }
 
-#ton-connect-btn * {
+#ton-connect-btn button {
     width: 100% !important;
     height: 100% !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
     cursor: pointer !important;
+    opacity: 1 !important;
+    /* Keep opaque for children (popovers) */
 }
+
+#ton-connect-btn button div,
+#ton-connect-btn button svg {
+    /* Hide the actual button elements but allow children like modals to show */
+    opacity: 0 !important;
+}
+
+#ton-connect-btn tc-root,
+#ton-connect-btn tc-portal-root {
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
 
 #wallet-btn-container {
     position: relative;
