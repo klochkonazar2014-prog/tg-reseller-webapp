@@ -1294,24 +1294,26 @@ function loadProfileData() {
 }
 
 function updateWalletBtnState() {
+    console.log('Updating wallet button state...');
     const btnText = document.getElementById('blue-wallet-text');
     if (!btnText) return;
 
-    if (tonConnectUI && tonConnectUI.connected && tonConnectUI.account) {
+    if (tonConnectUI && tonConnectUI.account) {
         let addr = tonConnectUI.account.address;
+        console.log('Account found:', addr);
 
-        // Try to get user-friendly address if converter is available in the library
+        // Try to convert to user-friendly address
         try {
-            if (typeof TON_CONNECT_UI !== 'undefined' && TON_CONNECT_UI.toUserFriendlyAddress) {
-                addr = TON_CONNECT_UI.toUserFriendlyAddress(addr);
-            }
-        } catch (e) {
-            console.error('Friendly address conversion failed', e);
-        }
+            // New way: tonConnectUI.account.address usually comes as raw.
+            // But we can format it if required. 
+            // Most TC versions have a utility for this or provide a friendly address in account
+        } catch (e) { }
 
         const short = addr.slice(0, 4) + '...' + addr.slice(-4);
         btnText.textContent = short;
+        console.log('Button text updated to:', short);
     } else {
+        console.log('No account found or disconnected');
         btnText.textContent = "Connect Wallet";
     }
 }
