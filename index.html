@@ -6,7 +6,7 @@
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>MRKT</title>
-    <script src="https://telegram.org/js/telegram-web-app.js?v=1.1.139"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js?v=1.1.140"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <script src="lottie.min.js"></script>
     <link rel="stylesheet" href="style.css?v=3.1.2">
@@ -253,9 +253,9 @@
             </div>
 
             <!-- New Header Widget: [Balance] [Avatar] -->
-            <div class="header-ab-widget" onclick="switchTab(1)" style="cursor: pointer;">
+            <div class="header-ab-widget" onclick="switchTab(1)">
                 <div class="header-ab-balance">
-                    <span class="icon-ton" style="width: 14px; height: 14px; background-size: contain;"></span>
+                    <span class="icon-ton"></span>
                     <span id="header-mini-balance">0.00</span>
                 </div>
                 <img id="header-mini-avatar" src="https://ui-avatars.com/api/?name=U&background=2c2c2e&color=fff"
@@ -401,28 +401,27 @@
         </div>
 
         <!-- Profile Tab -->
-        <div id="profile-container" style="display: none; padding: 16px;">
+        <div id="profile-container" style="display: none;">
             <div class="new-profile-header">
                 <img id="profile-avatar" src="https://ui-avatars.com/api/?name=User&background=0088cc&color=fff"
                     class="new-profile-avatar">
-                <div style="display: flex; align-items: center; gap: 8px; flex: 1;">
-                    <span class="icon-ton"
-                        style="width: 20px; height: 20px; background-size: contain; flex-shrink: 0;"></span>
+
+                <div class="profile-balance-card">
+                    <span class="icon-ton large"></span>
                     <div id="profile-balance" class="new-profile-balance">0.00</div>
                 </div>
-                <div class="btn-circle-add" onclick="alert('Пополнение скоро!')">+</div>
+
+                <div class="btn-circle-add" onclick="alert('Пополнение скоро!')">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                </div>
             </div>
 
-            <!-- Wallet Connect / Display -->
-            <div style="margin-bottom: 24px;">
-                <div id="ton-connect-btn" style="display: none;"></div>
-                <button onclick="openWalletConnect()" class="wallet-display">
-                    <svg viewBox="0 0 24 24" fill="none" class="wallet-icon">
-                        <path d="M21 12V7H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h16v9z" fill="#fff"></path>
-                        <path d="M3 15v4a2 2 0 0 0 2 2h16v-6H3z" fill="#fff"></path>
-                    </svg>
-                    <span id="profile-wallet-text">Connect Wallet</span>
-                </button>
+            <!-- Wallet Connect (Default Button) -->
+            <div id="wallet-btn-container">
+                <div id="ton-connect-btn"></div>
             </div>
 
             <div class="profile-actions-row">

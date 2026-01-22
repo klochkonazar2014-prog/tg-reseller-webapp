@@ -143,9 +143,9 @@ document.addEventListener("DOMContentLoaded", async () => {
             tg = window.Telegram.WebApp;
             tg.expand();
             tg.MainButton.hide();
-            loadProfileData();
         }
         initTonConnect();
+        loadProfileData(); // Call after initTonConnect
         loadFilterData();
         await loadLiveItems(true);
 
@@ -1114,8 +1114,9 @@ async function openProductView(item, finalPrice, imgSrc) {
     updateTotalPrice();
 
     rentBtn.onclick = async () => {
-        if (!tonConnectUI.connected) {
-            await tonConnectUI.openModal();
+        if (!tonConnectUI || !tonConnectUI.connected) {
+            if (tonConnectUI) await tonConnectUI.openModal();
+            else tg.showAlert("Кошелек не инициализирован");
             return;
         }
 
@@ -1248,7 +1249,7 @@ async function loadHistoryContent() {
 }
 
 function copyWallet() {
-    if (tonConnectUI.account && tonConnectUI.account.address) {
+    if (tonConnectUI && tonConnectUI.account && tonConnectUI.account.address) {
         copyToClipboard(tonConnectUI.account.address);
         if (tg) tg.showAlert("Адрес скопирован!");
         else alert("Адрес скопирован!");
@@ -1279,28 +1280,15 @@ function loadProfileData() {
     if (balElBase) balElBase.textContent = balance;
     if (balElMini) balElMini.textContent = balance;
 
-    // 3. Wallet State Sync
-    updateWalletBtnState();
+    // 3. Wallet - handled by default widget
+
 }
 
-function updateWalletBtnState() {
-    const btnText = document.getElementById('profile-wallet-text');
-    if (!btnText) return;
-
-    if (tonConnectUI.connected && tonConnectUI.account) {
-        const addr = tonConnectUI.account.address;
-        // User friendly format
-        const short = addr.slice(0, 4) + '...' + addr.slice(-4);
-        btnText.textContent = short;
-    } else {
-        btnText.textContent = "Connect Wallet";
-    }
-}
-
-// Subscribe to wallet changes
-if (tonConnectUI) {
+// Safe logic for wallet status
+if (typeof tonConnectUI !== 'undefined' && tonConnectUI) {
     tonConnectUI.onStatusChange(wallet => {
-        updateWalletBtnState();
+        // Just log for now, UI updates automatically with default button
+        console.log('Wallet status changed:', wallet);
     });
 }
 

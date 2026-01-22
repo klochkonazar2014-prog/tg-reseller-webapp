@@ -1130,57 +1130,77 @@ body {
     margin: 0 !important;
 }
 
+#ton-connect-btn {
+    width: 100%;
+}
+
 #ton-connect-btn button {
-    width: 48px !important;
-    padding: 0 !important;
-    gap: 0 !important;
+    width: 100% !important;
+    height: 52px !important;
+    border-radius: 16px !important;
+    justify-content: center !important;
 }
 
 /* --- NEW PROFILE DESIGN --- */
 .new-profile-header {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 14px;
-    margin-bottom: 24px;
+    gap: 20px;
+    margin-bottom: 32px;
+    padding: 16px 0;
 }
 
 .new-profile-avatar {
-    width: 60px;
-    height: 60px;
+    width: 80px;
+    height: 80px;
     border-radius: 50%;
     object-fit: cover;
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    flex-shrink: 0;
+    border: 3px solid rgba(255, 255, 255, 0.05);
 }
 
-.new-profile-balance-group {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.new-profile-balance {
-    font-size: 24px;
-    font-weight: 800;
-    color: #fff;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    line-height: 1;
-}
-
-.btn-circle-add {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
+/* Square Sphere Balance Card */
+.profile-balance-card {
     background: #1c1c1e;
-    color: #fff;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 18px 24px;
+    border-radius: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 18px;
+    gap: 12px;
+    min-width: 160px;
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.new-profile-balance {
+    font-size: 32px;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1;
+}
+
+.icon-ton.large {
+    width: 28px;
+    height: 28px;
+}
+
+.btn-circle-add {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #1c1c1e;
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.btn-circle-add:active {
+    transform: scale(0.9);
 }
 
 .profile-actions-row {
@@ -1256,59 +1276,32 @@ body {
     background: #2c2c2e;
 }
 
-/* Blue Wallet Button */
-.wallet-display {
-    background: linear-gradient(135deg, #0098EA 0%, #0077CC 100%);
-    /* Blue gradient */
-    color: #fff;
-    /* White text */
-    font-weight: 700;
-    font-size: 15px;
-    padding: 12px 16px;
-    /* Reduced padding */
-    border-radius: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    /* Center content */
-    gap: 10px;
-    cursor: pointer;
-    width: 100%;
-    border: none;
-    box-shadow: 0 4px 12px rgba(0, 136, 204, 0.3);
-}
-
-.wallet-display svg {
-    width: 20px;
-    height: 20px;
-    fill: #fff;
-}
-
 /* Header Avatar-Balance Widget */
 .header-ab-widget {
     display: inline-flex;
     align-items: center;
     gap: 10px;
     background: #1c1c1e;
-    padding: 4px 8px 4px 12px;
-    height: 40px;
-    border-radius: 20px;
+    padding: 2px 2px 2px 14px;
+    height: 44px;
+    /* Matches search row height better */
+    border-radius: 22px;
     border: 1px solid rgba(255, 255, 255, 0.05);
+    cursor: pointer;
 }
 
 .header-ab-balance {
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 700;
     color: #fff;
-    display: inline-flex;
+    display: flex;
     align-items: center;
-    gap: 5px;
-    line-height: 1;
+    gap: 6px;
 }
 
 .header-ab-avatar {
-    width: 32px;
-    height: 32px;
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
     object-fit: cover;
     display: block;
