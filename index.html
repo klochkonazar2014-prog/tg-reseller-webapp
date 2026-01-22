@@ -6,7 +6,7 @@
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>MRKT</title>
-    <script src="https://telegram.org/js/telegram-web-app.js?v=1.1.158"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js?v=1.1.159"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <script src="lottie.min.js"></script>
     <link rel="stylesheet" href="style.css?v=3.1.2">
@@ -172,6 +172,22 @@
                 </button>
             </div>
 
+            <div class="fee-notice-box"
+                style="margin-top: 16px; background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 12px; font-size: 11px; color: #8794a1;">
+                <span>You will additionally send 0.2 TON to process the transaction. Remain TON will be returned to you.
+                    <a href="javascript:void(0)" onclick="showHelp('fee')"
+                        style="color: #0088cc; text-decoration: none;">What does it mean?</a></span>
+            </div>
+
+            <div id="listing-warning-box"
+                style="display: none; margin-top: 16px; background: rgba(255, 149, 0, 0.1); border: 1px solid rgba(255, 149, 0, 0.2); border-radius: 12px; padding: 12px; font-size: 11px; color: #FF9500;">
+                <div style="font-weight: 700; margin-bottom: 2px;">This gift was listed for rent less than 24 hours ago.
+                </div>
+                <div>Listed at: <span id="view-listed-time">...</span> <a href="javascript:void(0)"
+                        onclick="showHelp('listing')" style="color: #FF9500; text-decoration: underline;">What does it
+                        mean?</a></div>
+            </div>
+
 
             <div class="owner-col-section"
                 style="margin-top: 24px; background: rgba(255, 255, 255, 0.1); border-radius: 24px; overflow: hidden;">
@@ -230,6 +246,19 @@
 
             <button onclick="submitTcLink()" class="btn-yellow" style="width: 100%; margin-top: 20px;">Подключить
                 кошелек</button>
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="help-modal-overlay" class="modal-overlay" onclick="closeHelpModal()"></div>
+    <div id="help-modal" class="filter-panel"
+        style="height: auto; max-height: 80vh; bottom: 0; border-radius: 24px 24px 0 0;">
+        <div class="mrkt-modal-header">
+            <h3 id="help-title">Help</h3>
+            <button onclick="closeHelpModal()"
+                style="background:none; border:none; color:#8b9bb4; font-size:24px; cursor: pointer;">✕</button>
+        </div>
+        <div id="help-body" style="padding: 20px; color: #fff; font-size: 14px; line-height: 1.6;">
         </div>
     </div>
 

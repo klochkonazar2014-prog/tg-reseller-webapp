@@ -230,6 +230,42 @@ function openTcModal(orderId) {
     document.getElementById('tc-modal').classList.add('active');
 }
 
+// --- Help Modal Logic ---
+function showHelp(type) {
+    const title = document.getElementById('help-title');
+    const body = document.getElementById('help-body');
+
+    if (type === 'fee') {
+        title.innerText = "Why additional 0.2 TON is needed?";
+        body.innerHTML = `
+            <div style="font-weight:700; color:#fff; margin-bottom:10px;">Additional 0.2 TON is sent to process the rent transaction on the blockchain.</div>
+            <p>These funds are used to pay network fees and execute the smart contract.</p>
+            <div style="font-weight:700; color:#fff; margin-top:20px; margin-bottom:10px;">What happens with unused TON?</div>
+            <p>Most of the unspent TON from this amount will automatically return to your wallet after the transaction is completed. A small part will return after the rent is completed.</p>
+            <p>Actual costs are usually only a few cents. You can see this in the transaction history.</p>
+            <div style="font-weight:700; color:#fff; margin-top:20px; margin-bottom:10px;">Is it normal?</div>
+            <p>This is a standard practice for transactions on the TON network and not only. The non-refundable part goes to network fees, not to the platform.</p>
+        `;
+    } else if (type === 'listing') {
+        title.innerText = "Why does this matter?";
+        body.innerHTML = `
+            <div style="font-weight:700; color:#fff; margin-bottom:10px;">This gift was recently listed for rent (less than 24 hours ago).</div>
+            <p>Fragment has a limit on how many times per day a gift can be linked to a Telegram account.</p>
+            <div style="font-weight:700; color:#fff; margin-top:20px; margin-bottom:10px;">What does this mean?</div>
+            <p>If the previous owner or renter has recently exhausted this limit, you won't be able to link the gift to your Telegram account immediately. You may have to wait for a day.</p>
+            <p style="color:#FF9500; font-weight:700; margin-top:20px;">Rent at your own risk!</p>
+        `;
+    }
+
+    document.getElementById('help-modal-overlay').classList.add('active');
+    document.getElementById('help-modal').classList.add('active');
+}
+
+function closeHelpModal() {
+    document.getElementById('help-modal-overlay').classList.remove('active');
+    document.getElementById('help-modal').classList.remove('active');
+}
+
 function closeTcModal() {
     document.getElementById('tc-modal-overlay').classList.remove('active');
     document.getElementById('tc-modal').classList.remove('active');
@@ -1184,6 +1220,36 @@ async function openProductView(item, finalPrice, imgSrc) {
         }
     };
 
+    // Listing Warning Logic
+    const warningBox = document.getElementById('listing-warning-box');
+    const warningTime = document.getElementById('view-listed-time');
+    if (warningBox) warningBox.style.display = 'none';
+
+    // Fetch full details to check listed_at
+    fetch(`${BACKEND_URL}/api/nft_details?nft_address=${item.nft_address}`)
+        .then(r => r.json())
+        .then(details => {
+            if (details.rent && details.rent.listed_at) {
+                const listedAt = details.rent.listed_at * 1000;
+                const now = Date.now();
+                const diffMs = now - listedAt;
+                const diffHrs = diffMs / (1000 * 60 * 60);
+
+                if (diffHrs < 24) {
+                    if (warningBox) warningBox.style.display = 'block';
+                    if (warningTime) {
+                        if (diffHrs < 1) {
+                            const mins = Math.round(diffMs / (1000 * 60));
+                            warningTime.innerText = `${mins} minutes ago`;
+                        } else {
+                            warningTime.innerText = `${Math.round(diffHrs)} hours ago`;
+                        }
+                    }
+                }
+            }
+        }).catch(e => console.error("Details fetch fail:", e));
+
+    document.getElementById('product-view').classList.add('active');
 }
 
 function adjustDuration(delta) {
@@ -1197,12 +1263,24 @@ function adjustDuration(delta) {
     updateTotalPrice();
 }
 
+function calculateMarkup(price) {
+    if (price <= 0.01) return 0; // matching backend 0.01 TON rule
+    if (price <= 0.10) return 0.05;
+    if (price <= 0.25) return 0.10;
+    if (price <= 0.50) return 0.15;
+    if (price <= 1.00) return 0.25;
+    if (price <= 2.50) return 0.45;
+    if (price <= 5.00) return 0.75;
+    return 1.00;
+}
+
 function updateTotalPrice() {
     if (!CURRENT_PAYMENT_ITEM) return;
     const input = document.getElementById('rent-duration-input');
     const dur = parseInt(input.value) || 1;
     const dp = parseFloat(CURRENT_PAYMENT_ITEM.price_per_day);
-    const total = (dp * dur).toFixed(2);
+    const markupPerDay = calculateMarkup(dp);
+    const total = ((dp + markupPerDay) * dur).toFixed(2);
     const priceSpan = document.getElementById('rent-btn-price');
     if (priceSpan) {
         priceSpan.innerText = total;
