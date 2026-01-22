@@ -1289,7 +1289,17 @@ function updateWalletBtnState() {
     if (!btnText) return;
 
     if (tonConnectUI && tonConnectUI.connected && tonConnectUI.account) {
-        const addr = tonConnectUI.account.address;
+        let addr = tonConnectUI.account.address;
+
+        // Try to get user-friendly address if converter is available in the library
+        try {
+            if (typeof TON_CONNECT_UI !== 'undefined' && TON_CONNECT_UI.toUserFriendlyAddress) {
+                addr = TON_CONNECT_UI.toUserFriendlyAddress(addr);
+            }
+        } catch (e) {
+            console.error('Friendly address conversion failed', e);
+        }
+
         const short = addr.slice(0, 4) + '...' + addr.slice(-4);
         btnText.textContent = short;
     } else {
@@ -1297,20 +1307,19 @@ function updateWalletBtnState() {
     }
 }
 
-if (typeof tonConnectUI !== 'undefined' && tonConnectUI) {
+// Global listener setup (ensure it only happens once)
+if (typeof tonConnectUI !== 'undefined' && tonConnectUI && !window.tcListenerSet) {
     tonConnectUI.onStatusChange(wallet => {
         console.log('Wallet status changed:', wallet);
         updateWalletBtnState();
     });
+    window.tcListenerSet = true;
 }
 
-// Open Wallet Connection Modal
+// Fallback in case overlay fails
 function openWalletConnect() {
     if (tonConnectUI) {
         tonConnectUI.openModal();
-    } else {
-        console.error('TonConnect UI not initialized');
-        if (tg) tg.showAlert('Ошибка инициализации кошелька');
     }
 }
 

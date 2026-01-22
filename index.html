@@ -6,7 +6,7 @@
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>MRKT</title>
-    <script src="https://telegram.org/js/telegram-web-app.js?v=1.1.141"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js?v=1.1.142"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <script src="lottie.min.js"></script>
     <link rel="stylesheet" href="style.css?v=3.1.2">
@@ -403,29 +403,32 @@
         <!-- Profile Tab -->
         <div id="profile-container" style="display: none; padding: 16px;">
             <div class="new-profile-header">
-                <img id="profile-avatar" src="https://ui-avatars.com/api/?name=User&background=0088cc&color=fff"
-                    class="new-profile-avatar">
-
                 <div class="profile-balance-card">
-                    <span class="icon-ton large"></span>
-                    <div id="profile-balance" class="new-profile-balance">0.00</div>
-                </div>
+                    <img id="profile-avatar" class="new-profile-avatar"
+                        src="https://ui-avatars.com/api/?name=User&background=0088cc&color=fff">
 
-                <div class="btn-circle-add" onclick="alert('Пополнение скоро!')">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                        <line x1="12" y1="5" x2="12" y2="19"></line>
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                    </svg>
+                    <div class="profile-balance-group">
+                        <span class="icon-ton large"></span>
+                        <div id="profile-balance" class="new-profile-balance">0.00</div>
+                    </div>
+
+                    <div class="btn-circle-add" onclick="alert('Пополнение скоро!')">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="3">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                    </div>
                 </div>
             </div>
 
             <!-- Wallet Connect (Custom Blue Button) -->
             <div id="wallet-btn-container" style="margin-bottom: 32px;">
-                <button id="blue-wallet-btn" class="blue-wallet-display" onclick="openWalletConnect()">
+                <button id="blue-wallet-btn" class="blue-wallet-display">
                     <span class="icon-ton" style="filter: brightness(0) invert(1);"></span>
                     <span id="blue-wallet-text">Connect Wallet</span>
                 </button>
-                <div id="ton-connect-btn" style="display: none;"></div>
+                <div id="ton-connect-btn"></div>
             </div>
 
             <div class="profile-actions-row">
