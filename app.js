@@ -1174,9 +1174,6 @@ async function openProductView(item, finalPrice, imgSrc) {
                     openTcModal(prepData.order_id, true);
                     startPollingOrder(prepData.order_id);
                 });
-
-                // Начинаем опрос статуса заказа
-                startPollingOrder(prepData.order_id);
             }
         } catch (e) {
             console.error(e);
