@@ -49,6 +49,17 @@ body {
     vertical-align: middle;
 }
 
+.icon-ton.large::before {
+    width: 38px;
+    height: 38px;
+    margin-right: 8px;
+}
+
+.icon-ton.header-icon::before {
+    width: 18px;
+    height: 18px;
+}
+
 .icon-before::before {
     margin-left: 0;
 }
@@ -1130,15 +1141,33 @@ body {
     margin: 0 !important;
 }
 
-#ton-connect-btn {
+/* New Blue Wallet Button */
+.blue-wallet-display {
+    background: #0088cc;
+    color: #fff;
+    border-radius: 16px;
+    height: 54px;
     width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    font-size: 16px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 136, 204, 0.2);
+    transition: all 0.2s;
+    margin-bottom: 24px;
 }
 
-#ton-connect-btn button {
-    width: 100% !important;
-    height: 52px !important;
-    border-radius: 16px !important;
-    justify-content: center !important;
+.blue-wallet-display:active {
+    transform: scale(0.98);
+    background: #0077bb;
+}
+
+#ton-connect-btn-hidden {
+    display: none;
 }
 
 /* --- NEW PROFILE DESIGN --- */
@@ -1162,27 +1191,31 @@ body {
 /* Square Sphere Balance Card */
 .profile-balance-card {
     background: #1c1c1e;
-    padding: 18px 24px;
-    border-radius: 24px;
+    padding: 18px 40px;
+    /* Increased horizontal padding */
+    border-radius: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 12px;
-    min-width: 160px;
-    border: 1px solid rgba(255, 255, 255, 0.03);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    width: 85%;
+    /* Stretched */
+    max-width: 320px;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
 }
 
 .new-profile-balance {
-    font-size: 32px;
+    font-size: 38px;
+    /* Slightly larger */
     font-weight: 800;
     color: #fff;
     line-height: 1;
 }
 
 .icon-ton.large {
-    width: 28px;
-    height: 28px;
+    display: flex;
+    align-items: center;
 }
 
 .btn-circle-add {

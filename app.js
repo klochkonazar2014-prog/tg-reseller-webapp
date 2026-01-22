@@ -1280,15 +1280,27 @@ function loadProfileData() {
     if (balElBase) balElBase.textContent = balance;
     if (balElMini) balElMini.textContent = balance;
 
-    // 3. Wallet - handled by default widget
-
+    // 3. Wallet State Sync
+    updateWalletBtnState();
 }
 
-// Safe logic for wallet status
+function updateWalletBtnState() {
+    const btnText = document.getElementById('blue-wallet-text');
+    if (!btnText) return;
+
+    if (tonConnectUI && tonConnectUI.connected && tonConnectUI.account) {
+        const addr = tonConnectUI.account.address;
+        const short = addr.slice(0, 4) + '...' + addr.slice(-4);
+        btnText.textContent = short;
+    } else {
+        btnText.textContent = "Connect Wallet";
+    }
+}
+
 if (typeof tonConnectUI !== 'undefined' && tonConnectUI) {
     tonConnectUI.onStatusChange(wallet => {
-        // Just log for now, UI updates automatically with default button
         console.log('Wallet status changed:', wallet);
+        updateWalletBtnState();
     });
 }
 
