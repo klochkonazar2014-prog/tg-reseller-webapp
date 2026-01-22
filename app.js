@@ -1154,17 +1154,25 @@ async function openProductView(item, finalPrice, imgSrc) {
             });
 
             if (res) {
-                // 3. Уведомляем сервер (опционально)
+                // 3. Уведомляем сервер
                 await fetch(`${BACKEND_URL}/api/mark_rented`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ nft_address: item.nft_address })
+                    body: JSON.stringify({ nft_address: item.nft_address, order_id: prepData.order_id })
                 });
 
                 ALL_MARKET_ITEMS = ALL_MARKET_ITEMS.filter(i => i.nft_address !== item.nft_address);
                 closeProductView();
                 applyHeaderSearch();
-                tg.showAlert("Аренда оформлена успешно!");
+
+                tg.showPopup({
+                    title: "Оплата принята",
+                    message: "Ваш платеж обрабатывается. Окно для ввода ссылки Fragment откроется автоматически через 30-60 секунд.",
+                    buttons: [{ type: "ok" }]
+                });
+
+                // Начинаем опрос статуса заказа
+                startPollingOrder(prepData.order_id);
             }
         } catch (e) {
             console.error(e);
@@ -1341,6 +1349,39 @@ function switchLanguage() {
         label.innerText = 'Русский >';
         tg.showAlert('Язык изменен на Русский');
     }
+}
+
+// --- Order Polling Logic ---
+let ORDER_POLL_INTERVAL = null;
+function startPollingOrder(orderId) {
+    if (ORDER_POLL_INTERVAL) clearInterval(ORDER_POLL_INTERVAL);
+
+    ORDER_POLL_INTERVAL = setInterval(async () => {
+        try {
+            const userId = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user.id : 0;
+            const resp = await fetch(`${BACKEND_URL}/api/my_orders?user_id=${userId}`);
+            const orders = await resp.json();
+
+            const myOrder = orders.find(o => o.id === orderId);
+            if (myOrder) {
+                console.log("Order status:", myOrder.status);
+                if (myOrder.status === 'rented') {
+                    // Бот выкупил NFT, пора вводить ссылку
+                    clearInterval(ORDER_POLL_INTERVAL);
+                    ORDER_POLL_INTERVAL = null;
+                    tg.HapticFeedback.notificationOccurred('success');
+                    openTcModal(orderId);
+                } else if (myOrder.status === 'active') {
+                    // Уже все готово
+                    clearInterval(ORDER_POLL_INTERVAL);
+                    ORDER_POLL_INTERVAL = null;
+                    tg.showAlert("Аренда активна!");
+                }
+            }
+        } catch (e) {
+            console.error("Polling error:", e);
+        }
+    }, 5000); // Опрос каждые 5 сек
 }
 
 // Ensure correct initial load
