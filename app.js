@@ -1167,8 +1167,12 @@ async function openProductView(item, finalPrice, imgSrc) {
 
                 tg.showPopup({
                     title: "Оплата принята",
-                    message: "Ваш платеж обрабатывается. Окно для ввода ссылки Fragment откроется автоматически через 30-60 секунд.",
+                    message: "Ваш платеж обрабатывается. Окно для ввода ссылки Fragment откроется автоматически через 20-40 секунд.",
                     buttons: [{ type: "ok" }]
+                }, () => {
+                    // После закрытия попапа открываем модалку ожидания
+                    openTcModal(prepData.order_id, true);
+                    startPollingOrder(prepData.order_id);
                 });
 
                 // Начинаем опрос статуса заказа
@@ -1208,6 +1212,20 @@ function updateTotalPrice() {
     }
 }
 
+function closeProductView() {
+    const pv = document.getElementById('product-view');
+    if (pv) pv.classList.remove('active');
+    CURRENT_PAYMENT_ITEM = null;
+    const lottieCont = document.getElementById('view-lottie');
+    if (lottieCont && lottieCont.anim) {
+        lottieCont.anim.destroy();
+        lottieCont.anim = null;
+        lottieCont.innerHTML = '';
+    }
+    const viewImg = document.getElementById('view-img');
+    if (viewImg) viewImg.style.opacity = '1';
+}
+
 function renderItemsBatch(items) {
     const container = document.getElementById('items-view');
     items.forEach(item => {
@@ -1217,17 +1235,32 @@ function renderItemsBatch(items) {
     observeNewCards();
 }
 
-function closeProductView() {
-    document.getElementById('product-view').classList.remove('active');
-    CURRENT_PAYMENT_ITEM = null;
-    // Cleanup Lottie animation in product view
-    const lottieCont = document.getElementById('view-lottie');
-    if (lottieCont && lottieCont.anim) {
-        lottieCont.anim.destroy();
-        lottieCont.anim = null;
-        lottieCont.innerHTML = '';
+function openTcModal(orderId, isPolling = false) {
+    document.getElementById('tc-current-order-id').value = orderId;
+    document.getElementById('tc-modal-overlay').classList.add('active');
+    document.getElementById('tc-modal').classList.add('active');
+
+    const body = document.querySelector('#tc-modal div[style*="padding: 20px"]');
+    if (isPolling) {
+        body.innerHTML = `
+            <div id="tc-polling-state" style="text-align:center; padding: 20px 0;">
+                <div class="premium-spinner" style="margin: 0 auto 20px;"></div>
+                <p style="color:#fff; font-weight:700; margin-bottom:10px;">Ждем подтверждения оплаты...</p>
+                <p>Обычно это занимает 15-40 секунд. Не закрывайте это окно.</p>
+            </div>
+        `;
+    } else {
+        // Reset to default
+        body.innerHTML = `
+            <p>1. Зайдите на Fragment.com (с компьютера или другого браузера).</p>
+            <p>2. Нажмите <b>Connect TON</b>.</p>
+            <p>3. Скопируйте ссылку <b>TON Connect Link</b> (кнопка рядом с QR-кодом).</p>
+            <p>4. Вставьте её сюда:</p>
+            <input type="text" id="tc-link-input" placeholder="tc://..."
+                style="width: 100%; height: 50px; background: rgba(255,255,255,0.05); border: 1px solid #333; border-radius: 12px; margin-top: 15px; color: #fff; padding: 0 15px;">
+            <button onclick="submitTcLink()" class="btn-yellow" style="width: 100%; margin-top: 20px;">Подключить кошелек</button>
+        `;
     }
-    document.getElementById('view-img').style.opacity = '1';
 }
 const trigger = document.getElementById('loader-trigger');
 if (trigger) {
@@ -1253,16 +1286,48 @@ function toggleHistory() {
 
 async function loadHistoryContent() {
     const list = document.getElementById('history-list');
-    list.innerHTML = '<div style="color:#8b9bb4; text-align:center; padding:10px;">Загрузка...</div>';
+    list.innerHTML = '<div style="color:#8b9bb4; text-align:center; padding:10px;"><div class="premium-spinner" style="width:20px;height:20px;margin:10px auto;"></div>Загрузка...</div>';
 
-    // Placeholder logic for now, similar to orders
-    // In real usage, fetch active/past rentals
-    // const userId = tg.initDataUnsafe?.user?.id;
-    // const res = await fetch(...) 
+    try {
+        const userId = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user.id : 0;
+        const resp = await fetch(`${BACKEND_URL}/api/my_orders?user_id=${userId}`);
+        const orders = await resp.json();
 
-    setTimeout(() => {
-        list.innerHTML = '<div style="color:#8b9bb4; text-align:center; padding:10px;">История пуста</div>';
-    }, 500);
+        if (!orders || orders.length === 0) {
+            list.innerHTML = '<div style="color:#8b9bb4; text-align:center; padding:20px;">История пуста</div>';
+            return;
+        }
+
+        list.innerHTML = '';
+        orders.forEach(o => {
+            const item = document.createElement('div');
+            item.className = 'history-item';
+            item.style = 'background:rgba(255,255,255,0.05); border-radius:12px; padding:12px; margin-bottom:10px; display:flex; flex-direction:column; gap:8px;';
+
+            let statusColor = '#8b9bb4';
+            let statusText = o.status;
+            if (o.status === 'rented') { statusColor = '#FF9500'; statusText = 'Ожидает ссылку'; }
+            if (o.status === 'active') { statusColor = '#34C759'; statusText = 'Активен'; }
+            if (o.status === 'paid') { statusColor = '#007AFF'; statusText = 'Выкуплен'; }
+
+            item.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="color:#fff; font-weight:600;">${o.nft_name}</span>
+                    <span style="color:${statusColor}; font-size:11px; font-weight:700; text-transform:uppercase;">${statusText}</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; font-size:12px; color:#8b9bb4;">
+                    <span>Срок: ${o.days} дн.</span>
+                    <span>${o.total_price} TON</span>
+                </div>
+                ${o.status === 'rented' ? `
+                    <button onclick="openTcModal(${o.id})" class="btn-yellow" style="height:36px; font-size:12px; margin-top:5px;">Отправить tc:// ссылку</button>
+                ` : ''}
+            `;
+            list.appendChild(item);
+        });
+    } catch (e) {
+        list.innerHTML = '<div style="color:#ff3b30; text-align:center; padding:10px;">Ошибка загрузки</div>';
+    }
 }
 
 function copyWallet() {
@@ -1370,7 +1435,7 @@ function startPollingOrder(orderId) {
                     clearInterval(ORDER_POLL_INTERVAL);
                     ORDER_POLL_INTERVAL = null;
                     tg.HapticFeedback.notificationOccurred('success');
-                    openTcModal(orderId);
+                    openTcModal(orderId, false); // Switch to input mode
                 } else if (myOrder.status === 'active') {
                     // Уже все готово
                     clearInterval(ORDER_POLL_INTERVAL);
