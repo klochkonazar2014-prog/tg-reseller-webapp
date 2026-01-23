@@ -1408,7 +1408,7 @@ async function loadHistoryContent() {
             if (o.status === 'pending_payment') { statusColor = '#FF3B30'; statusText = 'Ожидает оплату'; }
             if (o.status === 'rented') { statusColor = '#FF9500'; statusText = 'Ожидает ссылку'; }
             if (o.status === 'active') { statusColor = '#34C759'; statusText = 'Активен'; }
-            if (o.status === 'paid') { statusColor = '#007AFF'; statusText = 'Выкуплен'; }
+            if (o.status === 'paid') { statusColor = '#007AFF'; statusText = 'Обработка...'; }
 
             item.innerHTML = `
                 <div style="display:flex; justify-content:space-between; align-items:center;">
