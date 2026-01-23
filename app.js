@@ -225,11 +225,8 @@ function loadUserOrders() {
     // No-op 
 }
 
-function openTcModal(orderId) {
-    document.getElementById('tc-current-order-id').value = orderId;
-    document.getElementById('tc-modal-overlay').classList.add('active');
-    document.getElementById('tc-modal').classList.add('active');
-}
+// --- Modal Logic ---
+
 
 // --- Help Modal Logic ---
 function showHelp(type) {
@@ -1342,7 +1339,7 @@ function openTcModal(orderId, isPolling = false) {
     document.getElementById('tc-modal-overlay').classList.add('active');
     document.getElementById('tc-modal').classList.add('active');
 
-    const body = document.querySelector('#tc-modal div[style*="padding: 20px"]');
+    const body = document.getElementById('tc-modal-body');
     if (isPolling) {
         body.innerHTML = `
             <div id="tc-polling-state" style="text-align:center; padding: 20px 0;">
