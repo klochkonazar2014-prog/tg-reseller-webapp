@@ -5,6 +5,7 @@ const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // Tunnel URL
+// Tunnel URL (Keep as fallback, but use relative paths for stability)
 const BACKEND_URL = "https://arendabot.pp.ua";
 
 let tonConnectUI;
@@ -220,8 +221,15 @@ function switchTab(index) {
 }
 
 // Obsolete loadUserOrders removed as tab is gone.
-// --- Modal Logic ---
+function loadUserOrders() {
+    // No-op 
+}
 
+function openTcModal(orderId) {
+    document.getElementById('tc-current-order-id').value = orderId;
+    document.getElementById('tc-modal-overlay').classList.add('active');
+    document.getElementById('tc-modal').classList.add('active');
+}
 
 // --- Help Modal Logic ---
 function showHelp(type) {
@@ -288,8 +296,9 @@ async function submitTcLink() {
 
         if (data.status === 'ok') {
             tg.showAlert("Успешно! Теперь вернитесь на Fragment и нажмите Display in Telegram.");
+            document.getElementById('tc-link-input').value = ""; // Clear input
             closeTcModal();
-            loadUserOrders(); // Refresh status
+            loadHistoryContent(); // Refresh history list
         } else {
             throw new Error(data.error || "Ошибка сервера");
         }
@@ -1308,7 +1317,7 @@ function openTcModal(orderId, isPolling = false) {
     document.getElementById('tc-modal-overlay').classList.add('active');
     document.getElementById('tc-modal').classList.add('active');
 
-    const body = document.getElementById('tc-modal-body');
+    const body = document.querySelector('#tc-modal div[style*="padding: 20px"]');
     if (isPolling) {
         body.innerHTML = `
             <div id="tc-polling-state" style="text-align:center; padding: 20px 0;">
