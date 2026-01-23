@@ -272,42 +272,50 @@ function closeTcModal() {
     document.getElementById('tc-modal').classList.remove('active');
 }
 
-async function submitTcLink() {
-    const orderId = document.getElementById('tc-current-order-id').value;
-    const link = document.getElementById('tc-link-input').value.trim();
+console.log("SubmitTC: OrderID=" + orderId + ", Link=" + link);
+if (!orderId) {
+    alert("Ошибка: ID заказа не найден. Перезагрузите страницу.");
+    btn.innerText = originalText;
+    btn.disabled = false;
+    return;
+}
 
-    if (!link.startsWith('tc://')) {
-        tg.showAlert("Пожалуйста, вставьте корректную ссылку tc:// с Fragment");
-        return;
-    }
+try {
+    const url = `${BACKEND_URL}/api/submit_tc_link`;
+    console.log("Fetching: " + url);
+    const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order_id: parseInt(orderId), tc_link: link })
+    });
 
-    const btn = document.querySelector('#tc-modal .btn-yellow');
-    const originalText = btn.innerText;
-    btn.innerText = "Подключение...";
-    btn.disabled = true;
+    console.log("Response status: " + res.status);
+    const data = await res.json();
+    console.log("Response data:", data);
 
-    try {
-        const res = await fetch(`${BACKEND_URL}/api/submit_tc_link`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ order_id: parseInt(orderId), tc_link: link })
-        });
-        const data = await res.json();
-
-        if (data.status === 'ok') {
+    if (data.status === 'ok') {
+        if (window.Telegram && window.Telegram.WebApp) {
             tg.showAlert("Успешно! Теперь вернитесь на Fragment и нажмите Display in Telegram.");
-            document.getElementById('tc-link-input').value = ""; // Clear input
-            closeTcModal();
-            loadHistoryContent(); // Refresh history list
         } else {
-            throw new Error(data.error || "Ошибка сервера");
+            alert("Успешно! Теперь вернитесь на Fragment и нажмите Display in Telegram.");
         }
-    } catch (e) {
-        tg.showAlert("Ошибка: " + e.message);
-    } finally {
-        btn.innerText = originalText;
-        btn.disabled = false;
+        document.getElementById('tc-link-input').value = "";
+        closeTcModal();
+        loadHistoryContent();
+    } else {
+        throw new Error(data.error || "Ошибка сервера");
     }
+} catch (e) {
+    console.error("SubmitTC Error:", e);
+    if (window.Telegram && window.Telegram.WebApp) {
+        tg.showAlert("Ошибка: " + e.message);
+    } else {
+        alert("Ошибка: " + e.message);
+    }
+} finally {
+    btn.innerText = originalText;
+    btn.disabled = false;
+}
 }
 
 async function loadLiveItems(reset = true) {
