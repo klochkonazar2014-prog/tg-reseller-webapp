@@ -1405,6 +1405,7 @@ async function loadHistoryContent() {
 
             let statusColor = '#8b9bb4';
             let statusText = o.status;
+            if (o.status === 'pending_payment') { statusColor = '#FF3B30'; statusText = 'Ожидает оплату'; }
             if (o.status === 'rented') { statusColor = '#FF9500'; statusText = 'Ожидает ссылку'; }
             if (o.status === 'active') { statusColor = '#34C759'; statusText = 'Активен'; }
             if (o.status === 'paid') { statusColor = '#007AFF'; statusText = 'Выкуплен'; }
