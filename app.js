@@ -810,7 +810,6 @@ function createItemCard(item) {
         </div>
         <div class="card-content">
             <h3 class="card-title">${isNumber ? 'Anonymous Number' : baseName}</h3>
-            <div class="card-subtitle">Premium Item</div>
             
             <div class="card-pricing-container">
                 <div class="pricing-col">
