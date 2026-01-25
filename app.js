@@ -806,7 +806,6 @@ function createItemCard(item) {
     card.innerHTML = `
         <div class="card-image-wrapper">
              ${mediaHTML}
-             <div class="sweep-btn">Live</div>
         </div>
         <div class="card-content">
             <h3 class="card-title">${isNumber ? 'Anonymous Number' : item.nft_name}</h3>
@@ -832,7 +831,7 @@ function createItemCard(item) {
                      </svg>
                 </button>
             </div>
-            <div class="card-duration">Аренда на ${minDays} – ${maxDaysFinal} дн.</div>
+            <div class="card-duration">${minDays} – ${maxDaysFinal} days</div>
         </div>
     `;
     card.onclick = (e) => {
@@ -1373,9 +1372,9 @@ function updateTotalPrice() {
         dur = minDays;
         input.value = minDays;
     }
+    // Backend price already includes markup, so just multiply by duration
     const dp = parseFloat(CURRENT_PAYMENT_ITEM.price_per_day);
-    const markupPerDay = calculateMarkup(dp);
-    const total = ((dp + markupPerDay) * dur).toFixed(2);
+    const total = (dp * dur).toFixed(2);
     const priceSpan = document.getElementById('rent-btn-price');
     if (priceSpan) {
         priceSpan.innerText = total;
