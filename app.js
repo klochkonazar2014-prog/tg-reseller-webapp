@@ -15,6 +15,7 @@ let BATCH_SIZE = 30; // Better for mobile grid
 let IS_LOADING = false;
 let GLOBAL_OFFSET = 0;
 let HAS_MORE = true;
+let CURRENT_TYPE = 'gift'; // Default: gifts
 
 const isBadUrl = (url) => {
     if (!url) return true;
@@ -191,31 +192,46 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 function switchTab(index) {
-    // Indices: 0 = Market, 1 = Profile
-    const containers = ['market-container', 'profile-container'];
+    // Indices: 0 = Gifts, 1 = Usernames, 2 = Numbers, 3 = Profile
+    const navItems = document.querySelectorAll('.nav-item');
 
-    // Hide all first
-    containers.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.style.display = 'none';
-    });
+    // Reset filters and search when switching types
+    if (index < 3) {
+        let newType = 'gift';
+        if (index === 1) newType = 'username';
+        if (index === 2) newType = 'number';
 
-    // Show target with correct display mode
-    const targetId = containers[index];
-    const targetEl = document.getElementById(targetId);
-    if (targetEl) {
-        // Market uses grid, Profile uses block
-        targetEl.style.display = (index === 0) ? 'grid' : 'block';
+        if (CURRENT_TYPE !== newType) {
+            CURRENT_TYPE = newType;
+            // Hide filter row for usernames/numbers as they don't have sub-collections yet
+            const filterRow = document.querySelector('.filter-row');
+            if (filterRow) filterRow.style.display = (CURRENT_TYPE === 'gift' ? 'flex' : 'none');
+
+            // Clear items and reload
+            loadLiveItems(true);
+        }
+
+        document.getElementById('market-container').style.display = 'block';
+        document.getElementById('profile-container').style.display = 'none';
+
+        // Header title change
+        const headerTitle = document.querySelector('.header h1') || document.querySelector('.logo-text');
+        if (headerTitle) {
+            if (index === 0) headerTitle.innerText = "Готфты";
+            if (index === 1) headerTitle.innerText = "Ники";
+            if (index === 2) headerTitle.innerText = "Номера";
+        }
+    } else {
+        document.getElementById('market-container').style.display = 'none';
+        document.getElementById('profile-container').style.display = 'block';
     }
 
-    // Update Nav
-    document.querySelectorAll('.nav-item').forEach((nav, i) => {
-        if (i === index) nav.classList.add('active');
-        else nav.classList.remove('active');
+    navItems.forEach((nav, i) => {
+        nav.classList.toggle('active', i === index);
     });
 
     // Profile logic
-    if (index === 1) {
+    if (index === 3) { // Changed from 1 to 3 for profile tab
         loadProfileData();
     }
 }
@@ -358,10 +374,12 @@ async function loadLiveItems(reset = true) {
         const params = new URLSearchParams({
             limit: BATCH_SIZE,
             offset: GLOBAL_OFFSET,
+            type: CURRENT_TYPE, // Pass current type
             nft: ACTIVE_FILTERS.nft,
             model: ACTIVE_FILTERS.model,
             bg: ACTIVE_FILTERS.bg,
             symbol: ACTIVE_FILTERS.symbol,
+            sort: ACTIVE_FILTERS.sort,
             search: ACTIVE_FILTERS.search,
             price_from: ACTIVE_FILTERS.price_from || "",
             price_to: ACTIVE_FILTERS.price_to || "",
@@ -738,18 +756,29 @@ function createItemCard(item) {
     const fragmentUrls = generateFragmentUrls(item.nft_name);
     const lottieId = `lottie-${item.nft_address}`;
 
-    // SMART IMAGE LOGIC:
-    // If server gives us a 'bad' placeholder (gift.svg/ton_symbol), IGNORE IT and use generated Fragment URL.
+    // NEW TYPE LOGIC
+    let isFlat = (item.type === 'username' || item.type === 'number');
     let imgSrc = item._realImage;
-    if (!imgSrc || imgSrc.includes('gift.svg') || imgSrc.includes('ton_symbol')) {
-        imgSrc = fragmentUrls.image;
+    let placeholderHTML = "";
+
+    if (isFlat) {
+        let iconPath = item.type === 'username' ?
+            '<path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect><path d="M9 14l2 2 4-4"></path>' :
+            '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>';
+
+        placeholderHTML = `<div class="card-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${iconPath}</svg></div>`;
+        imgSrc = ""; // Use placeholder
+    } else {
+        if (!imgSrc || imgSrc.includes('gift.svg') || imgSrc.includes('ton_symbol')) {
+            imgSrc = fragmentUrls.image;
+        }
     }
-    // Final fallback
-    if (!imgSrc) imgSrc = fallbackImg;
+    if (!imgSrc && !isFlat) imgSrc = fallbackImg;
 
     let mediaHTML = `
         <div class="card-days-badge">Days: 1 – ${maxDays}</div>
-        <img src="${imgSrc}" class="card-img ${fragmentUrls.lottie ? 'lottie-bg' : ''}" id="img-${lottieId}" loading="lazy" onerror="this.src='${fallbackImg}'">
+        <div class="type-badge">${item.type.toUpperCase()}</div>
+        ${isFlat ? placeholderHTML : `<img src="${imgSrc}" class="card-img ${fragmentUrls.lottie ? 'lottie-bg' : ''}" id="img-${lottieId}" loading="lazy" onerror="this.src='${fallbackImg}'">`}
     `;
     // Set z-index 3 for Lottie to be clearly above img and badge (badge is 1)
     if (fragmentUrls.lottie) mediaHTML += `<div id="${lottieId}" class="card-img lottie-container" style="z-index: 3;"></div>`;
@@ -762,7 +791,7 @@ function createItemCard(item) {
         <div class="card-content">
             <h3 class="card-title">${baseName}</h3>
             <div class="card-number">${numStr}</div>
-            <div class="card-subtitle">${item._modelName}</div> 
+            <div class="card-subtitle">${isFlat ? "Premium Item" : item._modelName}</div> 
             <div class="card-bottom-row">
                 <button class="card-price-btn">${renderTonAmount(myPrice > 0 ? myPrice : "0.01")}</button>
                 <button class="card-cart-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><path d="M12 12a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"></path><path d="M12 14v4"></path><path d="M10 16h4"></path></svg></button>
