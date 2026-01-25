@@ -792,7 +792,7 @@ function createItemCard(item) {
 
     let mediaHTML = `
         <div class="card-days-badge">Days: 1 – ${maxDays}</div>
-        <div class="type-badge">${item.type.toUpperCase()}</div>
+        <div class="type-badge">${(item.type || 'GIFT').toUpperCase()}</div>
         ${isFlat ? placeholderHTML : `<img src="${imgSrc}" class="card-img ${fragmentUrls.lottie ? 'lottie-bg' : ''}" id="img-${lottieId}" loading="lazy" onerror="this.src='${fallbackImg}'">`}
     `;
     // Set z-index 3 for Lottie to be clearly above img and badge (badge is 1)
