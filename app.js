@@ -753,47 +753,52 @@ function createItemCard(item) {
     const baseName = match ? match[1] : item.nft_name;
     const numStr = match ? match[2] : "";
 
-    // Determine max days based on API or name fallback
-    let maxDays = Math.floor((item.max_duration || 2592000) / 86400);
-    const lowerName = item.nft_name.toLowerCase();
+    // Determine periods from API
+    const minDays = Math.floor((item.min_duration || 86400) / 86400);
+    const maxDaysFinal = Math.floor((item.max_duration || 2592000) / 86400);
 
-    if (lowerName.includes("basket")) maxDays = 180;
-    else if (lowerName.includes("frog")) maxDays = 15;
-    else if (lowerName.includes("voodoo")) maxDays = 100;
-    else if (lowerName.includes("jelly")) maxDays = 34;
-    else if (lowerName.includes("heart")) maxDays = 34; // Matches "Trapped Heart"
-    else if (lowerName.includes("duck")) maxDays = 14;
-    else if (lowerName.includes("magic ball")) maxDays = 29;
-    else if (lowerName.includes("pumpkin")) maxDays = 39;
-    else if (lowerName.includes("ghost")) maxDays = 29;
+    // Calculate Min. price for badge (price * minDays)
+    const minTotalPrice = (parseFloat(myPrice) * minDays).toFixed(2);
 
     let fallbackImg = "https://cdn-icons-png.flaticon.com/512/4213/4213958.png";
+    const telegramIcon = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/telegram_logo.svg";
     const fragmentUrls = generateFragmentUrls(item.nft_name);
     const lottieId = `lottie-${item.nft_address}`;
 
     // NEW TYPE LOGIC
-    let isFlat = (item.type === 'username' || item.type === 'number');
+    let isNumber = (item.type === 'number');
+    let isUsername = (item.type === 'username');
     let imgSrc = item._realImage;
     let placeholderHTML = "";
 
-    if (isFlat) {
-        let iconPath = item.type === 'username' ?
-            '<path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect><path d="M9 14l2 2 4-4"></path>' :
-            '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>';
-
-        placeholderHTML = `<div class="card-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${iconPath}</svg></div>`;
+    if (isNumber || isUsername) {
+        if (isNumber) {
+            placeholderHTML = `
+                <div class="card-placeholder" style="background:#0f1218;">
+                    <img src="${telegramIcon}" class="telegram-center-icon" onerror="this.style.display='none'">
+                    <div class="card-number-badge">${item.nft_name.replace('Anonymous Number ', '')}</div>
+                </div>`;
+        } else {
+            placeholderHTML = `
+                <div class="card-placeholder">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                        <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect><path d="M9 14l2 2 4-4"></path>
+                    </svg>
+                </div>`;
+        }
         imgSrc = ""; // Use placeholder
     } else {
         if (!imgSrc || imgSrc.includes('gift.svg') || imgSrc.includes('ton_symbol')) {
             imgSrc = fragmentUrls.image;
         }
     }
-    if (!imgSrc && !isFlat) imgSrc = fallbackImg;
+    if (!imgSrc && !isNumber && !isUsername) imgSrc = fallbackImg;
 
     let mediaHTML = `
-        <div class="card-days-badge">Days: 1 – ${maxDays}</div>
+        <div class="card-days-badge">Days: ${minDays} – ${maxDaysFinal}</div>
         <div class="type-badge">${(item.type || 'GIFT').toUpperCase()}</div>
-        ${isFlat ? placeholderHTML : `<img src="${imgSrc}" class="card-img ${fragmentUrls.lottie ? 'lottie-bg' : ''}" id="img-${lottieId}" loading="lazy" onerror="this.src='${fallbackImg}'">`}
+        ${(isNumber || isUsername) ? placeholderHTML : `<img src="${imgSrc}" class="card-img ${fragmentUrls.lottie ? 'lottie-bg' : ''}" id="img-${lottieId}" loading="lazy" onerror="this.src='${fallbackImg}'">`}
     `;
     // Set z-index 3 for Lottie to be clearly above img and badge (badge is 1)
     if (fragmentUrls.lottie) mediaHTML += `<div id="${lottieId}" class="card-img lottie-container" style="z-index: 3;"></div>`;
@@ -804,14 +809,31 @@ function createItemCard(item) {
              <div class="sweep-btn">Live</div>
         </div>
         <div class="card-content">
-            <h3 class="card-title">${baseName}</h3>
-            <div class="card-number">${numStr}</div>
-            <div class="card-subtitle">${isFlat ? "Premium Item" : item._modelName}</div> 
-            <div class="card-bottom-row">
-                <button class="card-price-btn">${renderTonAmount(myPrice > 0 ? myPrice : "0.01")}</button>
-                <button class="card-cart-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><path d="M12 12a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"></path><path d="M12 14v4"></path><path d="M10 16h4"></path></svg></button>
+            <h3 class="card-title">${isNumber ? 'Anonymous Number' : baseName}</h3>
+            <div class="card-subtitle">Premium Item</div>
+            
+            <div class="card-pricing-container">
+                <div class="pricing-col">
+                    <span class="pricing-label-small">Per day</span>
+                    <span class="pricing-value-small">${renderTonAmount(myPrice)}</span>
+                </div>
+                <div class="pricing-col" style="text-align:right;">
+                    <span class="pricing-label-small">Min. price</span>
+                    <span class="pricing-value-small">${renderTonAmount(minTotalPrice)}</span>
+                </div>
             </div>
-            <div class="card-duration">Аренда на 1 – ${maxDays} дн.</div>
+
+            <div class="card-bottom-row">
+                <button class="card-price-btn">Rent</button>
+                <button class="card-cart-btn">
+                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="9" cy="21" r="1"></circle>
+                        <circle cx="20" cy="21" r="1"></circle>
+                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                     </svg>
+                </button>
+            </div>
+            <div class="card-duration">Аренда на ${minDays} – ${maxDaysFinal} дн.</div>
         </div>
     `;
     card.onclick = (e) => {
@@ -1323,9 +1345,10 @@ async function openProductView(item, finalPrice, imgSrc) {
 function adjustDuration(delta) {
     if (!CURRENT_PAYMENT_ITEM) return;
     const input = document.getElementById('rent-duration-input');
-    const maxDays = Math.floor(CURRENT_PAYMENT_ITEM.max_duration / 86400);
+    const minDays = Math.floor((CURRENT_PAYMENT_ITEM.min_duration || 86400) / 86400);
+    const maxDays = Math.floor((CURRENT_PAYMENT_ITEM.max_duration || 2592000) / 86400);
     let val = parseInt(input.value) + delta;
-    if (val < 1) val = 1;
+    if (val < minDays) val = minDays;
     if (val > maxDays) val = maxDays;
     input.value = val;
     updateTotalPrice();
@@ -1345,7 +1368,12 @@ function calculateMarkup(price) {
 function updateTotalPrice() {
     if (!CURRENT_PAYMENT_ITEM) return;
     const input = document.getElementById('rent-duration-input');
-    const dur = parseInt(input.value) || 1;
+    const minDays = Math.floor((CURRENT_PAYMENT_ITEM.min_duration || 86400) / 86400);
+    let dur = parseInt(input.value) || minDays;
+    if (dur < minDays) {
+        dur = minDays;
+        input.value = minDays;
+    }
     const dp = parseFloat(CURRENT_PAYMENT_ITEM.price_per_day);
     const markupPerDay = calculateMarkup(dp);
     const total = ((dp + markupPerDay) * dur).toFixed(2);

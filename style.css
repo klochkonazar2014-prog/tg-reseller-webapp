@@ -416,6 +416,59 @@ body {
     text-align: center;
 }
 
+/* NEW: Dual Pricing Layout */
+.card-pricing-container {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    gap: 8px;
+}
+
+.pricing-col {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.pricing-label-small {
+    font-size: 9px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.pricing-value-small {
+    font-size: 14px;
+    font-weight: 800;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+/* NEW: Number Badge */
+.card-number-badge {
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #0088cc;
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 800;
+    white-space: nowrap;
+    z-index: 10;
+    box-shadow: 0 4px 12px rgba(0, 136, 204, 0.4);
+}
+
+.telegram-center-icon {
+    width: 60px;
+    height: 60px;
+    opacity: 0.8;
+}
+
 /* --- BOTTOM NAV --- */
 .bottom-nav {
     position: fixed;
