@@ -778,11 +778,13 @@ function createItemCard(item) {
                     <img src="${telegramIcon}" class="telegram-center-icon" onerror="this.style.display='none'">
                     <div class="card-number-badge">${item.nft_name.replace('Anonymous Number ', '')}</div>
                 </div>`;
-        } else if (isUsername) {
+        } else {
+            // Username styling with @ symbol
+            const username = item.nft_name.replace('@', '');
             placeholderHTML = `
-                <div class="card-placeholder" style="background:#0f1218;">
-                    <img src="${telegramIcon}" class="telegram-center-icon" onerror="this.style.display='none'">
-                    <div class="card-number-badge">${item.nft_name.replace('Anonymous Username ', '@')}</div>
+                <div class="card-placeholder" style="background:#1a1d29;">
+                    <div style="font-size: 48px; color: #0088cc; font-weight: 800;">@</div>
+                    <div class="card-number-badge" style="background: #0088cc;">${username}</div>
                 </div>`;
         }
         imgSrc = ""; // Use placeholder
@@ -807,7 +809,7 @@ function createItemCard(item) {
              <div class="sweep-btn">Live</div>
         </div>
         <div class="card-content">
-            <h3 class="card-title">${isNumber ? 'Anonymous Number' : (isUsername ? 'Anonymous Username' : item.nft_name)}</h3>
+            <h3 class="card-title">${isNumber ? 'Anonymous Number' : item.nft_name}</h3>
             
             <div class="card-pricing-container">
                 <div class="pricing-col">
