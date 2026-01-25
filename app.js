@@ -374,7 +374,7 @@ async function loadLiveItems(reset = true) {
         const params = new URLSearchParams({
             limit: BATCH_SIZE,
             offset: GLOBAL_OFFSET,
-            type: CURRENT_TYPE, // Pass current type
+            type: CURRENT_TYPE,
             nft: ACTIVE_FILTERS.nft,
             model: ACTIVE_FILTERS.model,
             bg: ACTIVE_FILTERS.bg,
@@ -387,8 +387,23 @@ async function loadLiveItems(reset = true) {
             t: Date.now()
         });
 
-        const response = await fetch(`${BACKEND_URL}/api/items?${params.toString()}`);
-        if (!response.ok) throw new Error("Server Error");
+        let response;
+        let retries = 3;
+        while (retries > 0) {
+            try {
+                response = await fetch(`${BACKEND_URL}/api/items?${params.toString()}`);
+                if (response.ok) break;
+            } catch (err) {
+                console.error(`Fetch attempt failed (${retries} retries left):`, err);
+            }
+            retries--;
+            if (retries > 0) await new Promise(r => setTimeout(r, 1000));
+        }
+
+        if (!response || !response.ok) {
+            throw new Error(`Server status: ${response ? response.status : 'Network Error'}`);
+        }
+
         const data = await response.json();
 
         if (data && data.items) {
@@ -423,8 +438,8 @@ async function loadLiveItems(reset = true) {
         if (loader) loader.style.display = 'none';
         hideLoading();
     } catch (e) {
-        console.error("Load Error:", e);
-        if (loader) loader.innerText = "Ошибка загрузки.";
+        console.error("Load Error details:", e);
+        if (loader) loader.innerText = "Ошибка загрузки: " + e.message;
         hideLoading();
     } finally {
         IS_LOADING = false;
