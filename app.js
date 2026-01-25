@@ -778,13 +778,11 @@ function createItemCard(item) {
                     <img src="${telegramIcon}" class="telegram-center-icon" onerror="this.style.display='none'">
                     <div class="card-number-badge">${item.nft_name.replace('Anonymous Number ', '')}</div>
                 </div>`;
-        } else {
+        } else if (isUsername) {
             placeholderHTML = `
-                <div class="card-placeholder">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
-                        <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect><path d="M9 14l2 2 4-4"></path>
-                    </svg>
+                <div class="card-placeholder" style="background:#0f1218;">
+                    <img src="${telegramIcon}" class="telegram-center-icon" onerror="this.style.display='none'">
+                    <div class="card-number-badge">${item.nft_name.replace('Anonymous Username ', '@')}</div>
                 </div>`;
         }
         imgSrc = ""; // Use placeholder
@@ -809,7 +807,7 @@ function createItemCard(item) {
              <div class="sweep-btn">Live</div>
         </div>
         <div class="card-content">
-            <h3 class="card-title">${isNumber ? 'Anonymous Number' : baseName}</h3>
+            <h3 class="card-title">${isNumber ? 'Anonymous Number' : (isUsername ? 'Anonymous Username' : item.nft_name)}</h3>
             
             <div class="card-pricing-container">
                 <div class="pricing-col">
