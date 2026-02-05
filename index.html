@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirecting...</title>
+    <script>
+        // Use relative path to preserve any URL parameters (like tgWebAppStartParam)
+        const currentUrl = new URL(window.location.href);
+        const redirectUrl = currentUrl.origin + currentUrl.pathname + 'web/index.html' + currentUrl.search + currentUrl.hash;
+        window.location.replace(redirectUrl);
+    </script>
+    <style>
+        body {
+            background: #000;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            font-family: sans-serif;
+        }
+    </style>
+</head>
+
+<body>
+    <p>Redirecting to Web App...</p>
+</body>
+
+</html>
