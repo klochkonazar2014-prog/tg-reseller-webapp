@@ -2,7 +2,7 @@
 let tg = null;
 const MY_MARKUP = 0.20;
 const OWNER_WALLET = "UQAotn3cT26kUKW5wSpP9dYKxwEQQ0qffDB24HGzuBrJ5PFB";
-const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
+const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/web/tonconnect-manifest.json";
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
