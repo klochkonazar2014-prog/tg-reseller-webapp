@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://become-publication-expects-substitute.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://supporting-bureau-treatments-products.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -20,6 +20,7 @@ let CURRENT_TYPE = 'gift'; // Default: gifts
 let CURRENT_STATUS = 'available'; // available, rented
 let GLOBAL_TON_PRICE = 0;
 let FRIENDLY_ADDR_CACHE = {};
+let COUNTDOWN_INTERVALS = {};
 
 /**
  * Converts Raw address (0:hex) to User-Friendly Non-bounceable (UQ...)
@@ -157,7 +158,12 @@ const TRANSLATIONS = {
         rent_title_suffix: " (Аренда)",
         auto_relist_label: "Авто-перевыставление",
         yes: "Да",
-        no: "Нет"
+        no: "Нет",
+        rented_by_you: "Арендовано вами",
+        rented_by_others: "Арендовано",
+        status_awaiting_fragment: "Ожидает подключения к Fragment",
+        connect_to_fragment: "Подключить к Fragment",
+        ends_in: "Освободится через"
     },
     en: {
         gifts: "Gifts",
@@ -238,12 +244,11 @@ const TRANSLATIONS = {
         auto_relist_label: "Auto-relist",
         yes: "Yes",
         no: "No",
-        preorder_warning_no_relist: "Warning: Auto-relist is disabled for this NFT. Pre-order might not trigger if the owner doesn't relist it manually.",
-        mode_rent_btn: "Rented Items Catalog",
-        mode_shop_btn: "Available for Rent Catalog",
-        loading_to_rent: "Loading Rented Items Catalog...",
-        loading_to_shop: "Loading Available for Rent Catalog...",
-        rent_title_suffix: " (Rent)"
+        rented_by_you: "Rented by you",
+        rented_by_others: "Rented",
+        status_awaiting_fragment: "Awaiting Fragment connection",
+        connect_to_fragment: "Connect to Fragment",
+        ends_in: "Ends in"
     }
 };
 
@@ -1461,6 +1466,13 @@ async function openProductView(item) {
     setChip('view-auto-relist-title', 'auto_relist');
     setChip('view-auto-relist-desc', 'auto_relist_desc');
     setChip('fee-what-mean', 'what_is_this');
+    setChip('view-countdown-label', 'ends_in');
+
+    // Reset banners & countdown
+    const banner = document.getElementById('view-status-banner');
+    if (banner) { banner.style.display = 'none'; banner.className = 'status-banner'; }
+    const countdownCont = document.getElementById('view-countdown-container');
+    if (countdownCont) countdownCont.style.display = 'none';
 
     // Hide Address
     const addrDom = document.getElementById('view-address');
@@ -1520,7 +1532,14 @@ async function openProductView(item) {
 
     // Rent Button
     const rentBtn = document.getElementById('main-rent-action-btn');
+    const stepper = document.querySelector('.rent-period-stepper');
+    const feeNotice = document.querySelector('.fee-notice-box');
+
     if (rentBtn) {
+        rentBtn.style.display = 'flex';
+        if (stepper) stepper.style.display = 'flex';
+        if (feeNotice) feeNotice.style.display = 'block';
+
         updateTotalPrice();
         const rentBtnTextEl = rentBtn.querySelector('#rent-btn-text');
         if (rentBtnTextEl) rentBtnTextEl.textContent = t('rent_button', { amount: '' }).replace('{amount}', '').trim();
@@ -1565,27 +1584,70 @@ async function openProductView(item) {
     if (warningBox) warningBox.style.display = 'none';
 
     if (item && item.nft_address) {
-        fetch(`${BACKEND_URL}/api/nft_details?nft_address=${item.nft_address}`)
-            .then(r => r.json())
-            .then(details => {
-                if (details.rent && details.rent.listed_at) {
-                    const diffHrs = (Date.now() - (details.rent.listed_at * 1000)) / (1000 * 60 * 60);
-                    if (diffHrs < 24) {
-                        if (warningBox) warningBox.style.display = 'block';
-                        const wt = document.getElementById('view-listed-time');
-                        if (wt) wt.innerText = diffHrs < 1 ? t('just_now') : `${Math.round(diffHrs)} ${t('hours_ago')}`;
+        const userId = tg.initDataUnsafe?.user?.id || 0;
+
+        // Parallel fetch for details and user order status
+        Promise.all([
+            fetch(`${BACKEND_URL}/api/nft_details?nft_address=${item.nft_address}`).then(r => r.json()),
+            fetch(`${BACKEND_URL}/api/my_orders?user_id=${userId}`).then(r => r.json())
+        ]).then(([details, myOrders]) => {
+            const myOrder = myOrders.find(o => o.nft_address === item.nft_address && (o.status === 'rented' || o.status === 'active' || o.status === 'paid'));
+
+            // 1. Status Banner Logic
+            if (item.status === 'rented' || (myOrder && myOrder.status === 'active')) {
+                const banner = document.getElementById('view-status-banner');
+                if (banner) {
+                    banner.style.display = 'block';
+                    if (myOrder) {
+                        banner.textContent = t('rented_by_you');
+                        banner.classList.add('bg-yellow');
+                    } else {
+                        banner.textContent = t('rented_by_others');
+                        banner.classList.add('bg-red');
                     }
                 }
-                if (details.attributes) {
-                    details.attributes.forEach(attr => {
-                        const row = Array.from(document.querySelectorAll('.property-item')).find(r => r.querySelector('.prop-name')?.textContent === t(attr.trait_type.toLowerCase()));
-                        if (row) {
-                            const valSpan = row.querySelector('.prop-value-text');
-                            if (valSpan) valSpan.textContent = attr.value;
-                        }
-                    });
+            }
+
+            // 2. Button Logic for Own Order
+            if (myOrder && myOrder.status === 'rented' && !myOrder.tc_link) {
+                if (rentBtn) {
+                    rentBtn.innerHTML = t('connect_to_fragment');
+                    if (stepper) stepper.style.display = 'none';
+                    if (feeNotice) feeNotice.style.display = 'none';
+                    rentBtn.onclick = () => openTcModal(myOrder.id);
                 }
-            }).catch(e => console.error(e));
+            }
+
+            // 3. Countdown Logic
+            const endTime = details.rent?.ends_at || details.rent_ends_at;
+            if (endTime && (item.status === 'rented' || (myOrder && myOrder.status === 'active'))) {
+                const countdownCont = document.getElementById('view-countdown-container');
+                const timerEl = document.getElementById('view-countdown-timer');
+                if (countdownCont && timerEl) {
+                    countdownCont.style.display = 'block';
+                    startCountdown(parseInt(endTime), timerEl);
+                }
+            }
+
+            // 4. Existing warning logic and attributes
+            if (details.rent && details.rent.listed_at) {
+                const diffHrs = (Date.now() - (details.rent.listed_at * 1000)) / (1000 * 60 * 60);
+                if (diffHrs < 24) {
+                    if (warningBox) warningBox.style.display = 'block';
+                    const wt = document.getElementById('view-listed-time');
+                    if (wt) wt.innerText = diffHrs < 1 ? t('just_now') : `${Math.round(diffHrs)} ${t('hours_ago')}`;
+                }
+            }
+            if (details.attributes) {
+                details.attributes.forEach(attr => {
+                    const row = Array.from(document.querySelectorAll('.property-item')).find(r => r.querySelector('.prop-name')?.textContent === t(attr.trait_type.toLowerCase()));
+                    if (row) {
+                        const valSpan = row.querySelector('.prop-right span');
+                        if (valSpan) valSpan.textContent = attr.value;
+                    }
+                });
+            }
+        }).catch(e => console.error(e));
     }
 
     // Reset scroll at the very end
@@ -1778,29 +1840,75 @@ async function loadHistoryContent() {
 
             let statusColor = '#8b9bb4';
             let statusText = o.status;
-            if (o.status === 'pending_payment') { statusColor = '#FF3B30'; statusText = t('status_pending'); }
-            if (o.status === 'rented') { statusColor = '#FF9500'; statusText = t('status_rented'); }
-            if (o.status === 'active') { statusColor = '#34C759'; statusText = 'Активен'; }
-            if (o.status === 'paid') { statusColor = '#007AFF'; statusText = 'Обработка...'; }
+            let showTcBtn = false;
+            let displayStatus = o.status;
+
+            if (o.status === 'pending_payment') {
+                statusColor = '#FF3B30';
+                displayStatus = t('status_pending');
+            } else if (o.status === 'rented' && !o.tc_link) {
+                statusColor = '#FF9500';
+                displayStatus = t('status_awaiting_fragment');
+                showTcBtn = true;
+            } else if (o.status === 'rented') {
+                statusColor = '#FF9500';
+                displayStatus = t('status_rented');
+            } else if (o.status === 'active') {
+                statusColor = '#34C759';
+                displayStatus = 'Активен';
+            } else if (o.status === 'paid') {
+                statusColor = '#007AFF';
+                displayStatus = 'Обработка...';
+            }
 
             item.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span style="color:#fff; font-weight:600;">${o.nft_name}</span>
-            <span style="color:${statusColor}; font-size:11px; font-weight:700; text-transform:uppercase;">${statusText}</span>
-        </div>
-        <div style="display:flex; justify-content:space-between; font-size:12px; color:#8b9bb4;">
-            <span>Срок: ${o.days} дн.</span>
-            <span>${o.total_price} TON</span>
-        </div>
-        ${o.status === 'rented' ? `
-            <button onclick="openTcModal(${o.id})" class="btn-yellow" style="height:36px; font-size:12px; margin-top:5px;">Отправить tc:// ссылку</button>
-        ` : ''}
-    `;
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="color:#fff; font-weight:700; font-size:14px;">${o.nft_name}</span>
+                    <span class="status-tag" style="color:${statusColor}; border: 1px solid ${statusColor}44; background: ${statusColor}11;">${displayStatus}</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; font-size:12px; color:#8b9bb4; font-weight:600;">
+                    <span>${o.days} дн.</span>
+                    <span class="tm-amount icon-ton" style="font-size:inherit; font-weight:800; color:#fff;">${o.total_price}</span>
+                </div>
+                ${showTcBtn ? `
+                    <button onclick="openTcModal(${o.id})" class="btn-yellow" style="height:38px; font-size:13px; margin-top:5px; font-weight:700; border-radius:10px;">${t('connect_to_fragment')}</button>
+                ` : ''}
+            `;
+
+            // If active and end_time exists, we could show timer here too, but user asked specifically for modal/card
             list.appendChild(item);
         });
     } catch (e) {
         list.innerHTML = '<div style="color:#ff3b30; text-align:center; padding:10px;">Ошибка загрузки</div>';
     }
+}
+
+function startCountdown(endTime, targetEl) {
+    if (typeof endTime !== 'number') return;
+    const intervalKey = targetEl.id || 'global-timer';
+    if (COUNTDOWN_INTERVALS[intervalKey]) clearInterval(COUNTDOWN_INTERVALS[intervalKey]);
+
+    const update = () => {
+        const now = Math.floor(Date.now() / 1000);
+        const diff = endTime - now;
+
+        if (diff <= 0) {
+            targetEl.textContent = "00 : 00 : 00 : 00";
+            clearInterval(COUNTDOWN_INTERVALS[intervalKey]);
+            return;
+        }
+
+        const d = Math.floor(diff / 86400);
+        const h = Math.floor((diff % 86400) / 3600);
+        const m = Math.floor((diff % 3600) / 60);
+        const s = diff % 60;
+
+        const pad = (n) => n.toString().padStart(2, '0');
+        targetEl.textContent = `${pad(d)} : ${pad(h)} : ${pad(m)} : ${pad(s)}`;
+    };
+
+    update();
+    COUNTDOWN_INTERVALS[intervalKey] = setInterval(update, 1000);
 }
 
 function copyWallet() {
