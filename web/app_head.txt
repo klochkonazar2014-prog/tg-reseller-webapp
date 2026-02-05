@@ -1,0 +1,1155 @@
+﻿// Consts
+let tg = null;
+const MY_MARKUP = 0.20;
+const OWNER_WALLET = "UQAotn3cT26kUKW5wSpP9dYKxwEQQ0qffDB24HGzuBrJ5PFB";
+const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
+
+// рџљЂ Dynamic Backend Detection
+const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const BACKEND_URL = isLocal ? "http://localhost:8001" : "https://arendabot.pp.ua";
+console.log("Using backend:", BACKEND_URL);
+
+let tonConnectUI;
+let ALL_MARKET_ITEMS = [];
+let RENDERED_COUNT = 0;
+let BATCH_SIZE = 30; // Better for mobile grid
+let IS_LOADING = false;
+let GLOBAL_OFFSET = 0;
+let HAS_MORE = true;
+let CURRENT_TYPE = 'gift'; // Default: gifts
+let GLOBAL_TON_PRICE = 0;
+
+const isBadUrl = (url) => {
+    if (!url) return true;
+    const u = String(url).toLowerCase();
+    return u.includes('ton_symbol.png') || u.includes('gift.svg');
+};
+
+const TRANSLATIONS = {
+    ru: {
+        gifts: "РџРѕРґР°СЂРєРё",
+        usernames: "РќРёРєРё",
+        numbers: "РќРѕРјРµСЂР°",
+        profile: "РџСЂРѕС„РёР»СЊ",
+        search: "РџРѕРёСЃРє",
+        no_items: "РќРёС‡РµРіРѕ РЅРµ РЅР°Р№РґРµРЅРѕ",
+        reset_filters: "РџРѕРїСЂРѕР±СѓР№С‚Рµ СЃР±СЂРѕСЃРёС‚СЊ С„РёР»СЊС‚СЂС‹",
+        price_per_day: "Р¦РµРЅР° РІ РґРµРЅСЊ",
+        period: "РЎСЂРѕРє (РґРЅРё)",
+        discount: "РЎРєРёРґРєР°",
+        days: "Р”РЅРё",
+        rent: "РђСЂРµРЅРґРѕРІР°С‚СЊ",
+        rent_days: "РђСЂРµРЅРґР° РЅР° {min}вЂ“{max} РґРЅ.",
+        per_day: "Р’ РґРµРЅСЊ",
+        min_price: "РњРёРЅ. С†РµРЅР°",
+        you_will_send: "Р’С‹ РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅРѕ РѕС‚РїСЂР°РІРёС‚Рµ {amount} TON РґР»СЏ РѕР±СЂР°Р±РѕС‚РєРё С‚СЂР°РЅР·Р°РєС†РёРё. РћСЃС‚Р°С‚РѕРє TON Р±СѓРґРµС‚ РІРѕР·РІСЂР°С‰РµРЅ РІР°Рј.",
+        processing: "РџРѕРґРєР»СЋС‡РµРЅРёРµ...",
+        success_tc: "РЈСЃРїРµС€РЅРѕ! РўРµРїРµСЂСЊ РІРµСЂРЅРёС‚РµСЃСЊ РЅР° Fragment Рё РЅР°Р¶РјРёС‚Рµ Display in Telegram.",
+        tc_link_placeholder: "Р’СЃС‚Р°РІСЊС‚Рµ tc:// СЃСЃС‹Р»РєСѓ СЃ Fragment",
+        rarity: "Р РµРґРєРѕСЃС‚СЊ",
+        model: "РњРѕРґРµР»СЊ",
+        symbol: "РЎРёРјРІРѕР»",
+        backdrop: "Р¤РѕРЅ",
+        copy_success: "РЎРєРѕРїРёСЂРѕРІР°РЅРѕ",
+        lang_ru: "Р СѓСЃСЃРєРёР№",
+        lang_en: "English",
+        what_is_this: "Р§С‚Рѕ СЌС‚Рѕ Р·РЅР°С‡РёС‚?",
+        settings_support: "РќР°СЃС‚СЂРѕР№РєРё Рё РїРѕРґРґРµСЂР¶РєР°",
+        profile_settings: "РќР°СЃС‚СЂРѕР№РєРё Рё РїРѕРґРґРµСЂР¶РєР°",
+        rental_history: "РСЃС‚РѕСЂРёСЏ Р°СЂРµРЅРґС‹",
+        profile_history: "РСЃС‚РѕСЂРёСЏ Р°СЂРµРЅРґС‹",
+        support_faq: "РџРѕРґРґРµСЂР¶РєР° Рё FAQ",
+        profile_support: "РџРѕРґРґРµСЂР¶РєР° Рё FAQ",
+        wallet_mgmt: "РЈРїСЂР°РІР»РµРЅРёРµ РєРѕС€РµР»СЊРєРѕРј",
+        profile_wallet: "РљРѕС€РµР»РµРє",
+        connect_wallet: "РџРѕРґРєР»СЋС‡РёС‚СЊ РєРѕС€РµР»РµРє",
+        connected: "РџРѕРґРєР»СЋС‡РµРЅРѕ",
+        details: "Р”РµС‚Р°Р»Рё",
+        owner: "Р’Р»Р°РґРµР»РµС†",
+        address: "РђРґСЂРµСЃ",
+        auto_relist: "РђРІС‚Рѕ-РїРµСЂРµРІС‹СЃС‚Р°РІР»РµРЅРёРµ",
+        auto_relist_desc: "Р­С‚РѕС‚ NFT Р±СѓРґРµС‚ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё РґРѕСЃС‚СѓРїРµРЅ РґР»СЏ Р°СЂРµРЅРґС‹ РїРѕСЃР»Рµ РѕРєРѕРЅС‡Р°РЅРёСЏ СЃСЂРѕРєР°.",
+        rent_button: "РђСЂРµРЅРґРѕРІР°С‚СЊ Р·Р° {amount}",
+        rent_for: "РђСЂРµРЅРґРѕРІР°С‚СЊ Р·Р°",
+        loading: "Р—Р°РіСЂСѓР·РєР°...",
+        filters: "Р¤РёР»СЊС‚СЂС‹",
+        gift_number: "РќРѕРјРµСЂ РїРѕРґР°СЂРєР°",
+        sort_by: "РЎРѕСЂС‚РёСЂРѕРІРєР°",
+        price: "Р¦РµРЅР°",
+        from: "РћС‚",
+        to: "Р”Рѕ",
+        clear_all: "РћС‡РёСЃС‚РёС‚СЊ РІСЃРµ",
+        show_results: "РџРѕРєР°Р·Р°С‚СЊ СЂРµР·СѓР»СЊС‚Р°С‚С‹",
+        search_hint: "РџРѕРёСЃРє...",
+        history_empty: "РСЃС‚РѕСЂРёСЏ РїСѓСЃС‚Р°",
+        invalid_tc_link: "РџРѕР¶Р°Р»СѓР№СЃС‚Р°, РІСЃС‚Р°РІСЊС‚Рµ РєРѕСЂСЂРµРєС‚РЅСѓСЋ СЃСЃС‹Р»РєСѓ tc:// СЃ Fragment",
+        status_pending: "РћР¶РёРґР°РµС‚ РѕРїР»Р°С‚Сѓ",
+        status_rented: "РћР¶РёРґР°РµС‚ СЃСЃС‹Р»РєСѓ",
+        just_now: "РўРѕР»СЊРєРѕ С‡С‚Рѕ",
+        hours_ago: "С‡. РЅР°Р·Р°Рґ",
+        what_is_this_long: "Р’С‹ РѕС‚РїСЂР°РІР»СЏРµС‚Рµ РЅРµР±РѕР»СЊС€СѓСЋ СЃСѓРјРјСѓ TON РґР»СЏ РїРѕРєСЂС‹С‚РёСЏ РєРѕРјРёСЃСЃРёРё СЃРµС‚Рё Рё СЂР°Р±РѕС‚С‹ СЃРµСЂРІРёСЃР°. РћСЃС‚Р°С‚РѕРє Р±СѓРґРµС‚ РІРѕР·РІСЂР°С‰РµРЅ РІР°Рј Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё.",
+        all: "Р’СЃРµ",
+        select_all: "Р’С‹Р±СЂР°С‚СЊ РІСЃРµ",
+        select_collection_first: "Р’С‹Р±РµСЂРёС‚Рµ NFT РєРѕР»Р»РµРєС†РёСЋ, С‡С‚РѕР±С‹ СѓРІРёРґРµС‚СЊ СЃРїРёСЃРѕРє РјРѕРґРµР»РµР№.",
+        search_filter_hint: "РџРѕРёСЃРє {label}...",
+        search_filter_global: " (Р’СЃРµ NFT)",
+        sort_price_asc: "Р¦РµРЅР° (РџРѕ РІРѕР·СЂР°СЃС‚Р°РЅРёСЋ)",
+        sort_price_desc: "Р¦РµРЅР° (РџРѕ СѓР±С‹РІР°РЅРёСЋ)",
+        sort_num_asc: "РќРѕРјРµСЂ (РџРѕ РІРѕР·СЂР°СЃС‚Р°РЅРёСЋ)",
+        sort_num_desc: "РќРѕРјРµСЂ (РџРѕ СѓР±С‹РІР°РЅРёСЋ)",
+        sort_model_rare: "Р РµРґРєРѕСЃС‚СЊ РјРѕРґРµР»Рё",
+        sort_bg_rare: "Р РµРґРєРѕСЃС‚СЊ С„РѕРЅР°",
+        sort_symbol_rare: "Р РµРґРєРѕСЃС‚СЊ СЃРёРјРІРѕР»Р°",
+        error_insufficient_funds: "РќРµРґРѕСЃС‚Р°С‚РѕС‡РЅРѕ СЃСЂРµРґСЃС‚РІ РЅР° РєРѕС€РµР»СЊРєРµ РґР»СЏ СЃРѕРІРµСЂС€РµРЅРёСЏ С‚СЂР°РЅР·Р°РєС†РёРё."
+    },
+    en: {
+        gifts: "Gifts",
+        usernames: "Usernames",
+        numbers: "Numbers",
+        profile: "Profile",
+        search: "Search",
+        no_items: "Nothing found",
+        reset_filters: "Try resetting filters",
+        price_per_day: "Price per day",
+        period: "Period (Days)",
+        discount: "Discount",
+        days: "Days",
+        rent: "Rent",
+        rent_days: "Rent for {min}вЂ“{max} days",
+        per_day: "Per day",
+        min_price: "Min. price",
+        you_will_send: "You will additionally send {amount} TON to process the transaction. Remain TON will be returned to you.",
+        processing: "Connecting...",
+        success_tc: "Success! Now go back to Fragment and click Display in Telegram.",
+        tc_link_placeholder: "Paste tc:// link from Fragment",
+        rarity: "Rarity",
+        model: "Model",
+        symbol: "Symbol",
+        backdrop: "Backdrop",
+        copy_success: "Copied",
+        lang_ru: "Russian",
+        lang_en: "English",
+        what_is_this: "What does this mean?",
+        settings_support: "Settings & Support",
+        rental_history: "Rental History",
+        support_faq: "Support & FAQ",
+        wallet_mgmt: "Wallet Management",
+        connect_wallet: "Connect Wallet",
+        connected: "Connected",
+        details: "Details",
+        owner: "Owner",
+        address: "Address",
+        auto_relist: "Auto re-list",
+        auto_relist_desc: "This NFT will be available for rent automatically after the period ends.",
+        rent_button: "Rent for {amount}",
+        loading: "Loading...",
+        filters: "Filters",
+        gift_number: "Gift Number",
+        sort_by: "Sort by",
+        price: "Price",
+        from: "From",
+        to: "To",
+        clear_all: "Clear All",
+        show_results: "Show Results",
+        search_hint: "Search...",
+        history_empty: "History is empty",
+        invalid_tc_link: "Please paste a valid tc:// link from Fragment",
+        status_pending: "Pending payment",
+        status_rented: "Awaiting link",
+        just_now: "Just now",
+        hours_ago: "h ago",
+        what_is_this_long: "You are sending a small amount of TON to cover network fees and service operations. The remainder will be returned to you automatically.",
+        all: "All",
+        select_all: "Select all",
+        select_collection_first: "Select an NFT collection first to see models.",
+        search_filter_hint: "Search {label}...",
+        search_filter_global: " (All NFTs)",
+        sort_price_asc: "Price (Low to High)",
+        sort_price_desc: "Price (High to Low)",
+        sort_num_asc: "Number (Low to High)",
+        sort_num_desc: "Number (High to Low)",
+        sort_model_rare: "Model Rarity",
+        sort_bg_rare: "Backdrop Rarity",
+        sort_symbol_rare: "Symbol Rarity",
+        error_insufficient_funds: "Not enough funds in your wallet to complete the transaction."
+    }
+};
+
+let CURRENT_LANG = localStorage.getItem('lang') || 'ru';
+function t(key, data = {}) {
+    let text = TRANSLATIONS[CURRENT_LANG][key] || key;
+    for (const [k, v] of Object.entries(data)) {
+        text = text.replace(`{${k}}`, v);
+    }
+    return text;
+}
+const copyToClipboard = (text) => {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+            }
+        }).catch(err => console.error('Copy failed', err));
+    }
+};
+const renderTonAmount = (val) => `<span class="icon-before icon-ton tm-amount">${val}</span>`;
+const renderTonAmountNoIcon = (val) => `<span class="tm-amount icon-ton" style="font-size:inherit;">${val}</span>`;
+
+function truncateMiddle(str, maxLength = 9) {
+    if (!str || str.length <= maxLength) return str;
+    const charsToShow = maxLength - 3;
+    const frontChars = Math.ceil(charsToShow / 2);
+    const backChars = Math.floor(charsToShow / 2);
+    return str.substr(0, frontChars) + '...' + str.substr(str.length - backChars);
+}
+
+let ATTR_STATS = { model: {}, bg: {}, symbol: {} };
+let CURRENT_PAYMENT_ITEM = null;
+
+// NEW: Visual mapping for premium look
+const VISUAL_MAP = {
+    bg: {
+        'Amber': '#FFBF00', 'Red': '#FF3B30', 'Blue': '#007AFF', 'Green': '#34C759',
+        'Gold': '#FFD700', 'Black': '#1a1a1a', 'White': '#FFFFFF', 'Purple': '#AF52DE',
+        'Pink': '#FF2D55', 'Indigo': '#5856D6', 'Orange': '#FF9500', 'Cyan': '#32ADE6',
+        'Aquamarine': '#7FFFD4', 'Azure Blue': '#007FFF', 'Battleship Grey': '#848482',
+        'Berry': '#990f4b', 'Black Hole': '#0f0f0f', 'Blood Orange': '#CC1100',
+        'Brown': '#964B00', 'Bubblegum': '#FFC1CC', 'Burgundy': '#800020',
+        'Candy Apple': '#FF0800', 'Charcoal': '#36454F', 'Chartreuse': '#7FFF00',
+        'Cherry': '#DE3163', 'Chestnut': '#954535', 'Chocolate': '#7B3F00',
+        'Cobalt': '#0047AB', 'Coral': '#FF7F50', 'Cream': '#FFFDD0',
+        'Crimson': '#DC143C', 'Dark Blue': '#00008B', 'Dark Green': '#013220',
+        'Deep Blue': '#00008B', 'Emerald': '#50C878', 'Forest': '#228B22',
+        'Fuchsia': '#FF00FF', 'Grey': '#808080', 'Hot Pink': '#FF69B4',
+        'Khaki': '#C3B091', 'Lavender': '#E6E6FA', 'Lemon': '#FFF700',
+        'Light Blue': '#ADD8E6', 'Light Green': '#90EE90', 'Lilac': '#C8A2C8',
+        'Lime': '#BFFF00', 'Magenta': '#FF00FF', 'Maroon': '#800000',
+        'Midnight': '#191970', 'Mint': '#3EB489', 'Navy': '#000080',
+        'Neon Blue': '#4D4DFF', 'Neon Green': '#39FF14', 'Olive': '#808000',
+        'Peach': '#FFE5B4', 'Pearl': '#EAE0C8', 'Periwinkle': '#CCCCFF',
+        'Pine': '#01796F', 'Plum': '#8E4585', 'Rose': '#FF007F',
+        'Ruby': '#E0115F', 'Rust': '#B7410E', 'Salmon': '#FA8072',
+        'Sapphire': '#0F52BA', 'Scarlet': '#FF2400', 'Seafoam': '#9FE2BF',
+        'Silver': '#C0C0C0', 'Sky Blue': '#87CEEB', 'Slate': '#708090',
+        'Smoke': '#738276', 'Steel': '#4682B4', 'Tan': '#D2B48C',
+        'Teal': '#008080', 'Turquoise': '#40E0D0', 'Violet': '#8F00FF',
+        'Yellow': '#FFFF00', 'Burnt Sienna': '#E97451', 'Camo Green': '#78866B',
+        'Cappuccino': '#856D4D', 'Caramel': '#FFD59A', 'Carmine': '#960018',
+        'Carrot Juice': '#F8931F', 'Celtic Blue': '#246BCE', 'Cobalt Blue': '#0047AB',
+        'Copper': '#B87333', 'Coral Red': '#FF4040', 'Cyberpunk': '#F400A1',
+        'Dark Lilac': '#9955BB', 'Deep Cyan': '#008B8B', 'Desert Sand': '#EDC9AF',
+        'Electric Indigo': '#6F00FF', 'Electric Purple': '#BF00FF',
+        'English Violet': '#563C5C', 'Fandango': '#B53389', 'Feldgrau': '#4D5D53',
+        'Fire Engine': '#CE2029', 'French Blue': '#0072BB', 'French Violet': '#8806CE',
+        'Grape': '#6F2DA8', 'Gunmetal': '#2A3439', 'Gunship Green': '#3C4039',
+        'Hunter Green': '#355E3B', 'Indigo Dye': '#091F92', 'Ivory White': '#FFFFF0',
+        'Jade Green': '#00A86B', 'Khaki Green': '#8A865D', 'Lemongrass': '#E1EDC9',
+        'Light Olive': '#B8B35A', 'Malachite': '#0BDA51', 'Marine Blue': '#042E4C',
+        'Mexican Pink': '#E4007C', 'Midnight Blue': '#191970', 'Mint Green': '#98FF98',
+        'Moonstone': '#3AA8C1', 'Mustard': '#FFDB58', 'Mystic Pearl': '#D6CFC7',
+        'Navy Blue': '#000080', 'Old Gold': '#CFB53B', 'Onyx Black': '#353839',
+        'Pacific Cyan': '#00BDBB', 'Pacific Green': '#009774', 'Persimmon': '#EC5800',
+        'Pine Green': '#01796F', 'Pistachio': '#93C572', 'Platinum': '#E5E4E2',
+        'Pure Gold': '#F6C700', 'Ranger Green': '#334D41', 'Raspberry': '#E30B5D',
+        'Rifle Green': '#444C38', 'Roman Silver': '#838996', 'Rosewood': '#65000B',
+        'Seal Brown': '#321414', 'Shamrock Green': '#009E60', 'Silver Blue': '#8C9BB0',
+        'Steel Grey': '#71797E', 'Strawberry': '#FC5A8D', 'Tactical Pine': '#2E4C3D',
+        'Tomato': '#FF6347'
+    },
+    symbol: {
+        'Candle': 'https://raw.githubusercontent.com/ton-blockchain/token-logos/main/nft/gift/candle.svg',
+        'Heart': 'https://raw.githubusercontent.com/ton-blockchain/token-logos/main/nft/gift/heart.svg',
+        'Star': 'https://raw.githubusercontent.com/ton-blockchain/token-logos/main/nft/gift/star.svg'
+    }
+};
+
+const TG_ASSETS_URL = "https://telegifter.ru/wp-content/themes/gifts/assets/img/gifts";
+
+const TG_SLUGS = ["berrybox", "artisanbrick", "prettyposy", "alphadogs", "voodoodoll", "ducks", "frog", "moneypot", "sparkler", "watch", "flower", "heart", "egg", "pear", "cocktail", "cactus", "jellyfish", "turtle", "gem", "gift", "box", "pot", "shard", "b-daycandle", "happybrownie", "astralshard", "kissedfrog", "plushpepe"];
+
+const SLUG_MAPPING = {
+    'artisanbricks': 'artisanbrick',
+    'berryboxes': 'berrybox',
+    'happybday': 'b-daycandle',
+    'bdaycandle': 'b-daycandle',
+    'thebackyard': 'alphadogs',
+    'prettyposies': 'prettyposy',
+    'astralshards': 'astralshard',
+    'poop': 'happybrownie',
+    'happybrownie': 'happybrownie',
+    'kissedfrog': 'kissedfrog',
+    'plushpepe': 'plushpepe',
+    'ducks': 'ducks'
+};
+
+function getTelegifterUrl(type, name, collection, slugIndex = 0) {
+    if (!name || name === 'Unknown' || name === 'Default' || name === 'Gift' || name === 'Gift #?') return null;
+    const cleanName = encodeURIComponent(name);
+
+    if (type === 'symbol') {
+        return `${TG_ASSETS_URL}/symbol/${cleanName}.webp`;
+    }
+
+    if (type === 'model') {
+        // Use local caching endpoint (handled by live_server.py + model_cache.py)
+        return `/models/${cleanName}.webp`;
+    }
+    return null;
+}
+
+let ACTIVE_FILTERS = {
+    nft: 'all',
+    model: 'all',
+    bg: 'all',
+    symbol: 'all',
+    tags: 'all',
+    sort: 'id_desc',
+    price_from: null,
+    price_to: null,
+    gift_number: null,
+    search: ""
+};
+
+// --- Language logic ---
+function switchLanguage(lang) {
+    CURRENT_LANG = lang;
+    localStorage.setItem('lang', lang);
+    location.reload();
+}
+
+function updateUILanguage() {
+    const map = {
+        'search-input': t('search'),
+        'nav-label-gifts': t('gifts'),
+        'nav-label-usernames': t('usernames'),
+        'nav-label-numbers': t('numbers'),
+        'nav-label-profile': t('profile'),
+        'view-label-wallet-mgmt': t('wallet_mgmt'),
+        'view-label-settings-support': t('settings_support'),
+        'view-label-history': t('rental_history'),
+        'view-label-support': t('support_faq'),
+        'view-label-lang': t('language_selector'),
+        'blue-wallet-text': t('connect_wallet'),
+        'header-wallet-connect-text': t('connect_wallet'),
+        'mrkt-label-filters': t('filters'),
+        'mrkt-label-gift-number': t('gift_number'),
+        'mrkt-label-sort': t('sort_by'),
+        'mrkt-label-price': t('price'),
+        'mrkt-btn-reset': t('clear_all'),
+        'mrkt-btn-apply': t('show_results'),
+        'fee-notice-text': t('what_is_this_long'),
+        'fee-what-mean': t('what_is_this'),
+        'details-tab': t('details'),
+        'listing-what-mean': t('what_is_this'),
+        'view-owner-label': t('owner'),
+        'view-address-label': t('address'),
+        'view-storage-label': "Storage",
+        'filter-gift-number': t('gift_number'),
+        'filter-price-from': t('from'),
+        'filter-price-to': t('to'),
+        'filter-search-nft': t('search_hint'),
+        'filter-search-model': t('search_hint'),
+        'filter-search-bg': t('search_hint'),
+        'filter-search-symbol': t('search_hint')
+    };
+    for (const [id, val] of Object.entries(map)) {
+        const el = document.getElementById(id);
+        if (el) {
+            if (el.tagName === 'INPUT') el.placeholder = val;
+            else el.innerText = val;
+        }
+    }
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+    try {
+        if (window.Telegram && window.Telegram.WebApp) {
+            tg = window.Telegram.WebApp;
+            tg.expand();
+            tg.MainButton.hide();
+        }
+        updateUILanguage();
+
+        // вЏі Failsafe: Hide loader after 5s no matter what
+        setTimeout(() => {
+            const screen = document.getElementById('loading-screen');
+            if (screen && screen.style.display !== 'none') {
+                console.warn("Failsafe: Hiding loader after 5s timeout");
+                screen.style.opacity = '0';
+                setTimeout(() => screen.style.display = 'none', 500);
+            }
+        }, 5000);
+
+        initTonConnect();
+        loadProfileData(); // Call after initTonConnect
+        loadFilterData();
+        await loadLiveItems(true);
+
+        document.getElementById('search-input').addEventListener('input', debounce((e) => {
+            ACTIVE_FILTERS.search = e.target.value.toLowerCase();
+            applyHeaderSearch();
+        }, 500));
+
+        // Block Zoom BUT allow scrolling
+        document.addEventListener('touchstart', (e) => {
+            if (e.touches.length > 1) e.preventDefault();
+        }, { passive: false });
+
+        // Prevent double tap zoom
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', (e) => {
+            const now = Date.now();
+            if (now - lastTouchEnd <= 300) {
+                // Check if target is scrollable or input
+                if (!e.target.closest('.chips-row') && !e.target.closest('input')) {
+                    // e.preventDefault(); // Removed to avoid blocking clicks
+                }
+            }
+            lastTouchEnd = now;
+        }, false);
+
+        window.addEventListener('wheel', (e) => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
+        window.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && (e.key === '=' || e.key === '-' || e.key === '+' || e.key === '0')) e.preventDefault();
+        });
+
+        // Tab Navigation
+        document.querySelectorAll('.nav-item').forEach((item, index) => {
+            item.onclick = () => {
+                document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+                item.classList.add('active');
+                switchTab(index);
+            };
+        });
+
+    } catch (e) { alert("Init Error: " + e.message); }
+});
+
+function switchTab(index) {
+    // Indices: 0 = Gifts, 1 = Usernames, 2 = Numbers, 3 = Profile
+    const navItems = document.querySelectorAll('.nav-item');
+
+    // Reset filters and search when switching types
+    if (index < 3) {
+        let newType = 'gift';
+        if (index === 1) newType = 'username';
+        if (index === 2) newType = 'number';
+
+        if (CURRENT_TYPE !== newType) {
+            CURRENT_TYPE = newType;
+            // Hide filter row for usernames/numbers
+            const chipsRow = document.querySelector('.chips-row');
+            if (chipsRow) chipsRow.style.display = (CURRENT_TYPE === 'gift' ? 'flex' : 'none');
+
+            // Clear items and reload
+            loadLiveItems(true);
+            window.scrollTo({ top: 0, behavior: 'instant' });
+        }
+
+        document.getElementById('market-container').style.display = 'block';
+        document.getElementById('profile-container').style.display = 'none';
+
+        // Header title change
+        const headerTitle = document.querySelector('.header h1') || document.querySelector('.logo-text');
+        if (headerTitle) {
+            if (index === 0) headerTitle.innerText = t('gifts');
+            if (index === 1) headerTitle.innerText = t('usernames');
+            if (index === 2) headerTitle.innerText = t('numbers');
+        }
+    } else {
+        document.getElementById('market-container').style.display = 'none';
+        document.getElementById('profile-container').style.display = 'block';
+    }
+
+    navItems.forEach((nav, i) => {
+        nav.classList.toggle('active', i === index);
+    });
+
+    // Profile logic
+    if (index === 3) { // Changed from 1 to 3 for profile tab
+        loadProfileData();
+    }
+}
+
+// Obsolete loadUserOrders removed as tab is gone.
+function loadUserOrders() {
+    // No-op 
+}
+
+// --- Modal Logic ---
+
+
+// --- Help Modal Logic ---
+function showHelp(amount) {
+    const title = document.getElementById('help-title');
+    const body = document.getElementById('help-body');
+
+    title.innerText = t('what_is_this');
+    body.innerHTML = `
+        <div style="font-weight:700; color:#fff; margin-bottom:10px;">${t('you_will_send', { amount: amount })}</div>
+    `;
+
+    document.getElementById('help-modal-overlay').classList.add('active');
+    document.getElementById('help-modal').classList.add('active');
+}
+
+function closeHelpModal() {
+    document.getElementById('help-modal-overlay').classList.remove('active');
+    document.getElementById('help-modal').classList.remove('active');
+}
+
+function closeTcModal() {
+    document.getElementById('tc-modal-overlay').classList.remove('active');
+    document.getElementById('tc-modal').classList.remove('active');
+}
+async function submitTcLink() {
+    const orderId = document.getElementById('tc-current-order-id').value;
+    const link = document.getElementById('tc-link-input').value.trim();
+    const btn = document.querySelector('#tc-modal .btn-yellow');
+    const originalText = btn.innerText;
+
+    if (!link.startsWith('tc://')) {
+        tg.showAlert(t('invalid_tc_link'));
+        return;
+    }
+
+    btn.innerText = t('processing');
+    btn.disabled = true;
+
+    console.log("SubmitTC: OrderID=" + orderId + ", Link=" + link);
+    if (!orderId) {
+        alert("РћС€РёР±РєР°: ID Р·Р°РєР°Р·Р° РЅРµ РЅР°Р№РґРµРЅ. РџРµСЂРµР·Р°РіСЂСѓР·РёС‚Рµ СЃС‚СЂР°РЅРёС†Сѓ.");
+        btn.innerText = originalText;
+        btn.disabled = false;
+        return;
+    }
+
+    try {
+        const url = `${BACKEND_URL}/api/submit_tc_link`;
+        console.log("Fetching: " + url);
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order_id: parseInt(orderId), tc_link: link })
+        });
+
+        console.log("Response status: " + res.status);
+        const data = await res.json();
+        console.log("Response data:", data);
+
+        if (data.status === 'ok') {
+            if (window.Telegram && window.Telegram.WebApp) {
+                tg.showAlert("РЈСЃРїРµС€РЅРѕ! РўРµРїРµСЂСЊ РІРµСЂРЅРёС‚РµСЃСЊ РЅР° Fragment Рё РЅР°Р¶РјРёС‚Рµ Display in Telegram.");
+            } else {
+                alert("РЈСЃРїРµС€РЅРѕ! РўРµРїРµСЂСЊ РІРµСЂРЅРёС‚РµСЃСЊ РЅР° Fragment Рё РЅР°Р¶РјРёС‚Рµ Display in Telegram.");
+            }
+            document.getElementById('tc-link-input').value = "";
+            closeTcModal();
+            loadHistoryContent();
+        } else {
+            throw new Error(data.error || "РћС€РёР±РєР° СЃРµСЂРІРµСЂР°");
+        }
+    } catch (e) {
+        console.error("SubmitTC Error:", e);
+        if (window.Telegram && window.Telegram.WebApp) {
+            tg.showAlert("РћС€РёР±РєР°: " + e.message);
+        } else {
+            alert("РћС€РёР±РєР°: " + e.message);
+        }
+    } finally {
+        btn.innerText = originalText;
+        btn.disabled = false;
+    }
+}
+
+async function loadLiveItems(reset = true) {
+    if (IS_LOADING) return;
+    if (!HAS_MORE && !reset) return;
+
+    const hideLoading = () => {
+        const screen = document.getElementById('loading-screen');
+        if (screen) {
+            screen.style.opacity = '0';
+            setTimeout(() => screen.style.display = 'none', 500);
+        }
+    };
+
+    const topLoader = document.getElementById('top-loader');
+    const scrollLoader = document.getElementById('scroll-loader');
+
+    if (reset) {
+        GLOBAL_OFFSET = 0;
+        HAS_MORE = true;
+        document.getElementById('items-view').innerHTML = '';
+        if (topLoader) topLoader.style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'instant' });
+    } else {
+        if (scrollLoader) scrollLoader.style.display = 'block';
+    }
+
+    IS_LOADING = true;
+
+    try {
+        const params = new URLSearchParams({
+            limit: BATCH_SIZE,
+            offset: GLOBAL_OFFSET,
+            type: CURRENT_TYPE,
+            nft: ACTIVE_FILTERS.nft,
+            model: ACTIVE_FILTERS.model,
+            bg: ACTIVE_FILTERS.bg,
+            symbol: ACTIVE_FILTERS.symbol,
+            sort: ACTIVE_FILTERS.sort,
+            search: ACTIVE_FILTERS.search,
+            price_from: ACTIVE_FILTERS.price_from || "",
+            price_to: ACTIVE_FILTERS.price_to || "",
+            gift_number: ACTIVE_FILTERS.gift_number || "",
+            t: Date.now()
+        });
+
+        let response;
+        let retries = 3;
+        while (retries > 0) {
+            try {
+                response = await fetch(`${BACKEND_URL}/api/items?${params.toString()}`);
+                if (response.ok) break;
+            } catch (err) {
+                console.error(`Fetch attempt failed (${retries} retries left):`, err);
+            }
+            retries--;
+            if (retries > 0) await new Promise(r => setTimeout(r, 1000));
+        }
+
+        if (!response || !response.ok) {
+            throw new Error(`Server status: ${response ? response.status : 'Network Error'}`);
+        }
+
+        const data = await response.json();
+
+        if (data && data.items) {
+            const items = data.items;
+            if (items.length < BATCH_SIZE) HAS_MORE = false;
+            GLOBAL_OFFSET += items.length;
+
+            const processed = items.map(item => {
+                const match = item.nft_name.match(/#(\d+)/);
+                item._nftNum = match ? parseInt(match[1]) : 0;
+                item._realImage = item.image || item.image_url;
+                return item;
+            });
+
+            if (reset && items.length === 0) {
+                document.getElementById('items-view').innerHTML = `
+                    <div class="error-msg" style="padding-top: 100px; text-align:center;">
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: #333; margin-bottom: 20px;">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="8" y1="12" x2="16" y2="12"></line>
+                        </svg>
+                        <div style="font-size: 18px; font-weight: 700; color: #fff;">${t('no_items')}</div>
+                        <div style="color: #8b9bb4; margin-top: 8px;">${t('reset_filters')}</div>
+                    </div>`;
+            } else {
+                renderItemsBatch(processed);
+            }
+
+            if (reset) initFilterLists();
+        }
+
+        if (document.getElementById('top-loader')) document.getElementById('top-loader').style.display = 'none';
+        if (document.getElementById('scroll-loader')) document.getElementById('scroll-loader').style.display = 'none';
+        hideLoading();
+    } catch (e) {
+        console.error("Load Error details:", e);
+        if (reset && document.getElementById('top-loader')) document.getElementById('top-loader').innerText = "РћС€РёР±РєР° СЃРѕРµРґРёРЅРµРЅРёСЏ СЃ СЃРµСЂРІРµСЂРѕРј. РџРѕРєР°Р·С‹РІР°РµРј РґРµРјРѕ-РґР°РЅРЅС‹Рµ.";
+
+        // --- рџ§Є DEV/DEMO FALLBACK: Inject mock data if backend is dead ---
+        if (reset) {
+            console.log("Backend unreachable. Injecting demo cards for UI testing.");
+            const demoItems = [
+                {
+                    id: 9993, type: 'gift', nft_name: 'Premium Gift #001',
+                    price_per_day: '5.00', min_duration: 86400, max_duration: 86400,
+                    image: 'https://nft.fragment.com/gift/voodoodoll-1.webp',
+                    _realImage: 'https://nft.fragment.com/gift/voodoodoll-1.webp',
+                    _collection: { name: 'Gifts' }
+                },
+                {
+                    id: 9991, type: 'gift', nft_name: 'Mighty Arm #2006',
+                    price_per_day: '1.25', min_duration: 86400, max_duration: 86400,
+                    image: 'https://nft.fragment.com/gift/mightyarm-2006.webp',
+                    _realImage: 'https://nft.fragment.com/gift/mightyarm-2006.webp',
+                    _collection: { name: 'Gifts' }
+                },
+                {
+                    id: 9992, type: 'gift', nft_name: 'Plush Pepe #302',
+                    price_per_day: '0.50', min_duration: 86400, max_duration: 604800,
+                    image: 'https://nft.fragment.com/gift/plushpepe-302.webp',
+                    _realImage: 'https://nft.fragment.com/gift/plushpepe-302.webp',
+                    _collection: { name: 'Gifts' }
+                }
+            ];
+            renderItemsBatch(demoItems);
+        }
+
+        if (document.getElementById('top-loader')) document.getElementById('top-loader').style.display = 'none';
+        if (document.getElementById('scroll-loader')) document.getElementById('scroll-loader').style.display = 'none';
+
+        hideLoading();
+    } finally {
+        IS_LOADING = false;
+    }
+}
+
+
+
+function selectNftChip(addr, btn) {
+    ACTIVE_FILTERS.nft = addr;
+    document.querySelectorAll('.chip-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    loadLiveItems(true); // Trigger server-side refresh
+}
+
+async function loadFilterData() {
+    try {
+        const res = await fetch(`${BACKEND_URL}/api/filters`);
+        const data = await res.json();
+        if (data) {
+            window.STATIC_COLLECTIONS = data.collections; // now they have {name, image}
+            ATTR_STATS = {
+                model: data.models, // {name, image}
+                bg: data.backdrops,
+                symbol: data.symbols
+            };
+            initFilterLists();
+        }
+    } catch (e) {
+        console.error("Filter Load Error:", e);
+    }
+}
+
+function initTonConnect() {
+    tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+        manifestUrl: MANIFEST_URL,
+        uiOptions: {
+            twaReturnUrl: 'https://t.me/ArendaLend_bot/app',
+            modalZIndex: 10000,
+            uiPreferences: {
+                theme: 'dark'
+            }
+        }
+    });
+
+    // Register listener immediately after initialization
+    tonConnectUI.onStatusChange(wallet => {
+        console.log('Wallet status changed:', wallet);
+        updateWalletBtnState();
+    });
+
+    // Initial check to update button text if already connected
+    updateWalletBtnState();
+}
+
+// --- Accordions logic ---
+function toggleAccordion(id, btn) {
+    const content = document.getElementById(id);
+    const isActive = content.classList.contains('active');
+
+    // Close others
+    document.querySelectorAll('.accordion-content').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.filter-accordion').forEach(b => b.classList.remove('active'));
+
+    if (!isActive) {
+        content.classList.add('active');
+        btn.classList.add('active');
+    }
+}
+
+function filterList(key) {
+    initFilterLists();
+}
+
+function toggleGenericModal(key) {
+    openAdvancedFilters();
+    const accMap = {
+        'nft': 'nft-acc',
+        'model': 'model-acc',
+        'bg': 'bg-acc',
+        'symbol': 'symbol-acc'
+    };
+
+    // Ensure data is loaded
+    if (!window.STATIC_COLLECTIONS || window.STATIC_COLLECTIONS.length === 0) {
+        loadFilterData();
+    }
+
+    const targetId = accMap[key];
+    if (targetId) {
+        const btn = document.querySelector(`.filter-accordion[onclick*="${targetId}"]`);
+        toggleAccordion(targetId, btn);
+    }
+}
+
+function initFilterLists() {
+    const sortCont = document.getElementById('sort-list-container');
+    const sorts = [
+        { id: 'price_asc', n: t('sort_price_asc') },
+        { id: 'price_desc', n: t('sort_price_desc') },
+        { id: 'num_asc', n: t('sort_num_asc') },
+        { id: 'num_desc', n: t('sort_num_desc') },
+        { id: 'model_rare', n: t('sort_model_rare') },
+        { id: 'bg_rare', n: t('sort_bg_rare') },
+        { id: 'symbol_rare', n: t('sort_symbol_rare') }
+    ];
+    sortCont.innerHTML = '';
+    sorts.forEach(s => addFilterItem(sortCont, s.n, s.id, 'sort', ACTIVE_FILTERS.sort === s.id));
+
+    const nftCont = document.getElementById('nft-list-container');
+    const nftSearch = document.getElementById('filter-search-nft').value.toLowerCase();
+    nftCont.innerHTML = '';
+
+    if (!nftSearch || t('all').toLowerCase().includes(nftSearch)) {
+        addFilterItem(nftCont, t('all'), "all", 'nft', ACTIVE_FILTERS.nft === 'all');
+    }
+
+    (window.STATIC_COLLECTIONS || []).forEach(col => {
+        if (col.name.toLowerCase().includes(nftSearch)) {
+            addFilterItem(nftCont, col.name, col.name, 'nft', ACTIVE_FILTERS.nft === col.name, col.image);
+        }
+    });
+
+    const maps = [
+        { id: 'model-list-container', key: 'model', search: 'filter-search-model', label: t('model').toLowerCase() },
+        { id: 'bg-list-container', key: 'bg', search: 'filter-search-bg', label: t('backdrop').toLowerCase() },
+        { id: 'symbol-list-container', key: 'symbol', search: 'filter-search-symbol', label: t('symbol').toLowerCase() }
+    ];
+
+    const selectedNFT = ACTIVE_FILTERS.nft;
+
+    maps.forEach(m => {
+        const cont = document.getElementById(m.id);
+        const sInput = document.getElementById(m.search);
+        if (!cont || !sInput) return;
+        const sVal = sInput.value.toLowerCase();
+        cont.innerHTML = '';
+
+        if (selectedNFT === 'all') {
+            // MODELS: Require NFT selection first
+            if (m.key === 'model') {
+                cont.innerHTML = `<div style="padding:20px; color:#8b9bb4; text-align:center; font-size:13px; background:rgba(255,255,255,0.03); border-radius:12px; margin-top:10px;">${t('select_collection_first')}</div>`;
+                sInput.disabled = true;
+                return;
+            }
+
+            // BG & SYMBOLS: Global selection allowed
+            const allItemsMap = {};
+            // Iterate OVER COLLECTIONS to preserve context
+            Object.entries(ATTR_STATS[m.key] || {}).forEach(([colName, list]) => {
+                if (!Array.isArray(list)) return; // Safety check
+                list.forEach(item => {
+                    // Store image AND collection for URL generation
+                    if (!allItemsMap[item.name]) {
+                        allItemsMap[item.name] = { image: item.image, collection: colName };
+                    }
+                    else if (isBadUrl(allItemsMap[item.name].image) && !isBadUrl(item.image)) {
+                        allItemsMap[item.name].image = item.image;
+                        allItemsMap[item.name].collection = colName;
+                    }
+                });
+            });
+            const allItems = Object.entries(allItemsMap)
+                .map(([n, data]) => ({ name: n, image: data.image, collection: data.collection }))
+                .sort((a, b) => a.name.localeCompare(b.name));
+
+            sInput.disabled = false;
+            sInput.placeholder = t('search_filter_hint', { label: m.label }) + t('search_filter_global');
+
+            if (!sVal || t('select_all').toLowerCase().includes(sVal)) {
+                addFilterItem(cont, t('select_all'), "all", m.key, ACTIVE_FILTERS[m.key] === 'all');
+            }
+
+            allItems.forEach(item => {
+                if (item.name.toLowerCase().includes(sVal)) {
+                    // Try to get clean visual first
+                    let visual = null;
+                    if (m.key === 'symbol') visual = getTelegifterUrl('symbol', item.name);
+                    else if (m.key === 'model') visual = getTelegifterUrl('model', item.name, item.collection);
+
+                    let icon = visual || item.image;
+                    if (!icon && (m.key === 'bg' || m.key === 'symbol')) icon = VISUAL_MAP[m.key][item.name] || null;
+                    // FIX: Pass item.collection as collectionContext
+                    addFilterItem(cont, item.name, item.name, m.key, ACTIVE_FILTERS[m.key] === item.name, icon, item.collection, item.image);
+                }
+            });
+            return;
+        }
+
+        sInput.disabled = false;
+        sInput.placeholder = t('search_filter_hint', { label: m.label });
+
+        if (!sVal || t('select_all').toLowerCase().includes(sVal)) {
+            addFilterItem(cont, t('select_all'), "all", m.key, ACTIVE_FILTERS[m.key] === 'all');
+        }
+
+        const items = (ATTR_STATS[m.key] && ATTR_STATS[m.key][selectedNFT]) || [];
+        items.forEach(item => {
+            if (item.name.toLowerCase().includes(sVal)) {
+                // Try clean visual
+                let visual = null;
+                if (m.key === 'symbol') visual = getTelegifterUrl('symbol', item.name);
+                else if (m.key === 'model') visual = getTelegifterUrl('model', item.name, selectedNFT);
+
+                let icon = visual || item.image;
+                if (!icon && (m.key === 'bg' || m.key === 'symbol')) icon = VISUAL_MAP[m.key][item.name] || null;
+                addFilterItem(cont, item.name, item.name, m.key, ACTIVE_FILTERS[m.key] === item.name, icon, selectedNFT, item.image);
+            }
+        });
+    });
+}
+
+function addFilterItem(container, name, value, key, isSelected, imgUrl, collectionContext, fallbackImgUrl) {
+    const div = document.createElement('div');
+    div.className = `filter-list-item ${isSelected ? 'selected' : ''}`;
+
+    const isAll = value === 'all';
+
+    let visualHTML = '';
+    if (isAll) {
+        visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: linear-gradient(135deg, #2a2a2a, #1a1a1a); border: 1px solid rgba(255,255,255,0.1); display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; overflow:hidden;">
+            <div style="font-size:10px; font-weight:900; color:#fff; letter-spacing:1px; z-index:2; font-family: 'Outfit', sans-serif;">Р’РЎР•</div>
+            <div style="width:16px; height:2px; background: #0088cc; margin-top:4px; border-radius:1px; z-index:2;"></div>
+            <div style="position:absolute; top:0; left:0; width:100%; height:100%; background: url('https://telegifter.ru/wp-content/themes/gifts/assets/img/bg-logo-mini.webp'); opacity:0.1; background-size: 20px;"></div>
+        </div>`;
+    } else if (key === 'symbol') {
+        const tgSymbol = getTelegifterUrl('symbol', name);
+        const iconSrc = tgSymbol || VISUAL_MAP.symbol[name];
+        visualHTML = `<img src="${iconSrc}" class="filter-img" style="filter: brightness(0) invert(1); width:28px; height:28px; object-fit:contain;" onerror="this.style.display='none'">`;
+    } else if (key === 'bg') {
+        const bgStyle = VISUAL_MAP.bg[name] || '#333';
+        visualHTML = `<div class="filter-color-circle" style="background: ${bgStyle}; position:relative; overflow:hidden; width:52px; height:52px; border-radius:12px;">
+            <div style="position:absolute; top:0; left:0; width:100%; height:100%; background: url('https://telegifter.ru/wp-content/themes/gifts/assets/img/bg-logo-mini.webp'); opacity:0.3; background-size: 20px;"></div>
+        </div>`;
+    } else if (imgUrl && !isBadUrl(imgUrl)) {
+        const fallback = (fallbackImgUrl && !isBadUrl(fallbackImgUrl)) ? fallbackImgUrl : 'https://nft.fragment.com/guide/gift.svg';
+
+        visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: rgba(255, 255, 255, 0.05); border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
+            <span style="color:#8b9bb4; font-size:11px; font-weight:700; position:absolute; z-index:1;">${name.substring(0, 3).toUpperCase()}</span>
+            <img src="${imgUrl}" class="filter-img" style="width:100%; height:100%; object-fit:contain; z-index:2; opacity:0; transition:opacity 0.2s;" 
+                onload="this.style.opacity='1';"
+                onerror="
+                    const name = '${name.replace(/'/g, "\\'")}';
+                    const col = '${(collectionContext || '').replace(/'/g, "\\'")}';
+                    this.dataset.slugIndex = this.dataset.slugIndex ? parseInt(this.dataset.slugIndex) + 1 : 1;
+                    const nextUrl = getTelegifterUrl('model', name, col, parseInt(this.dataset.slugIndex));
+                    if (nextUrl && parseInt(this.dataset.slugIndex) < 20) {
+                        this.src = nextUrl;
+                    } else if (this.src !== '${fallback}') {
+                        this.src = '${fallback}';
+                        this.style.opacity = '1';
+                    } else {
+                        this.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+                        this.style.display = 'none';
+                    }
+                ">
+        </div>`;
+    } else {
+        const labelText = name.substring(0, 3).toUpperCase();
+        visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: rgba(255, 255, 255, 0.05); border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
+            <span style="color:#8b9bb4; font-size:11px; font-weight:700; z-index:1;">${labelText}</span>
+        </div>`;
+    }
+
+    div.innerHTML = `
+        <div class="filter-item-left" style="overflow: hidden;">
+            ${visualHTML}
+            <div style="display:flex; flex-direction:column; margin-left:14px; overflow: hidden;">
+                <span class="filter-item-name">${name}</span>
+            </div>
+        </div>
+        <div class="checkbox-box" style="flex-shrink:0; width:22px; height:22px; border-radius:6px; border:2px solid ${isSelected ? '#0088cc' : '#333'}; display:flex; align-items:center; justify-content:center; margin-left:10px;">
+            ${isSelected ? '<div style="width:10px; height:10px; background:#0088cc; border-radius:2px;"></div>' : ''}
+        </div>
+    `;
+    div.onclick = (e) => {
+        e.stopPropagation();
+        ACTIVE_FILTERS[key] = value;
+
+        // Reset sub-filters if collection changed
+        if (key === 'nft') {
+            ACTIVE_FILTERS.model = 'all';
+            ACTIVE_FILTERS.bg = 'all';
+            ACTIVE_FILTERS.symbol = 'all';
+            // Also clear search inputs for sub-filters
+            ['model', 'bg', 'symbol'].forEach(k => {
+                const inp = document.getElementById(`filter-search-${k}`);
+                if (inp) inp.value = '';
+            });
+        }
+
+        initFilterLists();
+        applyHeaderSearch();
+    };
+    container.appendChild(div);
+}
+
+function applyHeaderSearch() {
+    loadLiveItems(true);
+}
+
+
+function createItemCard(item) {
+    const card = document.createElement('div');
+    // The design is now unified in CSS, so base 'card' is enough
+    card.className = "card";
+
+    const myPrice = parseFloat(item.price_per_day).toFixed(2);
+    const match = item.nft_name.match(/^(.*?)\s*(#\d+)$/);
+    const baseName = match ? match[1] : item.nft_name;
+    const numStr = match ? match[2] : "";
+
+    const minDays = Math.floor((item.min_duration || 86400) / 86400);
+    const maxDaysFinal = Math.floor((item.max_duration || 2592000) / 86400);
+
+    // Total min price for the grid
+    const minTotalPrice = (parseFloat(myPrice) * minDays).toFixed(2);
+
+    const telegramIcon = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/telegram_logo.svg";
+
+    const renderMediaHTML = (it, isModal = false) => {
+        const isNum = (it.type === 'number');
+        const isUser = (it.type === 'username');
+        const minD = Math.floor((it.min_duration || 86400) / 86400);
+        const maxD = Math.floor((it.max_duration || 2592000) / 86400);
+        const daysLabel = `${t('days')}: ${minD} вЂ“ ${maxD}`;
+
+        if (isNum || isUser) {
+            let inner = "";
+            const tIcon = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/telegram_logo.svg";
+
+            // For Grid Card: Render text INSIDE placeholder
+            const rawName = it.nft_name.replace('Anonymous Number ', '').replace('@', '');
+            const isLong = rawName.length > (isModal ? 20 : 15);
+            const fontSize = rawName.length > 20 ? (isModal ? '20px' : '14px') : (isModal ? '24px' : '17px');
+
+            if (isNum) {
+                inner = `
+                    <div class="card-placeholder" style="background:${isModal ? '#0f1218' : '#1c1c1e'}; height:100%; width:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:8px;">
+                        <img src="${tIcon}" class="telegram-center-icon" style="flex-shrink:0;">
+                        <div style="font-size:${fontSize}; font-weight:700; color:#fff; width:100%; text-align:center; padding:0 4px; box-sizing:border-box; flex-shrink:0;">${rawName}</div>
+                    </div>`;
+            } else {
+                // USER REQUEST: Middle truncation for Usernames if > 9 chars
+                const displayName = (!isModal && rawName.length > 9) ? truncateMiddle(rawName, 9) : rawName;
+                inner = `
+                    <div class="card-placeholder" style="background:${isModal ? '#1a1d29' : '#1c1c1e'}; height:100%; width:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:4px;">
+                         <div style="font-size:${isModal ? '80px' : '50px'}; color:#0088cc; font-weight:800; opacity:0.8; line-height:1; flex-shrink:0;">@</div>
+                         <div style="font-size:${fontSize}; font-weight:700; color:#fff; width:100%; text-align:center; padding:0 4px; box-sizing:border-box; flex-shrink:0;">${displayName}</div>
+                    </div>`;
+            }
+            if (!isModal) {
+                // Append badge for grid view inside placeholder
+                inner = inner.replace('</div>', `<div class="card-days-badge-bottom">${daysLabel}</div></div>`);
+            }
+            return inner;
+        } else {
+            let iSrc = it._realImage;
+            if (!iSrc || iSrc.includes('gift.svg') || iSrc.includes('ton_symbol')) {
+                const f = generateFragmentUrls(it.nft_name);
+                iSrc = f.image;
+            }
+            return `
+                <img src="${iSrc}" class="${isModal ? 'view-img-actual' : 'card-img'}" loading="lazy" onerror="this.src='https://nft.fragment.com/guide/gift.svg'">
+                <div class="card-days-badge-bottom">${daysLabel}</div>
+            `;
+        }
+    };
+
+    const mediaHTML = renderMediaHTML(item);
+    // REMOVED badgeText logic for Numbers/Usernames as it is now inside media
+    // Only keep for generic Gifts or if image failed? No, Gifts have separate title.
+
+    // For Gifts: Keep title below.
+    // For Numbers/Usernames: Title is now inside media, so empty here? 
+    // User requested: "РєР°СЂС‚РѕС‡РєР° СЃ РЅРёРјРµСЂРѕРј | С†РµРЅР°" -> Title IN card, Price below.
+    // So for Num/User, we hide the card-title div or leave empty.
+
+    const isUsername = (item.type === 'username');
+    const isNumber = (item.type === 'number');
+
+    // If Gift -> Show Title. If Num/User -> Hide Title (since it's in image).
+    const showTitleBelow = (!isUsername && !isNumber);
+    const badgeText = showTitleBelow ? (baseName + (numStr ? " " + numStr : "")) : "";
+
+    card.innerHTML = `
+        <div class="card-glow"></div>
+        <div class="card-image-wrapper">
+             ${mediaHTML}
+        </div>
+        <div class="card-content">
+            ${showTitleBelow ? `<div class="card-title">${badgeText}</div>` : ''}
+            <div class="card-pricing-row pricing-glass" ${!showTitleBelow ? 'style="margin-top:8px;"' : ''}>
+                <div class="pricing-col">
+                    <span class="pricing-label">${t('per_day')}</span>
+                    <span class="pricing-value">${renderTonAmount(myPrice)}</span>
+                </div>
+                <div class="pricing-col">
+                    <span class="pricing-label">${t('min_price')}</span>
+                    <span class="pricing-value">${renderTonAmount(minTotalPrice)}</span>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Click on entire card
+    card.onclick = (e) => {
+        e.stopPropagation();
+        openProductView(item, myPrice);
+    };
+
+    return card;
+}
+
+function openAdvancedFilters() {
+    document.getElementById('mrkt-modal').classList.add('active');
+    document.getElementById('mrkt-modal-overlay').classList.add('active');
+}
+function closeMrktModal() {
+    document.getElementById('mrkt-modal').classList.remove('active');
+    document.getElementById('mrkt-modal-overlay').classList.remove('active');
+}
+function resetMrktModal() {
+    ACTIVE_FILTERS = { nft: 'all', model: 'all', bg: 'all', symbol: 'all', tags: 'all', sort: 'price_asc', price_from: null, price_to: null, gift_number: null, search: ACTIVE_FILTERS.search };
+    document.getElementById('filter-gift-number').value = "";
+    document.getElementById('filter-price-from').value = "";
+    document.getElementById('filter-price-to').value = "";
+    initFilterLists();
+    applyHeaderSearch();
+}
+function applyMrktModal() {
+    // Collect from inputs
+    ACTIVE_FILTERS.gift_number = document.getElementById('filter-gift-number').value;
+    ACTIVE_FILTERS.price_from = document.getElementById('filter-price-from').value;
+    ACTIVE_FILTERS.price_to = document.getElementById('filter-price-to').value;
+
+    closeMrktModal();
+    loadLiveItems(true); // Trigger server-side refresh
+}
+
+function debounce(func, wait) {
+    let timeout;
+    return (...args) => { clearTimeout(timeout); timeout = setTimeout(() => func(...args), wait); };
+}
+function generateFragmentUrls(n) {
+    const match = n.match(/^(.*?)\s*#(\d+)$/);
+    if (!match) return { image: null, lottie: null };
+
+    // Improved slug generation for Fragment
+    let name = match[1].trim().toLowerCase()
+        .replace(/[^a-z0-9]/g, ''); // keep ONLY alphanumeric (remove spaces, dashes)
+
+    return {
+        image: `https://nft.fragment.com/gift/${name}-${match[2]}.webp`,
+        lottie: `https://nft.fragment.com/gift/${name}-${match[2]}.lottie.json`
+    };
+}
+function observeNewCards() {
+    // Lottie disabled in feed to prevent lag on mobile
+}

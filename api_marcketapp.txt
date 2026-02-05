@@ -1,0 +1,2720 @@
+Marketapp API
+ 1.0.0 
+OAS 3.1
+/docs/openapi.json
+At the moment, this API is free but may be changed in the future.
+
+Follow the Marketapp API channel for the latest news and updates.
+
+Authentication
+Endpoints require authentication via API token.
+
+How to authenticate:
+
+Get your API token from the Marketapp
+Add Authorization header to your request
+Set the header value to your API token (without any prefix like "Bearer")
+Example:
+
+Authorization: your_api_token_here
+Code Examples
+Some endpoints will return a transaction that you need to send to the blockchain yourself. See this example to learn how to do this.
+
+Authorize
+collections
+
+
+GET
+/v1/collections/
+List Collections
+
+
+Parameters
+Try it out
+No parameters
+
+Responses
+Code	Description	Links
+200	
+Successful Response
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+[
+  {
+    "name": "string",
+    "address": "string",
+    "extra_data": {
+      "items": 0,
+      "floor": "string",
+      "rent_floor": "string",
+      "volume7d": "string",
+      "volume30d": "string",
+      "owners": 0,
+      "on_sale_all": 0,
+      "on_sale_onchain": 0
+    }
+  }
+]
+No links
+
+GET
+/v1/collections/gifts/
+Gift Collections
+
+
+Parameters
+Try it out
+No parameters
+
+Responses
+Code	Description	Links
+200	
+Successful Response
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+[
+  {
+    "name": "string",
+    "address": "string",
+    "extra_data": {
+      "items": 0,
+      "floor": "string",
+      "rent_floor": "string",
+      "volume7d": "string",
+      "volume30d": "string",
+      "owners": 0,
+      "on_sale_all": 0,
+      "on_sale_onchain": 0
+    }
+  }
+]
+No links
+
+GET
+/v1/collections/{collection_address}/attributes/
+Get Collection Attributes
+
+
+Parameters
+Try it out
+Name	Description
+collection_address *
+string
+(path)
+collection_address
+Responses
+Code	Description	Links
+200	
+Successful Response
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "attributes": [
+    {
+      "trait_type": "string",
+      "values": [
+        {
+          "value": "string",
+          "count": 0,
+          "perc": 0,
+          "floor": "",
+          "rent_floor": ""
+        }
+      ]
+    }
+  ]
+}
+No links
+422	
+Validation Error
+
+Media type
+
+application/json
+Example Value
+Schema
+{
+  "detail": [
+    {
+      "loc": [
+        "string",
+        0
+      ],
+      "msg": "string",
+      "type": "string"
+    }
+  ]
+}
+No links
+nfts
+
+
+POST
+/v1/nfts/sale/
+Put Up For Sale
+
+
+Put up NFTs for sale.
+
+Parameters
+Try it out
+No parameters
+
+Request body
+
+application/json
+Example Value
+Schema
+{
+  "owner_address": "string",
+  "data": [
+    {
+      "nft_address": "string",
+      "price": 1,
+      "currency": "TON"
+    }
+  ]
+}
+Responses
+Code	Description	Links
+200	
+Successful Response
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "transaction": {
+    "validUntil": 0,
+    "messages": [
+      {
+        "address": "string",
+        "amount": "string",
+        "payload": "string",
+        "stateInit": "string"
+      }
+    ]
+  }
+}
+No links
+422	
+Validation Error
+
+Media type
+
+application/json
+Example Value
+Schema
+{
+  "detail": [
+    {
+      "loc": [
+        "string",
+        0
+      ],
+      "msg": "string",
+      "type": "string"
+    }
+  ]
+}
+No links
+
+POST
+/v1/nfts/change_price/
+Change Price
+
+
+Change price of NFTs.
+
+Parameters
+Try it out
+No parameters
+
+Request body
+
+application/json
+Example Value
+Schema
+{
+  "owner_address": "string",
+  "data": [
+    {
+      "nft_address": "string",
+      "price": 1,
+      "currency": "TON"
+    }
+  ]
+}
+Responses
+Code	Description	Links
+200	
+Successful Response
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "transaction": {
+    "validUntil": 0,
+    "messages": [
+      {
+        "address": "string",
+        "amount": "string",
+        "payload": "string",
+        "stateInit": "string"
+      }
+    ]
+  }
+}
+No links
+422	
+Validation Error
+
+Media type
+
+application/json
+Example Value
+Schema
+{
+  "detail": [
+    {
+      "loc": [
+        "string",
+        0
+      ],
+      "msg": "string",
+      "type": "string"
+    }
+  ]
+}
+No links
+
+POST
+/v1/nfts/cancel_sale/
+Cancel Sale
+
+
+Cancel sale of NFTs.
+
+Parameters
+Try it out
+No parameters
+
+Request body
+
+application/json
+Example Value
+Schema
+{
+  "owner_address": "string",
+  "nft_addresses": [
+    "string"
+  ]
+}
+Responses
+Code	Description	Links
+200	
+Successful Response
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "transaction": {
+    "validUntil": 0,
+    "messages": [
+      {
+        "address": "string",
+        "amount": "string",
+        "payload": "string",
+        "stateInit": "string"
+      }
+    ]
+  }
+}
+No links
+422	
+Validation Error
+
+Media type
+
+application/json
+Example Value
+Schema
+{
+  "detail": [
+    {
+      "loc": [
+        "string",
+        0
+      ],
+      "msg": "string",
+      "type": "string"
+    }
+  ]
+}
+No links
+
+POST
+/v1/nfts/buy/
+Buy Nft
+
+
+Buy NFTs.
+
+Parameters
+Try it out
+No parameters
+
+Request body
+
+application/json
+Example Value
+Schema
+{
+  "data": [
+    {
+      "nft_address": "string",
+      "price": 1,
+      "currency": "TON"
+    }
+  ]
+}
+Responses
+Code	Description	Links
+200	
+Successful Response
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "transaction": {
+    "validUntil": 0,
+    "messages": [
+      {
+        "address": "string",
+        "amount": "string",
+        "payload": "string",
+        "stateInit": "string"
+      }
+    ]
+  }
+}
+No links
+422	
+Validation Error
+
+Media type
+
+application/json
+Example Value
+Schema
+{
+  "detail": [
+    {
+      "loc": [
+        "string",
+        0
+      ],
+      "msg": "string",
+      "type": "string"
+    }
+  ]
+}
+No links
+
+GET
+/v1/nfts/collections/{collection_address}/
+Collection Nfts
+
+
+Parameters
+Try it out
+Name	Description
+collection_address *
+string
+(path)
+collection_address
+cursor
+string | (string | null)
+(query)
+Cursor for pagination
+
+cursor
+filter_by
+string
+(query)
+Filter by
+
+Available values : onsale
+
+Default value : onsale
+
+
+onsale
+limit
+integer
+(query)
+1 <= limit <= 100, default: 10
+
+Default value : 10
+
+10
+maximum: 100
+minimum: 1
+Responses
+Code	Description	Links
+200	
+Successful Response
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "cursor": "string",
+  "items": [
+    {
+      "address": "string",
+      "name": "string",
+      "collection_address": "string",
+      "owner": "string",
+      "real_owner": "string",
+      "min_bid": "string",
+      "max_bid": "string",
+      "attributes": [
+        {
+          "trait_type": "string",
+          "value": "string"
+        }
+      ],
+      "item_num": 0,
+      "listed_at": 0
+    }
+  ]
+}
+No links
+422	
+Validation Error
+
+Media type
+
+application/json
+Example Value
+Schema
+{
+  "detail": [
+    {
+      "loc": [
+        "string",
+        0
+      ],
+      "msg": "string",
+      "type": "string"
+    }
+  ]
+}
+No links
+
+GET
+/v1/nfts/{nft_address}/
+Nft Info
+
+
+Get NFT info by address
+
+Parameters
+Try it out
+Name	Description
+nft_address *
+string
+(path)
+nft_address
+Responses
+Code	Description	Links
+200	
+Successful Response
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "address": "string",
+  "collection_address": "string",
+  "name": "string",
+  "real_owner": "string",
+  "attributes": [
+    {
+      "trait_type": "string",
+      "value": "string"
+    }
+  ],
+  "status": "for_sale",
+  "status_details": {
+    "price": "string"
+  }
+}
+No links
+422	
+Validation Error
+
+Media type
+
+application/json
+Example Value
+Schema
+{
+  "detail": [
+    {
+      "loc": [
+        "string",
+        0
+      ],
+      "msg": "string",
+      "type": "string"
+    }
+  ]
+}
+No links
+gifts
+
+
+GET
+/v1/gifts/onsale/
+Get Gifts On Sale
+
+
+Return gifts on sale (onchain only).
+
+NOTE: in current moment cursor works in such a way that each next page may contain elements of the previous one.
+
+cursor: Pagination cursor (optional)
+collection_address: Filter by specific collection address (optional)
+model: Filter by model (optional)
+symbol: Filter by symbol (optional)
+backdrop: Filter by backdrop (optional)
+sort_by: Sort order (optional, default: min_bid_asc)
+item_num_from: Filter by item number from (optional)
+item_num_to: Filter by item number to (optional)
+min_price: Filter by min price in TON (optional)
+max_price: Filter by max price in TON (optional)
+Parameters
+Try it out
+Name	Description
+cursor
+string | (string | null)
+(query)
+Cursor for pagination
+
+cursor
+collection_address
+string | (string | null)
+(query)
+Filter by collection address
+
+collection_address
+model
+string | (string | null)
+(query)
+Model
+
+model
+symbol
+string | (string | null)
+(query)
+Symbol
+
+symbol
+backdrop
+string | (string | null)
+(query)
+Backdrop
+
+backdrop
+sort_by
+string
+(query)
+Sort order (optional, default: min_bid_asc)
+
+Available values : min_bid_asc, min_bid_desc, recently_touch
+
+Default value : min_bid_asc
+
+
+min_bid_asc
+item_num_from
+integer | (integer | null)
+(query)
+0 <= item_num_from <= 10000000
+
+item_num_from
+maximum: 10000000
+minimum: 1
+item_num_to
+integer | (integer | null)
+(query)
+0 <= item_num_to <= 10000000
+
+item_num_to
+maximum: 10000000
+minimum: 1
+min_price
+number | (number | null)
+(query)
+0 <= min_price <= 10000000
+
+min_price
+maximum: 10000000
+minimum: 0
+max_price
+number | (number | null)
+(query)
+0 <= max_price <= 10000000
+
+max_price
+maximum: 10000000
+minimum: 0
+Responses
+Code	Description	Links
+200	
+Successful Response
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "cursor": "string",
+  "items": [
+    {
+      "address": "string",
+      "name": "string",
+      "collection_address": "string",
+      "owner": "string",
+      "real_owner": "string",
+      "min_bid": "string",
+      "max_bid": "string",
+      "attributes": [
+        {
+          "trait_type": "string",
+          "value": "string"
+        }
+      ],
+      "item_num": 0,
+      "listed_at": 0
+    }
+  ]
+}
+No links
+422	
+Validation Error
+
+Media type
+
+application/json
+Example Value
+Schema
+{
+  "detail": [
+    {
+      "loc": [
+        "string",
+        0
+      ],
+      "msg": "string",
+      "type": "string"
+    }
+  ]
+}
+No links
+fragment
+
+
+POST
+/v1/fragment/stars/price/
+Get Stars Prices
+
+
+
+POST
+/v1/fragment/stars/recipient/
+Search Stars Recipient
+
+
+Search recipient for stars transfer.
+
+Parameters
+Try it out
+No parameters
+
+Request body
+
+application/json
+Example Value
+Schema
+{
+  "username": "string"
+}
+Responses
+Code	Description	Links
+200	
+Successful Response
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "photo": "string",
+  "name": "string"
+}
+No links
+422	
+Validation Error
+
+Media type
+
+application/json
+Example Value
+Schema
+{
+  "detail": [
+    {
+      "loc": [
+        "string",
+        0
+      ],
+      "msg": "string",
+      "type": "string"
+    }
+  ]
+}
+No links
+
+POST
+/v1/fragment/stars/buy/
+Buy Stars
+
+
+Buy stars for recipient.
+
+Parameters
+Try it out
+No parameters
+
+Request body
+
+application/json
+Example Value
+Schema
+{
+  "username": "string",
+  "quantity": 50
+}
+Responses
+Code	Description	Links
+200	
+Successful Response
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "transaction": {
+    "validUntil": 0,
+    "messages": [
+      {
+        "address": "string",
+        "amount": "string",
+        "payload": "string",
+        "stateInit": "string"
+      }
+    ]
+  }
+}
+No links
+422	
+Validation Error
+
+Media type
+
+application/json
+Example Value
+Schema
+{
+  "detail": [
+    {
+      "loc": [
+        "string",
+        0
+      ],
+      "msg": "string",
+      "type": "string"
+    }
+  ]
+}
+No links
+
+POST
+/v1/fragment/stars-giveaway/price/
+Get Stars Giveaway Prices
+
+
+Get stars giveaway pricing.
+
+Parameters
+Try it out
+No parameters
+
+Responses
+Code	Description	Links
+200	
+Successful Response
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "items": [
+    {
+      "ton": 0,
+      "stars": 0,
+      "boosts": 0
+    }
+  ]
+}
+No links
+
+POST
+/v1/fragment/stars-giveaway/recipient/
+Search Stars Giveaway Recipient
+
+
+Search recipient for stars giveaway.
+
+Parameters
+Try it out
+No parameters
+
+Request body
+
+application/json
+Example Value
+Schema
+{
+  "username": "string"
+}
+Responses
+Code	Description	Links
+200	
+Successful Response
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "photo": "string",
+  "name": "string"
+}
+No links
+422	
+Validation Error
+
+Media type
+
+application/json
+Example Value
+Schema
+{
+  "detail": [
+    {
+      "loc": [
+        "string",
+        0
+      ],
+      "msg": "string",
+      "type": "string"
+    }
+  ]
+}
+No links
+
+POST
+/v1/fragment/stars-giveaway/buy/
+Buy Stars Giveaway
+
+
+Buy stars giveaway.
+
+Parameters
+Try it out
+No parameters
+
+Request body
+
+application/json
+Example Value
+Schema
+{
+  "username": "string",
+  "quantity": 1,
+  "stars": 500
+}
+Responses
+Code	Description	Links
+200	
+Successful Response
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "transaction": {
+    "validUntil": 0,
+    "messages": [
+      {
+        "address": "string",
+        "amount": "string",
+        "payload": "string",
+        "stateInit": "string"
+      }
+    ]
+  }
+}
+No links
+422	
+Validation Error
+
+Media type
+
+application/json
+Example Value
+Schema
+{
+  "detail": [
+    {
+      "loc": [
+        "string",
+        0
+      ],
+      "msg": "string",
+      "type": "string"
+    }
+  ]
+}
+No links
+
+POST
+/v1/fragment/premium/price/
+Get Premium Price
+
+
+Get premium pricing.
+
+Parameters
+Try it out
+No parameters
+
+Responses
+Code	Description	Links
+200	
+Successful Response
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "months3": {
+    "ton": 0
+  },
+  "months6": {
+    "ton": 0
+  },
+  "months12": {
+    "ton": 0
+  }
+}
+No links
+
+POST
+/v1/fragment/premium/recipient/
+Search Premium Recipient
+
+
+Search recipient for premium.
+
+Parameters
+Try it out
+No parameters
+
+Request body
+
+application/json
+Example Value
+Schema
+{
+  "username": "string"
+}
+Responses
+Code	Description	Links
+200	
+Successful Response
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "photo": "string",
+  "name": "string"
+}
+No links
+422	
+Validation Error
+
+Media type
+
+application/json
+Example Value
+Schema
+{
+  "detail": [
+    {
+      "loc": [
+        "string",
+        0
+      ],
+      "msg": "string",
+      "type": "string"
+    }
+  ]
+}
+No links
+
+POST
+/v1/fragment/premium/buy/
+Buy Premium
+
+
+Buy premium for recipient.
+
+Parameters
+Try it out
+No parameters
+
+Request body
+
+application/json
+Example Value
+Schema
+{
+  "username": "string",
+  "months": 0
+}
+Responses
+Code	Description	Links
+200	
+Successful Response
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "transaction": {
+    "validUntil": 0,
+    "messages": [
+      {
+        "address": "string",
+        "amount": "string",
+        "payload": "string",
+        "stateInit": "string"
+      }
+    ]
+  }
+}
+No links
+422	
+Validation Error
+
+Media type
+
+application/json
+Example Value
+Schema
+{
+  "detail": [
+    {
+      "loc": [
+        "string",
+        0
+      ],
+      "msg": "string",
+      "type": "string"
+    }
+  ]
+}
+No links
+
+POST
+/v1/fragment/premium-giveaway/price/
+Get Premium Giveaway Price
+
+
+Get premium giveaway pricing.
+
+Parameters
+Try it out
+No parameters
+
+Request body
+
+application/json
+Example Value
+Schema
+{
+  "quantity": 1
+}
+Responses
+Code	Description	Links
+200	
+Successful Response
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "months3": {
+    "ton": 0
+  },
+  "months6": {
+    "ton": 0
+  },
+  "months12": {
+    "ton": 0
+  },
+  "boosts": 0
+}
+No links
+422	
+Validation Error
+
+Media type
+
+application/json
+Example Value
+Schema
+{
+  "detail": [
+    {
+      "loc": [
+        "string",
+        0
+      ],
+      "msg": "string",
+      "type": "string"
+    }
+  ]
+}
+No links
+
+POST
+/v1/fragment/premium-giveaway/recipient/
+Search Premium Giveaway Recipient
+
+
+Search recipient for premium giveaway.
+
+Parameters
+Try it out
+No parameters
+
+Request body
+
+application/json
+Example Value
+Schema
+{
+  "username": "string"
+}
+Responses
+Code	Description	Links
+200	
+Successful Response
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "photo": "string",
+  "name": "string"
+}
+No links
+422	
+Validation Error
+
+Media type
+
+application/json
+Example Value
+Schema
+{
+  "detail": [
+    {
+      "loc": [
+        "string",
+        0
+      ],
+      "msg": "string",
+      "type": "string"
+    }
+  ]
+}
+No links
+
+POST
+/v1/fragment/premium-giveaway/buy/
+Buy Premium Giveaway
+
+
+Buy premium giveaway.
+
+Parameters
+Try it out
+No parameters
+
+Request body
+
+application/json
+Example Value
+Schema
+{
+  "username": "string",
+  "months": 0,
+  "quantity": 1
+}
+Responses
+Code	Description	Links
+200	
+Successful Response
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "transaction": {
+    "validUntil": 0,
+    "messages": [
+      {
+        "address": "string",
+        "amount": "string",
+        "payload": "string",
+        "stateInit": "string"
+      }
+    ]
+  }
+}
+No links
+422	
+Validation Error
+
+Media type
+
+application/json
+Example Value
+Schema
+{
+  "detail": [
+    {
+      "loc": [
+        "string",
+        0
+      ],
+      "msg": "string",
+      "type": "string"
+    }
+  ]
+}
+No links
+
+POST
+/v1/fragment/ads-topup/pay/
+Ads Topup
+
+
+Ads topup.
+
+Parameters
+Try it out
+No parameters
+
+Request body
+
+application/json
+Example Value
+Schema
+{
+  "fragment_link": "string",
+  "amount": 1
+}
+Responses
+Code	Description	Links
+200	
+Successful Response
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "transaction": {
+    "validUntil": 0,
+    "messages": [
+      {
+        "address": "string",
+        "amount": "string",
+        "payload": "string",
+        "stateInit": "string"
+      }
+    ]
+  }
+}
+No links
+422	
+Validation Error
+
+Media type
+
+application/json
+Example Value
+Schema
+{
+  "detail": [
+    {
+      "loc": [
+        "string",
+        0
+      ],
+      "msg": "string",
+      "type": "string"
+    }
+  ]
+}
+No links
+
+POST
+/v1/fragment/telegram-topup/recipient/
+Search Telegram Topup Recipient
+
+
+Search recipient for telegram topup.
+
+Parameters
+Try it out
+No parameters
+
+Request body
+
+application/json
+Example Value
+Schema
+{
+  "username": "string"
+}
+Responses
+Code	Description	Links
+200	
+Successful Response
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "photo": "string",
+  "name": "string"
+}
+No links
+422	
+Validation Error
+
+Media type
+
+application/json
+Example Value
+Schema
+{
+  "detail": [
+    {
+      "loc": [
+        "string",
+        0
+      ],
+      "msg": "string",
+      "type": "string"
+    }
+  ]
+}
+No links
+
+POST
+/v1/fragment/telegram-topup/pay/
+Telegram Topup
+
+
+Telegram topup.
+
+Parameters
+Try it out
+No parameters
+
+Request body
+
+application/json
+Example Value
+Schema
+{
+  "username": "string",
+  "amount": 1
+}
+Responses
+Code	Description	Links
+200	
+Successful Response
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "transaction": {
+    "validUntil": 0,
+    "messages": [
+      {
+        "address": "string",
+        "amount": "string",
+        "payload": "string",
+        "stateInit": "string"
+      }
+    ]
+  }
+}
+No links
+422	
+Validation Error
+
+Media type
+
+application/json
+Example Value
+Schema
+{
+  "detail": [
+    {
+      "loc": [
+        "string",
+        0
+      ],
+      "msg": "string",
+      "type": "string"
+    }
+  ]
+}
+No links
+rent
+
+
+GET
+/v1/rent/
+Get Gifts Available For Rent Deprecated
+
+
+
+GET
+/v1/rent/gifts/
+Get Gifts Available For Rent
+
+
+Return gifts available for rent.
+
+cursor: Pagination cursor (optional)
+collection_address: Filter by specific collection address (optional)
+sort_by: Sort order (optional, default: recently_touch)
+model: Filter by model (optional)
+symbol: Filter by symbol (optional)
+backdrop: Filter by backdrop (optional)
+Parameters
+Try it out
+Name	Description
+cursor
+string | (string | null)
+(query)
+Cursor for pagination
+
+cursor
+collection_address
+string | (string | null)
+(query)
+Filter by collection address
+
+collection_address
+sort_by
+string
+(query)
+Sort order
+
+Available values : price_per_day, min_price, duration_asc, duration_desc, item_num_asc, item_num_desc, recently_touch
+
+Default value : recently_touch
+
+
+recently_touch
+model
+string | (string | null)
+(query)
+Model
+
+model
+symbol
+string | (string | null)
+(query)
+Symbol
+
+symbol
+backdrop
+string | (string | null)
+(query)
+Backdrop
+
+backdrop
+Responses
+Code	Description	Links
+200	
+Successful Response
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "cursor": "string",
+  "items": [
+    {
+      "nft_address": "string",
+      "nft_name": "string",
+      "min_duration": 0,
+      "max_duration": 0,
+      "price_per_day": "942378013670142409634997301828380",
+      "discount_per_day": 0
+    }
+  ]
+}
+No links
+422	
+Validation Error
+
+Media type
+
+application/json
+Example Value
+Schema
+{
+  "detail": [
+    {
+      "loc": [
+        "string",
+        0
+      ],
+      "msg": "string",
+      "type": "string"
+    }
+  ]
+}
+No links
+
+GET
+/v1/rent/usernames/
+Get Usernames Available For Rent
+
+
+Return usernames available for rent.
+
+cursor: Pagination cursor (optional)
+sort_by: Sort order (optional, default: recently_touch)
+Parameters
+Try it out
+Name	Description
+cursor
+string | (string | null)
+(query)
+Cursor for pagination
+
+cursor
+sort_by
+string
+(query)
+Sort order
+
+Available values : price_per_day, min_price, duration_asc, duration_desc, item_num_asc, item_num_desc, recently_touch
+
+Default value : recently_touch
+
+
+recently_touch
+Responses
+Code	Description	Links
+200	
+Successful Response
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "cursor": "string",
+  "items": [
+    {
+      "nft_address": "string",
+      "nft_name": "string",
+      "min_duration": 0,
+      "max_duration": 0,
+      "price_per_day": "993446217084268514276629573872248831048597109396750128",
+      "discount_per_day": 0
+    }
+  ]
+}
+No links
+422	
+Validation Error
+
+Media type
+
+application/json
+Example Value
+Schema
+{
+  "detail": [
+    {
+      "loc": [
+        "string",
+        0
+      ],
+      "msg": "string",
+      "type": "string"
+    }
+  ]
+}
+No links
+
+GET
+/v1/rent/numbers/
+Get Numbers Available For Rent
+
+
+Important: Notify your customers of the end of the rental period a few days in advance and explain clearly what happens after the end of the rental period.
+
+Return numbers available for rent.
+
+cursor: Pagination cursor (optional)
+sort_by: Sort order (optional, default: recently_touch)
+Parameters
+Try it out
+Name	Description
+cursor
+string | (string | null)
+(query)
+Cursor for pagination
+
+cursor
+sort_by
+string
+(query)
+Sort order
+
+Available values : price_per_day, min_price, duration_asc, duration_desc, item_num_asc, item_num_desc, recently_touch
+
+Default value : recently_touch
+
+
+recently_touch
+Responses
+Code	Description	Links
+200	
+Successful Response
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "cursor": "string",
+  "items": [
+    {
+      "nft_address": "string",
+      "nft_name": "string",
+      "min_duration": 0,
+      "max_duration": 0,
+      "price_per_day": "01777180995870301",
+      "discount_per_day": 0
+    }
+  ]
+}
+No links
+422	
+Validation Error
+
+Media type
+
+application/json
+Example Value
+Schema
+{
+  "detail": [
+    {
+      "loc": [
+        "string",
+        0
+      ],
+      "msg": "string",
+      "type": "string"
+    }
+  ]
+}
+No links
+
+GET
+/v1/rent/my-rented/
+Get My Rented Nfts
+
+
+Get my rented NFTs (last 100).
+
+Parameters
+Try it out
+Name	Description
+cursor
+string | (string | null)
+(query)
+Cursor for pagination
+
+cursor
+Responses
+Code	Description	Links
+200	
+Successful Response
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "cursor": "string",
+  "items": [
+    {
+      "nft_address": "string",
+      "nft_name": "string",
+      "duration": 0,
+      "price_per_day": "2232273100647244278009977409241914121681620614530473173427576922",
+      "end_time": 0,
+      "extend_duration": 0
+    }
+  ]
+}
+No links
+422	
+Validation Error
+
+Media type
+
+application/json
+Example Value
+Schema
+{
+  "detail": [
+    {
+      "loc": [
+        "string",
+        0
+      ],
+      "msg": "string",
+      "type": "string"
+    }
+  ]
+}
+No links
+
+POST
+/v1/rent/{nft_address}/pay/
+Rent Nft
+
+
+Pay for NFT rental.
+
+nft_address: Address of the NFT to rent
+duration: Rental duration in seconds
+price_per_day: Price per day in nanotons
+Returns transaction data for signing.
+
+Parameters
+Try it out
+Name	Description
+nft_address *
+string
+(path)
+nft_address
+Request body
+
+application/json
+Example Value
+Schema
+{
+  "duration": 0,
+  "price_per_day": "string"
+}
+Responses
+Code	Description	Links
+200	
+Successful Response
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "transaction": {
+    "validUntil": 0,
+    "messages": [
+      {
+        "address": "string",
+        "amount": "string",
+        "payload": "string",
+        "stateInit": "string"
+      }
+    ]
+  }
+}
+No links
+422	
+Validation Error
+
+Media type
+
+application/json
+Example Value
+Schema
+{
+  "detail": [
+    {
+      "loc": [
+        "string",
+        0
+      ],
+      "msg": "string",
+      "type": "string"
+    }
+  ]
+}
+No links
+
+POST
+/v1/rent/{nft_address}/extend/
+Extend Rent Nft
+
+
+Extend rent duration.
+
+nft_address: Address of the NFT to extend rent
+duration: New duration in seconds
+price_per_day: Price per day in nanotons
+Returns transaction data for signing.
+
+Parameters
+Try it out
+Name	Description
+nft_address *
+string
+(path)
+nft_address
+Request body
+
+application/json
+Example Value
+Schema
+{
+  "duration": 0,
+  "price_per_day": "string"
+}
+Responses
+Code	Description	Links
+200	
+Successful Response
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "transaction": {
+    "validUntil": 0,
+    "messages": [
+      {
+        "address": "string",
+        "amount": "string",
+        "payload": "string",
+        "stateInit": "string"
+      }
+    ]
+  }
+}
+No links
+422	
+Validation Error
+
+Media type
+
+application/json
+Example Value
+Schema
+{
+  "detail": [
+    {
+      "loc": [
+        "string",
+        0
+      ],
+      "msg": "string",
+      "type": "string"
+    }
+  ]
+}
+No links
+
+POST
+/v1/rent/{nft_address}/tonconnect/
+Connect Tonconnect
+
+
+Connect rent smart contract to Fragment.
+
+Important: You have to send transaction into blockchain using same wallet that you used to generate API token.
+
+nft_address: Address of the rented NFT
+tonconnect_url: TonConnect URL from wallet
+Returns status of the connection attempt.
+
+Parameters
+Try it out
+Name	Description
+nft_address *
+string
+(path)
+nft_address
+Request body
+
+application/json
+Example Value
+Schema
+{
+  "tonconnect_url": "string"
+}
+Responses
+Code	Description	Links
+200	
+Successful Response
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "additionalProp1": {}
+}
+No links
+422	
+Validation Error
+
+Media type
+
+application/json
+Example Value
+Schema
+{
+  "detail": [
+    {
+      "loc": [
+        "string",
+        0
+      ],
+      "msg": "string",
+      "type": "string"
+    }
+  ]
+}
+No links
+
+Schemas
+AdsTopupBodyCollapse allobject
+fragment_linkCollapse allstring
+Fragment link https://fragment.com/ads/pay?account=QSj4Ysvd...
+
+amountinteger[1, 10000]
+AvailableForRentResponseCollapse allobject
+cursorCollapse all(string | null)
+Any ofCollapse all(string | null)
+#0string
+#1null
+itemsCollapse allarray<object>
+ItemsCollapse allobject
+nft_addressstring
+nft_namestring
+min_durationCollapse allinteger
+Minimum duration in seconds
+
+max_durationCollapse allinteger
+Maximum duration in seconds
+
+price_per_dayCollapse allstringmatches ^\d+$
+Price per day in nanotons
+
+discount_per_dayCollapse allnumber
+Discount percentage per day
+
+BuyNFTBodyCollapse allobject
+dataCollapse allarray<object>
+ItemsCollapse allobject
+nft_addressstring
+pricenumber(0, 1000000000]
+currencyCollapse allstring
+EnumCollapse allarray
+#0"TON"
+Default"TON"
+BuyPremiumBodyCollapse allobject
+usernamestring
+monthsCollapse allinteger
+Allowed values: 3, 6, 12
+
+BuyPremiumGiveawayBodyCollapse allobject
+usernamestring
+monthsCollapse allinteger
+Allowed values: 3, 6, 12
+
+quantityinteger[1, 24000]
+BuyStarsBodyCollapse allobject
+usernamestring
+quantityinteger[50, 1000000]
+BuyStarsGiveawayBodyCollapse allobject
+usernamestring
+quantityCollapse allinteger[1, 10000]
+Possible values from 1 to 100xStars
+
+starsinteger[500, 1000000]
+CancelSaleNFTBodyCollapse allobject
+owner_addressstring
+nft_addressesCollapse allarray<string>
+Itemsstring
+ChangePriceNFTBodyCollapse allobject
+owner_addressstring
+dataCollapse allarray<object>
+ItemsCollapse allobject
+nft_addressstring
+pricenumber(0, 1000000000]
+currencyCollapse allstring
+EnumCollapse allarray
+#0"TON"
+Default"TON"
+CollectionCollapse allobject
+namestring
+addressstring
+extra_dataCollapse allobject
+itemsCollapse all(integer | null)
+Any ofCollapse all(integer | null)
+#0integer
+#1null
+floorCollapse all(string | null)
+Any ofCollapse all(string | null)
+#0string
+#1null
+rent_floorCollapse all(string | null)
+Any ofCollapse all(string | null)
+#0string
+#1null
+volume7dCollapse all(string | null)
+Any ofCollapse all(string | null)
+#0string
+#1null
+volume30dCollapse all(string | null)
+Any ofCollapse all(string | null)
+#0string
+#1null
+ownersCollapse all(integer | null)
+Any ofCollapse all(integer | null)
+#0integer
+#1null
+on_sale_allCollapse all(integer | null)
+Any ofCollapse all(integer | null)
+#0integer
+#1null
+on_sale_onchainCollapse all(integer | null)
+Any ofCollapse all(integer | null)
+#0integer
+#1null
+CollectionAttributeCollapse allobject
+trait_typestring
+valuesCollapse allarray<object>
+ItemsCollapse allobject
+valuestring
+countCollapse allinteger
+Default0
+percCollapse allnumber
+Default0
+floorCollapse allstring
+Default""
+rent_floorCollapse allstring
+Default""
+CollectionAttributeValueCollapse allobject
+valuestring
+countCollapse allinteger
+Default0
+percCollapse allnumber
+Default0
+floorCollapse allstring
+Default""
+rent_floorCollapse allstring
+Default""
+CollectionAttributesResponseCollapse allobject
+attributesCollapse allarray<object>
+ItemsCollapse allobject
+trait_typestring
+valuesCollapse allarray<object>
+ItemsCollapse allobject
+valuestring
+countCollapse allinteger
+Default0
+percCollapse allnumber
+Default0
+floorCollapse allstring
+Default""
+rent_floorCollapse allstring
+Default""
+CollectionStatsCollapse allobject
+itemsCollapse all(integer | null)
+Any ofCollapse all(integer | null)
+#0integer
+#1null
+floorCollapse all(string | null)
+Any ofCollapse all(string | null)
+#0string
+#1null
+rent_floorCollapse all(string | null)
+Any ofCollapse all(string | null)
+#0string
+#1null
+volume7dCollapse all(string | null)
+Any ofCollapse all(string | null)
+#0string
+#1null
+volume30dCollapse all(string | null)
+Any ofCollapse all(string | null)
+#0string
+#1null
+ownersCollapse all(integer | null)
+Any ofCollapse all(integer | null)
+#0integer
+#1null
+on_sale_allCollapse all(integer | null)
+Any ofCollapse all(integer | null)
+#0integer
+#1null
+on_sale_onchainCollapse all(integer | null)
+Any ofCollapse all(integer | null)
+#0integer
+#1null
+CurrencyCollapse allstring
+EnumCollapse allarray
+#0"TON"
+ExpiredStatusDetailsCollapse allobject
+last_fill_up_timeCollapse all(integer | null)
+Any ofCollapse all(integer | null)
+#0integer
+#1null
+FilterByCollapse allstring
+EnumCollapse allarray
+#0"onsale"
+ForRentStatusDetailsCollapse allobject
+price_per_dayCollapse allstring
+Price per day in nanotons
+
+min_durationCollapse allinteger
+Minimum duration in seconds
+
+max_durationCollapse allinteger
+Maximum duration in seconds
+
+discount_pdCollapse allnumber
+Discount percentage per day
+
+ForSaleStatusDetailsCollapse allobject
+priceCollapse allstring
+Price in nanotons
+
+GiftsOnSaleResponseCollapse allobject
+cursorCollapse all(string | null)
+Any ofCollapse all(string | null)
+#0string
+#1null
+itemsCollapse allarray<object>
+ItemsCollapse allobject
+addressstring
+namestring
+collection_addressstring
+ownerstring
+real_ownerstring
+min_bidstring
+max_bidstring
+attributesCollapse allarray<object>
+ItemsCollapse allobject
+trait_typestring
+valueCollapse all(string | integer | number)
+Any ofCollapse all(string | integer | number)
+#0string
+#1integer
+#2number
+item_numCollapse all(integer | null)
+Any ofCollapse all(integer | null)
+#0integer
+#1null
+listed_atCollapse all(integer | null)
+Any ofCollapse all(integer | null)
+#0integer
+#1null
+HTTPValidationErrorCollapse allobject
+detailCollapse allarray<object>
+ItemsCollapse allobject
+locCollapse allarray<(string | integer)>
+ItemsCollapse all(string | integer)
+Any ofCollapse all(string | integer)
+#0string
+#1integer
+msgstring
+typestring
+NFTAttributeCollapse allobject
+trait_typestring
+valueCollapse all(string | integer | number)
+Any ofCollapse all(string | integer | number)
+#0string
+#1integer
+#2number
+NFTItemCollapse allobject
+addressstring
+namestring
+collection_addressstring
+ownerstring
+real_ownerstring
+min_bidstring
+max_bidstring
+attributesCollapse allarray<object>
+ItemsCollapse allobject
+trait_typestring
+valueCollapse all(string | integer | number)
+Any ofCollapse all(string | integer | number)
+#0string
+#1integer
+#2number
+item_numCollapse all(integer | null)
+Any ofCollapse all(integer | null)
+#0integer
+#1null
+listed_atCollapse all(integer | null)
+Any ofCollapse all(integer | null)
+#0integer
+#1null
+NFTItemInfoResponseCollapse allobject
+addressstring
+collection_addressstring
+namestring
+real_ownerCollapse all(string | null)
+Any ofCollapse all(string | null)
+#0string
+#1null
+attributesCollapse allarray<object>
+ItemsCollapse allobject
+trait_typestring
+valueCollapse all(string | integer | number)
+Any ofCollapse all(string | integer | number)
+#0string
+#1integer
+#2number
+statusCollapse allstring
+EnumCollapse allarray
+#0"for_sale"
+#1"on_auction"
+#2"for_rent"
+#3"rented"
+#4"expired"
+#5"not_for_sale"
+status_detailsCollapse all(object | object | object | object | object | object)
+Any ofCollapse all(object | object | object | object | object | object)
+#0 ForSaleStatusDetailsExpand allobject
+#1 OnAuctionStatusDetailsExpand allobject
+#2 ForRentStatusDetailsExpand allobject
+#3 RentedStatusDetailsExpand allobject
+#4 ExpiredStatusDetailsExpand allobject
+#5 NotForSaleStatusDetailsExpand allobject
+NFTItemStatusEnumCollapse allstring
+EnumCollapse allarray
+#0"for_sale"
+#1"on_auction"
+#2"for_rent"
+#3"rented"
+#4"expired"
+#5"not_for_sale"
+NFTsOnSaleResponseCollapse allobject
+cursorCollapse all(string | null)
+Any ofCollapse all(string | null)
+#0string
+#1null
+itemsCollapse allarray<object>
+ItemsCollapse allobject
+addressstring
+namestring
+collection_addressstring
+ownerstring
+real_ownerstring
+min_bidstring
+max_bidstring
+attributesCollapse allarray<object>
+ItemsCollapse allobject
+trait_typestring
+valueCollapse all(string | integer | number)
+Any ofCollapse all(string | integer | number)
+#0string
+#1integer
+#2number
+item_numCollapse all(integer | null)
+Any ofCollapse all(integer | null)
+#0integer
+#1null
+listed_atCollapse all(integer | null)
+Any ofCollapse all(integer | null)
+#0integer
+#1null
+NotForSaleStatusDetailsCollapse allobject
+OnAuctionStatusDetailsCollapse allobject
+min_bidCollapse allstring
+Min bid in nanotons
+
+max_bidCollapse allstring
+Max bid in nanotons
+
+last_bidCollapse all(string | null)
+Last bid in nanotons
+
+Any ofCollapse all(string | null)
+#0string
+#1null
+next_bidCollapse all(string | null)
+Next bid in nanotons
+
+Any ofCollapse all(string | null)
+#0string
+#1null
+end_timeCollapse all(integer | null)
+End time in unix timestamp
+
+Any ofCollapse all(integer | null)
+#0integer
+#1null
+durationCollapse all(integer | null)
+Duration in seconds
+
+Any ofCollapse all(integer | null)
+#0integer
+#1null
+bid_stepCollapse all(integer | null)
+Bid step in percent
+
+Any ofCollapse all(integer | null)
+#0integer
+#1null
+PremiumGiveawayPriceBodyCollapse allobject
+quantityinteger[1, 24000]
+PremiumGiveawayPriceResponseCollapse allobject
+months3Collapse allobject
+tonnumber
+months6Collapse allobject
+tonnumber
+months12Collapse allobject
+tonnumber
+boostsinteger
+PremiumPriceResponseCollapse allobject
+months3Collapse allobject
+tonnumber
+months6Collapse allobject
+tonnumber
+months12Collapse allobject
+tonnumber
+PriceResponseCollapse allobject
+tonnumber
+RecipientResponseCollapse allobject
+photostring
+namestring
+RentItemCollapse allobject
+nft_addressstring
+nft_namestring
+min_durationCollapse allinteger
+Minimum duration in seconds
+
+max_durationCollapse allinteger
+Maximum duration in seconds
+
+price_per_dayCollapse allstringmatches ^\d+$
+Price per day in nanotons
+
+discount_per_dayCollapse allnumber
+Discount percentage per day
+
+RentNFTBodyCollapse allobject
+durationinteger
+price_per_daystring
+RentedItemCollapse allobject
+nft_addressstring
+nft_namestring
+durationCollapse allinteger
+Duration in seconds
+
+price_per_dayCollapse allstringmatches ^\d+$
+Price per day in nanotons
+
+end_timeCollapse allinteger
+End time in unix timestamp
+
+extend_durationCollapse allinteger
+Available extend duration in seconds
+
+RentedNFTsResponseCollapse allobject
+cursorCollapse all(string | null)
+Any ofCollapse all(string | null)
+#0string
+#1null
+itemsCollapse allarray<object>
+ItemsCollapse allobject
+nft_addressstring
+nft_namestring
+durationCollapse allinteger
+Duration in seconds
+
+price_per_dayCollapse allstringmatches ^\d+$
+Price per day in nanotons
+
+end_timeCollapse allinteger
+End time in unix timestamp
+
+extend_durationCollapse allinteger
+Available extend duration in seconds
+
+RentedStatusDetailsCollapse allobject
+price_per_dayCollapse allstring
+Price per day in nanotons
+
+min_durationCollapse allinteger
+Minimum duration in seconds
+
+max_durationCollapse allinteger
+Maximum duration in seconds
+
+discount_pdCollapse allnumber
+Discount percentage per day
+
+end_timeCollapse allinteger
+End time in unix timestamp
+
+durationCollapse allinteger
+Current rented duration in seconds
+
+SaleNFTBodyCollapse allobject
+owner_addressstring
+dataCollapse allarray<object>
+ItemsCollapse allobject
+nft_addressstring
+pricenumber(0, 1000000000]
+currencyCollapse allstring
+EnumCollapse allarray
+#0"TON"
+Default"TON"
+SaleNFTDataCollapse allobject
+nft_addressstring
+pricenumber(0, 1000000000]
+currencyCollapse allstring
+EnumCollapse allarray
+#0"TON"
+Default"TON"
+SearchRecipientBodyCollapse allobject
+usernamestring
+SendTxSchemaCollapse allobject
+transactionCollapse allobject
+validUntilinteger
+messagesCollapse allarray<object>
+ItemsCollapse allobject
+addressstring
+amountstring
+payloadCollapse all(string | null)
+Any ofCollapse all(string | null)
+#0string
+#1null
+stateInitCollapse all(string | null)
+Any ofCollapse all(string | null)
+#0string
+#1null
+StarsGiveawayPriceItemCollapse allobject
+tonnumber
+starsinteger
+boostsinteger
+StarsGiveawayPriceResponseCollapse allobject
+itemsCollapse allarray<object>
+ItemsCollapse allobject
+tonnumber
+starsinteger
+boostsinteger
+StarsPriceBodyCollapse allobject
+quantityinteger[50, 1000000]
+StarsPriceResponseCollapse allobject
+tonnumber
+TelegramTopupBodyCollapse allobject
+usernamestring
+amountCollapse allinteger[1, 1000]
+Allowed integer values: 1 - 1000 TON
+
+TonConnectBodyCollapse allobject
+tonconnect_urlstring
+TonTransactionMessageSchemaCollapse allobject
+addressstring
+amountstring
+payloadCollapse all(string | null)
+Any ofCollapse all(string | null)
+#0string
+#1null
+stateInitCollapse all(string | null)
+Any ofCollapse all(string | null)
+#0string
+#1null
+TonTransactionSchemaCollapse allobject
+validUntilinteger
+messagesCollapse allarray<object>
+ItemsCollapse allobject
+addressstring
+amountstring
+payloadCollapse all(string | null)
+Any ofCollapse all(string | null)
+#0string
+#1null
+stateInitCollapse all(string | null)
+Any ofCollapse all(string | null)
+#0string
+#1null
+ValidationErrorCollapse allobject
+locCollapse allarray<(string | integer)>
+ItemsCollapse all(string | integer)
+Any ofCollapse all(string | integer)
+#0string
+#1integer
+msgstring
+typestring
+SortByCollapse allstring
+EnumCollapse allarray
+#0"min_bid_asc"
+#1"min_bid_desc"
+#2"recently_touch"
+SortByCollapse allstring
+EnumCollapse allarray
+#0"price_per_day"
+#1"min_price"
+#2"duration_asc"
+#3"duration_desc"
+#4"item_num_asc"
+#5"item_num_desc"
+#6"recently_touch"

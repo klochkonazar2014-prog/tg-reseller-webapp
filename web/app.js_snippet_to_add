@@ -1,0 +1,17 @@
+
+// Helper for creating property rows
+function createPropRow(label, value, type, isRarity = false) {
+    const row = document.createElement('div');
+    row.className = 'detail-row';
+    row.style.cssText = 'padding: 14px 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); display: flex; justify-content: space-between; align-items: center;';
+    
+    // Add value styling based on type (optional)
+    let valueStyle = 'color: #fff; font-weight: 600; font-size: 13px;';
+    if (type === 'model') valueStyle += ' color: var(--accent-blue);';
+    
+    row.innerHTML = `
+        <span style="color: #8794a1; font-weight: 600; font-size: 13px;">${label}</span>
+        <span style="${valueStyle}">${value}</span>
+    `;
+    return row;
+}
