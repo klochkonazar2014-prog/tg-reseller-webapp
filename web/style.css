@@ -2321,3 +2321,104 @@ tc-root {
         opacity: 1;
     }
 }
+/* --- PREMIUM TIMER V5 --- */
+.timer-blocks {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.timer-box {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 6px 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 45px;
+}
+
+.timer-box .t-num {
+    font-size: 16px;
+    font-weight: 900;
+    color: #fff;
+    line-height: 1;
+}
+
+.timer-box .t-label {
+    font-size: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #8b9bb4;
+    margin-top: 2px;
+}
+
+.timer-sep {
+    color: #8b9bb4;
+    font-weight: 900;
+    font-size: 18px;
+    opacity: 0.5;
+}
+
+.timer-date-end {
+    color: #8b9bb4;
+    font-size: 12px;
+    font-weight: 600;
+    margin-left: 10px;
+}
+
+/* --- BRANDED LOADER V5 --- */
+#loading-screen {
+    background: radial-gradient(circle at center, #1a222c 0%, #0f151c 100%) !important;
+}
+
+.premium-spinner {
+    width: 60px;
+    height: 60px;
+    border-width: 4px;
+    border-top-color: var(--accent-blue);
+    box-shadow: 0 0 20px rgba(0, 136, 204, 0.2);
+}
+
+#loading-screen .loader-logo {
+    font-size: 24px;
+    font-weight: 900;
+    letter-spacing: 4px;
+    background: linear-gradient(135deg, #fff 0%, #8b9bb4 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-top: 20px;
+    animation: pulseText 2s infinite ease-in-out;
+}
+
+@keyframes pulseText {
+    0%, 100% { opacity: 0.6; transform: scale(0.98); }
+    50% { opacity: 1; transform: scale(1); }
+}
+
+/* --- ADAPTIVITY FIXES (TV & Large Screens) --- */
+@media (min-width: 1024px) {
+    .container {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    .bottom-nav {
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        max-width: 600px;
+        border-radius: 20px 20px 0 0;
+    }
+    .header-column {
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        max-width: 600px;
+    }
+    .product-view {
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        max-width: 600px;
+    }
+}
+#profile-container { padding-bottom: 120px; }

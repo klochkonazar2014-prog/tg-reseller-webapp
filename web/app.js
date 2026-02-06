@@ -1,12 +1,12 @@
 // Consts
 let tg = null;
 const MY_MARKUP = 0.20;
-const OWNER_WALLET = "UQAotn3cT26kUKW5wSpP9dYKxwEQQ0qffDB24HGzuBrJ5PFB";
+const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/web/tonconnect-manifest.json";
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://wondering-rack-scoring-falls.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://handle-syndrome-spencer-consultants.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -796,12 +796,14 @@ async function loadLiveItems(reset = true) {
             if (items.length < BATCH_SIZE) HAS_MORE = false;
             GLOBAL_OFFSET += items.length;
 
-            const processed = items.map(item => {
-                const match = item.nft_name.match(/#(\d+)/);
-                item._nftNum = match ? parseInt(match[1]) : 0;
-                item._realImage = item.image || item.image_url;
-                return item;
-            });
+            const processed = items
+                .filter(item => item.type === CURRENT_TYPE) // Strict client-side type check
+                .map(item => {
+                    const match = item.nft_name.match(/#(\d+)/);
+                    item._nftNum = match ? parseInt(match[1]) : 0;
+                    item._realImage = item.image || item.image_url;
+                    return item;
+                });
 
             if (reset && items.length === 0) {
                 document.getElementById('items-view').innerHTML = `
@@ -1828,7 +1830,12 @@ async function loadHistoryContent() {
         const orders = await resp.json();
 
         if (!orders || orders.length === 0) {
-            list.innerHTML = `<div style="color:#8b9bb4; text-align:center; padding:20px;">${t('history_empty')}</div>`;
+            list.innerHTML = `
+                <div style="color:#8b9bb4; text-align:center; padding:40px 20px;">
+                    <div style="font-size:32px; margin-bottom:10px; opacity:0.5;">📭</div>
+                    <div style="font-weight:700; color:#fff;">${t('history_empty')}</div>
+                    <div style="font-size:12px; margin-top:5px;">У вас пока нет активных или прошлых аренд</div>
+                </div>`;
             return;
         }
 
@@ -1888,12 +1895,15 @@ function startCountdown(endTime, targetEl) {
     const intervalKey = targetEl.id || 'global-timer';
     if (COUNTDOWN_INTERVALS[intervalKey]) clearInterval(COUNTDOWN_INTERVALS[intervalKey]);
 
+    const endDate = new Date(endTime * 1000);
+    const dateStr = endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
     const update = () => {
         const now = Math.floor(Date.now() / 1000);
         const diff = endTime - now;
 
         if (diff <= 0) {
-            targetEl.textContent = "00 : 00 : 00 : 00";
+            targetEl.innerHTML = `<span style="color:#FF3B30; font-weight:800;">EXPIRED</span>`;
             clearInterval(COUNTDOWN_INTERVALS[intervalKey]);
             return;
         }
@@ -1904,7 +1914,19 @@ function startCountdown(endTime, targetEl) {
         const s = diff % 60;
 
         const pad = (n) => n.toString().padStart(2, '0');
-        targetEl.textContent = `${pad(d)} : ${pad(h)} : ${pad(m)} : ${pad(s)}`;
+
+        targetEl.innerHTML = `
+            <div class="timer-blocks">
+                <div class="timer-box"><span class="t-num">${d}</span><span class="t-label">${d === 1 ? 'day' : 'days'}</span></div>
+                <div class="timer-sep">:</div>
+                <div class="timer-box"><span class="t-num">${pad(h)}</span><span class="t-label">hr</span></div>
+                <div class="timer-sep">:</div>
+                <div class="timer-box"><span class="t-num">${pad(m)}</span><span class="t-label">min</span></div>
+                <div class="timer-sep">:</div>
+                <div class="timer-box"><span class="t-num">${pad(s)}</span><span class="t-label">sec</span></div>
+                <div class="timer-date-end">${dateStr}</div>
+            </div>
+        `;
     };
 
     update();
