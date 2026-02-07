@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://regularly-honest-premises-van.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://photographs-charleston-delayed-spouse.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -585,6 +585,13 @@ function switchTab(index) {
         if (window.Telegram && window.Telegram.WebApp) {
             tg.HapticFeedback.impactOccurred('medium');
         }
+    }
+
+    // NEW: Filter visibility logic
+    if (index === 1 || index === 2) { // Usernames or Numbers
+        document.body.classList.add('hide-filters');
+    } else {
+        document.body.classList.remove('hide-filters');
     }
 }
 
@@ -1179,32 +1186,23 @@ function createItemCard(item) {
     // Total min price for the grid
     const minTotalPrice = (parseFloat(myPrice) * minDays).toFixed(2);
 
-    // NEW: Rental End Time Display
-    let rentalEndHTML = "";
-    if (item.status === 'rented' && item.rent_ends_at) {
-        const date = new Date(item.rent_ends_at * 1000);
-        const dateStr = date.toLocaleDateString(t('lang') === 'ru' ? 'ru-RU' : 'en-US', { day: 'numeric', month: 'short' });
-        rentalEndHTML = `<div class="rental-badge rented">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:4px;">
-                <circle cx="12" cy="12" r="10"></circle>
-                <polyline points="12 6 12 12 16 14"></polyline>
-            </svg>
-            ${t('available_from')}: ${dateStr}
-        </div>`;
+    // NEW: Rented status class
+    if (item.status === 'rented') {
+        card.classList.add('rented');
     }
 
-    const telegramIcon = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/telegram_logo.svg";
+    const telegramIcon = "telegram_logo.svg";
 
     const renderMediaHTML = (it, isModal = false) => {
-        const isNum = (it.type === 'number');
-        const isUser = (it.type === 'username');
+        const isNum = (it.type === 'number') || it.nft_name.includes('+888');
+        const isUser = (it.type === 'username') || it.nft_name.startsWith('@');
         const minD = Math.floor((it.min_duration || 86400) / 86400);
         const maxD = Math.floor((it.max_duration || 2592000) / 86400);
         const daysLabel = `${t('days')}: ${minD} – ${maxD}`;
 
         if (isNum || isUser) {
             let inner = "";
-            const tIcon = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/telegram_logo.svg";
+            const tIcon = "telegram_logo.svg";
 
             // For Grid Card: Render text INSIDE placeholder
             const rawName = it.nft_name.replace('Anonymous Number ', '').replace('@', '');
@@ -1253,15 +1251,14 @@ function createItemCard(item) {
     // User requested: "карточка с нимером | цена" -> Title IN card, Price below.
     // So for Num/User, we hide the card-title div or leave empty.
 
-    const isUsername = (item.type === 'username');
-    const isNumber = (item.type === 'number');
+    const isUsername = (item.type === 'username') || item.nft_name.startsWith('@');
+    const isNumber = (item.type === 'number') || item.nft_name.includes('+888');
 
     // If Gift -> Show Title. If Num/User -> Hide Title (since it's in image).
     const showTitleBelow = (!isUsername && !isNumber);
     const badgeText = showTitleBelow ? (baseName + (numStr ? " " + numStr : "")) : "";
 
     card.innerHTML = `
-        ${rentalEndHTML}
         <div class="card-glow"></div>
         <div class="card-image-wrapper">
              ${mediaHTML}
@@ -1349,11 +1346,11 @@ async function openProductView(item) {
     if (mediaCont) {
         mediaCont.style.display = 'block';
         const renderMediaHTML = (it) => {
-            const isNum = (it.type === 'number');
-            const isUser = (it.type === 'username');
+            const isNum = (it.type === 'number') || it.nft_name.includes('+888');
+            const isUser = (it.type === 'username') || it.nft_name.startsWith('@');
             if (isNum || isUser) {
                 const rawName = it.nft_name.replace('Anonymous Number ', '').replace('@', '');
-                const tIcon = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/telegram_logo.svg";
+                const tIcon = "telegram_logo.svg";
                 let inner = "";
                 if (isNum) {
                     inner = `
@@ -1620,7 +1617,7 @@ async function openProductView(item) {
                 }
             }
 
-            // 3. Countdown Logic
+            // 3. Countdown Logic (Blocky V2)
             const endTime = details.rent?.ends_at || details.rent_ends_at;
             if (endTime && (item.status === 'rented' || (myOrder && myOrder.status === 'active'))) {
                 const countdownCont = document.getElementById('view-countdown-container');
@@ -1629,6 +1626,9 @@ async function openProductView(item) {
                     countdownCont.style.display = 'block';
                     startCountdown(parseInt(endTime), timerEl);
                 }
+            } else {
+                const countdownCont = document.getElementById('view-countdown-container');
+                if (countdownCont) countdownCont.style.display = 'none';
             }
 
             // 4. Existing warning logic and attributes
@@ -1646,6 +1646,20 @@ async function openProductView(item) {
                     if (row) {
                         const valSpan = row.querySelector('.prop-right span');
                         if (valSpan) valSpan.textContent = attr.value;
+
+                        // NEW: Make attribute clickable to filter
+                        row.classList.add('clickable-prop');
+                        row.onclick = () => {
+                            const filterKey = attr.trait_type.toLowerCase();
+                            if (ACTIVE_FILTERS.hasOwnProperty(filterKey)) {
+                                ACTIVE_FILTERS[filterKey] = attr.value;
+                                closeProductView();
+                                switchTab(0); // Go to Gifts
+                                initFilterLists();
+                                applyHeaderSearch();
+                                tg?.HapticFeedback?.impactOccurred('light');
+                            }
+                        };
                     }
                 });
             }
@@ -1916,15 +1930,26 @@ function startCountdown(endTime, targetEl) {
         const pad = (n) => n.toString().padStart(2, '0');
 
         targetEl.innerHTML = `
-            <div class="timer-blocks">
-                <div class="timer-box"><span class="t-num">${d}</span><span class="t-label">${d === 1 ? 'day' : 'days'}</span></div>
-                <div class="timer-sep">:</div>
-                <div class="timer-box"><span class="t-num">${pad(h)}</span><span class="t-label">hr</span></div>
-                <div class="timer-sep">:</div>
-                <div class="timer-box"><span class="t-num">${pad(m)}</span><span class="t-label">min</span></div>
-                <div class="timer-sep">:</div>
-                <div class="timer-box"><span class="t-num">${pad(s)}</span><span class="t-label">sec</span></div>
-                <div class="timer-date-end">${dateStr}</div>
+            <div class="countdown-container-v2">
+                <span class="countdown-label-v2">${t('ends_in')}</span>
+                <div class="countdown-blocks-v2">
+                    <div class="countdown-block-item">
+                        <div class="countdown-box">${d} <span class="countdown-unit">дн</span></div>
+                    </div>
+                    <span class="countdown-sep">:</span>
+                    <div class="countdown-block-item">
+                        <div class="countdown-box">${pad(h)}</div>
+                    </div>
+                    <span class="countdown-sep">:</span>
+                    <div class="countdown-block-item">
+                        <div class="countdown-box">${pad(m)}</div>
+                    </div>
+                    <span class="countdown-sep">:</span>
+                    <div class="countdown-block-item">
+                        <div class="countdown-box">${pad(s)}</div>
+                    </div>
+                </div>
+                <span style="color:#8b9bb4; font-size:12px; margin-left:5px; font-weight:600;">${dateStr}</span>
             </div>
         `;
     };

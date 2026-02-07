@@ -1638,6 +1638,104 @@ tc-root {
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
 }
 
+/* Rented Card Animation */
+@keyframes pulse-rented {
+    0% {
+        box-shadow: 0 0 5px rgba(0, 136, 204, 0.2), inset 0 0 5px rgba(0, 136, 204, 0.1);
+        border-color: rgba(0, 136, 204, 0.3);
+    }
+
+    50% {
+        box-shadow: 0 0 15px rgba(0, 136, 204, 0.4), inset 0 0 10px rgba(0, 136, 204, 0.2);
+        border-color: rgba(0, 136, 204, 0.6);
+    }
+
+    100% {
+        box-shadow: 0 0 5px rgba(0, 136, 204, 0.2), inset 0 0 5px rgba(0, 136, 204, 0.1);
+        border-color: rgba(0, 136, 204, 0.3);
+    }
+}
+
+.card.rented {
+    border: 1px solid rgba(0, 136, 204, 0.4);
+    animation: pulse-rented 3s infinite ease-in-out;
+}
+
+.card.rented::before {
+    content: 'АРЕНДОВАНО';
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #0088cc;
+    color: white;
+    font-size: 10px;
+    font-weight: 900;
+    padding: 2px 10px;
+    border-radius: 100px;
+    z-index: 10;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 10px rgba(0, 136, 204, 0.4);
+}
+
+/* Blocky Countdown */
+.countdown-container-v2 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 15px;
+}
+
+.countdown-label-v2 {
+    color: #8b9bb4;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.countdown-blocks-v2 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.countdown-block-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.countdown-box {
+    background: #1c1c1e;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 6px 10px;
+    min-width: 34px;
+    text-align: center;
+    color: white;
+    font-weight: 800;
+    font-size: 14px;
+}
+
+.countdown-unit {
+    color: #8b9bb4;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.countdown-sep {
+    color: #3a3a3c;
+    font-weight: 800;
+}
+
+/* Filter Visibility Logic */
+body.hide-filters .chips-row {
+    display: none !important;
+}
+
+body.hide-filters .header-column {
+    padding-bottom: 0px;
+}
+
 .profile-balance-group {
     display: flex;
     align-items: center;
@@ -2321,6 +2419,7 @@ tc-root {
         opacity: 1;
     }
 }
+
 /* --- PREMIUM TIMER V5 --- */
 .timer-blocks {
     display: flex;
@@ -2394,8 +2493,17 @@ tc-root {
 }
 
 @keyframes pulseText {
-    0%, 100% { opacity: 0.6; transform: scale(0.98); }
-    50% { opacity: 1; transform: scale(1); }
+
+    0%,
+    100% {
+        opacity: 0.6;
+        transform: scale(0.98);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
 
 /* --- ADAPTIVITY FIXES (TV & Large Screens) --- */
@@ -2404,21 +2512,27 @@ tc-root {
         max-width: 600px;
         margin: 0 auto;
     }
+
     .bottom-nav {
         left: 50% !important;
         transform: translateX(-50%) !important;
         max-width: 600px;
         border-radius: 20px 20px 0 0;
     }
+
     .header-column {
         left: 50% !important;
         transform: translateX(-50%) !important;
         max-width: 600px;
     }
+
     .product-view {
         left: 50% !important;
         transform: translateX(-50%) !important;
         max-width: 600px;
     }
 }
-#profile-container { padding-bottom: 120px; }
+
+#profile-container {
+    padding-bottom: 120px;
+}
