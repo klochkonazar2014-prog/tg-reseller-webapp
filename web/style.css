@@ -2717,3 +2717,77 @@ body.hide-filters .header-column {
     color: #FF3B30;
     border: 1px solid rgba(255, 59, 48, 0.3);
 }
+
+/* New Media Status Overlay */
+.media-status-overlay {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 20;
+    pointer-events: none;
+}
+
+.status-overlay-badge {
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 8px;
+    padding: 6px 12px;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.status-overlay-badge.rented {
+    background: rgba(0, 0, 0, 0.6);
+}
+
+/* Market App Style Countdown V3 */
+/* Container acts as a row */
+.countdown-market-container {
+    display: flex;
+    align-items: center;
+    background: transparent;
+    font-family: 'Outfit', sans-serif;
+    gap: 12px;
+}
+
+.countdown-market-label {
+    color: #8b9bb4;
+    font-size: 15px;
+    font-weight: 500;
+    margin-right: 4px;
+}
+
+/* The dark pills for values */
+.countdown-market-pill {
+    background: #1c1c1e;
+    /* Dark specific bg color */
+    border-radius: 8px;
+    padding: 6px 10px;
+    color: #fff;
+    font-weight: 700;
+    font-size: 15px;
+    min-width: 32px;
+    text-align: center;
+    display: inline-block;
+}
+
+/* Separators */
+.countdown-market-sep {
+    color: #8b9bb4;
+    font-weight: 700;
+    font-size: 15px;
+}
+
+/* Date at the end */
+.countdown-market-date {
+    color: #8b9bb4;
+    font-size: 14px;
+    font-weight: 500;
+    margin-left: 8px;
+}

@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://affordable-mtv-heather-unlimited.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://rare-oldest-addressing-remote.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -1424,15 +1424,26 @@ async function openProductView(item) {
     }
 
     // NEW: Status Pills
-    const badgeRow = document.getElementById('view-badges-row');
-    if (badgeRow) {
-        badgeRow.innerHTML = '';
+    // NEW: Status Overlay (replaces badge row)
+    const statusOverlay = document.getElementById('view-media-status-overlay');
+    if (statusOverlay) {
+        statusOverlay.style.display = 'none';
+        statusOverlay.innerHTML = '';
+
+        let statusText = '';
+        let statusClass = '';
+
         if (item.status === 'rented') {
-            badgeRow.innerHTML += `<div class="status-pill rented">${t('rented')}</div>`;
+            statusText = t('rented');
+            statusClass = 'rented';
         } else if (item.status === 'pending') {
-            badgeRow.innerHTML += `<div class="status-pill pending">${t('pending')}</div>`;
-        } else {
-            badgeRow.innerHTML += `<div class="status-pill active">${t('available')}</div>`;
+            statusText = t('pending');
+            statusClass = 'pending';
+        }
+
+        if (statusText) {
+            statusOverlay.innerHTML = `<div class="status-overlay-badge ${statusClass}">${statusText}</div>`;
+            statusOverlay.style.display = 'block';
         }
     }
     const viewCopyBtn = document.getElementById('view-copy-btn-main');
@@ -1528,13 +1539,34 @@ async function openProductView(item) {
 
         const tgRow = document.createElement('div');
         tgRow.className = 'property-item';
+        // Added .clickable-prop class from previous tasks
         tgRow.innerHTML = `<div class="prop-left"><div class="prop-name">Telegram</div></div><div class="prop-right"><span style="color:var(--accent-blue); font-weight:600;">${giftBaseName} #${nftNum}</span></div>`;
         tgRow.onclick = () => tg.openTelegramLink(tgNftLink);
         propCont.appendChild(tgRow);
 
-        if (item._modelName) propCont.appendChild(createPropRow(t('model'), item._modelName, 'model'));
-        if (item._symbol) propCont.appendChild(createPropRow(t('symbol'), item._symbol, 'symbol'));
-        if (item._backdrop) propCont.appendChild(createPropRow(t('backdrop'), item._backdrop, 'bg'));
+        // Helper for clickable properties
+        const appendClickableProp = (label, val, key) => {
+            if (!val) return;
+            const r = createPropRow(label, val, key);
+            r.classList.add('clickable-prop'); // Ensure visual feedback
+            // Add arrow
+            r.querySelector('.prop-right').innerHTML += `<span class="arrow-v" style="font-size:12px; margin-left:8px;">›</span>`;
+
+            r.onclick = () => {
+                // FAILSAFE: Ensure we set the Collection filter too, otherwise Model list is disabled
+                if (key === 'model' || key === 'bg' || key === 'symbol') {
+                    ACTIVE_FILTERS.nft = colName;
+                }
+                ACTIVE_FILTERS[key] = val;
+                closeProductView();
+                loadLiveItems(true);
+            };
+            propCont.appendChild(r);
+        };
+
+        if (item._modelName) appendClickableProp(t('model'), item._modelName, 'model');
+        if (item._symbol) appendClickableProp(t('symbol'), item._symbol, 'symbol');
+        if (item._backdrop) appendClickableProp(t('backdrop'), item._backdrop, 'bg');
 
         // Auto-relist status
         const reRow = createPropRow(t('auto_relist_label'), item.auto_relist ? t('yes') : t('no'));
@@ -1923,14 +1955,15 @@ function startCountdown(endTime, targetEl) {
     if (COUNTDOWN_INTERVALS[intervalKey]) clearInterval(COUNTDOWN_INTERVALS[intervalKey]);
 
     const endDate = new Date(endTime * 1000);
-    const dateStr = endDate.toLocaleDateString(t('lang') === 'ru' ? 'ru-RU' : 'en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    // Format: "Feb 8, 2026"
+    const dateStr = endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
     const update = () => {
         const now = Math.floor(Date.now() / 1000);
         const diff = endTime - now;
 
         if (diff <= 0) {
-            targetEl.innerHTML = `<div style="text-align:center; padding: 20px; background: rgba(255,59,48,0.1); border-radius:16px; border:1px solid rgba(255,59,48,0.2);"><span style="color:#FF3B30; font-weight:800; font-size:16px;">EXPIRED</span></div>`;
+            targetEl.innerHTML = `<span style="color:#FF3B30; font-weight:800;">EXPIRED</span>`;
             clearInterval(COUNTDOWN_INTERVALS[intervalKey]);
             return;
         }
@@ -1939,48 +1972,25 @@ function startCountdown(endTime, targetEl) {
         const h = Math.floor((diff % 86400) / 3600);
         const m = Math.floor((diff % 3600) / 60);
         const s = diff % 60;
-
         const pad = (n) => n.toString().padStart(2, '0');
 
+        // Market App Style: Ends in [0 days] : [14] : [37] : [02] Feb 8, 2026
         targetEl.innerHTML = `
-            <div class="countdown-premium">
-                <div class="countdown-header">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8b9bb4" stroke-width="2.5">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <polyline points="12 6 12 12 16 14"></polyline>
-                    </svg>
-                    <span class="countdown-label-premium">${t('ends_in')}</span>
-                </div>
+            <div class="countdown-market-container">
+                <span class="countdown-market-label">${t('ends_in')}</span>
                 
-                <div class="countdown-grid">
-                    <div class="countdown-digit-box">
-                        <div class="countdown-val">${d}</div>
-                        <div class="countdown-unit">${t('days')}</div>
-                    </div>
-                    <div class="countdown-sep">:</div>
-                    <div class="countdown-digit-box">
-                        <div class="countdown-val">${pad(h)}</div>
-                        <div class="countdown-unit">HR</div>
-                    </div>
-                    <div class="countdown-sep">:</div>
-                    <div class="countdown-digit-box">
-                        <div class="countdown-val">${pad(m)}</div>
-                        <div class="countdown-unit">MIN</div>
-                    </div>
-                    <div class="countdown-sep">:</div>
-                    <div class="countdown-digit-box">
-                        <div class="countdown-val">${pad(s)}</div>
-                        <div class="countdown-unit">SEC</div>
-                    </div>
-                </div>
-
-                <div class="expiry-badge">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                        <path d="M5 12h14"></path>
-                        <path d="M12 5l7 7-7 7"></path>
-                    </svg>
-                    <span>${dateStr}</span>
-                </div>
+                <div class="countdown-market-pill">${d} days</div>
+                <span class="countdown-market-sep">:</span>
+                
+                <div class="countdown-market-pill">${pad(h)}</div>
+                <span class="countdown-market-sep">:</span>
+                
+                <div class="countdown-market-pill">${pad(m)}</div>
+                <span class="countdown-market-sep">:</span>
+                
+                <div class="countdown-market-pill">${pad(s)}</div>
+                
+                <span class="countdown-market-date">${dateStr}</span>
             </div>
         `;
     };
