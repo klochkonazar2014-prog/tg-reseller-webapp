@@ -2778,15 +2778,17 @@ body.hide-filters .header-column {
     margin-left: 8px;
 }
 
-/* --- EXACT MARKET TIMER STYLE (Improved) --- */
+/* --- EXACT MARKET TIMER STYLE (Responsive) --- */
 .market-timer-row {
     display: flex;
     align-items: center;
     justify-content: flex-start;
+    flex-wrap: wrap;
     gap: 6px;
     font-family: 'Outfit', 'Inter', sans-serif;
     margin-top: 12px;
     margin-bottom: 8px;
+    max-width: 100%;
 }
 
 .mt-label {
@@ -2810,11 +2812,11 @@ body.hide-filters .header-column {
     align-items: center;
     justify-content: center;
     line-height: 1;
+    white-space: nowrap;
 }
 
 .mt-wide {
     padding: 5px 11px;
-    /* Wider for "X days" */
 }
 
 .mt-sep {
@@ -2830,4 +2832,36 @@ body.hide-filters .header-column {
     margin-left: 10px;
     font-weight: 500;
     white-space: nowrap;
+}
+
+/* Responsive: для узких экранов */
+@media (max-width: 480px) {
+    .market-timer-row {
+        gap: 5px;
+    }
+
+    .mt-label {
+        font-size: 12px;
+        margin-right: 4px;
+    }
+
+    .mt-pill {
+        font-size: 12px;
+        padding: 4px 8px;
+        min-width: 28px;
+    }
+
+    .mt-wide {
+        padding: 4px 9px;
+    }
+
+    .mt-sep {
+        font-size: 12px;
+        margin: 0 1px;
+    }
+
+    .mt-date {
+        font-size: 12px;
+        margin-left: 6px;
+    }
 }
