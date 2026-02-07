@@ -1641,53 +1641,42 @@ tc-root {
 /* Rented Card Animation */
 @keyframes pulse-rented {
     0% {
-        box-shadow: 0 0 5px rgba(88, 86, 214, 0.2), inset 0 0 5px rgba(88, 86, 214, 0.1);
-        border-color: rgba(88, 86, 214, 0.3);
+        box-shadow: 0 0 5px rgba(0, 136, 204, 0.2), inset 0 0 5px rgba(0, 136, 204, 0.1);
+        border-color: rgba(0, 136, 204, 0.3);
     }
 
     50% {
-        box-shadow: 0 0 15px rgba(88, 86, 214, 0.4), inset 0 0 10px rgba(88, 86, 214, 0.2);
-        border-color: rgba(88, 86, 214, 0.8);
+        box-shadow: 0 0 15px rgba(0, 136, 204, 0.4), inset 0 0 10px rgba(0, 136, 204, 0.2);
+        border-color: rgba(0, 136, 204, 0.6);
     }
 
     100% {
-        box-shadow: 0 0 5px rgba(88, 86, 214, 0.2), inset 0 0 5px rgba(88, 86, 214, 0.1);
-        border-color: rgba(88, 86, 214, 0.3);
+        box-shadow: 0 0 5px rgba(0, 136, 204, 0.2), inset 0 0 5px rgba(0, 136, 204, 0.1);
+        border-color: rgba(0, 136, 204, 0.3);
     }
 }
 
 .card.rented {
-    border: 2px solid rgba(88, 86, 214, 0.6);
-    animation: pulse-rented 2.5s infinite ease-in-out;
-    position: relative;
-    overflow: visible !important;
+    border: 1px solid rgba(0, 136, 204, 0.4);
+    animation: pulse-rented 3s infinite ease-in-out;
 }
 
-.card.rented::after {
+.card.rented::before {
     content: 'АРЕНДОВАНО';
     position: absolute;
-    top: 8px;
-    /* Slightly inside */
+    top: -10px;
     left: 50%;
     transform: translateX(-50%);
-    background: linear-gradient(135deg, #5856d6, #3a38b5);
+    background: #0088cc;
     color: white;
     font-size: 10px;
-    font-weight: 800;
-    padding: 3px 10px;
-    border-radius: 20px;
-    z-index: 20;
+    font-weight: 900;
+    padding: 2px 10px;
+    border-radius: 100px;
+    z-index: 10;
     letter-spacing: 0.5px;
-    box-shadow: 0 2px 8px rgba(88, 86, 214, 0.5);
-    pointer-events: none;
-    text-transform: uppercase;
+    box-shadow: 0 4px 10px rgba(0, 136, 204, 0.4);
 }
-
-/* Clear old pseudo-elements */
-.card.rented::before {
-    display: none;
-}
-
 
 /* Blocky Countdown */
 .countdown-container-v2 {
@@ -1716,17 +1705,15 @@ tc-root {
 }
 
 .countdown-box {
-    background: #141416;
-    /* Darker bg */
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: #1c1c1e;
+    border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: 8px;
-    padding: 8px 12px;
-    min-width: 40px;
+    padding: 6px 10px;
+    min-width: 34px;
     text-align: center;
     color: white;
-    font-weight: 700;
-    font-size: 16px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    font-weight: 800;
+    font-size: 14px;
 }
 
 .countdown-unit {
@@ -2544,8 +2531,189 @@ body.hide-filters .header-column {
         transform: translateX(-50%) !important;
         max-width: 600px;
     }
+
 }
+
+/* Clickable Properties */
+.clickable-prop {
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.clickable-prop:active {
+    background: rgba(255, 255, 255, 0.15) !important;
+}
+
+.clickable-prop .prop-right {
+    position: relative;
+    padding-right: 14px;
+}
+
+.clickable-prop .prop-right::after {
+    content: '›';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 18px;
+    color: #8b9bb4;
+    font-weight: 400;
+}
+
 
 #profile-container {
     padding-bottom: 120px;
+}
+
+/* --- PREMIUM COUNTDOWN (V3) --- */
+.countdown-premium {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    margin-top: 20px;
+    padding: 24px;
+    background: linear-gradient(145deg, rgba(30, 30, 35, 0.8) 0%, rgba(20, 20, 25, 0.9) 100%);
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    position: relative;
+    overflow: hidden;
+}
+
+.countdown-premium::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(0, 136, 204, 0.08) 0%, transparent 60%);
+    pointer-events: none;
+}
+
+.countdown-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 2;
+}
+
+.countdown-label-premium {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #8b9bb4;
+    font-weight: 800;
+}
+
+.countdown-grid {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    z-index: 2;
+}
+
+.countdown-digit-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    width: 64px;
+    padding: 12px 0 10px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s;
+}
+
+.countdown-digit-box:hover {
+    transform: translateY(-2px);
+    border-color: rgba(0, 136, 204, 0.3);
+}
+
+.countdown-val {
+    font-size: 28px;
+    font-weight: 800;
+    color: #fff;
+    font-family: 'Outfit', sans-serif;
+    line-height: 1;
+    text-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    font-variant-numeric: tabular-nums;
+}
+
+.countdown-unit {
+    font-size: 10px;
+    color: #8b9bb4;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-top: 6px;
+    letter-spacing: 0.5px;
+}
+
+.countdown-sep {
+    font-size: 24px;
+    color: rgba(255, 255, 255, 0.2);
+    font-weight: 300;
+    margin-top: 10px;
+    animation: blink 2s infinite;
+}
+
+@keyframes blink {
+
+    0%,
+    100% {
+        opacity: 0.5;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}
+
+.expiry-badge {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #0088cc;
+    font-weight: 700;
+    background: rgba(0, 136, 204, 0.15);
+    padding: 6px 14px;
+    border-radius: 100px;
+    border: 1px solid rgba(0, 136, 204, 0.2);
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Rented Status Indicators in View */
+.status-pill {
+    padding: 6px 12px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.status-pill.rented {
+    background: rgba(255, 149, 0, 0.15);
+    color: #FF9500;
+    border: 1px solid rgba(255, 149, 0, 0.3);
+}
+
+.status-pill.active {
+    background: rgba(52, 199, 89, 0.15);
+    color: #34C759;
+    border: 1px solid rgba(52, 199, 89, 0.3);
+}
+
+.status-pill.pending {
+    background: rgba(255, 59, 48, 0.15);
+    color: #FF3B30;
+    border: 1px solid rgba(255, 59, 48, 0.3);
 }

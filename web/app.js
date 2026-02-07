@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://ronald-nirvana-learned-guestbook.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://affordable-mtv-heather-unlimited.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -1422,6 +1422,19 @@ async function openProductView(item) {
     if (viewTitle) {
         viewTitle.innerText = item.nft_name;
     }
+
+    // NEW: Status Pills
+    const badgeRow = document.getElementById('view-badges-row');
+    if (badgeRow) {
+        badgeRow.innerHTML = '';
+        if (item.status === 'rented') {
+            badgeRow.innerHTML += `<div class="status-pill rented">${t('rented')}</div>`;
+        } else if (item.status === 'pending') {
+            badgeRow.innerHTML += `<div class="status-pill pending">${t('pending')}</div>`;
+        } else {
+            badgeRow.innerHTML += `<div class="status-pill active">${t('available')}</div>`;
+        }
+    }
     const viewCopyBtn = document.getElementById('view-copy-btn-main');
     if (viewCopyBtn) {
         viewCopyBtn.onclick = () => copyNftTitle(item.nft_name);
@@ -1910,14 +1923,14 @@ function startCountdown(endTime, targetEl) {
     if (COUNTDOWN_INTERVALS[intervalKey]) clearInterval(COUNTDOWN_INTERVALS[intervalKey]);
 
     const endDate = new Date(endTime * 1000);
-    const dateStr = endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const dateStr = endDate.toLocaleDateString(t('lang') === 'ru' ? 'ru-RU' : 'en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 
     const update = () => {
         const now = Math.floor(Date.now() / 1000);
         const diff = endTime - now;
 
         if (diff <= 0) {
-            targetEl.innerHTML = `<span style="color:#FF3B30; font-weight:800;">EXPIRED</span>`;
+            targetEl.innerHTML = `<div style="text-align:center; padding: 20px; background: rgba(255,59,48,0.1); border-radius:16px; border:1px solid rgba(255,59,48,0.2);"><span style="color:#FF3B30; font-weight:800; font-size:16px;">EXPIRED</span></div>`;
             clearInterval(COUNTDOWN_INTERVALS[intervalKey]);
             return;
         }
@@ -1930,26 +1943,44 @@ function startCountdown(endTime, targetEl) {
         const pad = (n) => n.toString().padStart(2, '0');
 
         targetEl.innerHTML = `
-            <div class="countdown-container-v2">
-                <span class="countdown-label-v2">${t('ends_in')}</span>
-                <div class="countdown-blocks-v2">
-                    <div class="countdown-block-item">
-                        <div class="countdown-box">${d} <span class="countdown-unit">дн</span></div>
+            <div class="countdown-premium">
+                <div class="countdown-header">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8b9bb4" stroke-width="2.5">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    <span class="countdown-label-premium">${t('ends_in')}</span>
+                </div>
+                
+                <div class="countdown-grid">
+                    <div class="countdown-digit-box">
+                        <div class="countdown-val">${d}</div>
+                        <div class="countdown-unit">${t('days')}</div>
                     </div>
-                    <span class="countdown-sep">:</span>
-                    <div class="countdown-block-item">
-                        <div class="countdown-box">${pad(h)}</div>
+                    <div class="countdown-sep">:</div>
+                    <div class="countdown-digit-box">
+                        <div class="countdown-val">${pad(h)}</div>
+                        <div class="countdown-unit">HR</div>
                     </div>
-                    <span class="countdown-sep">:</span>
-                    <div class="countdown-block-item">
-                        <div class="countdown-box">${pad(m)}</div>
+                    <div class="countdown-sep">:</div>
+                    <div class="countdown-digit-box">
+                        <div class="countdown-val">${pad(m)}</div>
+                        <div class="countdown-unit">MIN</div>
                     </div>
-                    <span class="countdown-sep">:</span>
-                    <div class="countdown-block-item">
-                        <div class="countdown-box">${pad(s)}</div>
+                    <div class="countdown-sep">:</div>
+                    <div class="countdown-digit-box">
+                        <div class="countdown-val">${pad(s)}</div>
+                        <div class="countdown-unit">SEC</div>
                     </div>
                 </div>
-                <span style="color:#8b9bb4; font-size:12px; margin-left:5px; font-weight:600;">${dateStr}</span>
+
+                <div class="expiry-badge">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                        <path d="M5 12h14"></path>
+                        <path d="M12 5l7 7-7 7"></path>
+                    </svg>
+                    <span>${dateStr}</span>
+                </div>
             </div>
         `;
     };
