@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://dog-assumptions-keyboard-lived.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://front-longest-gratis-associated.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -163,7 +163,10 @@ const TRANSLATIONS = {
         rented_by_others: "Арендовано",
         status_awaiting_fragment: "Ожидает подключения к Fragment",
         connect_to_fragment: "Подключить к Fragment",
-        ends_in: "Освободится через"
+        ends_in: "Освободится через",
+        days_label: "Дни",
+        day_label: "День",
+        days_2_4: "Дня"
     },
     en: {
         gifts: "Gifts",
@@ -248,7 +251,10 @@ const TRANSLATIONS = {
         rented_by_others: "Rented",
         status_awaiting_fragment: "Awaiting Fragment connection",
         connect_to_fragment: "Connect to Fragment",
-        ends_in: "Ends in"
+        ends_in: "Ends in",
+        days_label: "Days",
+        day_label: "Day",
+        days_2_4: "Days"
     }
 };
 
