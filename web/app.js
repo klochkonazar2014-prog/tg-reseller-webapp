@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://earned-heritage-moments-trainers.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://derby-terminals-unions-researcher.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -888,28 +888,46 @@ async function loadFilterData() {
         console.log('[FILTERS] Loading from:', `${BACKEND_URL}/api/filters`);
         const res = await fetch(`${BACKEND_URL}/api/filters`);
         const data = await res.json();
-        console.log('[FILTERS] Received data keys:', Object.keys(data));
+        console.log('[FILTERS] Received keys:', Object.keys(data));
 
         if (data) {
-            // Handle 'nfts' array (convert to collections format)
+            // NFTs = collections
             if (data.nfts && Array.isArray(data.nfts)) {
                 window.STATIC_COLLECTIONS = data.nfts.map(name => ({ name, image: null }));
-            } else if (data.collections) {
-                window.STATIC_COLLECTIONS = data.collections;
             }
 
-            // Map models/backdrops/symbols (try different possible keys)
-            ATTR_STATS = {
-                model: data.models_map || data.models || {},
-                bg: data.backdrops_map || data.backdrops || {},
-                symbol: data.symbols_map || data.symbols || {}
+            // Convert array backdrops/symbols to nested format {collectionName: [{name, image}]}
+            const convertArrayToMap = (arr) => {
+                if (!Array.isArray(arr)) return {};
+                const items = arr.map(name => ({ name, image: null }));
+                return { "ALL": items }; // Group all under "ALL" pseudo-collection
             };
 
-            console.log('[FILTERS] Final mapped:', {
-                collections: window.STATIC_COLLECTIONS?.length,
-                models_keys: Object.keys(ATTR_STATS.model).length,
-                backdrops_keys: Object.keys(ATTR_STATS.bg).length,
-                symbols_keys: Object.keys(ATTR_STATS.symbol).length
+            // Models_map: already in correct format {collection: [model1, model2]}
+            // But need to convert model strings to objects {name, image}
+            const convertModelsMap = (map) => {
+                if (!map || typeof map !== 'object') return {};
+                const result = {};
+                for (const [collection, models] of Object.entries(map)) {
+                    if (Array.isArray(models)) {
+                        result[collection] = models.map(name => ({ name, image: null }));
+                    }
+                }
+                return result;
+            };
+
+            ATTR_STATS = {
+                model: data.models_map ? convertModelsMap(data.models_map) : {},
+                bg: data.backdrops ? convertArrayToMap(data.backdrops) : {},
+                symbol: data.symbols ? convertArrayToMap(data.symbols) : {}
+            };
+
+            console.log('[FILTERS] Loaded successfully:', {
+                collections: window.STATIC_COLLECTIONS?.length || 0,
+                model_collections: Object.keys(ATTR_STATS.model).length,
+                total_models: Object.values(ATTR_STATS.model).reduce((sum, arr) => sum + arr.length, 0),
+                backdrops: data.backdrops?.length || 0,
+                symbols: data.symbols?.length || 0
             });
             initFilterLists();
         }
