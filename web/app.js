@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://before-impression-wolf-destiny.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://attacked-packs-apparatus-listening.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -1946,7 +1946,7 @@ function startCountdown(endTime, targetEl) {
     if (COUNTDOWN_INTERVALS[intervalKey]) clearInterval(COUNTDOWN_INTERVALS[intervalKey]);
 
     const endDate = new Date(endTime * 1000);
-    const dateStr = endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const dateStr = endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
     // Market App Style: Ends in [0 days] : [14] : [37] : [02] Feb 8, 2026
     const update = () => {
