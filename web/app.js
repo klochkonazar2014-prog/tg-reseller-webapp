@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://maximum-northern-tom-logan.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://crest-promptly-postage-explained.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -885,8 +885,11 @@ function selectNftChip(addr, btn) {
 
 async function loadFilterData() {
     try {
+        console.log('[FILTERS] Loading from:', `${BACKEND_URL}/api/filters`);
         const res = await fetch(`${BACKEND_URL}/api/filters`);
         const data = await res.json();
+        console.log('[FILTERS] Received data:', data);
+
         if (data) {
             window.STATIC_COLLECTIONS = data.collections; // now they have {name, image}
             ATTR_STATS = {
@@ -894,6 +897,12 @@ async function loadFilterData() {
                 bg: data.backdrops,
                 symbol: data.symbols
             };
+            console.log('[FILTERS] Stats loaded:', {
+                collections: window.STATIC_COLLECTIONS?.length,
+                models: Object.keys(data.models || {}).length,
+                backdrops: Object.keys(data.backdrops || {}).length,
+                symbols: Object.keys(data.symbols || {}).length
+            });
             initFilterLists();
         }
     } catch (e) {

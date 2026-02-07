@@ -2778,52 +2778,56 @@ body.hide-filters .header-column {
     margin-left: 8px;
 }
 
-/* --- EXACT MARKET TIMER STYLE --- */
+/* --- EXACT MARKET TIMER STYLE (Improved) --- */
 .market-timer-row {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-family: 'Inter', sans-serif;
-    /* or system default */
-    margin-top: 15px;
+    justify-content: flex-start;
+    gap: 6px;
+    font-family: 'Outfit', 'Inter', sans-serif;
+    margin-top: 12px;
+    margin-bottom: 8px;
 }
 
 .mt-label {
     color: #8b9bb4;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 500;
-    margin-right: 4px;
+    margin-right: 6px;
+    white-space: nowrap;
 }
 
 .mt-pill {
     background: #252830;
-    /* Darker blue-grey background */
     color: #fff;
     font-weight: 700;
-    font-size: 14px;
-    padding: 6px 10px;
-    border-radius: 8px;
-    min-width: 32px;
+    font-size: 13px;
+    padding: 5px 9px;
+    border-radius: 6px;
+    min-width: 30px;
     text-align: center;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
+    line-height: 1;
 }
 
 .mt-wide {
-    padding: 6px 12px;
-    /* A bit wider for "0 days" */
+    padding: 5px 11px;
+    /* Wider for "X days" */
 }
 
 .mt-sep {
     color: #5d6372;
     font-weight: 600;
-    font-size: 14px;
+    font-size: 13px;
+    margin: 0 2px;
 }
 
 .mt-date {
     color: #8b9bb4;
-    font-size: 14px;
-    margin-left: 8px;
+    font-size: 13px;
+    margin-left: 10px;
     font-weight: 500;
+    white-space: nowrap;
 }
