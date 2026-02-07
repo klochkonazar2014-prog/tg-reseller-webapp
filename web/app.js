@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://cite-jill-reasoning-billing.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://ronald-nirvana-learned-guestbook.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -804,12 +804,7 @@ async function loadLiveItems(reset = true) {
             GLOBAL_OFFSET += items.length;
 
             const processed = items
-                .filter(item => {
-                    if (item.type !== CURRENT_TYPE) return false;
-                    // Strict filter: No names starting with @ or +888 in Gifts
-                    if (CURRENT_TYPE === 'gift' && (item.nft_name.startsWith('@') || item.nft_name.includes('+888'))) return false;
-                    return true;
-                }) // Strict client-side type check
+                .filter(item => item.type === CURRENT_TYPE) // Strict client-side type check
                 .map(item => {
                     const match = item.nft_name.match(/#(\d+)/);
                     item._nftNum = match ? parseInt(match[1]) : 0;
@@ -1192,8 +1187,9 @@ function createItemCard(item) {
     const minTotalPrice = (parseFloat(myPrice) * minDays).toFixed(2);
 
     // NEW: Rented status class
-    // NEW: Rented status class REMOVED for V3 (Catalog must differ from View)
-    // if (item.status === 'rented') card.classList.add('rented');
+    if (item.status === 'rented') {
+        card.classList.add('rented');
+    }
 
     const telegramIcon = "telegram_logo.svg";
 
@@ -1934,28 +1930,27 @@ function startCountdown(endTime, targetEl) {
         const pad = (n) => n.toString().padStart(2, '0');
 
         targetEl.innerHTML = `
-            <div class="market-timer">
-                <div class="market-timer-unit">
-                    <span class="val">${d}</span>
-                    <span class="label">${t('days')}</span>
+            <div class="countdown-container-v2">
+                <span class="countdown-label-v2">${t('ends_in')}</span>
+                <div class="countdown-blocks-v2">
+                    <div class="countdown-block-item">
+                        <div class="countdown-box">${d} <span class="countdown-unit">дн</span></div>
+                    </div>
+                    <span class="countdown-sep">:</span>
+                    <div class="countdown-block-item">
+                        <div class="countdown-box">${pad(h)}</div>
+                    </div>
+                    <span class="countdown-sep">:</span>
+                    <div class="countdown-block-item">
+                        <div class="countdown-box">${pad(m)}</div>
+                    </div>
+                    <span class="countdown-sep">:</span>
+                    <div class="countdown-block-item">
+                        <div class="countdown-box">${pad(s)}</div>
+                    </div>
                 </div>
-                <div class="sep">:</div>
-                <div class="market-timer-unit">
-                    <span class="val">${pad(h)}</span>
-                    <span class="label">Ч</span>
-                </div>
-                <div class="sep">:</div>
-                <div class="market-timer-unit">
-                    <span class="val">${pad(m)}</span>
-                    <span class="label">М</span>
-                </div>
-                <div class="sep">:</div>
-                <div class="market-timer-unit">
-                    <span class="val">${pad(s)}</span>
-                    <span class="label">С</span>
-                </div>
+                <span style="color:#8b9bb4; font-size:12px; margin-left:5px; font-weight:600;">${dateStr}</span>
             </div>
-            <div style="text-align:center; font-size:13px; color:var(--text-color, #8b9bb4); font-weight:500; margin-top:-5px;">${t('ends_in')} ${dateStr}</div>
         `;
     };
 
