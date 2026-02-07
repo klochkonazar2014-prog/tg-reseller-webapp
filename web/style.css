@@ -2778,35 +2778,38 @@ body.hide-filters .header-column {
     margin-left: 8px;
 }
 
-/* --- EXACT MARKET TIMER STYLE (Responsive) --- */
+/* --- COMPACT OVAL TIMER STYLE --- */
 .market-timer-row {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    justify-content: flex-start;
-    flex-wrap: wrap;
+    justify-content: center;
     gap: 6px;
     font-family: 'Outfit', 'Inter', sans-serif;
-    margin-top: 12px;
+    margin-top: 8px;
     margin-bottom: 8px;
-    max-width: 100%;
+    background: linear-gradient(135deg, rgba(138, 43, 226, 0.15), rgba(75, 0, 130, 0.15));
+    border: 2px solid rgba(138, 43, 226, 0.4);
+    border-radius: 50px;
+    padding: 8px 20px;
+    box-shadow: 0 4px 15px rgba(138, 43, 226, 0.3);
 }
 
 .mt-label {
-    color: #8b9bb4;
+    color: #d8d8ff;
     font-size: 13px;
-    font-weight: 500;
-    margin-right: 6px;
+    font-weight: 600;
+    margin-right: 8px;
     white-space: nowrap;
 }
 
 .mt-pill {
-    background: #252830;
+    background: rgba(255, 255, 255, 0.1);
     color: #fff;
     font-weight: 700;
-    font-size: 13px;
-    padding: 5px 9px;
+    font-size: 14px;
+    padding: 4px 8px;
     border-radius: 6px;
-    min-width: 30px;
+    min-width: 28px;
     text-align: center;
     display: inline-flex;
     align-items: center;
@@ -2816,20 +2819,20 @@ body.hide-filters .header-column {
 }
 
 .mt-wide {
-    padding: 5px 11px;
+    padding: 4px 10px;
 }
 
 .mt-sep {
-    color: #5d6372;
+    color: rgba(255, 255, 255, 0.6);
     font-weight: 600;
-    font-size: 13px;
+    font-size: 14px;
     margin: 0 2px;
 }
 
 .mt-date {
-    color: #8b9bb4;
-    font-size: 13px;
-    margin-left: 10px;
+    color: #d8d8ff;
+    font-size: 12px;
+    margin-left: 8px;
     font-weight: 500;
     white-space: nowrap;
 }
@@ -2864,4 +2867,15 @@ body.hide-filters .header-column {
         font-size: 12px;
         margin-left: 6px;
     }
+}
+
+/* Hide bottom nav when profile is active */
+body.profile-active .bottom-nav {
+    transform: translateY(100%);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.bottom-nav {
+    transition: transform 0.3s ease, opacity 0.3s ease;
 }

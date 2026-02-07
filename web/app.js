@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://derby-terminals-unions-researcher.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://dog-assumptions-keyboard-lived.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -575,6 +575,9 @@ function switchTab(index) {
             if (index === 2) baseTitle = t('numbers');
             headerTitle.innerText = baseTitle + (CURRENT_STATUS === 'rented' ? t('rent_title_suffix') : '');
         }
+
+        // Remove profile-active class
+        document.body.classList.remove('profile-active');
     } else { // Profile tab
         document.getElementById('market-container').style.display = 'none';
         document.getElementById('profile-container').style.display = 'block';
@@ -585,6 +588,9 @@ function switchTab(index) {
         if (window.Telegram && window.Telegram.WebApp) {
             tg.HapticFeedback.impactOccurred('medium');
         }
+
+        // Add profile-active class to hide bottom nav
+        document.body.classList.add('profile-active');
     }
 
     // NEW: Filter visibility logic
