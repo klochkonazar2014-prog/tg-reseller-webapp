@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://subsequently-fell-genesis-default.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://maximum-northern-tom-logan.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -1379,20 +1379,20 @@ async function openProductView(item) {
         mediaCont.innerHTML = renderMediaHTML(item);
     }
 
-    // NEW: Release Date Badge in Product View
+    // NEW: Release Date Badge in Product View - NOW WITH LIVE COUNTDOWN
     const releaseBadge = document.getElementById('view-release-badge');
     if (releaseBadge) {
         if (item.status === 'rented' && item.rent_ends_at) {
-            const date = new Date(item.rent_ends_at * 1000);
-            const dateStr = date.toLocaleDateString(t('lang') === 'ru' ? 'ru-RU' : 'en-US', { day: 'numeric', month: 'short' });
-            releaseBadge.innerHTML = `<div class="rental-badge rented" style="position:static; display:inline-flex; margin-bottom:12px;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:6px;">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <polyline points="12 6 12 12 16 14"></polyline>
-                </svg>
-                ${t('available_from')}: ${dateStr}
-            </div>`;
+            // Create a unique timer element ID
+            const timerId = 'release-timer-' + item.id;
+            releaseBadge.innerHTML = `<div id="${timerId}" style="margin-bottom:12px;"></div>`;
             releaseBadge.style.display = 'block';
+
+            // Start the countdown timer
+            const timerEl = document.getElementById(timerId);
+            if (timerEl) {
+                startCountdown(parseInt(item.rent_ends_at), timerEl);
+            }
         } else {
             releaseBadge.style.display = 'none';
         }
