@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://rare-oldest-addressing-remote.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://before-impression-wolf-destiny.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -1145,7 +1145,7 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
     `;
     div.onclick = (e) => {
         e.stopPropagation();
-        ACTIVE_FILTERS[key] = value;
+        ACTIVE_FILTERS[key] = value ? value.trim() : value;
 
         // Reset sub-filters if collection changed
         if (key === 'nft') {
@@ -1638,19 +1638,10 @@ async function openProductView(item) {
             const myOrder = myOrders.find(o => o.nft_address === item.nft_address && (o.status === 'rented' || o.status === 'active' || o.status === 'paid'));
 
             // 1. Status Banner Logic
-            if (item.status === 'rented' || (myOrder && myOrder.status === 'active')) {
-                const banner = document.getElementById('view-status-banner');
-                if (banner) {
-                    banner.style.display = 'block';
-                    if (myOrder) {
-                        banner.textContent = t('rented_by_you');
-                        banner.classList.add('bg-yellow');
-                    } else {
-                        banner.textContent = t('rented_by_others');
-                        banner.classList.add('bg-red');
-                    }
-                }
-            }
+            // 1. Status Banner Logic - REMOVED PER USER REQUEST
+            // The banner is now handled by the image overlay only.
+            const banner = document.getElementById('view-status-banner');
+            if (banner) banner.style.display = 'none';
 
             // 2. Button Logic for Own Order
             if (myOrder && myOrder.status === 'rented' && !myOrder.tc_link) {
@@ -1955,9 +1946,9 @@ function startCountdown(endTime, targetEl) {
     if (COUNTDOWN_INTERVALS[intervalKey]) clearInterval(COUNTDOWN_INTERVALS[intervalKey]);
 
     const endDate = new Date(endTime * 1000);
-    // Format: "Feb 8, 2026"
-    const dateStr = endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const dateStr = endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
+    // Market App Style: Ends in [0 days] : [14] : [37] : [02] Feb 8, 2026
     const update = () => {
         const now = Math.floor(Date.now() / 1000);
         const diff = endTime - now;
@@ -1974,29 +1965,29 @@ function startCountdown(endTime, targetEl) {
         const s = diff % 60;
         const pad = (n) => n.toString().padStart(2, '0');
 
-        // Market App Style: Ends in [0 days] : [14] : [37] : [02] Feb 8, 2026
         targetEl.innerHTML = `
-            <div class="countdown-market-container">
-                <span class="countdown-market-label">${t('ends_in')}</span>
+            <div class="market-timer-row">
+                <span class="mt-label">${t('ends_in')}</span>
                 
-                <div class="countdown-market-pill">${d} days</div>
-                <span class="countdown-market-sep">:</span>
+                <div class="mt-pill mt-wide">${d} ${t('days')}</div>
+                <span class="mt-sep">:</span>
                 
-                <div class="countdown-market-pill">${pad(h)}</div>
-                <span class="countdown-market-sep">:</span>
+                <div class="mt-pill">${pad(h)}</div>
+                <span class="mt-sep">:</span>
                 
-                <div class="countdown-market-pill">${pad(m)}</div>
-                <span class="countdown-market-sep">:</span>
+                <div class="mt-pill">${pad(m)}</div>
+                <span class="mt-sep">:</span>
                 
-                <div class="countdown-market-pill">${pad(s)}</div>
+                <div class="mt-pill">${pad(s)}</div>
                 
-                <span class="countdown-market-date">${dateStr}</span>
+                <span class="mt-date">${dateStr}</span>
             </div>
         `;
     };
 
     update();
     COUNTDOWN_INTERVALS[intervalKey] = setInterval(update, 1000);
+
 }
 
 function copyWallet() {

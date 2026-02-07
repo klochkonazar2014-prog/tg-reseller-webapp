@@ -1618,7 +1618,8 @@ tc-root {
     align-items: center;
     gap: 12px;
     margin-bottom: 28px;
-    padding: 0;
+    padding: 40px 0 0 0;
+    /* Added top padding */
 }
 
 /* Square Sphere Balance Card - Container for Avatar, Balance and + */
@@ -2790,4 +2791,54 @@ body.hide-filters .header-column {
     font-size: 14px;
     font-weight: 500;
     margin-left: 8px;
+}
+
+/* --- EXACT MARKET TIMER STYLE --- */
+.market-timer-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Inter', sans-serif;
+    /* or system default */
+    margin-top: 15px;
+}
+
+.mt-label {
+    color: #8b9bb4;
+    font-size: 14px;
+    font-weight: 500;
+    margin-right: 4px;
+}
+
+.mt-pill {
+    background: #252830;
+    /* Darker blue-grey background */
+    color: #fff;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    min-width: 32px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mt-wide {
+    padding: 6px 12px;
+    /* A bit wider for "0 days" */
+}
+
+.mt-sep {
+    color: #5d6372;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.mt-date {
+    color: #8b9bb4;
+    font-size: 14px;
+    margin-left: 8px;
+    font-weight: 500;
 }
