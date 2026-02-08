@@ -958,7 +958,8 @@ body {
     width: 36px;
     height: 36px;
     border-radius: 10px;
-    object-fit: cover;
+    object-fit: contain;
+    padding: 8px;
 }
 
 .filter-item-name {
@@ -1478,7 +1479,8 @@ body {
     width: 32px;
     height: 32px;
     border-radius: 8px;
-    object-fit: cover;
+    object-fit: contain;
+    padding: 6px;
     background: rgba(255, 255, 255, 0.05);
 }
 

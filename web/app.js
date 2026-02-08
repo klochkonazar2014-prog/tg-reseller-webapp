@@ -1194,7 +1194,6 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
         // CLEAN STRATEGY Phase 2:
         // 1. Models: Prefer local /models/ asset
         // 2. NFTs: Prefer TonAPI collection logo (extremely clean)
-        let icon = imgUrl;
         if (key === 'model') {
             icon = `/models/${name}.webp`;
         } else if (key === 'nft' && window.FILTERS_CACHE && window.FILTERS_CACHE.nft_addresses && window.FILTERS_CACHE.nft_addresses[name]) {
@@ -1210,7 +1209,7 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
         }
 
         visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: rgba(255, 255, 255, 0.05); border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
-            <img src="${icon}" class="filter-img" style="width:100%; height:100%; object-fit:contain; z-index:2; opacity:0; transition:opacity 0.2s;" 
+            <img src="${icon}" class="filter-img" style="width:100%; height:100%; object-fit:contain; z-index:2; opacity:0; transition:opacity 0.2s; padding:7px;" 
                 onload="this.style.opacity='1';"
                 onerror="handleFilterImageError(this, '${name.replace(/'/g, "\\'")}', '${(collectionContext || '').replace(/'/g, "\\'")}', '${(fallbackImgUrl || '').replace(/'/g, "\\'")}', '${key}')">
         </div>`;
