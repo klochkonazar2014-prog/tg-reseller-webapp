@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://belong-quantity-councils-plant.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://disc-dive-translations-breed.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -389,8 +389,8 @@ function getTelegifterUrl(type, name, collection, slugIndex = 0) {
     }
 
     if (type === 'model') {
-        // Use local caching endpoint (handled by live_server.py + model_cache.py)
-        return `/models/${cleanName}.webp`;
+        // Use relative path for GitHub Pages compatibility
+        return `models/${cleanName}.webp`;
     }
     return null;
 }
@@ -1186,12 +1186,16 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
             <div style="position:absolute; top:0; left:0; width:100%; height:100%; background: url('https://telegifter.ru/wp-content/themes/gifts/assets/img/bg-logo-mini.webp'); opacity:0.3; background-size: 20px;"></div>
         </div>`;
     } else if (imgUrl && !isBadUrl(imgUrl) && key !== 'symbol' && key !== 'bg') {
+        // Validation to avoid 'undefined' in URLs
+        const safeName = (name || '').toString();
+        const safeCol = (collectionContext || '').toString();
+
         const fallback = (fallbackImgUrl && !isBadUrl(fallbackImgUrl)) ? fallbackImgUrl : 'https://nft.fragment.com/guide/gift.svg';
         // For models, if local fails, use collection fallback as the "normal" Fragment image
-        const collFallback = (key === 'nft' || key === 'model') ? getCollectionFallback(collectionContext || name) : fallback;
+        const collFallback = (key === 'nft' || key === 'model') ? getCollectionFallback(safeCol || safeName) : fallback;
 
         visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: rgba(255, 255, 255, 0.05); border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
-            <span style="color:#8b9bb4; font-size:11px; font-weight:700; position:absolute; z-index:1;">${name.substring(0, 3).toUpperCase()}</span>
+            <span style="color:#8b9bb4; font-size:11px; font-weight:700; position:absolute; z-index:1;">${safeName.substring(0, 3).toUpperCase()}</span>
             <img src="${imgUrl}" class="filter-img" style="width:100%; height:100%; object-fit:contain; z-index:2; opacity:0; transition:opacity 0.2s;" 
                 onload="this.style.opacity='1';"
                 onerror="
@@ -1199,8 +1203,10 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
                         this.src = this.src.replace('.webp', '.png');
                         return;
                     }
-                    const name = '${name.replace(/'/g, "\\'")}';
+                    const name = '${(name || '').replace(/'/g, "\\'")}';
                     const key = '${key}';
+                    if (!name || name === 'undefined') return;
+
                     if (key === 'nft') {
                         this.src = getCollectionFallback(name);
                         this.style.opacity = '1';
@@ -1208,10 +1214,14 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
                         return;
                     }
                     const col = '${(collectionContext || '').replace(/'/g, "\\'")}';
+                    if (!col || col === 'undefined') {
+                        this.src = 'https://nft.fragment.com/guide/gift.svg';
+                        return;
+                    }
                     this.dataset.slugIndex = this.dataset.slugIndex ? parseInt(this.dataset.slugIndex) + 1 : 1;
                     
                     // If model local image failed, immediately try collection fallback if available
-                    if (key === 'model' && col && this.src !== getCollectionFallback(col)) {
+                    if (key === 'model' && col && col !== 'undefined' && this.src !== getCollectionFallback(col)) {
                         this.src = getCollectionFallback(col);
                         this.style.opacity = '1';
                         return;
