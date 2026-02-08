@@ -57,29 +57,47 @@ async def handle_live_items(request):
     try:
         async with db.aiosqlite.connect(db.DB_PATH, timeout=30) as conn:
             conn.row_factory = db.aiosqlite.Row
+            
+            # Build basic query WITHOUT json_extract to avoid malformed JSON issues
             query = f"SELECT * FROM items WHERE status = ?"
             params = [s_filter]
             
             if t_filter == 'gift':
+                # Exclude internal assets AND Usernames/Numbers
                 query += " AND type = 'gift' AND metadata NOT LIKE '%ton_symbol.png%' AND metadata NOT LIKE '%gift.svg%' AND metadata IS NOT NULL"
-            else: query += f" AND type = ?" ; params.append(t_filter)
-            if f_nft and f_nft != 'all': query += " AND json_extract(metadata, '$.collection') = ?"; params.append(f_nft)
-            if f_model and f_model != 'all': query += " AND json_extract(metadata, '$.model') = ?"; params.append(f_model)
-            if f_bg and f_bg != 'all': query += " AND json_extract(metadata, '$.backdrop') = ?"; params.append(f_bg)
-            if f_symbol and f_symbol != 'all': query += " AND json_extract(metadata, '$.symbol') = ?"; params.append(f_symbol)
-            if f_search: query += " AND (title LIKE ? OR nft_address LIKE ?)"; params.extend([f"%{f_search}%", f"%{f_search}%"])
-            
-            count_query = f"SELECT COUNT(*) FROM ({query})"
-            async with conn.execute(count_query, params) as c: total_found = (await c.fetchone())[0]
+                query += " AND title NOT LIKE '@%' AND title NOT LIKE '+888%'"
+            else:
+                query += f" AND type = ?"
+                params.append(t_filter)
+                
+            if f_search:
+                query += " AND (title LIKE ? OR nft_address LIKE ?)"
+                params.extend([f"%{f_search}%", f"%{f_search}%"])
 
+            # Fetch all matching rows (without metadata filters in SQL)
             order_by = "price_per_day ASC" if f_sort == 'price_asc' else "price_per_day DESC" if f_sort == 'price_desc' else "id DESC"
-            async with conn.execute(f"{query} ORDER BY {order_by} LIMIT ? OFFSET ?", params + [limit, offset]) as cursor:
-                rows = await cursor.fetchall()
+            async with conn.execute(f"{query} ORDER BY {order_by}", params) as cursor:
+                all_rows = await cursor.fetchall()
             
-            items = []
-            for r in rows:
-                m = json.loads(r['metadata'] or "{}")
-                items.append({
+            # NOW filter by metadata in Python (safe from malformed JSON)
+            filtered_items = []
+            for r in all_rows:
+                try:
+                    m = json.loads(r['metadata'] or "{}")
+                except Exception:
+                    continue  # Skip items with bad JSON
+                
+                # Apply metadata filters
+                if f_nft and f_nft != 'all' and m.get("collection") != f_nft:
+                    continue
+                if f_model and f_model != 'all' and m.get("model") != f_model:
+                    continue
+                if f_bg and f_bg != 'all' and m.get("backdrop") != f_bg:
+                    continue
+                if f_symbol and f_symbol != 'all' and m.get("symbol") != f_symbol:
+                    continue
+                
+                filtered_items.append({
                     "id": r['id'],
                     "type": r['type'] or 'gift',
                     "nft_name": r['title'],
@@ -96,9 +114,16 @@ async def handle_live_items(request):
                     "_backdrop": m.get("backdrop"), 
                     "_symbol": m.get("symbol")
                 })
-
-            return web.json_response({"items": items, "total_available": total_found, "offset": offset})
+            
+            # Apply pagination
+            total_found = len(filtered_items)
+            paginated_items = filtered_items[offset:offset + limit]
+            
+            return web.json_response({"items": paginated_items, "total_available": total_found, "offset": offset})
     except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        logging.error(f"[handle_live_items] Error: {error_details}")
         return web.json_response({"items": [], "error": str(e)}, status=500)
 
 async def handle_filter_data(request):
@@ -204,6 +229,7 @@ async def cors_middleware(request, handler):
 
 app = web.Application(middlewares=[cors_middleware])
 app.router.add_get('/', handle_index)
+app.router.add_static('/models/', path='./web/models/', name='models')
 app.router.add_get('/api/items', handle_live_items)
 app.router.add_get('/api/filters', handle_filter_data)
 app.router.add_get('/api/prepare_rent', handle_prepare_rent)

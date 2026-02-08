@@ -63,7 +63,7 @@ async def fetch_nft_details(session, addr, item_type):
                 name_part, num_part = full_name.rsplit(" #", 1)
                 
                 # Normalize name to slug: remove all non-alphanumeric, lowercase
-                # "Khabib’s Papakha" -> "khabibspapakha"
+                # Fragment prefers concatenated slugs for most gifts: "Eternal Rose" -> "eternalrose"
                 slug = re.sub(r'[^a-z0-9]', '', name_part.lower())
                 
                 image_url = f"https://nft.fragment.com/gift/{slug}-{num_part}.webp"
@@ -266,35 +266,88 @@ async def discover_rented_items(session, cycle_start_str):
         await asyncio.sleep(0.5) # throttle
 
 async def update_filters_cache(session):
-    """Rebuild the static filters cache for the web app UI"""
-    # ... (code same as before, simplified for brevity in this replacement)
-    # Actually, let's keep it simple or assume it's there. 
-    # Since I'm replacing a huge chunk, I should include it.
-    logging.info("Updating filters cache...")
+    """Rebuild the static filters cache using MarketApp API for full attribute data"""
+    logging.info("Updating filters cache from MarketApp API...")
     try:
-        models = await db.get_unique_models()
-        async with db.aiosqlite.connect(db.DB_PATH) as conn:
-            conn.row_factory = db.aiosqlite.Row
-            async with conn.execute("SELECT metadata FROM items WHERE type = 'gift' AND status = 'available'") as cursor:
-                rows = await cursor.fetchall()
-            bgs = set()
-            symbols = set()
-            for r in rows:
-                try:
-                    m = json.loads(r['metadata'])
-                    if m.get('backdrop'): bgs.add(m['backdrop'])
-                    if m.get('symbol'): symbols.add(m['symbol'])
-                except: continue
+        # 1. Get all gift collections
+        collections_data = await fetch_api(session, "/collections/gifts/")
+        if not collections_data:
+            logging.error("Failed to fetch gift collections")
+            return
+        
+        collections = []
+        models_map = {}
+        all_backdrops = set()
+        all_symbols = set()
+        
+        logging.info(f"Found {len(collections_data)} gift collections, fetching attributes...")
+        
+        # 2. For each collection, fetch attributes
+        for idx, col in enumerate(collections_data):
+            col_name = col.get("name")
+            col_address = col.get("address")
+            
+            if not col_name or not col_address:
+                continue
+            
+            collections.append(col_name)
+            
+            # Fetch attributes for this collection
+            attrs_data = await fetch_api(session, f"/collections/{col_address}/attributes/")
+            if not attrs_data or "attributes" not in attrs_data:
+                logging.warning(f"No attributes for {col_name}")
+                continue
+            
+            collection_models = []
+            
+            # Parse attributes
+            for attr in attrs_data["attributes"]:
+                trait_type = attr.get("trait_type")
+                values = attr.get("values", [])
+                
+                if trait_type == "Model":
+                    # Add all model values for this collection
+                    collection_models.extend([v["value"] for v in values if "value" in v])
+                
+                elif trait_type == "Backdrop":
+                    # Collect all unique backdrops across collections
+                    all_backdrops.update([v["value"] for v in values if "value" in v])
+                
+                elif trait_type == "Symbol":
+                    # Collect all unique symbols across collections
+                    all_symbols.update([v["value"] for v in values if "value" in v])
+            
+            if collection_models:
+                models_map[col_name] = sorted(collection_models)
+            
+            # Progress log every 100 collections
+            if (idx + 1) % 100 == 0:
+                logging.info(f"Processed {idx + 1}/{len(collections_data)} collections...")
+            
+            # Small delay to avoid rate limiting
+            await asyncio.sleep(0.1)
+        
+        # 3. Build final cache structure
         cache = {
-            "nfts": models,
-            "backdrops": sorted(list(bgs)),
-            "symbols": sorted(list(symbols))
+            "nfts": sorted(collections),
+            "nft_addresses": {col.get("name"): col.get("address") for col in collections_data if col.get("name") and col.get("address")},
+            "models_map": models_map,
+            "backdrops": sorted(list(all_backdrops)),
+            "symbols": sorted(list(all_symbols))
         }
+        
+        # 4. Save to file
         with open("filters_cache.json", "w", encoding="utf-8") as f:
             json.dump(cache, f, ensure_ascii=False, indent=2)
-        logging.info("Filters cache updated.")
+        
+        total_models = sum(len(m) for m in models_map.values())
+        logging.info(f"✅ Filters cache updated: {len(collections)} collections, {total_models} models, {len(all_backdrops)} backdrops, {len(all_symbols)} symbols")
+    
     except Exception as e:
         logging.error(f"Filters cache update failed: {e}")
+        import traceback
+        traceback.print_exc()
+
 
 async def main_loop():
     await db.init_db()
