@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://jeffrey-surveillance-similar-nation.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://championship-lafayette-copied-naples.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -402,7 +402,8 @@ const SLUG_MAPPING = {
     'santasgifts': 'santasgifts',
     'calaveras': 'calavera',
     'snowmans': 'snowman',
-    'witchesbrooms': 'witchesbroom'
+    'witchesbrooms': 'witchesbroom',
+    'gemsignets': 'signetring'
 };
 
 function getTelegifterUrl(type, name, collection, slugIndex = 0) {
@@ -1490,19 +1491,9 @@ function handleFilterImageError(img, name, collection, fallback, key) {
     img.dataset.attempt = img.dataset.attempt ? parseInt(img.dataset.attempt) + 1 : 1;
     const attempt = parseInt(img.dataset.attempt);
 
-    if (attempt === 1) {
-        // 1. If it's a model and telegifter/local load failed
-        if (key === 'model') {
-            // 1.1 Try Telegifter Collection Image (Beautiful/Singular)
-            // This is the "Best Guess" fallback if the specific model image is missing
-            if (collection) {
-                const singular = singularizeCollection(collection);
-                const cleanSingular = encodeURIComponent(singular);
-                img.src = `${TG_ASSETS_URL}/noupdate/${cleanSingular}.webp`;
-                return;
-            }
-        }
-    }
+    // --- DELETED: attempt === 1 collection fallback for models ---
+    // This was causing models to show the collection image when model image was missing,
+    // which was confusing for the users. Now we only allow model-specific fallbacks.
 
     if (attempt === 2) {
         // 1.2 Try hyphenated local name for Models
@@ -1541,13 +1532,13 @@ function handleFilterImageError(img, name, collection, fallback, key) {
     }
 
     if (attempt === 2) {
-        // 2. Try generic Fragment URL for models/nfts (gift type)
-        // If it's a model (e.g. "Red"), its name alone isn't enough on Fragment, 
-        // so we use the collection name (e.g. "Clover Pins") as the source
-        let n = (key === 'model' && collection) ? collection : name;
+        // 2. Try generic Fragment URL for models/nfts
+        // We now ALWAYS use the specific name (model or NFT) to avoid showing 
+        // collection images for missing models.
+        let n = name;
         if (n && !n.includes('#')) {
-            // Basic singularization for "Clover Pins" -> "Clover Pin"
-            if (n.endsWith('s') && n.length > 4) n = n.slice(0, -1);
+            // Basic singularization
+            n = singularizeCollection(n);
 
             const f = generateFragmentUrls(n + " #1", 0);
             if (f.image && f.image !== img.src.split('?')[0]) {
@@ -1559,9 +1550,9 @@ function handleFilterImageError(img, name, collection, fallback, key) {
 
     if (attempt === 3) {
         // 3. Try hyphenated fallback
-        let n = (key === 'model' && collection) ? collection : name;
+        let n = name;
         if (n && !n.includes('#')) {
-            if (n.endsWith('s') && n.length > 4) n = n.slice(0, -1);
+            n = singularizeCollection(n);
 
             const f = generateFragmentUrls(n + " #1", 1);
             if (f.image && f.image !== img.src.split('?')[0]) {
