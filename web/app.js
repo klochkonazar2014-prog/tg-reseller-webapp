@@ -6,7 +6,9 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://connections-mime-publicly-countries.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://shakira-stylus-durable-appear.trycloudflare.com"; // Updated to match actual hosting if needed, but for API calls it should probably be the tunnel. Wait, the user has a tunnel URL in line 9. Let's keep it but check why it might fail.
+// Actual dynamic backend usually comes from env or is hardcoded. Looking at line 9:
+// const BACKEND_URL = "https://shakira-stylus-durable-appear.trycloudflare.com"; 
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -85,7 +87,7 @@ const TRANSLATIONS = {
         rent_days: "Аренда на {min}–{max} дн.",
         per_day: "В день",
         min_price: "Мин. цена",
-        you_will_send: "Вы дополнительно отправите {amount} TON для обработки транзакции. Остаток TON будет возвращен вам.",
+        you_will_send: "(Дополнительно вам потребуется отправить 0,2 тонны для обработки транзакции. Оставшаяся тонна будет вам возвращена. Что это значит?",
         processing: "Подключение...",
         success_tc: "Успешно! Теперь вернитесь на Fragment и нажмите Display in Telegram.",
         tc_link_placeholder: "Вставьте tc:// ссылку с Fragment",
@@ -132,16 +134,13 @@ const TRANSLATIONS = {
         status_rented: "Ожидает ссылку",
         just_now: "Только что",
         hours_ago: "ч. назад",
-        what_is_this_long: "Вы отправляете небольшую сумму TON для покрытия комиссии сети и работы сервиса. Остаток будет возвращен вам автоматически.",
+        what_is_this_long: "<b>Зачем нужны дополнительные 0,2 тонны?</b><br>Дополнительно 0,2 тонны отправляется для обработки транзакции по аренде в блокчейне.<br>Эти средства используются для оплаты сетевых сборов и выполнения смарт-контракта.<br>Фактические затраты обычно составляют всего несколько центов. Это можно увидеть в истории транзакций.<br><br><b>Это нормально?</b><br>Это стандартная практика для транзакций в сети TON и не только. Невозвратная часть идет на оплату комиссий сети, а не на оплату услуг платформы.",
         wallet_mgmt: "Управление кошельком",
         copy_address: "Копировать адрес",
         disconnect_wallet: "Отключить кошелек",
         all: "Все",
         select_all: "Выбрать все",
         select_collection_first: "Выберите NFT коллекцию, чтобы увидеть список моделей.",
-        listing_warning: "Этот подарок был выставлен на аренду менее 24 часов назад.",
-        listing_help_title: "Ограничение 24 часа",
-        listing_help_text: "Telegram ограничивает смену отображаемого подарка в профиле: если вы арендуете этот подарок и установите его в профиль, вы не сможете сменить его на другой до истечения 24 часов с момента его последнего выставления (листинга).",
         search_filter_hint: "Поиск {label}...",
         search_filter_global: " (Все NFT)",
         sort_price_asc: "Цена (По возрастанию)",
@@ -169,7 +168,9 @@ const TRANSLATIONS = {
         ends_in: "Освободится через",
         days_label: "Дни",
         day_label: "День",
-        days_2_4: "Дня"
+        days_2_4: "Дня",
+        listing_warning_title: "Подарок, выставленный на аренду менее чем на 24 часа.",
+        listing_warning_body: `<b>Почему это важно?</b><br>Этот подарок недавно был выставлен на аренду (менее 24 часов назад).<br>Fragment устанавливает ограничение на количество раз в день, когда подарок может быть привязан к аккаунту Telegram.<br><br><b>Что это значит?</b><br>Если предыдущий владелец или арендатор недавно исчерпал этот лимит, вы не сможете сразу привязать подарок к своему аккаунту в Telegram. Возможно, вам придётся подождать день.<br><br>Аренда на свой страх и риск!`
     },
     en: {
         gifts: "Gifts",
@@ -229,13 +230,10 @@ const TRANSLATIONS = {
         status_rented: "Awaiting link",
         just_now: "Just now",
         hours_ago: "h ago",
-        what_is_this_long: "You are sending a small amount of TON to cover network fees and service operations. The remainder will be returned to you automatically.",
+        what_is_this_long: "<b>Why an extra 0.2 TON?</b><br>An additional 0.2 TON is sent to process the rental transaction on the blockchain.<br>These funds are used to pay network fees and execute the smart contract.<br>Actual costs are usually just a few cents. You can see this in your transaction history.<br><br><b>Is this normal?</b><br>This is standard practice for transactions on the TON network and beyond. The non-refundable portion goes towards network fees, not platform service fees.",
         all: "All",
         select_all: "Select all",
         select_collection_first: "Select an NFT collection first to see models.",
-        listing_warning: "This gift was listed less than 24 hours ago.",
-        listing_help_title: "24-hour Limit",
-        listing_help_text: "Telegram limits how often you can change the displayed gift in your profile. If you rent and display this gift, you won't be able to change it for another one until 24 hours have passed since its last listing.",
         search_filter_hint: "Search {label}...",
         search_filter_global: " (All NFTs)",
         sort_price_asc: "Price (Low to High)",
@@ -260,7 +258,9 @@ const TRANSLATIONS = {
         ends_in: "Ends in",
         days_label: "Days",
         day_label: "Day",
-        days_2_4: "Days"
+        days_2_4: "Days",
+        listing_warning_title: "Gift listed for rent less than 24 hours ago.",
+        listing_warning_body: `<b>Why is this important?</b><br>This gift was recently listed for rent (less than 24 hours ago).<br>Fragment sets a limit on the number of times per day a gift can be linked to a Telegram account.<br><br><b>What does this mean?</b><br>If the previous owner or tenant has recently exhausted this limit, you won't be able to link the gift to your Telegram account immediately. You might have to wait a day.<br><br>Rent at your own risk!`
     }
 };
 
@@ -671,17 +671,13 @@ function showHelp(type, amount) {
     const title = document.getElementById('help-title');
     const body = document.getElementById('help-body');
 
-    if (type === 'fee') {
+    if (type === 'listing') {
+        title.innerText = t('listing_warning_title');
+        body.innerHTML = `<div style="color:#fff;">${t('listing_warning_body')}</div>`;
+    } else {
         title.innerText = t('what_is_this');
         body.innerHTML = `
-            <div style="font-weight:700; color:#fff; margin-bottom:10px;">${t('what_is_this_long')}</div>
-            <div style="color:#8b9bb4;">${t('you_will_send', { amount: amount || '0.2' })}</div>
-        `;
-    } else if (type === 'listing') {
-        title.innerText = t('listing_help_title');
-        body.innerHTML = `
-            <div style="font-weight:700; color:#fff; margin-bottom:10px;">${t('listing_warning')}</div>
-            <div style="color:#8b9bb4;">${t('listing_help_text')}</div>
+            <div style="font-weight:700; color:#fff; margin-bottom:10px;">${t('you_will_send', { amount: amount })}</div>
         `;
     }
 
@@ -1655,28 +1651,6 @@ async function openProductView(item) {
     if (banner) { banner.style.display = 'none'; banner.className = 'status-banner'; }
     const countdownCont = document.getElementById('view-countdown-container');
     if (countdownCont) countdownCont.style.display = 'none';
-
-    // Listing Warning Logic
-    const listingWarningBox = document.getElementById('listing-warning-box');
-    const listedTimeEl = document.getElementById('view-listed-time');
-    if (listingWarningBox) {
-        if (item.type === 'gift' && item.listed_at) {
-            const now = Math.floor(Date.now() / 1000);
-            const diffHours = (now - item.listed_at) / 3600;
-
-            if (diffHours < 24) {
-                listingWarningBox.style.display = 'block';
-                const date = new Date(item.listed_at * 1000);
-                if (listedTimeEl) {
-                    listedTimeEl.innerText = date.toLocaleString();
-                }
-            } else {
-                listingWarningBox.style.display = 'none';
-            }
-        } else {
-            listingWarningBox.style.display = 'none';
-        }
-    }
 
     // Hide Address
     const addrDom = document.getElementById('view-address');
