@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://dollars-faqs-indirect-homework.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://kay-gained-accompanied-oliver.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -509,6 +509,16 @@ document.addEventListener("DOMContentLoaded", async () => {
                         }
                     }).catch(e => console.error("Deep link fetch error:", e));
             }
+
+    // FIX: Add click handler for product-view background
+    const productView = document.getElementById('product-view');
+    if (productView) {
+        productView.addEventListener('click', function(e) {
+            if (e.target.id === 'product-view') {
+                closeProductView();
+            }
+        });
+    }
         }
 
         document.getElementById('search-input').addEventListener('input', debounce((e) => {
