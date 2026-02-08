@@ -685,6 +685,8 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: flex-end;
+    /* Кнопки внизу */
     padding-top: 10px;
     z-index: 999;
     height: calc(125px + var(--safe-area-bottom));
@@ -1109,6 +1111,8 @@ body {
     overflow-y: scroll !important;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
+    padding-bottom: 100px;
+    /* Создаём кликабельную область */
 }
 
 .product-view.active {
