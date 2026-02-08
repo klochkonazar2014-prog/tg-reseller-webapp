@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://touch-computing-sufficiently-psychology.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://grounds-namespace-experts-removable.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -17,6 +17,12 @@ let IS_LOADING = false;
 let GLOBAL_OFFSET = 0;
 let HAS_MORE = true;
 let CURRENT_TYPE = 'gift'; // Default: gifts
+let NFT_ADDRESSES = {};
+let MODELS_MAP = {};
+let MODEL_EXAMPLES = {}; // NEW: Example numbers for each model
+let BACKDROPS = [];
+let SYMBOLS = [];
+let ATTR_STATS = {}; // Statistics per collection
 let CURRENT_STATUS = 'available'; // available, rented
 let GLOBAL_TON_PRICE = 0;
 let FRIENDLY_ADDR_CACHE = {};
@@ -292,9 +298,6 @@ function truncateMiddle(str, maxLength = 9) {
     return isUser ? '@' + res : res;
 }
 
-let ATTR_STATS = { model: {}, bg: {}, symbol: {} };
-let CURRENT_PAYMENT_ITEM = null;
-
 // NEW: Visual mapping for premium look
 const VISUAL_MAP = {
     bg: {
@@ -387,29 +390,18 @@ function getTelegifterUrl(type, name, collection, slugIndex = 0) {
     }
 
     if (type === 'model') {
-        // Models use format: https://nft.fragment.com/gift/modelslug-number.medium.jpg
-        // We don't know the exact number, so we'll try common ones
-        const slugBase = name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/[\s]+/g, '');
+        // Models: Use local files downloaded from Fragment
+        // Each collection has a model.webp file (the first model from that collection)
+        if (!collection) return null;
 
-        // Try different number variations
-        const numbers = [888, 1, 777, 555, 123, 100];
-        if (slugIndex < numbers.length) {
-            return `https://nft.fragment.com/gift/${slugBase}-${numbers[slugIndex]}.medium.jpg`;
-        }
-
-        // Try hyphenated version after exhausting numbers
-        if (slugIndex === numbers.length) {
-            const hyphenated = name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/[\s]+/g, '-').replace(/^-|-$/g, '');
-            return `https://nft.fragment.com/gift/${hyphenated}-${numbers[0]}.medium.jpg`;
-        }
-
-        return null;
+        const collectionSlug = collection.toLowerCase().replace(/[^a-z0-9]/g, '');
+        return `/file/gifts/${collectionSlug}/model.webp`;
     }
 
     if (type === 'nft') {
-        // NFT collections use format: https://nft.fragment.com/file/gifts/collectionslug/thumb.webp
+        // NFT collections: Use local thumb.webp
         const collectionSlug = name.toLowerCase().replace(/[^a-z0-9]/g, '');
-        return `https://nft.fragment.com/file/gifts/${collectionSlug}/thumb.webp`;
+        return `/file/gifts/${collectionSlug}/thumb.webp`;
     }
 
     return null;
@@ -945,51 +937,48 @@ function selectNftChip(addr, btn) {
 async function loadFilterData() {
     try {
         console.log('[FILTERS] Loading from:', `${BACKEND_URL}/api/filters`);
-        const res = await fetch(`${BACKEND_URL}/api/filters`);
-        const data = await res.json();
+        const resp = await fetch(`${BACKEND_URL}/api/filters`);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const data = await resp.json();
+
         console.log('[FILTERS] Received keys:', Object.keys(data));
 
-        if (data) {
-            // NFTs = collections
-            if (data.nfts && Array.isArray(data.nfts)) {
-                window.STATIC_COLLECTIONS = data.nfts.map(name => ({ name, image: null }));
-            }
+        NFT_ADDRESSES = data.nft_addresses || {};
+        MODELS_MAP = data.models_map || {};
+        MODEL_EXAMPLES = data.model_examples || {}; // NEW: Load model examples
+        BACKDROPS = data.backdrops || [];
+        SYMBOLS = data.symbols || [];
 
-            // Convert array backdrops/symbols to nested format {collectionName: [{name, image}]}
-            const convertArrayToMap = (arr) => {
-                if (!Array.isArray(arr)) return {};
-                const items = arr.map(name => ({ name, image: null }));
-                return { "ALL": items }; // Group all under "ALL" pseudo-collection
-            };
+        console.log('[FILTERS] Loaded', Object.keys(MODEL_EXAMPLES).length, 'model examples');
 
-            // Models_map: already in correct format {collection: [model1, model2]}
-            // But need to convert model strings to objects {name, image}
-            const convertModelsMap = (map) => {
-                if (!map || typeof map !== 'object') return {};
-                const result = {};
-                for (const [collection, models] of Object.entries(map)) {
-                    if (Array.isArray(models)) {
-                        result[collection] = models.map(name => ({ name, image: null }));
-                    }
-                }
-                return result;
-            };
+        // Build ATTR_STATS structure
+        ATTR_STATS = {
+            model: {},
+            bg: {},
+            symbol: {}
+        };
 
-            ATTR_STATS = {
-                model: data.models_map ? convertModelsMap(data.models_map) : {},
-                bg: data.backdrops ? convertArrayToMap(data.backdrops) : {},
-                symbol: data.symbols ? convertArrayToMap(data.symbols) : {}
-            };
+        // Process models
+        Object.entries(MODELS_MAP).forEach(([nftName, models]) => {
+            ATTR_STATS.model[nftName] = models.map(m => ({ name: m, image: null }));
+        });
 
-            console.log('[FILTERS] Loaded successfully:', {
-                collections: window.STATIC_COLLECTIONS?.length || 0,
-                model_collections: Object.keys(ATTR_STATS.model).length,
-                total_models: Object.values(ATTR_STATS.model).reduce((sum, arr) => sum + arr.length, 0),
-                backdrops: data.backdrops?.length || 0,
-                symbols: data.symbols?.length || 0
-            });
-            initFilterLists();
-        }
+        // Process backdrops and symbols globally
+        ATTR_STATS.bg['global'] = BACKDROPS.map(b => ({ name: b, image: null }));
+        ATTR_STATS.symbol['global'] = SYMBOLS.map(s => ({ name: s, image: null }));
+
+        // NFTs for collection list
+        window.STATIC_COLLECTIONS = (data.nfts || []).map(name => ({ name, image: null }));
+
+        console.log('[FILTERS] Loaded successfully:', {
+            collections: window.STATIC_COLLECTIONS?.length || 0,
+            model_collections: Object.keys(ATTR_STATS.model).length,
+            total_models: Object.values(ATTR_STATS.model).reduce((sum, arr) => sum + arr.length, 0),
+            backdrops: BACKDROPS.length,
+            symbols: SYMBOLS.length,
+            model_examples: Object.keys(MODEL_EXAMPLES).length
+        });
+        initFilterLists();
     } catch (e) {
         console.error("Filter Load Error:", e);
     }
