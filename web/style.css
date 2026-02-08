@@ -960,6 +960,7 @@ body {
     border-radius: 10px;
     object-fit: contain;
     padding: 8px;
+    box-sizing: border-box;
 }
 
 .filter-item-name {
@@ -1480,8 +1481,9 @@ body {
     height: 32px;
     border-radius: 8px;
     object-fit: contain;
-    padding: 6px;
+    padding: 8px;
     background: rgba(255, 255, 255, 0.05);
+    box-sizing: border-box;
 }
 
 .filter-color-circle {

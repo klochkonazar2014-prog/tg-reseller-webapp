@@ -291,8 +291,8 @@ function getTelegifterUrl(type, name, collection, slugIndex = 0) {
     }
 
     if (type === 'model') {
-        // Use local caching endpoint (handled by live_server.py + model_cache.py)
-        return `/models/${cleanName}.webp`;
+        const s3Hash = "06a55d5908016b6dc14a7ef03afd869a";
+        return `https://i2.anton.market/a/${s3Hash}/marketapp/gifts/model/${cleanName}.webp`;
     }
     return null;
 }

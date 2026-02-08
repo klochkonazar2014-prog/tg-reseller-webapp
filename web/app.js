@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://football-intent-gardens-gardens.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://lobby-pencil-regards-newer.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -387,8 +387,8 @@ function getTelegifterUrl(type, name, collection, slugIndex = 0) {
     }
 
     if (type === 'model') {
-        // Use local caching endpoint (handled by live_server.py + model_cache.py)
-        return `/models/${cleanName}.webp`;
+        const s3Hash = "06a55d5908016b6dc14a7ef03afd869a";
+        return `https://i2.anton.market/a/${s3Hash}/marketapp/gifts/model/${cleanName}.webp`;
     }
     return null;
 }
@@ -1421,13 +1421,12 @@ function handleFilterImageError(img, name, collection, fallback, key) {
     const attempt = parseInt(img.dataset.attempt);
 
     if (attempt === 1) {
-        // 1. If it's a model and local load failed, try hyphenated local name: "Big Brother" -> "Big-Brother.webp"
-        if (key === 'model' && !img.src.includes('-refresh=') && !img.src.includes('tonapi.io') && !img.src.includes('hyphen')) {
+        // 1. If it's a model and anton.market or local load failed, try hyphenated local name
+        if (key === 'model' && (img.src.includes('anton.market') || img.src.includes('/models/')) && !img.src.includes('-refresh=') && !img.src.includes('tonapi.io') && !img.src.includes('hyphen')) {
             const hyphenated = name.replace(/\s+/g, '-');
-            if (hyphenated !== name) {
-                img.src = `/models/${hyphenated}.webp?attempt=hyphen`;
-                return;
-            }
+            // Try local fallback first if anton.market fails
+            img.src = `/models/${hyphenated}.webp?attempt=hyphen`;
+            return;
         }
 
         // 2. Try the Collection image (clean/base gift) from TonAPI
@@ -1450,11 +1449,11 @@ function handleFilterImageError(img, name, collection, fallback, key) {
 
         // 4. Last resort Fragment fallback for models if TonAPI also failed
         if (key === 'model' && !img.src.includes('fragment.com') && !img.src.includes('tonapi.io')) {
-             const f = generateFragmentUrls(name + " #1", 0);
-             if (f.image) {
-                 img.src = f.image;
-                 return;
-             }
+            const f = generateFragmentUrls(name + " #1", 0);
+            if (f.image) {
+                img.src = f.image;
+                return;
+            }
         }
 
         // Try cache-busting the current URL
