@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://studios-swimming-exactly-adopt.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://screw-tex-parallel-thank.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -19,7 +19,9 @@ let HAS_MORE = true;
 let CURRENT_TYPE = 'gift'; // Default: gifts
 let NFT_ADDRESSES = {};
 let MODELS_MAP = {};
-let MODEL_EXAMPLES = {}; // NEW: Example numbers for each model
+let MODEL_EXAMPLES = {};
+let SYMBOL_EXAMPLES = {};
+// NEW: Example numbers for each model
 let BACKDROPS = [];
 let SYMBOLS = [];
 let ATTR_STATS = {}; // Statistics per collection
@@ -363,78 +365,78 @@ const TG_ASSETS_URL = "https://telegifter.ru/wp-content/themes/gifts/assets/img/
 const TG_SLUGS = ["berrybox", "artisanbrick", "prettyposy", "alphadogs", "voodoodoll", "ducks", "frog", "moneypot", "sparkler", "watch", "flower", "heart", "egg", "pear", "cocktail", "cactus", "jellyfish", "turtle", "gem", "gift", "box", "pot", "shard", "b-daycandle", "happybrownie", "astralshard", "kissedfrog", "plushpepe"];
 
 const SLUG_MAPPING = {
-    'Artisan Bricks': 'artisanbrick',
-    'Berry Boxes': 'berrybox',
-    'Falling Stars': 'fallingstar',
-    'Ginger Cookies': 'gingercookie',
-    'Holiday Drinks': 'holidaydrink',
-    'Jacks-in-the-Box': 'jackinthebox',
-    'Loot Bags': 'lootbag',
-    'Neko Helmets': 'nekohelmet',
-    'Pixel Art': 'pixelart',
-    'Snow Mittens': 'snowmitten',
-    'Snake Boxes': 'snakebox',
-    'Spring Baskets': 'springbasket',
-    'Valentine Boxes': 'valentinebox',
-    'Toy Bears': 'toybear',
-    'Bonded Rings': 'bondedring',
-    'Flying Brooms': 'flyingbroom',
-    'Astral Shards': 'astralshard',
-    'Hanging Stars': 'hangingstar',
-    'Joyful Bundles': 'joyfulbundle',
-    'Bling Binkies': 'blingbinky',
-    'Durov\'s Caps': 'durovscap',
-    'Durov’s Caps': 'durovscap',
-    'Jelly Bunnies': 'jellybunny',
-    'Precious Peaches': 'preciouspeach',
-    'Pretty Posies': 'prettyposy',
-    'Swiss Watches': 'swisswatch',
-    'Khabib\'s Papakhas': 'khabibspapakha',
-    'Khabib’s Papakhas': 'khabibspapakha',
+    'Artisan Bricks': 'artisanbrick', 'Berry Boxes': 'berrybox', 'Falling Stars': 'fallingstar',
+    'Ginger Cookies': 'gingercookie', 'Holiday Drinks': 'holidaydrink', 'Jacks-in-the-Box': 'jackinthebox',
+    'Loot Bags': 'lootbag', 'Neko Helmets': 'nekohelmet', 'Pixel Art': 'pixelart', 'Snow Mittens': 'snowmitten',
+    'Snake Boxes': 'snakebox', 'Spring Baskets': 'springbasket', 'Valentine Boxes': 'valentinebox',
+    'Toy Bears': 'toybear', 'Bonded Rings': 'bondedring', 'Flying Brooms': 'flyingbroom',
+    'Astral Shards': 'astralshard', 'Hanging Stars': 'hangingstar', 'Joyful Bundles': 'joyfulbundle',
+    'Bling Binkies': 'blingbinky', 'Durov\'s Caps': 'durovscap', 'Durov’s Caps': 'durovscap',
+    'Jelly Bunnies': 'jellybunny', 'Precious Peaches': 'preciouspeach', 'Pretty Posies': 'prettyposy',
+    'Swiss Watches': 'swisswatch', 'Khabib\'s Papakhas': 'khabibspapakha', 'Khabib’s Papakhas': 'khabibspapakha',
+    'Fresh Socks': 'freshsocks', 'Big Years': 'bigyear', 'Bow Ties': 'bowtie', 'Bunny Muffins': 'bunnymuffin',
+    'Candy Canes': 'candycane', 'Clover Pins': 'cloverpin', 'Cookie Hearts': 'cookieheart',
+    'Crystal Balls': 'crystalball', 'Cupid Charms': 'cupidcharm', 'Desk Calendars': 'deskcalendar',
+    'Diamond Rings': 'diamondring', 'Easter Eggs': 'easteregg', 'Electric Skulls': 'electricskull',
+    'Eternal Candles': 'eternalcandle', 'Eternal Roses': 'eternalrose', 'Evil Eyes': 'evileye',
+    'Faith Amulets': 'faithamulet', 'Gem Signets': 'gemsignet', 'Genie Lamps': 'genielamp',
+    'Heart Lockets': 'heartlockett', 'Heroic Helmets': 'heroichelmet', 'Hex Pots': 'hexpot',
+    'Homemade Cakes': 'homemadecake', 'Hypno Lollipops': 'hypnolollipop', 'Ice Creams': 'icecream',
+    'Input Keys': 'inputkey', 'Instant Ramens': 'instantramen', 'Ion Gems': 'iongem',
+    'Ionic Dryers': 'ionicdryer', 'Jester Hats': 'jesterhat', 'Jingle Bells': 'jinglebell',
+    'Jolly Chimps': 'jollychimp', 'Kissed Frogs': 'kissedfrog', 'Light Swords': 'lightsword',
+    'Lol Pops': 'lolpop', 'Love Candles': 'lovecandle', 'Love Potions': 'lovepotion',
+    'Low Riders': 'lowrider', 'Lunar Snakes': 'lunarsnake', 'Lush Bouquets': 'lushbouquet',
+    'Mad Pumpkins': 'madpumpkin', 'Magic Potions': 'magicpotion', 'Mighty Arms': 'mightyarm',
+    'Mini Oscars': 'minioscar', 'Money Pots': 'moneypot', 'Moon Pendants': 'moonpendant',
+    'Mousse Cakes': 'moussecake', 'Nail Bracelets': 'nailbracelet', 'Party Sparklers': 'partysparkler',
+    'Perfume Bottles': 'perfumebottle', 'Pet Snakes': 'petsnake', 'Plush Pepes': 'plushpepe',
+    'Record Players': 'recordplayer', 'Restless Jars': 'restlessjar', 'Sakura Flowers': 'sakuraflower',
+    'Santa Hats': 'santahat', 'Scared Cats': 'scaredcat', 'Sharp Tongues': 'sharptongue',
+    'Signet Rings': 'signetring', 'Skull Flowers': 'skullflower', 'Sky Stilettos': 'skystiletto',
+    'Sleigh Bells': 'sleighbell', 'Snoop Cigars': 'sloopcigar', 'Snoop Doggs': 'snoopdogg',
+    'Snow Globes': 'snowglobe', 'Spiced Wines': 'spicedwine', 'Star Notepads': 'starnotepad',
+    'Stellar Rockets': 'stellarrocket', 'Swag Bags': 'swagbag', 'Tama Gadgets': 'tamagadget',
+    'Trapped Hearts': 'trappedheart', 'UFC Strikes': 'ufcstrike', 'Vintage Cigars': 'vintagecigar',
+    'Westside Signs': 'westsidesign', 'Whip Cupcakes': 'whipcupcake', 'Winter Wreaths': 'winterwreath',
+    'Witch Hats': 'witchhat', 'Xmas Stockings': 'xmasstocking'
 };
 
-function getTelegifterUrl(type, name, collection, slugIndex = 0) {
+function getTelegifterUrl(type, name, collection, slugIndex = 0, exampleNum = null) {
     if (!name || name === 'Unknown' || name === 'Default' || name === 'Gift' || name === 'Gift #?') return null;
 
     if (type === 'symbol') {
-        // Symbols: Use official TON repository for icons
         const clean = name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').trim();
         const slugNoSpace = clean.replace(/\s+/g, '');
         const slugDash = clean.replace(/\s+/g, '-');
         const variants = [slugNoSpace, slugDash];
 
-        if (slugIndex >= variants.length) return null;
+        if (slugIndex >= variants.length) {
+            // Last resort: fragment guide icon
+            return `https://nft.fragment.com/guide/gift.svg`;
+        }
         return `https://raw.githubusercontent.com/ton-blockchain/token-logos/main/nft/gift/${variants[slugIndex]}.svg`;
     }
 
     const collectionName = (type === 'model') ? collection : name;
     if (!collectionName) return null;
 
-    // Generate variants matching download_models.py logic
     const variants = [];
-
-    // 1. Check known mapping
-    if (SLUG_MAPPING[collectionName]) {
-        variants.push(SLUG_MAPPING[collectionName]);
-    }
-
-    // 2. Clean name
+    if (SLUG_MAPPING[collectionName]) variants.push(SLUG_MAPPING[collectionName]);
     const clean = collectionName.toLowerCase().replace(/['’]/g, '').replace(/-/g, ' ');
     const noSpaces = clean.replace(/\s+/g, '');
     variants.push(noSpaces);
+    if (noSpaces.endsWith('s') && noSpaces.length > 3) variants.push(noSpaces.slice(0, -1));
 
-    // 3. Singular form
-    if (noSpaces.endsWith('s') && noSpaces.length > 3) {
-        variants.push(noSpaces.slice(0, -1));
-    }
-
-    // Unique variants
     const uniqueVariants = [...new Set(variants)];
-
     if (slugIndex >= uniqueVariants.length) return null;
     const selectedSlug = uniqueVariants[slugIndex];
 
     if (type === 'model') {
+        if (exampleNum) {
+            // Try specific model hash if we have example num from cache
+            return `${BACKEND_URL}/file/gifts/${selectedSlug}/model.${exampleNum}.webp`;
+        }
         return `${BACKEND_URL}/file/gifts/${selectedSlug}/model.webp`;
     }
 
@@ -983,11 +985,12 @@ async function loadFilterData() {
 
         NFT_ADDRESSES = data.nft_addresses || {};
         MODELS_MAP = data.models_map || {};
-        MODEL_EXAMPLES = data.model_examples || {}; // NEW: Load model examples
+        MODEL_EXAMPLES = data.model_examples || {};
+        SYMBOL_EXAMPLES = data.symbol_examples || {}; // NEW: Load symbol examples
         BACKDROPS = data.backdrops || [];
         SYMBOLS = data.symbols || [];
 
-        console.log('[FILTERS] Loaded', Object.keys(MODEL_EXAMPLES).length, 'model examples');
+        console.log('[FILTERS] Loaded', Object.keys(MODEL_EXAMPLES).length, 'model examples,', Object.keys(SYMBOL_EXAMPLES).length, 'symbol examples');
 
         // Build ATTR_STATS structure
         ATTR_STATS = {
@@ -1164,22 +1167,22 @@ function initFilterLists() {
 
             allItems.forEach(item => {
                 if (item.name.toLowerCase().includes(sVal)) {
-                    // Try to get clean visual first
-                    let icon = null;
-                    if (m.key === 'symbol') icon = getTelegifterUrl('symbol', item.name);
-                    else if (m.key === 'model') icon = getTelegifterUrl('model', item.name, item.collection);
-                    else if (m.key === 'nft') icon = item.image; // Use existing image for NFT collections
+                    if (m.key === 'symbol') {
+                        const exNum = (SYMBOL_EXAMPLES && SYMBOL_EXAMPLES[item.name]) || null;
+                        icon = getTelegifterUrl('symbol', item.name, null, 0, exNum);
+                    } else if (m.key === 'model') {
+                        const exNum = (MODEL_EXAMPLES && MODEL_EXAMPLES[item.name]) || null;
+                        icon = getTelegifterUrl('model', item.name, item.collection, 0, exNum);
+                    } else if (m.key === 'nft') {
+                        icon = getTelegifterUrl('nft', item.name, null, 0);
+                        if (!icon) icon = item.image;
+                    }
 
                     if (!icon && (m.key === 'bg' || m.key === 'symbol')) icon = (VISUAL_MAP[m.key] && VISUAL_MAP[m.key][item.name]) || null;
 
-                    // NEW: Ensure we try Fragment URL if other methods failed and it's a Model
-                    if (!icon && m.key === 'model') {
-                        const slug = item.name.toLowerCase().replace(/[^a-z0-9]/g, '');
-                        // We use a generic model #1 for the filter icon preview if possible
-                        icon = `https://nft.fragment.com/gift/${slug}-1.webp`;
-                    }
-
-                    addFilterItem(cont, item.name, item.name, m.key, ACTIVE_FILTERS[m.key] === item.name, icon, item.collection, item.image);
+                    const exNum = (m.key === 'model') ? ((MODEL_EXAMPLES && MODEL_EXAMPLES[item.name]) || null) :
+                        (m.key === 'symbol') ? ((SYMBOL_EXAMPLES && SYMBOL_EXAMPLES[item.name]) || null) : null;
+                    addFilterItem(cont, item.name, item.name, m.key, ACTIVE_FILTERS[m.key] === item.name, icon, item.collection, item.image, exNum);
                 }
             });
             return;
@@ -1200,20 +1203,28 @@ function initFilterLists() {
 
         items.forEach(item => {
             if (item.name.toLowerCase().includes(sVal)) {
-                // Try clean visual
-                let visual = null;
-                if (m.key === 'symbol') visual = getTelegifterUrl('symbol', item.name);
-                else if (m.key === 'model') visual = getTelegifterUrl('model', item.name, selectedNFT);
+                if (m.key === 'symbol') {
+                    const exNum = (SYMBOL_EXAMPLES && SYMBOL_EXAMPLES[item.name]) || null;
+                    visual = getTelegifterUrl('symbol', item.name, null, 0, exNum);
+                } else if (m.key === 'model') {
+                    const exNum = (MODEL_EXAMPLES && MODEL_EXAMPLES[item.name]) || null;
+                    visual = getTelegifterUrl('model', item.name, selectedNFT, 0, exNum);
+                } else if (m.key === 'nft') {
+                    visual = getTelegifterUrl('nft', item.name, null, 0);
+                }
 
                 let icon = visual || item.image;
                 if (!icon && (m.key === 'bg' || m.key === 'symbol')) icon = (VISUAL_MAP[m.key] && VISUAL_MAP[m.key][item.name]) || null;
-                addFilterItem(cont, item.name, item.name, m.key, ACTIVE_FILTERS[m.key] === item.name, icon, selectedNFT, item.image);
+
+                const exNum = (m.key === 'model') ? ((MODEL_EXAMPLES && MODEL_EXAMPLES[item.name]) || null) :
+                    (m.key === 'symbol') ? ((SYMBOL_EXAMPLES && SYMBOL_EXAMPLES[item.name]) || null) : null;
+                addFilterItem(cont, item.name, item.name, m.key, ACTIVE_FILTERS[m.key] === item.name, icon, selectedNFT, item.image, exNum);
             }
         });
     });
 }
 
-function addFilterItem(container, name, value, key, isSelected, imgUrl, collectionContext, fallbackImgUrl) {
+function addFilterItem(container, name, value, key, isSelected, imgUrl, collectionContext, fallbackImgUrl, exampleNum = null) {
     const div = document.createElement('div');
     div.className = `filter-list-item ${isSelected ? 'selected' : ''}`;
 
@@ -1227,10 +1238,27 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
             <div style="position:absolute; top:0; left:0; width:100%; height:100%; background: url('https://telegifter.ru/wp-content/themes/gifts/assets/img/bg-logo-mini.webp'); opacity:0.1; background-size: 20px;"></div>
         </div>`;
     } else if (key === 'symbol') {
-        const tgSymbol = getTelegifterUrl('symbol', name);
+        const exNum = (SYMBOL_EXAMPLES && SYMBOL_EXAMPLES[name]) || null;
+        const tgSymbol = getTelegifterUrl('symbol', name, null, 0, exNum);
         const iconSrc = tgSymbol || (VISUAL_MAP.symbol ? VISUAL_MAP.symbol[name] : null);
         if (iconSrc) {
-            visualHTML = `<img src="${iconSrc}" class="filter-img" style="filter: brightness(0) invert(1); width:28px; height:28px; object-fit:contain;" onerror="this.style.display='none'">`;
+            visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: rgba(255, 255, 255, 0.05); border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
+                <span class="filter-item-letter" style="color:#8b9bb4; font-size:11px; font-weight:700; position:absolute; z-index:1;">${name.substring(0, 3).toUpperCase()}</span>
+                <img src="${iconSrc}" class="filter-img" style="width:${exNum ? '100%' : '28px'}; height:${exNum ? '100%' : '28px'}; object-fit:contain; z-index:2; ${!exNum ? 'filter: brightness(0) invert(1);' : ''}" 
+                    onload="this.previousElementSibling.style.display='none';"
+                    onerror="
+                        const name = '${name.replace(/'/g, "\\\\\\'")}';
+                        const exNum = ${JSON.stringify(exNum)};
+                        this.dataset.slugIndex = this.dataset.slugIndex ? parseInt(this.dataset.slugIndex) + 1 : 1;
+                        const nextUrl = getTelegifterUrl('symbol', name, null, parseInt(this.dataset.slugIndex), exNum);
+                        if (nextUrl && parseInt(this.dataset.slugIndex) <= 7) {
+                            this.src = nextUrl;
+                        } else {
+                            this.style.display = 'none';
+                            this.previousElementSibling.style.display = 'block';
+                        }
+                    ">
+            </div>`;
         } else {
             visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: rgba(255, 255, 255, 0.05); border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
                 <span style="color:#8b9bb4; font-size:11px; font-weight:700; z-index:1;">${name.substring(0, 3).toUpperCase()}</span>
@@ -1253,12 +1281,15 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
             <img src="${possibleImg}" class="filter-img" style="width:100%; height:100%; object-fit:contain; z-index:2; opacity:0; transition:opacity 0.2s;" 
                 onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';"
                 onerror="
-                    const name = '${name.replace(/'/g, "\\\\'")}';
-                    const col = '${(collectionContext || '').replace(/'/g, "\\\\'")}';
+                    const name = '${name.replace(/'/g, "\\\\\\'")}';
+                    const col = '${(collectionContext || '').replace(/'/g, "\\\\\\'")}';
+                    const exNum = ${exampleNum || 'null'};
                     this.dataset.slugIndex = this.dataset.slugIndex ? parseInt(this.dataset.slugIndex) + 1 : 1;
-                    const nextUrl = getTelegifterUrl('${key}', name, col, parseInt(this.dataset.slugIndex));
+                    const nextUrl = getTelegifterUrl('${key}', name, col, parseInt(this.dataset.slugIndex), exNum);
                     if (nextUrl && parseInt(this.dataset.slugIndex) <= 7) {
                         this.src = nextUrl;
+                    } else if (fallbackImgUrl && parseInt(this.dataset.slugIndex) === 8) {
+                        this.src = fallbackImgUrl;
                     } else {
                         this.style.display = 'none';
                         this.previousElementSibling.style.display = 'block';
