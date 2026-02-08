@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://kitchen-carlos-banners-disposal.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://lesser-ball-makeup-aware.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -930,7 +930,22 @@ async function loadFilterData() {
         if (data) {
             // NFTs = collections
             if (data.nfts && Array.isArray(data.nfts)) {
-                window.STATIC_COLLECTIONS = data.nfts.map(name => ({ name, image: null }));
+                window.STATIC_COLLECTIONS = data.nfts.map(name => {
+                    // Try to get official collection image from TonAPI if address is available
+                    let img = null;
+                    if (data.nft_addresses && data.nft_addresses[name]) {
+                        img = `https://cache.tonapi.io/img/collection/${data.nft_addresses[name]}/image.png?size=256`;
+                    }
+
+                    // Fallback to fragment if TonAPI addr is missing
+                    if (!img) {
+                        let singular = name;
+                        if (name.endsWith('s') && name.length > 4) singular = name.slice(0, -1);
+                        const f = generateFragmentUrls(singular + " #1", 0);
+                        img = f.image;
+                    }
+                    return { name, image: img };
+                });
             }
 
             // Convert array backdrops/symbols to nested format {collectionName: [{name, image}]}
@@ -1174,28 +1189,29 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
         visualHTML = `<div class="filter-color-circle" style="background: ${bgStyle}; position:relative; overflow:hidden; width:52px; height:52px; border-radius:12px;">
             <div style="position:absolute; top:0; left:0; width:100%; height:100%; background: url('https://telegifter.ru/wp-content/themes/gifts/assets/img/bg-logo-mini.webp'); opacity:0.3; background-size: 20px;"></div>
         </div>`;
-    } else if (imgUrl && !isBadUrl(imgUrl)) {
+    } else if (key === 'model' || key === 'nft' || (imgUrl && !isBadUrl(imgUrl))) {
+        // For models, prioritize local "clean" assets (no bg/symbol)
+        let icon = imgUrl;
+        if (key === 'model') {
+            // Force local model image
+            icon = `/models/${name}.webp`;
+        } else if (!icon || isBadUrl(icon)) {
+            if (key === 'nft') {
+                // If nft (collection) image is missing, try a generic fragment gift
+                let n = name;
+                if (n.endsWith('s') && n.length > 4) n = n.slice(0, -1);
+                const f = generateFragmentUrls(n + " #1", 0);
+                icon = f.image;
+            }
+        }
+
         const fallback = (fallbackImgUrl && !isBadUrl(fallbackImgUrl)) ? fallbackImgUrl : 'https://nft.fragment.com/guide/gift.svg';
 
         visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: rgba(255, 255, 255, 0.05); border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
             <span style="color:#8b9bb4; font-size:11px; font-weight:700; position:absolute; z-index:1;">${name.substring(0, 3).toUpperCase()}</span>
-            <img src="${imgUrl}" class="filter-img" style="width:100%; height:100%; object-fit:contain; z-index:2; opacity:0; transition:opacity 0.2s;" 
+            <img src="${icon}" class="filter-img" style="width:100%; height:100%; object-fit:contain; z-index:2; opacity:0; transition:opacity 0.2s;" 
                 onload="this.style.opacity='1';"
-                onerror="
-                    const name = '${name.replace(/'/g, "\\'")}';
-                    const col = '${(collectionContext || '').replace(/'/g, "\\'")}';
-                    this.dataset.slugIndex = this.dataset.slugIndex ? parseInt(this.dataset.slugIndex) + 1 : 1;
-                    const nextUrl = getTelegifterUrl('model', name, col, parseInt(this.dataset.slugIndex));
-                    if (nextUrl && parseInt(this.dataset.slugIndex) < 20) {
-                        this.src = nextUrl;
-                    } else if (this.src !== '${fallback}') {
-                        this.src = '${fallback}';
-                        this.style.opacity = '1';
-                    } else {
-                        this.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-                        this.style.display = 'none';
-                    }
-                ">
+                onerror="handleFilterImageError(this, '${name.replace(/'/g, "\\'")}', '${(collectionContext || '').replace(/'/g, "\\'")}', '${(fallbackImgUrl || '').replace(/'/g, "\\'")}', '${key}')">
         </div>`;
     } else {
         const labelText = name.substring(0, 3).toUpperCase();
@@ -1400,6 +1416,75 @@ function handleGiftImageError(img, name) {
             console.warn("Hiding broken gift card:", name);
         }
     }
+}
+
+function handleFilterImageError(img, name, collection, fallback, key) {
+    img.dataset.attempt = img.dataset.attempt ? parseInt(img.dataset.attempt) + 1 : 1;
+    const attempt = parseInt(img.dataset.attempt);
+
+    if (attempt === 1) {
+        // 1. If it's a model and local load failed, try Fragment as fallback
+        if (key === 'model' && !img.src.includes('fragment.com')) {
+            const f = generateFragmentUrls(name + " #1", 0);
+            if (f.image) {
+                img.src = f.image;
+                return;
+            }
+        }
+
+        // If it's an NFT (collection) and TonAPI failed, try Fragment
+        if (key === 'nft' && img.src.includes('tonapi.io')) {
+            let n = name;
+            if (n.endsWith('s') && n.length > 4) n = n.slice(0, -1);
+            const f = generateFragmentUrls(n + " #1", 0);
+            if (f.image) {
+                img.src = f.image;
+                return;
+            }
+        }
+
+        // Try cache-busting the current URL
+        if (img.src && !img.src.includes('?refresh=')) {
+            img.src = img.src + (img.src.includes('?') ? '&' : '?') + 'refresh=' + Date.now();
+            return;
+        }
+    }
+
+    if (attempt === 2) {
+        // 2. Try generic Fragment URL for models/nfts (gift type)
+        // If it's a model (e.g. "Red"), its name alone isn't enough on Fragment, 
+        // so we use the collection name (e.g. "Clover Pins") as the source
+        let n = (key === 'model' && collection) ? collection : name;
+        if (n && !n.includes('#')) {
+            // Basic singularization for "Clover Pins" -> "Clover Pin"
+            if (n.endsWith('s') && n.length > 4) n = n.slice(0, -1);
+
+            const f = generateFragmentUrls(n + " #1", 0);
+            if (f.image && f.image !== img.src.split('?')[0]) {
+                img.src = f.image;
+                return;
+            }
+        }
+    }
+
+    if (attempt === 3) {
+        // 3. Try hyphenated fallback
+        let n = (key === 'model' && collection) ? collection : name;
+        if (n && !n.includes('#')) {
+            if (n.endsWith('s') && n.length > 4) n = n.slice(0, -1);
+
+            const f = generateFragmentUrls(n + " #1", 1);
+            if (f.image && f.image !== img.src.split('?')[0]) {
+                img.src = f.image;
+                return;
+            }
+        }
+    }
+
+    // Final fallback
+    img.src = fallback || 'https://nft.fragment.com/guide/gift.svg';
+    img.onerror = null;
+    img.style.opacity = '1';
 }
 
 function renderMediaHTML(it, isModal = false) {
