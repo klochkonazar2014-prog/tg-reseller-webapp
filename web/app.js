@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://fleece-heavy-fabrics-turned.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://touch-computing-sufficiently-psychology.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -407,9 +407,9 @@ function getTelegifterUrl(type, name, collection, slugIndex = 0) {
     }
 
     if (type === 'nft') {
-        // NFT collections use format: /file/gifts/collectionslug/thumb.webp
+        // NFT collections use format: https://nft.fragment.com/file/gifts/collectionslug/thumb.webp
         const collectionSlug = name.toLowerCase().replace(/[^a-z0-9]/g, '');
-        return `/file/gifts/${collectionSlug}/thumb.webp`;
+        return `https://nft.fragment.com/file/gifts/${collectionSlug}/thumb.webp`;
     }
 
     return null;
