@@ -6,7 +6,8 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://proposals-cassette-prescribed-eval.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://mineral-metadata-highway-tulsa.trycloudflare.com"; // Cloudflare Tunnel URL
+window.fallbackImgUrl = null; // Prevent ReferenceError from cached older scripts
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -406,21 +407,17 @@ function getTelegifterUrl(type, name, collection, slugIndex = 0, exampleNum = nu
     if (!name || name === 'Unknown' || name === 'Default' || name === 'Gift' || name === 'Gift #?') return null;
 
     if (type === 'symbol') {
-        if (exampleNum && typeof exampleNum === 'object') {
-            // New: Use local example found by update_cache_fix.py
-            return `${BACKEND_URL}/file/gifts/${exampleNum.slug}/thumb.webp`;
-        }
-
         const clean = name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').trim();
-        const slugNoSpace = clean.replace(/\s+/g, '');
         const slugDash = clean.replace(/\s+/g, '-');
-        const variants = [slugNoSpace, slugDash];
 
-        if (slugIndex >= variants.length) {
-            // Last resort: fragment guide icon
-            return `https://nft.fragment.com/guide/gift.svg`;
-        }
-        return `https://raw.githubusercontent.com/ton-blockchain/token-logos/main/nft/gift/${variants[slugIndex]}.svg`;
+        // Try to get the official SVG from Fragment guide or fallback to TON logos
+        const variants = [
+            `https://nft.fragment.com/guide/${slugDash}.svg`,
+            `https://raw.githubusercontent.com/ton-blockchain/token-logos/main/nft/gift/${slugDash.replace(/-/g, '')}.svg`
+        ];
+
+        if (slugIndex >= variants.length) return null;
+        return variants[slugIndex];
     }
 
     const collectionName = (type === 'model') ? collection : name;
@@ -439,14 +436,14 @@ function getTelegifterUrl(type, name, collection, slugIndex = 0, exampleNum = nu
 
     if (type === 'model') {
         if (exampleNum) {
-            // Try specific model hash if we have example num from cache
             return `${BACKEND_URL}/file/gifts/${selectedSlug}/model.${exampleNum}.webp`;
         }
         return `${BACKEND_URL}/file/gifts/${selectedSlug}/model.webp`;
     }
 
     if (type === 'nft') {
-        return `${BACKEND_URL}/file/gifts/${selectedSlug}/thumb.webp`;
+        // Updated to matching Fragment-style URL pattern (handled by live_server.py)
+        return `${BACKEND_URL}/gift/${selectedSlug}.webp`;
     }
 
     return null;
@@ -1243,32 +1240,25 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
             <div style="position:absolute; top:0; left:0; width:100%; height:100%; background: url('https://telegifter.ru/wp-content/themes/gifts/assets/img/bg-logo-mini.webp'); opacity:0.1; background-size: 20px;"></div>
         </div>`;
     } else if (key === 'symbol') {
-        const exNum = (SYMBOL_EXAMPLES && SYMBOL_EXAMPLES[name]) || null;
-        const tgSymbol = getTelegifterUrl('symbol', name, null, 0, exNum);
+        const tgSymbol = getTelegifterUrl('symbol', name, null, 0);
         const iconSrc = tgSymbol || (VISUAL_MAP.symbol ? VISUAL_MAP.symbol[name] : null);
-        if (iconSrc) {
-            visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: rgba(255, 255, 255, 0.05); border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
-                <span class="filter-item-letter" style="color:#8b9bb4; font-size:11px; font-weight:700; position:absolute; z-index:1;">${name.substring(0, 3).toUpperCase()}</span>
-                <img src="${iconSrc}" class="filter-img" style="width:${exNum ? '100%' : '28px'}; height:${exNum ? '100%' : '28px'}; object-fit:contain; z-index:2; ${!exNum ? 'filter: brightness(0) invert(1);' : ''}" 
-                    onload="this.previousElementSibling.style.display='none';"
-                    onerror="
-                        const name = '${name.replace(/'/g, "\\\\\\'")}';
-                        const exNum = ${JSON.stringify(exNum)};
-                        this.dataset.slugIndex = this.dataset.slugIndex ? parseInt(this.dataset.slugIndex) + 1 : 1;
-                        const nextUrl = getTelegifterUrl('symbol', name, null, parseInt(this.dataset.slugIndex), exNum);
-                        if (nextUrl && parseInt(this.dataset.slugIndex) <= 7) {
-                            this.src = nextUrl;
-                        } else {
-                            this.style.display = 'none';
-                            this.previousElementSibling.style.display = 'block';
-                        }
-                    ">
-            </div>`;
-        } else {
-            visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: rgba(255, 255, 255, 0.05); border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
-                <span style="color:#8b9bb4; font-size:11px; font-weight:700; z-index:1;">${name.substring(0, 3).toUpperCase()}</span>
-            </div>`;
-        }
+
+        visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: rgba(255, 255, 255, 0.05); border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
+            <span class="filter-item-letter" style="color:#8b9bb4; font-size:11px; font-weight:700; position:absolute; z-index:1;">${name.substring(0, 3).toUpperCase()}</span>
+            ${iconSrc ? `<img src="${iconSrc}" class="filter-img" style="width:28px; height:28px; object-fit:contain; z-index:2; filter: brightness(0) invert(1);" 
+                onload="this.previousElementSibling.style.display='none';"
+                onerror="
+                    const name = '${name.replace(/'/g, "\\\\\\'")}';
+                    this.dataset.slugIndex = this.dataset.slugIndex ? parseInt(this.dataset.slugIndex) + 1 : 1;
+                    const nextUrl = getTelegifterUrl('symbol', name, null, parseInt(this.dataset.slugIndex));
+                    if (nextUrl && parseInt(this.dataset.slugIndex) <= 7) {
+                        this.src = nextUrl;
+                    } else {
+                        this.style.display = 'none';
+                        this.previousElementSibling.style.display = 'block';
+                    }
+                ">` : ''}
+        </div>`;
     } else if (key === 'bg') {
         const bgStyle = (VISUAL_MAP.bg && VISUAL_MAP.bg[name]) || '#333';
         visualHTML = `<div class="filter-color-circle" style="background: ${bgStyle}; position:relative; overflow:hidden; width:52px; height:52px; border-radius:12px;">
