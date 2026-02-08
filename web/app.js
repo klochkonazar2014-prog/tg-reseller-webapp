@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://van-whilst-sprint-protection.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://installing-endless-harvard-diet.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -360,48 +360,86 @@ const TG_ASSETS_URL = "https://telegifter.ru/wp-content/themes/gifts/assets/img/
 const TG_SLUGS = ["berrybox", "artisanbrick", "prettyposy", "alphadogs", "voodoodoll", "ducks", "frog", "moneypot", "sparkler", "watch", "flower", "heart", "egg", "pear", "cocktail", "cactus", "jellyfish", "turtle", "gem", "gift", "box", "pot", "shard", "b-daycandle", "happybrownie", "astralshard", "kissedfrog", "plushpepe"];
 
 const SLUG_MAPPING = {
-    'artisanbricks': 'artisanbrick',
-    'berryboxes': 'berrybox',
-    'happybday': 'b-daycandle',
-    'bdaycandle': 'b-daycandle',
-    'thebackyard': 'alphadogs',
-    'prettyposies': 'prettyposy',
-    'astralshards': 'astralshard',
-    'poop': 'happybrownie',
-    'happybrownie': 'happybrownie',
-    'kissedfrog': 'kissedfrog',
-    'plushpepe': 'plushpepe',
-    'ducks': 'ducks',
-    'eternalrose': 'eternalrose',
-    'cloverpin': 'cloverpin',
-    'whipcupcake': 'whipcupcake',
-    'jellypuppy': 'jellypuppy',
-    'magicmushroom': 'magicmushroom',
-    'goldstar': 'goldstar',
-    'khabibspapakha': 'khabibspapakha'
+    'Artisan Bricks': 'artisanbrick',
+    'Berry Boxes': 'berrybox',
+    'Falling Stars': 'fallingstar',
+    'Ginger Cookies': 'gingercookie',
+    'Holiday Drinks': 'holidaydrink',
+    'Jacks-in-the-Box': 'jackinthebox',
+    'Loot Bags': 'lootbag',
+    'Neko Helmets': 'nekohelmet',
+    'Pixel Art': 'pixelart',
+    'Snow Mittens': 'snowmitten',
+    'Snake Boxes': 'snakebox',
+    'Spring Baskets': 'springbasket',
+    'Valentine Boxes': 'valentinebox',
+    'Toy Bears': 'toybear',
+    'Bonded Rings': 'bondedring',
+    'Flying Brooms': 'flyingbroom',
+    'Astral Shards': 'astralshard',
+    'Hanging Stars': 'hangingstar',
+    'Joyful Bundles': 'joyfulbundle',
+    'Bling Binkies': 'blingbinky',
+    'Durov\'s Caps': 'durovscap',
+    'Durov’s Caps': 'durovscap',
+    'Jelly Bunnies': 'jellybunny',
+    'Precious Peaches': 'preciouspeach',
+    'Pretty Posies': 'prettyposy',
+    'Swiss Watches': 'swisswatch',
+    'Khabib\'s Papakhas': 'khabibspapakha',
+    'Khabib’s Papakhas': 'khabibspapakha',
 };
 
 function getTelegifterUrl(type, name, collection, slugIndex = 0) {
     if (!name || name === 'Unknown' || name === 'Default' || name === 'Gift' || name === 'Gift #?') return null;
 
-    if (type === 'symbol') {
-        // Symbols already have URLs in VISUAL_MAP, return null to let addFilterItem use them
-        return null;
+    const collectionName = (type === 'model') ? collection : name;
+    if (!collectionName) return null;
+
+    if (type === 'symbol') return null;
+
+    // Generate variants matching download_models.py logic
+    const variants = [];
+
+    // 1. Check known mapping
+    if (SLUG_MAPPING[collectionName]) {
+        variants.push(SLUG_MAPPING[collectionName]);
     }
 
-    if (type === 'model') {
-        // Models: Use local files downloaded from Fragment
-        // Each collection has a model.webp file (the first model from that collection)
-        if (!collection) return null;
+    // 2. Clean name (no spaces, no symbols)
+    const clean = collectionName.toLowerCase().replace(/['’]/g, '').replace(/-/g, ' ');
+    const noSpaces = clean.replace(/\s+/g, '');
+    variants.push(noSpaces);
 
-        const collectionSlug = collection.toLowerCase().replace(/[^a-z0-9]/g, '');
-        return `/file/gifts/${collectionSlug}/model.webp`;
+    // 3. Singular form
+    if (noSpaces.endsWith('s') && noSpaces.length > 3) {
+        variants.push(noSpaces.slice(0, -1));
+    }
+
+    // 4. Hyphenated
+    if (clean.includes(' ')) {
+        variants.push(clean.replace(/\s+/g, '-'));
+    }
+
+    // 5. First/Last words
+    const words = clean.split(/\s+/);
+    if (words.length > 1) {
+        variants.push(words[0]);
+        variants.push(words[words.length - 1]);
+    }
+
+    // Unique variants
+    const uniqueVariants = [...new Set(variants)];
+
+    if (slugIndex >= uniqueVariants.length) return null;
+    const selectedSlug = uniqueVariants[slugIndex];
+
+    if (type === 'model') {
+        return `/file/gifts/${selectedSlug}/model.webp`;
     }
 
     if (type === 'nft') {
-        // NFT collections: Use local thumb.webp
-        const collectionSlug = name.toLowerCase().replace(/[^a-z0-9]/g, '');
-        return `/file/gifts/${collectionSlug}/thumb.webp`;
+        return `/file/gifts/${selectedSlug}/thumb.webp`;
     }
 
     return null;
