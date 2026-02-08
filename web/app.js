@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://algorithms-dispatch-interference-pizza.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://belong-quantity-councils-plant.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -375,7 +375,9 @@ const SLUG_MAPPING = {
     'jellypuppy': 'jellypuppy',
     'magicmushroom': 'magicmushroom',
     'goldstar': 'goldstar',
-    'khabibspapakha': 'khabibspapakha'
+    'khabibspapakha': 'khabibspapakha',
+    'deskcalendars': 'deskcalendars',
+    'crystalballs': 'crystalballs'
 };
 
 function getTelegifterUrl(type, name, collection, slugIndex = 0) {
@@ -1176,14 +1178,14 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
         </div>`;
     } else if (key === 'symbol') {
         const tgSymbol = getTelegifterUrl('symbol', name);
-        const iconSrc = tgSymbol || VISUAL_MAP.symbol[name];
-        visualHTML = `<img src="${iconSrc}" class="filter-img" style="filter: brightness(0) invert(1); width:28px; height:28px; object-fit:contain;" onerror="this.style.display='none'">`;
+        const iconSrc = imgUrl || tgSymbol || VISUAL_MAP.symbol[name];
+        visualHTML = `<img src="${iconSrc}" class="filter-img" style="filter: brightness(0) invert(1); width:28px; height:28px; object-fit:contain;" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'; this.style.opacity='0';">`;
     } else if (key === 'bg') {
-        const bgStyle = VISUAL_MAP.bg[name] || '#333';
+        const bgStyle = VISUAL_MAP.bg[name] || imgUrl || '#333';
         visualHTML = `<div class="filter-color-circle" style="background: ${bgStyle}; position:relative; overflow:hidden; width:52px; height:52px; border-radius:12px;">
             <div style="position:absolute; top:0; left:0; width:100%; height:100%; background: url('https://telegifter.ru/wp-content/themes/gifts/assets/img/bg-logo-mini.webp'); opacity:0.3; background-size: 20px;"></div>
         </div>`;
-    } else if (imgUrl && !isBadUrl(imgUrl)) {
+    } else if (imgUrl && !isBadUrl(imgUrl) && key !== 'symbol' && key !== 'bg') {
         const fallback = (fallbackImgUrl && !isBadUrl(fallbackImgUrl)) ? fallbackImgUrl : 'https://nft.fragment.com/guide/gift.svg';
         // For models, if local fails, use collection fallback as the "normal" Fragment image
         const collFallback = (key === 'nft' || key === 'model') ? getCollectionFallback(collectionContext || name) : fallback;
@@ -1390,18 +1392,18 @@ function generateFragmentUrls(n, attempt = 0) {
     let slug = SLUG_MAPPING[lookupKey] || null;
 
     if (!slug) {
-        // Default Fragment behavior for multi-word collections: use hyphens
-        // "Desk Calendars" -> "desk-calendars"
+        // Default Fragment behavior for collections: concatenation
+        // "Crystal Balls" -> "crystalballs", "Desk Calendars" -> "deskcalendars"
+        slug = rawName.toLowerCase().replace(/[^a-z0-9]/g, '');
+    }
+
+    // Specific attempt logic:
+    if (attempt === 1) {
+        // Hyphenated as backup for some collections (e.g. "major-dog")
         slug = rawName.toLowerCase()
             .replace(/[^a-z0-9\s-]/g, '')
             .replace(/[\s-]+/g, '-')
             .replace(/^-|-$/g, '');
-    }
-
-    // Specific attempt logic for potential variations
-    if (attempt === 1) {
-        // If hyphenated failed, try concatenated as a backup
-        slug = rawName.toLowerCase().replace(/[^a-z0-9]/g, '');
     }
 
     return {
