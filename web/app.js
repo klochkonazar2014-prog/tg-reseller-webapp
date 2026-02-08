@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://refine-estimation-chief-yellow.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://van-whilst-sprint-protection.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -360,54 +360,48 @@ const TG_ASSETS_URL = "https://telegifter.ru/wp-content/themes/gifts/assets/img/
 const TG_SLUGS = ["berrybox", "artisanbrick", "prettyposy", "alphadogs", "voodoodoll", "ducks", "frog", "moneypot", "sparkler", "watch", "flower", "heart", "egg", "pear", "cocktail", "cactus", "jellyfish", "turtle", "gem", "gift", "box", "pot", "shard", "b-daycandle", "happybrownie", "astralshard", "kissedfrog", "plushpepe"];
 
 const SLUG_MAPPING = {
-    'Artisan Bricks': 'artisanbrick',
-    'Berry Boxes': 'berrybox',
-    'Falling Stars': 'fallingstar',
-    'Ginger Cookies': 'gingercookie',
-    'Holiday Drinks': 'holidaydrink',
-    'Jacks-in-the-Box': 'jackinthebox',
-    'Loot Bags': 'lootbag',
-    'Neko Helmets': 'nekohelmet',
-    'Pixel Art': 'pixelart',
-    'Snow Mittens': 'snowmitten',
-    'Snake Boxes': 'snakebox',
-    'Spring Baskets': 'springbasket',
-    'Valentine Boxes': 'valentinebox',
-    'Toy Bears': 'toybear',
-    'Bonded Rings': 'bondedring',
-    'Flying Brooms': 'flyingbroom',
-    'Astral Shards': 'astralshard',
-    'Hanging Stars': 'hangingstar',
-    'Joyful Bundles': 'joyfulbundle',
-    'Bling Binkies': 'blingbinky',
-    'Durov\'s Caps': 'durovscap',
-    'Durov’s Caps': 'durovscap',
-    'Jelly Bunnies': 'jellybunny',
-    'Precious Peaches': 'preciouspeach',
-    'Pretty Posies': 'prettyposy',
-    'Swiss Watches': 'swisswatch',
-    'Khabib\'s Papakhas': 'khabibspapakha',
-    'Khabib’s Papakhas': 'khabibspapakha',
+    'artisanbricks': 'artisanbrick',
+    'berryboxes': 'berrybox',
+    'happybday': 'b-daycandle',
+    'bdaycandle': 'b-daycandle',
+    'thebackyard': 'alphadogs',
+    'prettyposies': 'prettyposy',
+    'astralshards': 'astralshard',
+    'poop': 'happybrownie',
+    'happybrownie': 'happybrownie',
+    'kissedfrog': 'kissedfrog',
+    'plushpepe': 'plushpepe',
+    'ducks': 'ducks',
+    'eternalrose': 'eternalrose',
+    'cloverpin': 'cloverpin',
+    'whipcupcake': 'whipcupcake',
+    'jellypuppy': 'jellypuppy',
+    'magicmushroom': 'magicmushroom',
+    'goldstar': 'goldstar',
+    'khabibspapakha': 'khabibspapakha'
 };
 
 function getTelegifterUrl(type, name, collection, slugIndex = 0) {
     if (!name || name === 'Unknown' || name === 'Default' || name === 'Gift' || name === 'Gift #?') return null;
 
     if (type === 'symbol') {
+        // Symbols already have URLs in VISUAL_MAP, return null to let addFilterItem use them
         return null;
     }
 
-    const normalize = (s) => s ? s.toLowerCase().replace(/['’]/g, '').replace(/[^a-z0-9]/g, '') : '';
-
     if (type === 'model') {
+        // Models: Use local files downloaded from Fragment
+        // Each collection has a model.webp file (the first model from that collection)
         if (!collection) return null;
-        const slug = SLUG_MAPPING[collection] || normalize(collection);
-        return `${BACKEND_URL}/file/gifts/${slug}/model.webp`;
+
+        const collectionSlug = collection.toLowerCase().replace(/[^a-z0-9]/g, '');
+        return `/file/gifts/${collectionSlug}/model.webp`;
     }
 
     if (type === 'nft') {
-        const slug = SLUG_MAPPING[name] || normalize(name);
-        return `${BACKEND_URL}/file/gifts/${slug}/thumb.webp`;
+        // NFT collections: Use local thumb.webp
+        const collectionSlug = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+        return `/file/gifts/${collectionSlug}/thumb.webp`;
     }
 
     return null;
@@ -1374,14 +1368,20 @@ function generateFragmentUrls(n, attempt = 0) {
     const rawName = match[1].trim();
     const num = match[2];
 
-    const normalize = (s) => s ? s.toLowerCase().replace(/['’]/g, '').replace(/[^a-z0-9]/g, '') : '';
-    const slug = SLUG_MAPPING[rawName] || normalize(rawName);
+    // Normalize for lookup: remove everything except a-z, 0-9
+    const lookupKey = rawName.toLowerCase().replace(/[^a-z0-9]/g, '');
+    let slug = SLUG_MAPPING[lookupKey] || lookupKey; // Default to concatenated if not in mapping
 
-    // Try local path first
-    const localPath = `${BACKEND_URL}/file/gifts/${slug}/thumb.webp`;
+    // Specific attempt logic: 
+    // attempt 0: slug as is (usually concatenated)
+    // attempt 1: hyphenated (just in case)
+    if (attempt === 1) {
+        if (rawName.includes(' ') || rawName.includes('-')) {
+            slug = rawName.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/[\s-]+/g, '-').replace(/^-|-$/g, '');
+        }
+    }
 
     return {
-        local: localPath,
         image: `https://nft.fragment.com/gift/${slug}-${num}.webp`,
         lottie: `https://nft.fragment.com/gift/${slug}-${num}.lottie.json`
     };
@@ -1456,9 +1456,16 @@ function renderMediaHTML(it, isModal = false) {
         }
         return inner;
     } else {
-        const urls = generateFragmentUrls(it.nft_name);
-        const iSrc = urls.local || urls.image || 'gift_placeholder.png';
-
+        let iSrc = it._realImage;
+        // ALWAYS try to fix fragment urls if they don't have hyphens but are gifts
+        if (iSrc && iSrc.includes('nft.fragment.com/gift/') && !iSrc.includes('-') && !SLUG_MAPPING[iSrc.split('/').pop().split('-')[0]]) {
+            const f = generateFragmentUrls(it.nft_name);
+            iSrc = f.image;
+        }
+        if (!iSrc || iSrc.includes('gift.svg') || iSrc.includes('ton_symbol')) {
+            const f = generateFragmentUrls(it.nft_name);
+            iSrc = f.image;
+        }
         return `
             <img src="${iSrc}" class="${isModal ? 'view-img-actual' : 'card-img'}" style="${isModal ? 'width:100%; height:100%; object-fit:contain;' : ''}" loading="lazy" onerror="handleGiftImageError(this, '${it.nft_name.replace(/'/g, "\\'")}')">
             <div class="card-days-badge-bottom">${daysLabel}</div>
