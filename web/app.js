@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://cohen-lay-indices-amongst.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://works-scratch-substitute-developmental.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -1116,13 +1116,20 @@ function initFilterLists() {
             allItems.forEach(item => {
                 if (item.name.toLowerCase().includes(sVal)) {
                     // Try to get clean visual first
-                    let visual = null;
-                    if (m.key === 'symbol') visual = getTelegifterUrl('symbol', item.name);
-                    else if (m.key === 'model') visual = getTelegifterUrl('model', item.name, item.collection);
+                    let icon = null;
+                    if (m.key === 'symbol') icon = getTelegifterUrl('symbol', item.name);
+                    else if (m.key === 'model') icon = getTelegifterUrl('model', item.name, item.collection);
+                    else if (m.key === 'nft') icon = item.image; // Use existing image for NFT collections
 
-                    let icon = visual || item.image;
-                    if (!icon && (m.key === 'bg' || m.key === 'symbol')) icon = VISUAL_MAP[m.key][item.name] || null;
-                    // FIX: Pass item.collection as collectionContext
+                    if (!icon && (m.key === 'bg' || m.key === 'symbol')) icon = (VISUAL_MAP[m.key] && VISUAL_MAP[m.key][item.name]) || null;
+
+                    // NEW: Ensure we try Fragment URL if other methods failed and it's a Model
+                    if (!icon && m.key === 'model') {
+                        const slug = item.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+                        // We use a generic model #1 for the filter icon preview if possible
+                        icon = `https://nft.fragment.com/gift/${slug}-1.webp`;
+                    }
+
                     addFilterItem(cont, item.name, item.name, m.key, ACTIVE_FILTERS[m.key] === item.name, icon, item.collection, item.image);
                 }
             });
@@ -1167,20 +1174,31 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
         </div>`;
     } else if (key === 'symbol') {
         const tgSymbol = getTelegifterUrl('symbol', name);
-        const iconSrc = tgSymbol || VISUAL_MAP.symbol[name];
-        visualHTML = `<img src="${iconSrc}" class="filter-img" style="filter: brightness(0) invert(1); width:28px; height:28px; object-fit:contain;" onerror="this.style.display='none'">`;
+        const iconSrc = tgSymbol || (VISUAL_MAP.symbol ? VISUAL_MAP.symbol[name] : null);
+        if (iconSrc) {
+            visualHTML = `<img src="${iconSrc}" class="filter-img" style="filter: brightness(0) invert(1); width:28px; height:28px; object-fit:contain;" onerror="this.style.display='none'">`;
+        } else {
+            visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: rgba(255, 255, 255, 0.05); border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
+                <span style="color:#8b9bb4; font-size:11px; font-weight:700; z-index:1;">${name.substring(0, 3).toUpperCase()}</span>
+            </div>`;
+        }
     } else if (key === 'bg') {
-        const bgStyle = VISUAL_MAP.bg[name] || '#333';
+        const bgStyle = (VISUAL_MAP.bg && VISUAL_MAP.bg[name]) || '#333';
         visualHTML = `<div class="filter-color-circle" style="background: ${bgStyle}; position:relative; overflow:hidden; width:52px; height:52px; border-radius:12px;">
             <div style="position:absolute; top:0; left:0; width:100%; height:100%; background: url('https://telegifter.ru/wp-content/themes/gifts/assets/img/bg-logo-mini.webp'); opacity:0.3; background-size: 20px;"></div>
         </div>`;
-    } else if (imgUrl && !isBadUrl(imgUrl)) {
-        const fallback = (fallbackImgUrl && !isBadUrl(fallbackImgUrl)) ? fallbackImgUrl : 'https://nft.fragment.com/guide/gift.svg';
+    } else {
+        // Model or NFT or fallback
+        const isNFT = key === 'nft';
+        const cleanName = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+        // For Models, we try to use the first item's image as a preview
+        // For NFTs, we try to use the collection slug
+        const possibleImg = imgUrl || (isNFT ? `https://nft.fragment.com/gift/${cleanName}-1.webp` : `https://nft.fragment.com/gift/${cleanName}-1.webp`);
 
         visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: rgba(255, 255, 255, 0.05); border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
-            <span style="color:#8b9bb4; font-size:11px; font-weight:700; position:absolute; z-index:1;">${name.substring(0, 3).toUpperCase()}</span>
-            <img src="${imgUrl}" class="filter-img" style="width:100%; height:100%; object-fit:contain; z-index:2; opacity:0; transition:opacity 0.2s;" 
-                onload="this.style.opacity='1';"
+            <span class="filter-item-letter" style="color:#8b9bb4; font-size:11px; font-weight:700; position:absolute; z-index:1;">${name.substring(0, 3).toUpperCase()}</span>
+            <img src="${possibleImg}" class="filter-img" style="width:100%; height:100%; object-fit:contain; z-index:2; opacity:0; transition:opacity 0.2s;" 
+                onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';"
                 onerror="
                     const name = '${name.replace(/'/g, "\\'")}';
                     const col = '${(collectionContext || '').replace(/'/g, "\\'")}';
@@ -1188,19 +1206,11 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
                     const nextUrl = getTelegifterUrl('model', name, col, parseInt(this.dataset.slugIndex));
                     if (nextUrl && parseInt(this.dataset.slugIndex) < 20) {
                         this.src = nextUrl;
-                    } else if (this.src !== '${fallback}') {
-                        this.src = '${fallback}';
-                        this.style.opacity = '1';
                     } else {
-                        this.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
                         this.style.display = 'none';
+                        this.previousElementSibling.style.display = 'block';
                     }
                 ">
-        </div>`;
-    } else {
-        const labelText = name.substring(0, 3).toUpperCase();
-        visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: rgba(255, 255, 255, 0.05); border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
-            <span style="color:#8b9bb4; font-size:11px; font-weight:700; z-index:1;">${labelText}</span>
         </div>`;
     }
 
