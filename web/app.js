@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://mineral-metadata-highway-tulsa.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://integration-beta-position-uri.trycloudflare.com"; // Cloudflare Tunnel URL
 window.fallbackImgUrl = null; // Prevent ReferenceError from cached older scripts
 console.log("Using backend:", BACKEND_URL);
 
