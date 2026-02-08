@@ -958,9 +958,7 @@ body {
     width: 36px;
     height: 36px;
     border-radius: 10px;
-    object-fit: contain;
-    padding: 8px;
-    box-sizing: border-box;
+    object-fit: cover;
 }
 
 .filter-item-name {
@@ -1480,10 +1478,8 @@ body {
     width: 32px;
     height: 32px;
     border-radius: 8px;
-    object-fit: contain;
-    padding: 8px;
+    object-fit: cover;
     background: rgba(255, 255, 255, 0.05);
-    box-sizing: border-box;
 }
 
 .filter-color-circle {
@@ -2502,11 +2498,13 @@ body.hide-filters .header-column {
 
     0%,
     100% {
-        opacity: 1;
+        opacity: 0.6;
+        transform: scale(0.98);
     }
 
     50% {
-        opacity: 0.6;
+        opacity: 1;
+        transform: scale(1);
     }
 }
 

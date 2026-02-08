@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://championship-lafayette-copied-naples.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://carter-somehow-oriental-consent.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -375,35 +375,7 @@ const SLUG_MAPPING = {
     'jellypuppy': 'jellypuppy',
     'magicmushroom': 'magicmushroom',
     'goldstar': 'goldstar',
-    'khabibspapakha': 'khabibspapakha',
-    'blingbinkies': 'blingbinky',
-    'eternalcandles': 'eternalcandle',
-    'cupidcharms': 'cupidcharm',
-    'skystilettos': 'skystiletto',
-    'swagbags': 'swagbag',
-    'cookiehearts': 'cookieheart',
-    'lightswords': 'lightsword',
-    'signetrings': 'signetring',
-    'lushbouquets': 'lushbouquet',
-    'joyfulbundles': 'joyfulbundle',
-    'minioscars': 'minioscar',
-    'snoopcigars': 'snoopcigar',
-    'crystalballs': 'crystalball',
-    'vintagecigars': 'vintagecigar',
-    'flyingbrooms': 'flyingbroom',
-    'genielamps': 'genielamp',
-    'kissedfrogs': 'kissedfrog',
-    'iongems': 'iongem',
-    'jollychimps': 'jollychimp',
-    'magicpotions': 'magicpotion',
-    'festivefireworks': 'festivefirework',
-    'duckybath': 'ducks',
-    'coffinnails': 'coffinnails',
-    'santasgifts': 'santasgifts',
-    'calaveras': 'calavera',
-    'snowmans': 'snowman',
-    'witchesbrooms': 'witchesbroom',
-    'gemsignets': 'signetring'
+    'khabibspapakha': 'khabibspapakha'
 };
 
 function getTelegifterUrl(type, name, collection, slugIndex = 0) {
@@ -414,20 +386,9 @@ function getTelegifterUrl(type, name, collection, slugIndex = 0) {
         return `${TG_ASSETS_URL}/symbol/${cleanName}.webp`;
     }
 
-    if (type === 'nft') {
-        return `${TG_ASSETS_URL}/noupdate/${cleanName}.webp`;
-    }
-
     if (type === 'model') {
-        // Use collection slug if available
-        if (collection) {
-            const raw = collection.toLowerCase().replace(/[^a-z0-9]/g, '');
-            const slug = SLUG_MAPPING[raw] || raw;
-            return `${TG_ASSETS_URL}/${slug}/${cleanName}.webp`;
-        }
-        // Fallback or generic path if no collection (but telegifter needs slug)
-        // If we don't have collection, we can't guess folder. Return null to use local fallback.
-        return null;
+        // Use local caching endpoint (handled by live_server.py + model_cache.py)
+        return `/models/${cleanName}.webp`;
     }
     return null;
 }
@@ -965,27 +926,11 @@ async function loadFilterData() {
         const res = await fetch(`${BACKEND_URL}/api/filters`);
         const data = await res.json();
         console.log('[FILTERS] Received keys:', Object.keys(data));
-        window.FILTERS_CACHE = data;
 
         if (data) {
             // NFTs = collections
             if (data.nfts && Array.isArray(data.nfts)) {
-                window.STATIC_COLLECTIONS = data.nfts.map(name => {
-                    // Try to get official collection image from TonAPI if address is available
-                    let img = null;
-                    if (data.nft_addresses && data.nft_addresses[name]) {
-                        img = `https://cache.tonapi.io/img/collection/${data.nft_addresses[name]}/image.png?size=256`;
-                    }
-
-                    // Fallback to fragment if TonAPI addr is missing
-                    if (!img) {
-                        let singular = name;
-                        if (name.endsWith('s') && name.length > 4) singular = name.slice(0, -1);
-                        const f = generateFragmentUrls(singular + " #1", 0);
-                        img = f.image;
-                    }
-                    return { name, image: img };
-                });
+                window.STATIC_COLLECTIONS = data.nfts.map(name => ({ name, image: null }));
             }
 
             // Convert array backdrops/symbols to nested format {collectionName: [{name, image}]}
@@ -1114,7 +1059,8 @@ function initFilterLists() {
 
     (window.STATIC_COLLECTIONS || []).forEach(col => {
         if (col.name.toLowerCase().includes(nftSearch)) {
-            addFilterItem(nftCont, col.name, col.name, 'nft', ACTIVE_FILTERS.nft === col.name, col.image);
+            const visual = `/collections/${col.name}.webp`;
+            addFilterItem(nftCont, col.name, col.name, 'nft', ACTIVE_FILTERS.nft === col.name, visual);
         }
     });
 
@@ -1174,6 +1120,7 @@ function initFilterLists() {
                     let visual = null;
                     if (m.key === 'symbol') visual = getTelegifterUrl('symbol', item.name);
                     else if (m.key === 'model') visual = getTelegifterUrl('model', item.name, item.collection);
+                    else if (m.key === 'nft') visual = `/collections/${item.name}.webp`;
 
                     let icon = visual || item.image;
                     if (!icon && (m.key === 'bg' || m.key === 'symbol')) icon = VISUAL_MAP[m.key][item.name] || null;
@@ -1198,6 +1145,7 @@ function initFilterLists() {
                 let visual = null;
                 if (m.key === 'symbol') visual = getTelegifterUrl('symbol', item.name);
                 else if (m.key === 'model') visual = getTelegifterUrl('model', item.name, selectedNFT);
+                else if (m.key === 'nft') visual = `/collections/${item.name}.webp`;
 
                 let icon = visual || item.image;
                 if (!icon && (m.key === 'bg' || m.key === 'symbol')) icon = VISUAL_MAP[m.key][item.name] || null;
@@ -1205,6 +1153,12 @@ function initFilterLists() {
             }
         });
     });
+}
+
+function getCollectionFallback(name) {
+    if (!name) return 'https://nft.fragment.com/guide/gift.svg';
+    const f = generateFragmentUrls(name + " #1");
+    return f.image || 'https://nft.fragment.com/guide/gift.svg';
 }
 
 function addFilterItem(container, name, value, key, isSelected, imgUrl, collectionContext, fallbackImgUrl) {
@@ -1229,39 +1183,53 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
         visualHTML = `<div class="filter-color-circle" style="background: ${bgStyle}; position:relative; overflow:hidden; width:52px; height:52px; border-radius:12px;">
             <div style="position:absolute; top:0; left:0; width:100%; height:100%; background: url('https://telegifter.ru/wp-content/themes/gifts/assets/img/bg-logo-mini.webp'); opacity:0.3; background-size: 20px;"></div>
         </div>`;
-    } else if (key === 'model' || key === 'nft' || (imgUrl && !isBadUrl(imgUrl))) {
-        // CLEAN STRATEGY Phase 2:
-        // 1. Models: Prefer local /models/ asset
-        // 2. NFTs: Prefer TonAPI collection logo (extremely clean)
-        let icon = imgUrl;
-        if (key === 'model') {
-            icon = getTelegifterUrl('model', name, collectionContext) || `/models/${name}.webp`;
-        } else if (key === 'nft') {
-            // CLEAN STRATEGY Phase 3: Prefer Telegifter for Collections too
-            icon = getTelegifterUrl('nft', name);
-            if (!icon && window.FILTERS_CACHE && window.FILTERS_CACHE.nft_addresses && window.FILTERS_CACHE.nft_addresses[name]) {
-                const addr = window.FILTERS_CACHE.nft_addresses[name];
-                icon = `https://cache.tonapi.io/img/collection/${addr}/image.png`;
-            }
-            else if (!icon || isBadUrl(icon)) {
-                let n = name;
-                if (n.endsWith('s') && n.length > 4) n = n.slice(0, -1);
-                const f = generateFragmentUrls(n + " #1", 0);
-                icon = f.image;
-            }
+    } else if (imgUrl && !isBadUrl(imgUrl)) {
+        const fallback = (fallbackImgUrl && !isBadUrl(fallbackImgUrl)) ? fallbackImgUrl : 'https://nft.fragment.com/guide/gift.svg';
+        const collFallback = key === 'nft' ? getCollectionFallback(name) : fallback;
+
+        visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: rgba(255, 255, 255, 0.05); border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
+            <span style="color:#8b9bb4; font-size:11px; font-weight:700; position:absolute; z-index:1;">${name.substring(0, 3).toUpperCase()}</span>
+            <img src="${imgUrl}" class="filter-img" style="width:100%; height:100%; object-fit:contain; z-index:2; opacity:0; transition:opacity 0.2s;" 
+                onload="this.style.opacity='1';"
+                onerror="
+                    if (this.src.endsWith('.webp')) {
+                        this.src = this.src.replace('.webp', '.png');
+                        return;
+                    }
+                    const name = '${name.replace(/'/g, "\\'")}';
+                    const key = '${key}';
+                    if (key === 'nft') {
+                        this.src = getCollectionFallback(name);
+                        this.style.opacity = '1';
+                        this.onerror = null;
+                        return;
+                    }
+                    const col = '${(collectionContext || '').replace(/'/g, "\\'")}';
+                    this.dataset.slugIndex = this.dataset.slugIndex ? parseInt(this.dataset.slugIndex) + 1 : 1;
+                    const nextUrl = getTelegifterUrl('model', name, col, parseInt(this.dataset.slugIndex));
+                    if (nextUrl && parseInt(this.dataset.slugIndex) < 20) {
+                        this.src = nextUrl;
+                    } else if (this.src !== '${collFallback}') {
+                        this.src = '${collFallback}';
+                        this.style.opacity = '1';
+                    } else {
+                        this.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+                        this.style.display = 'none';
+                    }
+                ">
+        </div>`;
+    } else {
+        const labelText = name.substring(0, 3).toUpperCase();
+        let fallbackVisual = '';
+        if (key === 'nft') {
+            const fallbackSrc = getCollectionFallback(name);
+            fallbackVisual = `<img src="${fallbackSrc}" class="filter-img" style="width:100%; height:100%; object-fit:contain; z-index:2;" onload="this.parentElement.querySelector('span').style.display='none'">`;
         }
 
-        if (icon) {
-            visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: rgba(255, 255, 255, 0.05); border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
-            <img src="${icon}" class="filter-img" style="width:100%; height:100%; object-fit:contain; z-index:2; opacity:0; transition:opacity 0.2s; padding:7px;" 
-                onload="this.style.opacity='1';"
-                onerror="handleFilterImageError(this, '${name.replace(/'/g, "\\'")}', '${(collectionContext || '').replace(/'/g, "\\'")}', '${(fallbackImgUrl || '').replace(/'/g, "\\'")}', '${key}')">
-             <script>setTimeout(() => { const i = document.currentScript.previousElementSibling; if(i && i.style.opacity!=='1') i.style.opacity='1'; }, 3000);</script>
+        visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: rgba(255, 255, 255, 0.05); border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
+            <span style="color:#8b9bb4; font-size:11px; font-weight:700; z-index:1;">${labelText}</span>
+            ${fallbackVisual}
         </div>`;
-        } else {
-            visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: rgba(255, 255, 255, 0.05); border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
-        </div>`;
-        }
     }
 
     div.innerHTML = `
@@ -1457,115 +1425,9 @@ function handleGiftImageError(img, name) {
         const card = img.closest('.card');
         if (card) {
             card.style.display = 'none';
+            console.warn("Hiding broken gift card:", name);
         }
     }
-}
-
-const SINGULAR_EXCEPTIONS = {
-    'blingbinkies': 'Bling Binky',
-    'berryboxes': 'Berry Box',
-    'artisanbricks': 'Artisan Brick',
-    'prettyposies': 'Pretty Posy',
-    'happybrownies': 'Happy Brownie',
-    'jellybunnies': 'Jelly Bunny',
-    'voodoodolls': 'Voodoo Doll',
-    'alphadogs': 'Alpha Dog',
-    'coffeecups': 'Coffee Cup',
-    'spyderlilies': 'Spyder Lily',
-    'tikitotems': 'Tiki Totem'
-};
-
-function singularizeCollection(name) {
-    if (!name) return '';
-    const lower = name.toLowerCase().replace(/[^a-z0-9]/g, '');
-    if (SINGULAR_EXCEPTIONS[lower]) return SINGULAR_EXCEPTIONS[lower];
-
-    // Default heuristic: remove 's' at end if present
-    if (name.endsWith('s') && !name.endsWith('ss')) {
-        return name.slice(0, -1);
-    }
-    return name;
-}
-
-function handleFilterImageError(img, name, collection, fallback, key) {
-    img.dataset.attempt = img.dataset.attempt ? parseInt(img.dataset.attempt) + 1 : 1;
-    const attempt = parseInt(img.dataset.attempt);
-
-    // --- DELETED: attempt === 1 collection fallback for models ---
-    // This was causing models to show the collection image when model image was missing,
-    // which was confusing for the users. Now we only allow model-specific fallbacks.
-
-    if (attempt === 2) {
-        // 1.2 Try hyphenated local name for Models
-        if (key === 'model' && !img.src.includes('attempt=hyphen')) {
-            const hyphenated = name.replace(/\s+/g, '-');
-            img.src = `/models/${hyphenated}.webp?attempt=hyphen`;
-            return;
-        }
-
-        // 2. Try TonAPI collection logo
-        if (key === 'model' && collection && window.FILTERS_CACHE && window.FILTERS_CACHE.nft_addresses && window.FILTERS_CACHE.nft_addresses[collection]) {
-            const addr = window.FILTERS_CACHE.nft_addresses[collection];
-            img.src = `https://cache.tonapi.io/img/collection/${addr}/image.png`;
-            return;
-        }
-
-        // 2.2 Try TonAPI for NFT collection if Telegifter failed
-        if (key === 'nft' && img.src.includes('telegifter.ru') && window.FILTERS_CACHE && window.FILTERS_CACHE.nft_addresses && window.FILTERS_CACHE.nft_addresses[name]) {
-            return;
-        }
-    }
-
-    // 4. Last resort Fragment fallback for models if TonAPI also failed
-    if (key === 'model' && !img.src.includes('fragment.com') && !img.src.includes('tonapi.io')) {
-        const f = generateFragmentUrls(name + " #1", 0);
-        if (f.image) {
-            img.src = f.image;
-            return;
-        }
-    }
-
-    // Try cache-busting the current URL
-    if (img.src && !img.src.includes('?refresh=')) {
-        img.src = img.src + (img.src.includes('?') ? '&' : '?') + 'refresh=' + Date.now();
-        return;
-    }
-
-    if (attempt === 2) {
-        // 2. Try generic Fragment URL for models/nfts
-        // We now ALWAYS use the specific name (model or NFT) to avoid showing 
-        // collection images for missing models.
-        let n = name;
-        if (n && !n.includes('#')) {
-            // Basic singularization
-            n = singularizeCollection(n);
-
-            const f = generateFragmentUrls(n + " #1", 0);
-            if (f.image && f.image !== img.src.split('?')[0]) {
-                img.src = f.image;
-                return;
-            }
-        }
-    }
-
-    if (attempt === 3) {
-        // 3. Try hyphenated fallback
-        let n = name;
-        if (n && !n.includes('#')) {
-            n = singularizeCollection(n);
-
-            const f = generateFragmentUrls(n + " #1", 1);
-            if (f.image && f.image !== img.src.split('?')[0]) {
-                img.src = f.image;
-                return;
-            }
-        }
-    }
-
-    // Final fallback
-    img.src = fallback || 'https://nft.fragment.com/guide/gift.svg';
-    img.onerror = null;
-    img.style.opacity = '1';
 }
 
 function renderMediaHTML(it, isModal = false) {

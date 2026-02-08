@@ -290,17 +290,9 @@ function getTelegifterUrl(type, name, collection, slugIndex = 0) {
         return `${TG_ASSETS_URL}/symbol/${cleanName}.webp`;
     }
 
-    if (type === 'nft') {
-        return `${TG_ASSETS_URL}/noupdate/${cleanName}.webp`;
-    }
-
     if (type === 'model') {
-        if (collection) {
-            const raw = collection.toLowerCase().replace(/[^a-z0-9]/g, '');
-            const slug = SLUG_MAPPING[raw] || raw;
-            return `${TG_ASSETS_URL}/${slug}/${cleanName}.webp`;
-        }
-        return null;
+        // Use local caching endpoint (handled by live_server.py + model_cache.py)
+        return `/models/${cleanName}.webp`;
     }
     return null;
 }
