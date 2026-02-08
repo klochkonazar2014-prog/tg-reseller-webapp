@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://decimal-holly-conflicts-dramatic.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://fact-dana-survival-disabilities.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -1194,8 +1194,9 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
         // CLEAN STRATEGY Phase 2:
         // 1. Models: Prefer local /models/ asset
         // 2. NFTs: Prefer TonAPI collection logo (extremely clean)
+        let icon = imgUrl;
         if (key === 'model') {
-            icon = `/models/${name}.webp`;
+            icon = getTelegifterUrl('model', name) || `/models/${name}.webp`;
         } else if (key === 'nft' && window.FILTERS_CACHE && window.FILTERS_CACHE.nft_addresses && window.FILTERS_CACHE.nft_addresses[name]) {
             const addr = window.FILTERS_CACHE.nft_addresses[name];
             icon = `https://cache.tonapi.io/img/collection/${addr}/image.png`;
@@ -1429,10 +1430,26 @@ function handleFilterImageError(img, name, collection, fallback, key) {
             return;
         }
 
+        // 1.5 Try Fragment for models if local and anton fail
+        if (key === 'model' && img.src.includes('attempt=hyphen')) {
+            const f = generateFragmentUrls(name + " #1", 0);
+            img.src = f.image;
+            return;
+        }
+
         // 2. Try the Collection image (clean/base gift) from TonAPI
         if (key === 'model' && collection && window.FILTERS_CACHE && window.FILTERS_CACHE.nft_addresses && window.FILTERS_CACHE.nft_addresses[collection]) {
             const addr = window.FILTERS_CACHE.nft_addresses[collection];
             img.src = `https://cache.tonapi.io/img/collection/${addr}/image.png`;
+            return;
+        }
+
+        // 2.5 Try Fragment for NFTs if TonAPI fails
+        if (key === 'nft' && (img.src.includes('tonapi.io') || img.src.includes('undefined'))) {
+            let n = name;
+            if (n.endsWith('s') && n.length > 4) n = n.slice(0, -1);
+            const f = generateFragmentUrls(n + " #1", 0);
+            img.src = f.image;
             return;
         }
 
