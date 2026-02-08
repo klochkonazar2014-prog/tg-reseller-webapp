@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://installing-endless-harvard-diet.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://vast-ethernet-containers-chain.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -392,11 +392,10 @@ const SLUG_MAPPING = {
 
 function getTelegifterUrl(type, name, collection, slugIndex = 0) {
     if (!name || name === 'Unknown' || name === 'Default' || name === 'Gift' || name === 'Gift #?') return null;
+    if (type === 'symbol') return null; // Symbols are handled via VISUAL_MAP or external links
 
     const collectionName = (type === 'model') ? collection : name;
     if (!collectionName) return null;
-
-    if (type === 'symbol') return null;
 
     // Generate variants matching download_models.py logic
     const variants = [];
@@ -406,7 +405,7 @@ function getTelegifterUrl(type, name, collection, slugIndex = 0) {
         variants.push(SLUG_MAPPING[collectionName]);
     }
 
-    // 2. Clean name (no spaces, no symbols)
+    // 2. Clean name
     const clean = collectionName.toLowerCase().replace(/['’]/g, '').replace(/-/g, ' ');
     const noSpaces = clean.replace(/\s+/g, '');
     variants.push(noSpaces);
@@ -414,18 +413,6 @@ function getTelegifterUrl(type, name, collection, slugIndex = 0) {
     // 3. Singular form
     if (noSpaces.endsWith('s') && noSpaces.length > 3) {
         variants.push(noSpaces.slice(0, -1));
-    }
-
-    // 4. Hyphenated
-    if (clean.includes(' ')) {
-        variants.push(clean.replace(/\s+/g, '-'));
-    }
-
-    // 5. First/Last words
-    const words = clean.split(/\s+/);
-    if (words.length > 1) {
-        variants.push(words[0]);
-        variants.push(words[words.length - 1]);
     }
 
     // Unique variants
