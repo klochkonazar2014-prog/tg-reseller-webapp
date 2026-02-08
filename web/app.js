@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://thermal-logos-experiment-arthur.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://trackback-travelling-hepatitis-assumes.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -375,7 +375,24 @@ const SLUG_MAPPING = {
     'jellypuppy': 'jellypuppy',
     'magicmushroom': 'magicmushroom',
     'goldstar': 'goldstar',
-    'khabibspapakha': 'khabibspapakha'
+    'khabibspapakha': 'khabibspapakha',
+    'blingbinkies': 'blingbinky',
+    'eternalcandles': 'eternalcandle',
+    'cupidcharms': 'cupidcharm',
+    'skystilettos': 'skystiletto',
+    'swagbags': 'swagbag',
+    'cookiehearts': 'cookieheart',
+    'lightswords': 'lightsword',
+    'signetrings': 'signetring',
+    'lushbouquets': 'lushbouquet',
+    'joyfulbundles': 'joyfulbundle',
+    'minioscars': 'minioscar',
+    'snoopcigars': 'snoopcigar',
+    'crystalballs': 'crystalball',
+    'vintagecigars': 'vintagecigar',
+    'flyingbrooms': 'flyingbroom',
+    'genielamps': 'genielamp',
+    'kissedfrogs': 'kissedfrog'
 };
 
 function getTelegifterUrl(type, name, collection, slugIndex = 0) {
