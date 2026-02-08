@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://feeling-vienna-curtis-utilize.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://studios-swimming-exactly-adopt.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -351,7 +351,10 @@ const VISUAL_MAP = {
     symbol: {
         'Candle': 'https://raw.githubusercontent.com/ton-blockchain/token-logos/main/nft/gift/candle.svg',
         'Heart': 'https://raw.githubusercontent.com/ton-blockchain/token-logos/main/nft/gift/heart.svg',
-        'Star': 'https://raw.githubusercontent.com/ton-blockchain/token-logos/main/nft/gift/star.svg'
+        'Star': 'https://raw.githubusercontent.com/ton-blockchain/token-logos/main/nft/gift/star.svg',
+        'candle': 'https://raw.githubusercontent.com/ton-blockchain/token-logos/main/nft/gift/candle.svg',
+        'heart': 'https://raw.githubusercontent.com/ton-blockchain/token-logos/main/nft/gift/heart.svg',
+        'star': 'https://raw.githubusercontent.com/ton-blockchain/token-logos/main/nft/gift/star.svg'
     }
 };
 
@@ -392,7 +395,17 @@ const SLUG_MAPPING = {
 
 function getTelegifterUrl(type, name, collection, slugIndex = 0) {
     if (!name || name === 'Unknown' || name === 'Default' || name === 'Gift' || name === 'Gift #?') return null;
-    if (type === 'symbol') return null; // Symbols are handled via VISUAL_MAP or external links
+
+    if (type === 'symbol') {
+        // Symbols: Use official TON repository for icons
+        const clean = name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').trim();
+        const slugNoSpace = clean.replace(/\s+/g, '');
+        const slugDash = clean.replace(/\s+/g, '-');
+        const variants = [slugNoSpace, slugDash];
+
+        if (slugIndex >= variants.length) return null;
+        return `https://raw.githubusercontent.com/ton-blockchain/token-logos/main/nft/gift/${variants[slugIndex]}.svg`;
+    }
 
     const collectionName = (type === 'model') ? collection : name;
     if (!collectionName) return null;
@@ -422,11 +435,11 @@ function getTelegifterUrl(type, name, collection, slugIndex = 0) {
     const selectedSlug = uniqueVariants[slugIndex];
 
     if (type === 'model') {
-        return `/file/gifts/${selectedSlug}/model.webp`;
+        return `${BACKEND_URL}/file/gifts/${selectedSlug}/model.webp`;
     }
 
     if (type === 'nft') {
-        return `/file/gifts/${selectedSlug}/thumb.webp`;
+        return `${BACKEND_URL}/file/gifts/${selectedSlug}/thumb.webp`;
     }
 
     return null;
