@@ -689,6 +689,15 @@ body {
     /* Кнопки внизу */
     z-index: 999;
     height: calc(125px + var(--safe-area-bottom));
+    transition: height 0.3s ease;
+}
+
+.bottom-nav.profile-mode {
+    height: calc(75px + var(--safe-area-bottom));
+}
+
+.bottom-nav.profile-mode .nav-items-row {
+    padding-bottom: 8px;
 }
 
 .nav-item {

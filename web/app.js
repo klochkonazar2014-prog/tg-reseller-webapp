@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://frederick-courts-wars-amend.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://situated-submitting-sustainable-improved.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -608,6 +608,8 @@ function switchTab(index) {
 
         // FIX: Nav should always be visible
         // document.body.classList.add('profile-active');
+        const bNav = document.querySelector('.bottom-nav');
+        if (bNav) bNav.classList.add('profile-mode');
     }
 
     // NEW: Filter visibility logic
@@ -615,6 +617,11 @@ function switchTab(index) {
         document.body.classList.add('hide-filters');
     } else {
         document.body.classList.remove('hide-filters');
+    }
+
+    if (index !== 3) {
+        const bNav = document.querySelector('.bottom-nav');
+        if (bNav) bNav.classList.remove('profile-mode');
     }
 }
 
@@ -1736,7 +1743,8 @@ async function openProductView(item) {
             }
             if (details.attributes) {
                 details.attributes.forEach(attr => {
-                    const row = Array.from(document.querySelectorAll('.property-item')).find(r => r.querySelector('.prop-name')?.textContent === t(attr.trait_type.toLowerCase()));
+                    const trait = attr.trait_type.toLowerCase();
+                    const row = Array.from(document.querySelectorAll('.property-item')).find(r => r.querySelector('.prop-name')?.textContent === t(trait));
                     if (row) {
                         const valSpan = row.querySelector('.prop-right span');
                         if (valSpan) valSpan.textContent = attr.value;
@@ -1744,7 +1752,10 @@ async function openProductView(item) {
                         // NEW: Make attribute clickable to filter
                         row.classList.add('clickable-prop');
                         row.onclick = () => {
-                            const filterKey = attr.trait_type.toLowerCase();
+                            let filterKey = trait;
+                            if (filterKey === 'backdrop' || filterKey === 'background' || filterKey === 'фон') {
+                                filterKey = 'bg';
+                            }
                             if (ACTIVE_FILTERS.hasOwnProperty(filterKey)) {
                                 ACTIVE_FILTERS[filterKey] = attr.value;
                                 closeProductView();
