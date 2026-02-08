@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://situated-submitting-sustainable-improved.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://marion-prot-robot-peter.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -368,7 +368,9 @@ const SLUG_MAPPING = {
     'happybrownie': 'happybrownie',
     'kissedfrog': 'kissedfrog',
     'plushpepe': 'plushpepe',
-    'ducks': 'ducks'
+    'ducks': 'ducks',
+    'eternalrose': 'eternal-rose',
+    'eternal-rose': 'eternal-rose'
 };
 
 function getTelegifterUrl(type, name, collection, slugIndex = 0) {
@@ -1386,13 +1388,24 @@ function generateFragmentUrls(n) {
     const match = n.match(/^(.*?)\s*#(\d+)$/);
     if (!match) return { image: null, lottie: null };
 
-    // Improved slug generation for Fragment
-    let name = match[1].trim().toLowerCase()
-        .replace(/[^a-z0-9]/g, ''); // keep ONLY alphanumeric (remove spaces, dashes)
+    const rawName = match[1].trim();
+    // 1. Try mapping first (case-insensitive)
+    const lookupKey = rawName.toLowerCase().replace(/[^a-z0-9-]/g, ''); // keep hyphens for lookup
+    let slug = SLUG_MAPPING[lookupKey] || SLUG_MAPPING[lookupKey.replace(/-/g, '')];
+
+    // 2. Fallback to automatic slug generation
+    if (!slug) {
+        // IMPROVED: If it contains spaces, it's likely hyphenated on Fragment (like Eternal Rose -> eternal-rose)
+        if (rawName.includes(' ')) {
+            slug = rawName.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '-');
+        } else {
+            slug = rawName.toLowerCase().replace(/[^a-z0-9]/g, '');
+        }
+    }
 
     return {
-        image: `https://nft.fragment.com/gift/${name}-${match[2]}.webp`,
-        lottie: `https://nft.fragment.com/gift/${name}-${match[2]}.lottie.json`
+        image: `https://nft.fragment.com/gift/${slug}-${match[2]}.webp`,
+        lottie: `https://nft.fragment.com/gift/${slug}-${match[2]}.lottie.json`
     };
 }
 function observeNewCards() {
