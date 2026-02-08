@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://requested-delaware-mall-stripes.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://yard-spatial-newsletters-vote.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -380,15 +380,27 @@ const SLUG_MAPPING = {
 
 function getTelegifterUrl(type, name, collection, slugIndex = 0) {
     if (!name || name === 'Unknown' || name === 'Default' || name === 'Gift' || name === 'Gift #?') return null;
-    const cleanName = encodeURIComponent(name);
 
     if (type === 'symbol') {
-        return `${TG_ASSETS_URL}/symbol/${cleanName}.webp`;
+        const cleanSymbol = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+        return `https://nft.fragment.com/symbol/${cleanSymbol}.svg`;
     }
 
     if (type === 'model') {
-        // Use local caching endpoint (handled by live_server.py + model_cache.py)
-        return `/models/${cleanName}.webp`;
+        // Generate Fragment URL: https://nft.fragment.com/gift/modelslug-1.webp
+        const slugBase = name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/[\s]+/g, '');
+
+        // Try different slug variations for better success rate
+        if (slugIndex === 0) {
+            // First try: concatenated (most common)
+            return `https://nft.fragment.com/gift/${slugBase}-1.webp`;
+        } else if (slugIndex === 1) {
+            // Second try: hyphenated
+            const hyphenated = name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/[\s]+/g, '-').replace(/^-|-$/g, '');
+            return `https://nft.fragment.com/gift/${hyphenated}-1.webp`;
+        }
+        // Give up after 2 attempts
+        return null;
     }
     return null;
 }
@@ -1191,20 +1203,19 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
         // Model or NFT or fallback
         const isNFT = key === 'nft';
         const cleanName = name.toLowerCase().replace(/[^a-z0-9]/g, '');
-        // For Models, we try to use the first item's image as a preview
-        // For NFTs, we try to use the collection slug
-        const possibleImg = imgUrl || (isNFT ? `https://nft.fragment.com/gift/${cleanName}-1.webp` : `https://nft.fragment.com/gift/${cleanName}-1.webp`);
+        // Generate Fragment URL
+        const possibleImg = imgUrl || `https://nft.fragment.com/gift/${cleanName}-1.webp`;
 
         visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: rgba(255, 255, 255, 0.05); border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
             <span class="filter-item-letter" style="color:#8b9bb4; font-size:11px; font-weight:700; position:absolute; z-index:1;">${name.substring(0, 3).toUpperCase()}</span>
             <img src="${possibleImg}" class="filter-img" style="width:100%; height:100%; object-fit:contain; z-index:2; opacity:0; transition:opacity 0.2s;" 
                 onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';"
                 onerror="
-                    const name = '${name.replace(/'/g, "\\'")}';
-                    const col = '${(collectionContext || '').replace(/'/g, "\\'")}';
+                    const name = '${name.replace(/'/g, "\\\\'")}';
+                    const col = '${(collectionContext || '').replace(/'/g, "\\\\'")}';
                     this.dataset.slugIndex = this.dataset.slugIndex ? parseInt(this.dataset.slugIndex) + 1 : 1;
-                    const nextUrl = getTelegifterUrl('model', name, col, parseInt(this.dataset.slugIndex));
-                    if (nextUrl && parseInt(this.dataset.slugIndex) < 20) {
+                    const nextUrl = getTelegifterUrl('${key}', name, col, parseInt(this.dataset.slugIndex));
+                    if (nextUrl && parseInt(this.dataset.slugIndex) <= 1) {
                         this.src = nextUrl;
                     } else {
                         this.style.display = 'none';
