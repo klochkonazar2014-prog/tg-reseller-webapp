@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://yard-spatial-newsletters-vote.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://fleece-heavy-fabrics-turned.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -382,26 +382,36 @@ function getTelegifterUrl(type, name, collection, slugIndex = 0) {
     if (!name || name === 'Unknown' || name === 'Default' || name === 'Gift' || name === 'Gift #?') return null;
 
     if (type === 'symbol') {
-        const cleanSymbol = name.toLowerCase().replace(/[^a-z0-9]/g, '');
-        return `https://nft.fragment.com/symbol/${cleanSymbol}.svg`;
+        // Symbols already have URLs in VISUAL_MAP, return null to let addFilterItem use them
+        return null;
     }
 
     if (type === 'model') {
-        // Generate Fragment URL: https://nft.fragment.com/gift/modelslug-1.webp
+        // Models use format: https://nft.fragment.com/gift/modelslug-number.medium.jpg
+        // We don't know the exact number, so we'll try common ones
         const slugBase = name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/[\s]+/g, '');
 
-        // Try different slug variations for better success rate
-        if (slugIndex === 0) {
-            // First try: concatenated (most common)
-            return `https://nft.fragment.com/gift/${slugBase}-1.webp`;
-        } else if (slugIndex === 1) {
-            // Second try: hyphenated
-            const hyphenated = name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/[\s]+/g, '-').replace(/^-|-$/g, '');
-            return `https://nft.fragment.com/gift/${hyphenated}-1.webp`;
+        // Try different number variations
+        const numbers = [888, 1, 777, 555, 123, 100];
+        if (slugIndex < numbers.length) {
+            return `https://nft.fragment.com/gift/${slugBase}-${numbers[slugIndex]}.medium.jpg`;
         }
-        // Give up after 2 attempts
+
+        // Try hyphenated version after exhausting numbers
+        if (slugIndex === numbers.length) {
+            const hyphenated = name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/[\s]+/g, '-').replace(/^-|-$/g, '');
+            return `https://nft.fragment.com/gift/${hyphenated}-${numbers[0]}.medium.jpg`;
+        }
+
         return null;
     }
+
+    if (type === 'nft') {
+        // NFT collections use format: /file/gifts/collectionslug/thumb.webp
+        const collectionSlug = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+        return `/file/gifts/${collectionSlug}/thumb.webp`;
+    }
+
     return null;
 }
 
@@ -1215,7 +1225,7 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
                     const col = '${(collectionContext || '').replace(/'/g, "\\\\'")}';
                     this.dataset.slugIndex = this.dataset.slugIndex ? parseInt(this.dataset.slugIndex) + 1 : 1;
                     const nextUrl = getTelegifterUrl('${key}', name, col, parseInt(this.dataset.slugIndex));
-                    if (nextUrl && parseInt(this.dataset.slugIndex) <= 1) {
+                    if (nextUrl && parseInt(this.dataset.slugIndex) <= 7) {
                         this.src = nextUrl;
                     } else {
                         this.style.display = 'none';
