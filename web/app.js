@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://carter-somehow-oriental-consent.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://algorithms-dispatch-interference-pizza.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -1059,7 +1059,7 @@ function initFilterLists() {
 
     (window.STATIC_COLLECTIONS || []).forEach(col => {
         if (col.name.toLowerCase().includes(nftSearch)) {
-            const visual = `/collections/${col.name}.webp`;
+            const visual = getCollectionFallback(col.name);
             addFilterItem(nftCont, col.name, col.name, 'nft', ACTIVE_FILTERS.nft === col.name, visual);
         }
     });
@@ -1120,7 +1120,7 @@ function initFilterLists() {
                     let visual = null;
                     if (m.key === 'symbol') visual = getTelegifterUrl('symbol', item.name);
                     else if (m.key === 'model') visual = getTelegifterUrl('model', item.name, item.collection);
-                    else if (m.key === 'nft') visual = `/collections/${item.name}.webp`;
+                    else if (m.key === 'nft') visual = getCollectionFallback(item.name);
 
                     let icon = visual || item.image;
                     if (!icon && (m.key === 'bg' || m.key === 'symbol')) icon = VISUAL_MAP[m.key][item.name] || null;
@@ -1145,7 +1145,7 @@ function initFilterLists() {
                 let visual = null;
                 if (m.key === 'symbol') visual = getTelegifterUrl('symbol', item.name);
                 else if (m.key === 'model') visual = getTelegifterUrl('model', item.name, selectedNFT);
-                else if (m.key === 'nft') visual = `/collections/${item.name}.webp`;
+                else if (m.key === 'nft') visual = getCollectionFallback(item.name);
 
                 let icon = visual || item.image;
                 if (!icon && (m.key === 'bg' || m.key === 'symbol')) icon = VISUAL_MAP[m.key][item.name] || null;
@@ -1185,7 +1185,8 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
         </div>`;
     } else if (imgUrl && !isBadUrl(imgUrl)) {
         const fallback = (fallbackImgUrl && !isBadUrl(fallbackImgUrl)) ? fallbackImgUrl : 'https://nft.fragment.com/guide/gift.svg';
-        const collFallback = key === 'nft' ? getCollectionFallback(name) : fallback;
+        // For models, if local fails, use collection fallback as the "normal" Fragment image
+        const collFallback = (key === 'nft' || key === 'model') ? getCollectionFallback(collectionContext || name) : fallback;
 
         visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: rgba(255, 255, 255, 0.05); border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
             <span style="color:#8b9bb4; font-size:11px; font-weight:700; position:absolute; z-index:1;">${name.substring(0, 3).toUpperCase()}</span>
@@ -1206,8 +1207,16 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
                     }
                     const col = '${(collectionContext || '').replace(/'/g, "\\'")}';
                     this.dataset.slugIndex = this.dataset.slugIndex ? parseInt(this.dataset.slugIndex) + 1 : 1;
+                    
+                    // If model local image failed, immediately try collection fallback if available
+                    if (key === 'model' && col && this.src !== getCollectionFallback(col)) {
+                        this.src = getCollectionFallback(col);
+                        this.style.opacity = '1';
+                        return;
+                    }
+
                     const nextUrl = getTelegifterUrl('model', name, col, parseInt(this.dataset.slugIndex));
-                    if (nextUrl && parseInt(this.dataset.slugIndex) < 20) {
+                    if (nextUrl && parseInt(this.dataset.slugIndex) < 5) { // Reduced retries to avoid loops
                         this.src = nextUrl;
                     } else if (this.src !== '${collFallback}') {
                         this.src = '${collFallback}';
@@ -1378,15 +1387,21 @@ function generateFragmentUrls(n, attempt = 0) {
 
     // Normalize for lookup: remove everything except a-z, 0-9
     const lookupKey = rawName.toLowerCase().replace(/[^a-z0-9]/g, '');
-    let slug = SLUG_MAPPING[lookupKey] || lookupKey; // Default to concatenated if not in mapping
+    let slug = SLUG_MAPPING[lookupKey] || null;
 
-    // Specific attempt logic: 
-    // attempt 0: slug as is (usually concatenated)
-    // attempt 1: hyphenated (just in case)
+    if (!slug) {
+        // Default Fragment behavior for multi-word collections: use hyphens
+        // "Desk Calendars" -> "desk-calendars"
+        slug = rawName.toLowerCase()
+            .replace(/[^a-z0-9\s-]/g, '')
+            .replace(/[\s-]+/g, '-')
+            .replace(/^-|-$/g, '');
+    }
+
+    // Specific attempt logic for potential variations
     if (attempt === 1) {
-        if (rawName.includes(' ') || rawName.includes('-')) {
-            slug = rawName.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/[\s-]+/g, '-').replace(/^-|-$/g, '');
-        }
+        // If hyphenated failed, try concatenated as a backup
+        slug = rawName.toLowerCase().replace(/[^a-z0-9]/g, '');
     }
 
     return {
