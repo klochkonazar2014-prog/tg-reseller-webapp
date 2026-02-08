@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://rules-directed-kids-offering.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://technician-field-descending-than.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -370,7 +370,12 @@ const SLUG_MAPPING = {
     'plushpepe': 'plushpepe',
     'ducks': 'ducks',
     'eternalrose': 'eternal-rose',
-    'eternal-rose': 'eternal-rose'
+    'eternal-rose': 'eternal-rose',
+    'cloverpin': 'clover-pin',
+    'whipcupcake': 'whipcupcake',
+    'jellypuppy': 'jellypuppy',
+    'magicmushroom': 'magicmushroom',
+    'goldstar': 'goldstar'
 };
 
 function getTelegifterUrl(type, name, collection, slugIndex = 0) {
@@ -1331,21 +1336,27 @@ function applyMrktModal() {
     loadLiveItems(true); // Trigger server-side refresh
 }
 
+function debounce(func, wait) {
+    let timeout;
+    return (...args) => { clearTimeout(timeout); timeout = setTimeout(() => func(...args), wait); };
+}
+
 function generateFragmentUrls(n, attempt = 0) {
     const match = n.match(/^(.*?)\s*#(\d+)$/);
     if (!match) return { image: null, lottie: null };
 
     const rawName = match[1].trim();
     const num = match[2];
-    // 1. Try mapping first
-    const lookupKey = rawName.toLowerCase().replace(/[^a-z0-9-]/g, '');
-    let slug = SLUG_MAPPING[lookupKey] || SLUG_MAPPING[lookupKey.replace(/-/g, '')];
+
+    // Normalize for lookup: remove everything except a-z, 0-9
+    const lookupKey = rawName.toLowerCase().replace(/[^a-z0-9]/g, '');
+    let slug = SLUG_MAPPING[lookupKey];
 
     if (!slug) {
         if (attempt === 0) {
-            // First attempt: try hyphenated for multi-word
-            if (rawName.includes(' ')) {
-                slug = rawName.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '-');
+            // First attempt: try hyphenated if it has spaces or already has hyphens
+            if (rawName.includes(' ') || rawName.includes('-')) {
+                slug = rawName.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/[\s-]+/g, '-').replace(/^-|-$/g, '');
             } else {
                 slug = rawName.toLowerCase().replace(/[^a-z0-9]/g, '');
             }
@@ -1353,12 +1364,8 @@ function generateFragmentUrls(n, attempt = 0) {
             // Second attempt: try concatenated (no hyphens)
             slug = rawName.toLowerCase().replace(/[^a-z0-9]/g, '');
         } else {
-            // Give up
             return { image: 'https://nft.fragment.com/guide/gift.svg', lottie: null };
         }
-    } else if (attempt > 0) {
-        // If we already have a mapping but it failed (rare, maybe mapping is wrong)
-        return { image: 'https://nft.fragment.com/guide/gift.svg', lottie: null };
     }
 
     return {
