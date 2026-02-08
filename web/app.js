@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://screw-tex-parallel-thank.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://proposals-cassette-prescribed-eval.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -406,6 +406,11 @@ function getTelegifterUrl(type, name, collection, slugIndex = 0, exampleNum = nu
     if (!name || name === 'Unknown' || name === 'Default' || name === 'Gift' || name === 'Gift #?') return null;
 
     if (type === 'symbol') {
+        if (exampleNum && typeof exampleNum === 'object') {
+            // New: Use local example found by update_cache_fix.py
+            return `${BACKEND_URL}/file/gifts/${exampleNum.slug}/thumb.webp`;
+        }
+
         const clean = name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').trim();
         const slugNoSpace = clean.replace(/\s+/g, '');
         const slugDash = clean.replace(/\s+/g, '-');
@@ -1283,13 +1288,18 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
                 onerror="
                     const name = '${name.replace(/'/g, "\\\\\\'")}';
                     const col = '${(collectionContext || '').replace(/'/g, "\\\\\\'")}';
-                    const exNum = ${exampleNum || 'null'};
-                    this.dataset.slugIndex = this.dataset.slugIndex ? parseInt(this.dataset.slugIndex) + 1 : 1;
+                    const exNum = ${JSON.stringify(exampleNum)};
+                    const fallback = ${JSON.stringify(fallbackImgUrl)};
+                    
+                    if (!this.dataset.slugIndex) this.dataset.slugIndex = "0";
+                    this.dataset.slugIndex = (parseInt(this.dataset.slugIndex) + 1).toString();
+                    
                     const nextUrl = getTelegifterUrl('${key}', name, col, parseInt(this.dataset.slugIndex), exNum);
-                    if (nextUrl && parseInt(this.dataset.slugIndex) <= 7) {
+                    if (nextUrl) {
                         this.src = nextUrl;
-                    } else if (fallbackImgUrl && parseInt(this.dataset.slugIndex) === 8) {
-                        this.src = fallbackImgUrl;
+                    } else if (fallback && !this.dataset.fallbackUsed) {
+                        this.dataset.fallbackUsed = "true";
+                        this.src = fallback;
                     } else {
                         this.style.display = 'none';
                         this.previousElementSibling.style.display = 'block';
