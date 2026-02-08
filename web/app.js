@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://beta-weights-specially-throw.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://thermal-logos-experiment-arthur.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -1216,18 +1216,19 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
                 icon = `https://cache.tonapi.io/img/collection/${addr}/image.png`;
             }
             else if (!icon || isBadUrl(icon)) {
-                if (key === 'nft') {
-                    let n = name;
-                    if (n.endsWith('s') && n.length > 4) n = n.slice(0, -1);
-                    const f = generateFragmentUrls(n + " #1", 0);
-                    icon = f.image;
-                }
+                let n = name;
+                if (n.endsWith('s') && n.length > 4) n = n.slice(0, -1);
+                const f = generateFragmentUrls(n + " #1", 0);
+                icon = f.image;
             }
+        }
 
+        if (icon) {
             visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: rgba(255, 255, 255, 0.05); border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
             <img src="${icon}" class="filter-img" style="width:100%; height:100%; object-fit:contain; z-index:2; opacity:0; transition:opacity 0.2s; padding:7px;" 
                 onload="this.style.opacity='1';"
                 onerror="handleFilterImageError(this, '${name.replace(/'/g, "\\'")}', '${(collectionContext || '').replace(/'/g, "\\'")}', '${(fallbackImgUrl || '').replace(/'/g, "\\'")}', '${key}')">
+             <script>setTimeout(() => { const i = document.currentScript.previousElementSibling; if(i && i.style.opacity!=='1') i.style.opacity='1'; }, 3000);</script>
         </div>`;
         } else {
             visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: rgba(255, 255, 255, 0.05); border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
