@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://disc-dive-translations-breed.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://cohen-lay-indices-amongst.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -375,9 +375,7 @@ const SLUG_MAPPING = {
     'jellypuppy': 'jellypuppy',
     'magicmushroom': 'magicmushroom',
     'goldstar': 'goldstar',
-    'khabibspapakha': 'khabibspapakha',
-    'deskcalendars': 'deskcalendars',
-    'crystalballs': 'crystalballs'
+    'khabibspapakha': 'khabibspapakha'
 };
 
 function getTelegifterUrl(type, name, collection, slugIndex = 0) {
@@ -389,8 +387,8 @@ function getTelegifterUrl(type, name, collection, slugIndex = 0) {
     }
 
     if (type === 'model') {
-        // Use relative path for GitHub Pages compatibility
-        return `models/${cleanName}.webp`;
+        // Use local caching endpoint (handled by live_server.py + model_cache.py)
+        return `/models/${cleanName}.webp`;
     }
     return null;
 }
@@ -1061,8 +1059,7 @@ function initFilterLists() {
 
     (window.STATIC_COLLECTIONS || []).forEach(col => {
         if (col.name.toLowerCase().includes(nftSearch)) {
-            const visual = getCollectionFallback(col.name);
-            addFilterItem(nftCont, col.name, col.name, 'nft', ACTIVE_FILTERS.nft === col.name, visual);
+            addFilterItem(nftCont, col.name, col.name, 'nft', ACTIVE_FILTERS.nft === col.name, col.image);
         }
     });
 
@@ -1122,7 +1119,6 @@ function initFilterLists() {
                     let visual = null;
                     if (m.key === 'symbol') visual = getTelegifterUrl('symbol', item.name);
                     else if (m.key === 'model') visual = getTelegifterUrl('model', item.name, item.collection);
-                    else if (m.key === 'nft') visual = getCollectionFallback(item.name);
 
                     let icon = visual || item.image;
                     if (!icon && (m.key === 'bg' || m.key === 'symbol')) icon = VISUAL_MAP[m.key][item.name] || null;
@@ -1147,7 +1143,6 @@ function initFilterLists() {
                 let visual = null;
                 if (m.key === 'symbol') visual = getTelegifterUrl('symbol', item.name);
                 else if (m.key === 'model') visual = getTelegifterUrl('model', item.name, selectedNFT);
-                else if (m.key === 'nft') visual = getCollectionFallback(item.name);
 
                 let icon = visual || item.image;
                 if (!icon && (m.key === 'bg' || m.key === 'symbol')) icon = VISUAL_MAP[m.key][item.name] || null;
@@ -1155,12 +1150,6 @@ function initFilterLists() {
             }
         });
     });
-}
-
-function getCollectionFallback(name) {
-    if (!name) return 'https://nft.fragment.com/guide/gift.svg';
-    const f = generateFragmentUrls(name + " #1");
-    return f.image || 'https://nft.fragment.com/guide/gift.svg';
 }
 
 function addFilterItem(container, name, value, key, isSelected, imgUrl, collectionContext, fallbackImgUrl) {
@@ -1178,60 +1167,29 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
         </div>`;
     } else if (key === 'symbol') {
         const tgSymbol = getTelegifterUrl('symbol', name);
-        const iconSrc = imgUrl || tgSymbol || VISUAL_MAP.symbol[name];
-        visualHTML = `<img src="${iconSrc}" class="filter-img" style="filter: brightness(0) invert(1); width:28px; height:28px; object-fit:contain;" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'; this.style.opacity='0';">`;
+        const iconSrc = tgSymbol || VISUAL_MAP.symbol[name];
+        visualHTML = `<img src="${iconSrc}" class="filter-img" style="filter: brightness(0) invert(1); width:28px; height:28px; object-fit:contain;" onerror="this.style.display='none'">`;
     } else if (key === 'bg') {
-        const bgStyle = VISUAL_MAP.bg[name] || imgUrl || '#333';
+        const bgStyle = VISUAL_MAP.bg[name] || '#333';
         visualHTML = `<div class="filter-color-circle" style="background: ${bgStyle}; position:relative; overflow:hidden; width:52px; height:52px; border-radius:12px;">
             <div style="position:absolute; top:0; left:0; width:100%; height:100%; background: url('https://telegifter.ru/wp-content/themes/gifts/assets/img/bg-logo-mini.webp'); opacity:0.3; background-size: 20px;"></div>
         </div>`;
-    } else if (imgUrl && !isBadUrl(imgUrl) && key !== 'symbol' && key !== 'bg') {
-        // Validation to avoid 'undefined' in URLs
-        const safeName = (name || '').toString();
-        const safeCol = (collectionContext || '').toString();
-
+    } else if (imgUrl && !isBadUrl(imgUrl)) {
         const fallback = (fallbackImgUrl && !isBadUrl(fallbackImgUrl)) ? fallbackImgUrl : 'https://nft.fragment.com/guide/gift.svg';
-        // For models, if local fails, use collection fallback as the "normal" Fragment image
-        const collFallback = (key === 'nft' || key === 'model') ? getCollectionFallback(safeCol || safeName) : fallback;
 
         visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: rgba(255, 255, 255, 0.05); border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
-            <span style="color:#8b9bb4; font-size:11px; font-weight:700; position:absolute; z-index:1;">${safeName.substring(0, 3).toUpperCase()}</span>
+            <span style="color:#8b9bb4; font-size:11px; font-weight:700; position:absolute; z-index:1;">${name.substring(0, 3).toUpperCase()}</span>
             <img src="${imgUrl}" class="filter-img" style="width:100%; height:100%; object-fit:contain; z-index:2; opacity:0; transition:opacity 0.2s;" 
                 onload="this.style.opacity='1';"
                 onerror="
-                    if (this.src.endsWith('.webp')) {
-                        this.src = this.src.replace('.webp', '.png');
-                        return;
-                    }
-                    const name = '${(name || '').replace(/'/g, "\\'")}';
-                    const key = '${key}';
-                    if (!name || name === 'undefined') return;
-
-                    if (key === 'nft') {
-                        this.src = getCollectionFallback(name);
-                        this.style.opacity = '1';
-                        this.onerror = null;
-                        return;
-                    }
+                    const name = '${name.replace(/'/g, "\\'")}';
                     const col = '${(collectionContext || '').replace(/'/g, "\\'")}';
-                    if (!col || col === 'undefined') {
-                        this.src = 'https://nft.fragment.com/guide/gift.svg';
-                        return;
-                    }
                     this.dataset.slugIndex = this.dataset.slugIndex ? parseInt(this.dataset.slugIndex) + 1 : 1;
-                    
-                    // If model local image failed, immediately try collection fallback if available
-                    if (key === 'model' && col && col !== 'undefined' && this.src !== getCollectionFallback(col)) {
-                        this.src = getCollectionFallback(col);
-                        this.style.opacity = '1';
-                        return;
-                    }
-
                     const nextUrl = getTelegifterUrl('model', name, col, parseInt(this.dataset.slugIndex));
-                    if (nextUrl && parseInt(this.dataset.slugIndex) < 5) { // Reduced retries to avoid loops
+                    if (nextUrl && parseInt(this.dataset.slugIndex) < 20) {
                         this.src = nextUrl;
-                    } else if (this.src !== '${collFallback}') {
-                        this.src = '${collFallback}';
+                    } else if (this.src !== '${fallback}') {
+                        this.src = '${fallback}';
                         this.style.opacity = '1';
                     } else {
                         this.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
@@ -1241,15 +1199,8 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
         </div>`;
     } else {
         const labelText = name.substring(0, 3).toUpperCase();
-        let fallbackVisual = '';
-        if (key === 'nft') {
-            const fallbackSrc = getCollectionFallback(name);
-            fallbackVisual = `<img src="${fallbackSrc}" class="filter-img" style="width:100%; height:100%; object-fit:contain; z-index:2;" onload="this.parentElement.querySelector('span').style.display='none'">`;
-        }
-
         visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: rgba(255, 255, 255, 0.05); border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
             <span style="color:#8b9bb4; font-size:11px; font-weight:700; z-index:1;">${labelText}</span>
-            ${fallbackVisual}
         </div>`;
     }
 
@@ -1399,21 +1350,15 @@ function generateFragmentUrls(n, attempt = 0) {
 
     // Normalize for lookup: remove everything except a-z, 0-9
     const lookupKey = rawName.toLowerCase().replace(/[^a-z0-9]/g, '');
-    let slug = SLUG_MAPPING[lookupKey] || null;
+    let slug = SLUG_MAPPING[lookupKey] || lookupKey; // Default to concatenated if not in mapping
 
-    if (!slug) {
-        // Default Fragment behavior for collections: concatenation
-        // "Crystal Balls" -> "crystalballs", "Desk Calendars" -> "deskcalendars"
-        slug = rawName.toLowerCase().replace(/[^a-z0-9]/g, '');
-    }
-
-    // Specific attempt logic:
+    // Specific attempt logic: 
+    // attempt 0: slug as is (usually concatenated)
+    // attempt 1: hyphenated (just in case)
     if (attempt === 1) {
-        // Hyphenated as backup for some collections (e.g. "major-dog")
-        slug = rawName.toLowerCase()
-            .replace(/[^a-z0-9\s-]/g, '')
-            .replace(/[\s-]+/g, '-')
-            .replace(/^-|-$/g, '');
+        if (rawName.includes(' ') || rawName.includes('-')) {
+            slug = rawName.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/[\s-]+/g, '-').replace(/^-|-$/g, '');
+        }
     }
 
     return {
