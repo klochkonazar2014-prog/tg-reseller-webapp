@@ -6,8 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://integration-beta-position-uri.trycloudflare.com"; // Cloudflare Tunnel URL
-window.fallbackImgUrl = null; // Prevent ReferenceError from cached older scripts
+const BACKEND_URL = "https://parliament-bra-ken-suggests.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -18,14 +17,6 @@ let IS_LOADING = false;
 let GLOBAL_OFFSET = 0;
 let HAS_MORE = true;
 let CURRENT_TYPE = 'gift'; // Default: gifts
-let NFT_ADDRESSES = {};
-let MODELS_MAP = {};
-let MODEL_EXAMPLES = {};
-let SYMBOL_EXAMPLES = {};
-// NEW: Example numbers for each model
-let BACKDROPS = [];
-let SYMBOLS = [];
-let ATTR_STATS = {}; // Statistics per collection
 let CURRENT_STATUS = 'available'; // available, rented
 let GLOBAL_TON_PRICE = 0;
 let FRIENDLY_ADDR_CACHE = {};
@@ -301,6 +292,9 @@ function truncateMiddle(str, maxLength = 9) {
     return isUser ? '@' + res : res;
 }
 
+let ATTR_STATS = { model: {}, bg: {}, symbol: {} };
+let CURRENT_PAYMENT_ITEM = null;
+
 // NEW: Visual mapping for premium look
 const VISUAL_MAP = {
     bg: {
@@ -354,10 +348,7 @@ const VISUAL_MAP = {
     symbol: {
         'Candle': 'https://raw.githubusercontent.com/ton-blockchain/token-logos/main/nft/gift/candle.svg',
         'Heart': 'https://raw.githubusercontent.com/ton-blockchain/token-logos/main/nft/gift/heart.svg',
-        'Star': 'https://raw.githubusercontent.com/ton-blockchain/token-logos/main/nft/gift/star.svg',
-        'candle': 'https://raw.githubusercontent.com/ton-blockchain/token-logos/main/nft/gift/candle.svg',
-        'heart': 'https://raw.githubusercontent.com/ton-blockchain/token-logos/main/nft/gift/heart.svg',
-        'star': 'https://raw.githubusercontent.com/ton-blockchain/token-logos/main/nft/gift/star.svg'
+        'Star': 'https://raw.githubusercontent.com/ton-blockchain/token-logos/main/nft/gift/star.svg'
     }
 };
 
@@ -366,84 +357,57 @@ const TG_ASSETS_URL = "https://telegifter.ru/wp-content/themes/gifts/assets/img/
 const TG_SLUGS = ["berrybox", "artisanbrick", "prettyposy", "alphadogs", "voodoodoll", "ducks", "frog", "moneypot", "sparkler", "watch", "flower", "heart", "egg", "pear", "cocktail", "cactus", "jellyfish", "turtle", "gem", "gift", "box", "pot", "shard", "b-daycandle", "happybrownie", "astralshard", "kissedfrog", "plushpepe"];
 
 const SLUG_MAPPING = {
-    'Artisan Bricks': 'artisanbrick', 'Berry Boxes': 'berrybox', 'Falling Stars': 'fallingstar',
-    'Ginger Cookies': 'gingercookie', 'Holiday Drinks': 'holidaydrink', 'Jacks-in-the-Box': 'jackinthebox',
-    'Loot Bags': 'lootbag', 'Neko Helmets': 'nekohelmet', 'Pixel Art': 'pixelart', 'Snow Mittens': 'snowmitten',
-    'Snake Boxes': 'snakebox', 'Spring Baskets': 'springbasket', 'Valentine Boxes': 'valentinebox',
-    'Toy Bears': 'toybear', 'Bonded Rings': 'bondedring', 'Flying Brooms': 'flyingbroom',
-    'Astral Shards': 'astralshard', 'Hanging Stars': 'hangingstar', 'Joyful Bundles': 'joyfulbundle',
-    'Bling Binkies': 'blingbinky', 'Durov\'s Caps': 'durovscap', 'Durov’s Caps': 'durovscap',
-    'Jelly Bunnies': 'jellybunny', 'Precious Peaches': 'preciouspeach', 'Pretty Posies': 'prettyposy',
-    'Swiss Watches': 'swisswatch', 'Khabib\'s Papakhas': 'khabibspapakha', 'Khabib’s Papakhas': 'khabibspapakha',
-    'Fresh Socks': 'freshsocks', 'Big Years': 'bigyear', 'Bow Ties': 'bowtie', 'Bunny Muffins': 'bunnymuffin',
-    'Candy Canes': 'candycane', 'Clover Pins': 'cloverpin', 'Cookie Hearts': 'cookieheart',
-    'Crystal Balls': 'crystalball', 'Cupid Charms': 'cupidcharm', 'Desk Calendars': 'deskcalendar',
-    'Diamond Rings': 'diamondring', 'Easter Eggs': 'easteregg', 'Electric Skulls': 'electricskull',
-    'Eternal Candles': 'eternalcandle', 'Eternal Roses': 'eternalrose', 'Evil Eyes': 'evileye',
-    'Faith Amulets': 'faithamulet', 'Gem Signets': 'gemsignet', 'Genie Lamps': 'genielamp',
-    'Heart Lockets': 'heartlockett', 'Heroic Helmets': 'heroichelmet', 'Hex Pots': 'hexpot',
-    'Homemade Cakes': 'homemadecake', 'Hypno Lollipops': 'hypnolollipop', 'Ice Creams': 'icecream',
-    'Input Keys': 'inputkey', 'Instant Ramens': 'instantramen', 'Ion Gems': 'iongem',
-    'Ionic Dryers': 'ionicdryer', 'Jester Hats': 'jesterhat', 'Jingle Bells': 'jinglebell',
-    'Jolly Chimps': 'jollychimp', 'Kissed Frogs': 'kissedfrog', 'Light Swords': 'lightsword',
-    'Lol Pops': 'lolpop', 'Love Candles': 'lovecandle', 'Love Potions': 'lovepotion',
-    'Low Riders': 'lowrider', 'Lunar Snakes': 'lunarsnake', 'Lush Bouquets': 'lushbouquet',
-    'Mad Pumpkins': 'madpumpkin', 'Magic Potions': 'magicpotion', 'Mighty Arms': 'mightyarm',
-    'Mini Oscars': 'minioscar', 'Money Pots': 'moneypot', 'Moon Pendants': 'moonpendant',
-    'Mousse Cakes': 'moussecake', 'Nail Bracelets': 'nailbracelet', 'Party Sparklers': 'partysparkler',
-    'Perfume Bottles': 'perfumebottle', 'Pet Snakes': 'petsnake', 'Plush Pepes': 'plushpepe',
-    'Record Players': 'recordplayer', 'Restless Jars': 'restlessjar', 'Sakura Flowers': 'sakuraflower',
-    'Santa Hats': 'santahat', 'Scared Cats': 'scaredcat', 'Sharp Tongues': 'sharptongue',
-    'Signet Rings': 'signetring', 'Skull Flowers': 'skullflower', 'Sky Stilettos': 'skystiletto',
-    'Sleigh Bells': 'sleighbell', 'Snoop Cigars': 'sloopcigar', 'Snoop Doggs': 'snoopdogg',
-    'Snow Globes': 'snowglobe', 'Spiced Wines': 'spicedwine', 'Star Notepads': 'starnotepad',
-    'Stellar Rockets': 'stellarrocket', 'Swag Bags': 'swagbag', 'Tama Gadgets': 'tamagadget',
-    'Trapped Hearts': 'trappedheart', 'UFC Strikes': 'ufcstrike', 'Vintage Cigars': 'vintagecigar',
-    'Westside Signs': 'westsidesign', 'Whip Cupcakes': 'whipcupcake', 'Winter Wreaths': 'winterwreath',
-    'Witch Hats': 'witchhat', 'Xmas Stockings': 'xmasstocking'
+    'artisanbricks': 'artisanbrick',
+    'berryboxes': 'berrybox',
+    'happybday': 'b-daycandle',
+    'bdaycandle': 'b-daycandle',
+    'thebackyard': 'alphadogs',
+    'prettyposies': 'prettyposy',
+    'astralshards': 'astralshard',
+    'poop': 'happybrownie',
+    'happybrownie': 'happybrownie',
+    'kissedfrog': 'kissedfrog',
+    'plushpepe': 'plushpepe',
+    'ducks': 'ducks',
+    'eternalrose': 'eternalrose',
+    'cloverpin': 'cloverpin',
+    'whipcupcake': 'whipcupcake',
+    'jellypuppy': 'jellypuppy',
+    'magicmushroom': 'magicmushroom',
+    'goldstar': 'goldstar',
+    'khabibspapakha': 'khabibspapakha'
 };
 
-function getTelegifterUrl(type, name, collection, slugIndex = 0, exampleNum = null) {
+function getTelegifterUrl(type, name, collection, slugIndex = 0) {
     if (!name || name === 'Unknown' || name === 'Default' || name === 'Gift' || name === 'Gift #?') return null;
 
     if (type === 'symbol') {
-        const clean = name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').trim();
-        const slugDash = clean.replace(/\s+/g, '-');
-
-        // Try to get the official SVG from Fragment guide or fallback to TON logos
-        const variants = [
-            `https://nft.fragment.com/guide/${slugDash}.svg`,
-            `https://raw.githubusercontent.com/ton-blockchain/token-logos/main/nft/gift/${slugDash.replace(/-/g, '')}.svg`
-        ];
-
-        if (slugIndex >= variants.length) return null;
-        return variants[slugIndex];
+        // Symbols already have URLs in VISUAL_MAP, return null to let addFilterItem use them
+        return null;
     }
 
-    const collectionName = (type === 'model') ? collection : name;
-    if (!collectionName) return null;
-
-    const variants = [];
-    if (SLUG_MAPPING[collectionName]) variants.push(SLUG_MAPPING[collectionName]);
-    const clean = collectionName.toLowerCase().replace(/['’]/g, '').replace(/-/g, ' ');
-    const noSpaces = clean.replace(/\s+/g, '');
-    variants.push(noSpaces);
-    if (noSpaces.endsWith('s') && noSpaces.length > 3) variants.push(noSpaces.slice(0, -1));
-
-    const uniqueVariants = [...new Set(variants)];
-    if (slugIndex >= uniqueVariants.length) return null;
-    const selectedSlug = uniqueVariants[slugIndex];
-
     if (type === 'model') {
-        if (exampleNum) {
-            return `${BACKEND_URL}/file/gifts/${selectedSlug}/model.${exampleNum}.webp`;
+        // Models use format: /file/gifts/collectionslug/model.webp
+        // We need collection slug for this
+        if (collection) {
+            const colSlug = collection.toLowerCase().replace(/[^a-z0-9]/g, '');
+            const modelSlug = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+            return `/file/gifts/${colSlug}/model.${modelSlug}.webp`;
         }
-        return `${BACKEND_URL}/file/gifts/${selectedSlug}/model.webp`;
+
+        // Fallback or old logic if no collection context
+        const slugBase = name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/[\s]+/g, '');
+        const numbers = [888, 1, 777, 555, 123, 100];
+        if (slugIndex < numbers.length) {
+            return `https://nft.fragment.com/gift/${slugBase}-${numbers[slugIndex]}.medium.jpg`;
+        }
+        return null;
     }
 
     if (type === 'nft') {
-        // Updated to matching Fragment-style URL pattern (handled by live_server.py)
-        return `${BACKEND_URL}/gift/${selectedSlug}.webp`;
+        // NFT collections use format: /file/gifts/collectionslug/thumb.webp
+        const collectionSlug = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+        return `/file/gifts/${collectionSlug}/thumb.webp`;
     }
 
     return null;
@@ -979,49 +943,51 @@ function selectNftChip(addr, btn) {
 async function loadFilterData() {
     try {
         console.log('[FILTERS] Loading from:', `${BACKEND_URL}/api/filters`);
-        const resp = await fetch(`${BACKEND_URL}/api/filters`);
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-        const data = await resp.json();
-
+        const res = await fetch(`${BACKEND_URL}/api/filters`);
+        const data = await res.json();
         console.log('[FILTERS] Received keys:', Object.keys(data));
 
-        NFT_ADDRESSES = data.nft_addresses || {};
-        MODELS_MAP = data.models_map || {};
-        MODEL_EXAMPLES = data.model_examples || {};
-        SYMBOL_EXAMPLES = data.symbol_examples || {}; // NEW: Load symbol examples
-        BACKDROPS = data.backdrops || [];
-        SYMBOLS = data.symbols || [];
+        if (data) {
+            // NFTs = collections
+            if (data.nfts && Array.isArray(data.nfts)) {
+                window.STATIC_COLLECTIONS = data.nfts.map(name => ({ name, image: null }));
+            }
 
-        console.log('[FILTERS] Loaded', Object.keys(MODEL_EXAMPLES).length, 'model examples,', Object.keys(SYMBOL_EXAMPLES).length, 'symbol examples');
+            // Convert array backdrops/symbols to nested format {collectionName: [{name, image}]}
+            const convertArrayToMap = (arr) => {
+                if (!Array.isArray(arr)) return {};
+                const items = arr.map(name => ({ name, image: null }));
+                return { "ALL": items }; // Group all under "ALL" pseudo-collection
+            };
 
-        // Build ATTR_STATS structure
-        ATTR_STATS = {
-            model: {},
-            bg: {},
-            symbol: {}
-        };
+            // Models_map: already in correct format {collection: [model1, model2]}
+            // But need to convert model strings to objects {name, image}
+            const convertModelsMap = (map) => {
+                if (!map || typeof map !== 'object') return {};
+                const result = {};
+                for (const [collection, models] of Object.entries(map)) {
+                    if (Array.isArray(models)) {
+                        result[collection] = models.map(name => ({ name, image: null }));
+                    }
+                }
+                return result;
+            };
 
-        // Process models
-        Object.entries(MODELS_MAP).forEach(([nftName, models]) => {
-            ATTR_STATS.model[nftName] = models.map(m => ({ name: m, image: null }));
-        });
+            ATTR_STATS = {
+                model: data.models_map ? convertModelsMap(data.models_map) : {},
+                bg: data.backdrops ? convertArrayToMap(data.backdrops) : {},
+                symbol: data.symbols ? convertArrayToMap(data.symbols) : {}
+            };
 
-        // Process backdrops and symbols globally
-        ATTR_STATS.bg['global'] = BACKDROPS.map(b => ({ name: b, image: null }));
-        ATTR_STATS.symbol['global'] = SYMBOLS.map(s => ({ name: s, image: null }));
-
-        // NFTs for collection list
-        window.STATIC_COLLECTIONS = (data.nfts || []).map(name => ({ name, image: null }));
-
-        console.log('[FILTERS] Loaded successfully:', {
-            collections: window.STATIC_COLLECTIONS?.length || 0,
-            model_collections: Object.keys(ATTR_STATS.model).length,
-            total_models: Object.values(ATTR_STATS.model).reduce((sum, arr) => sum + arr.length, 0),
-            backdrops: BACKDROPS.length,
-            symbols: SYMBOLS.length,
-            model_examples: Object.keys(MODEL_EXAMPLES).length
-        });
-        initFilterLists();
+            console.log('[FILTERS] Loaded successfully:', {
+                collections: window.STATIC_COLLECTIONS?.length || 0,
+                model_collections: Object.keys(ATTR_STATS.model).length,
+                total_models: Object.values(ATTR_STATS.model).reduce((sum, arr) => sum + arr.length, 0),
+                backdrops: data.backdrops?.length || 0,
+                symbols: data.symbols?.length || 0
+            });
+            initFilterLists();
+        }
     } catch (e) {
         console.error("Filter Load Error:", e);
     }
@@ -1169,22 +1135,22 @@ function initFilterLists() {
 
             allItems.forEach(item => {
                 if (item.name.toLowerCase().includes(sVal)) {
-                    if (m.key === 'symbol') {
-                        const exNum = (SYMBOL_EXAMPLES && SYMBOL_EXAMPLES[item.name]) || null;
-                        icon = getTelegifterUrl('symbol', item.name, null, 0, exNum);
-                    } else if (m.key === 'model') {
-                        const exNum = (MODEL_EXAMPLES && MODEL_EXAMPLES[item.name]) || null;
-                        icon = getTelegifterUrl('model', item.name, item.collection, 0, exNum);
-                    } else if (m.key === 'nft') {
-                        icon = getTelegifterUrl('nft', item.name, null, 0);
-                        if (!icon) icon = item.image;
-                    }
+                    // Try to get clean visual first
+                    let icon = null;
+                    if (m.key === 'symbol') icon = getTelegifterUrl('symbol', item.name);
+                    else if (m.key === 'model') icon = getTelegifterUrl('model', item.name, item.collection);
+                    else if (m.key === 'nft') icon = item.image; // Use existing image for NFT collections
 
                     if (!icon && (m.key === 'bg' || m.key === 'symbol')) icon = (VISUAL_MAP[m.key] && VISUAL_MAP[m.key][item.name]) || null;
 
-                    const exNum = (m.key === 'model') ? ((MODEL_EXAMPLES && MODEL_EXAMPLES[item.name]) || null) :
-                        (m.key === 'symbol') ? ((SYMBOL_EXAMPLES && SYMBOL_EXAMPLES[item.name]) || null) : null;
-                    addFilterItem(cont, item.name, item.name, m.key, ACTIVE_FILTERS[m.key] === item.name, icon, item.collection, item.image, exNum);
+                    // NEW: Ensure we try Fragment URL if other methods failed and it's a Model
+                    if (!icon && m.key === 'model') {
+                        const slug = item.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+                        // We use a generic model #1 for the filter icon preview if possible
+                        icon = `https://nft.fragment.com/gift/${slug}-1.webp`;
+                    }
+
+                    addFilterItem(cont, item.name, item.name, m.key, ACTIVE_FILTERS[m.key] === item.name, icon, item.collection, item.image);
                 }
             });
             return;
@@ -1197,36 +1163,23 @@ function initFilterLists() {
             addFilterItem(cont, t('select_all'), "all", m.key, ACTIVE_FILTERS[m.key] === 'all');
         }
 
-        let items = (ATTR_STATS[m.key] && ATTR_STATS[m.key][selectedNFT]) || [];
-        // Fallback to global for backgrounds and symbols if collection-specific ones not found
-        if (items.length === 0 && (m.key === 'bg' || m.key === 'symbol')) {
-            items = (ATTR_STATS[m.key] && ATTR_STATS[m.key]['global']) || [];
-        }
-
+        const items = (ATTR_STATS[m.key] && ATTR_STATS[m.key][selectedNFT]) || [];
         items.forEach(item => {
             if (item.name.toLowerCase().includes(sVal)) {
-                if (m.key === 'symbol') {
-                    const exNum = (SYMBOL_EXAMPLES && SYMBOL_EXAMPLES[item.name]) || null;
-                    visual = getTelegifterUrl('symbol', item.name, null, 0, exNum);
-                } else if (m.key === 'model') {
-                    const exNum = (MODEL_EXAMPLES && MODEL_EXAMPLES[item.name]) || null;
-                    visual = getTelegifterUrl('model', item.name, selectedNFT, 0, exNum);
-                } else if (m.key === 'nft') {
-                    visual = getTelegifterUrl('nft', item.name, null, 0);
-                }
+                // Try clean visual
+                let visual = null;
+                if (m.key === 'symbol') visual = getTelegifterUrl('symbol', item.name);
+                else if (m.key === 'model') visual = getTelegifterUrl('model', item.name, selectedNFT);
 
                 let icon = visual || item.image;
-                if (!icon && (m.key === 'bg' || m.key === 'symbol')) icon = (VISUAL_MAP[m.key] && VISUAL_MAP[m.key][item.name]) || null;
-
-                const exNum = (m.key === 'model') ? ((MODEL_EXAMPLES && MODEL_EXAMPLES[item.name]) || null) :
-                    (m.key === 'symbol') ? ((SYMBOL_EXAMPLES && SYMBOL_EXAMPLES[item.name]) || null) : null;
-                addFilterItem(cont, item.name, item.name, m.key, ACTIVE_FILTERS[m.key] === item.name, icon, selectedNFT, item.image, exNum);
+                if (!icon && (m.key === 'bg' || m.key === 'symbol')) icon = VISUAL_MAP[m.key][item.name] || null;
+                addFilterItem(cont, item.name, item.name, m.key, ACTIVE_FILTERS[m.key] === item.name, icon, selectedNFT, item.image);
             }
         });
     });
 }
 
-function addFilterItem(container, name, value, key, isSelected, imgUrl, collectionContext, fallbackImgUrl, exampleNum = null) {
+function addFilterItem(container, name, value, key, isSelected, imgUrl, collectionContext, fallbackImgUrl) {
     const div = document.createElement('div');
     div.className = `filter-list-item ${isSelected ? 'selected' : ''}`;
 
@@ -1240,25 +1193,15 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
             <div style="position:absolute; top:0; left:0; width:100%; height:100%; background: url('https://telegifter.ru/wp-content/themes/gifts/assets/img/bg-logo-mini.webp'); opacity:0.1; background-size: 20px;"></div>
         </div>`;
     } else if (key === 'symbol') {
-        const tgSymbol = getTelegifterUrl('symbol', name, null, 0);
+        const tgSymbol = getTelegifterUrl('symbol', name);
         const iconSrc = tgSymbol || (VISUAL_MAP.symbol ? VISUAL_MAP.symbol[name] : null);
-
-        visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: rgba(255, 255, 255, 0.05); border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
-            <span class="filter-item-letter" style="color:#8b9bb4; font-size:11px; font-weight:700; position:absolute; z-index:1;">${name.substring(0, 3).toUpperCase()}</span>
-            ${iconSrc ? `<img src="${iconSrc}" class="filter-img" style="width:28px; height:28px; object-fit:contain; z-index:2; filter: brightness(0) invert(1);" 
-                onload="this.previousElementSibling.style.display='none';"
-                onerror="
-                    const name = '${name.replace(/'/g, "\\\\\\'")}';
-                    this.dataset.slugIndex = this.dataset.slugIndex ? parseInt(this.dataset.slugIndex) + 1 : 1;
-                    const nextUrl = getTelegifterUrl('symbol', name, null, parseInt(this.dataset.slugIndex));
-                    if (nextUrl && parseInt(this.dataset.slugIndex) <= 7) {
-                        this.src = nextUrl;
-                    } else {
-                        this.style.display = 'none';
-                        this.previousElementSibling.style.display = 'block';
-                    }
-                ">` : ''}
-        </div>`;
+        if (iconSrc) {
+            visualHTML = `<img src="${iconSrc}" class="filter-img" style="filter: brightness(0) invert(1); width:28px; height:28px; object-fit:contain;" onerror="this.style.display='none'">`;
+        } else {
+            visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: rgba(255, 255, 255, 0.05); border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
+                <span style="color:#8b9bb4; font-size:11px; font-weight:700; z-index:1;">${name.substring(0, 3).toUpperCase()}</span>
+            </div>`;
+        }
     } else if (key === 'bg') {
         const bgStyle = (VISUAL_MAP.bg && VISUAL_MAP.bg[name]) || '#333';
         visualHTML = `<div class="filter-color-circle" style="background: ${bgStyle}; position:relative; overflow:hidden; width:52px; height:52px; border-radius:12px;">
@@ -1267,29 +1210,37 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
     } else {
         // Model or NFT or fallback
         const isNFT = key === 'nft';
+        const isModel = key === 'model';
         const cleanName = name.toLowerCase().replace(/[^a-z0-9]/g, '');
-        // Generate Fragment URL
-        const possibleImg = imgUrl || `https://nft.fragment.com/gift/${cleanName}-1.webp`;
+
+        // Generate local path if it's NFT or Model
+        let possibleImg = imgUrl;
+        if (!possibleImg) {
+            if (isNFT) {
+                possibleImg = `/file/gifts/${cleanName}/thumb.webp`;
+            } else if (isModel && collectionContext) {
+                const colSlug = collectionContext.toLowerCase().replace(/[^a-z0-9]/g, '');
+                const modelSlug = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+                possibleImg = `/file/gifts/${colSlug}/model.${modelSlug}.webp`;
+            }
+        }
+
+        // Fallback to Fragment URL if no local path or specifically requested
+        if (!possibleImg) {
+            possibleImg = `https://nft.fragment.com/gift/${cleanName}-1.webp`;
+        }
 
         visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: rgba(255, 255, 255, 0.05); border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
             <span class="filter-item-letter" style="color:#8b9bb4; font-size:11px; font-weight:700; position:absolute; z-index:1;">${name.substring(0, 3).toUpperCase()}</span>
             <img src="${possibleImg}" class="filter-img" style="width:100%; height:100%; object-fit:contain; z-index:2; opacity:0; transition:opacity 0.2s;" 
                 onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';"
                 onerror="
-                    const name = '${name.replace(/'/g, "\\\\\\'")}';
-                    const col = '${(collectionContext || '').replace(/'/g, "\\\\\\'")}';
-                    const exNum = ${JSON.stringify(exampleNum)};
-                    const fallback = ${JSON.stringify(fallbackImgUrl)};
-                    
-                    if (!this.dataset.slugIndex) this.dataset.slugIndex = "0";
-                    this.dataset.slugIndex = (parseInt(this.dataset.slugIndex) + 1).toString();
-                    
-                    const nextUrl = getTelegifterUrl('${key}', name, col, parseInt(this.dataset.slugIndex), exNum);
+                    const name = '${name.replace(/'/g, "\\\\'")}';
+                    const col = '${(collectionContext || '').replace(/'/g, "\\\\'")}';
+                    this.dataset.slugIndex = this.dataset.slugIndex ? parseInt(this.dataset.slugIndex) + 1 : 1;
+                    const nextUrl = getTelegifterUrl('${key}', name, col, parseInt(this.dataset.slugIndex));
                     if (nextUrl) {
                         this.src = nextUrl;
-                    } else if (fallback && !this.dataset.fallbackUsed) {
-                        this.dataset.fallbackUsed = "true";
-                        this.src = fallback;
                     } else {
                         this.style.display = 'none';
                         this.previousElementSibling.style.display = 'block';
