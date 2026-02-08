@@ -330,7 +330,6 @@ async def update_filters_cache(session):
         # 3. Build final cache structure
         cache = {
             "nfts": sorted(collections),
-            "nft_addresses": {col.get("name"): col.get("address") for col in collections_data if col.get("name") and col.get("address")},
             "models_map": models_map,
             "backdrops": sorted(list(all_backdrops)),
             "symbols": sorted(list(all_symbols))

@@ -4,6 +4,7 @@ import asyncio
 import json
 import logging
 import os
+import re
 from tonutils.utils import begin_cell
 from dotenv import load_dotenv
 
@@ -74,33 +75,32 @@ async def handle_live_items(request):
                 query += " AND (title LIKE ? OR nft_address LIKE ?)"
                 params.extend([f"%{f_search}%", f"%{f_search}%"])
 
-            # Fetch all matching rows (without metadata filters in SQL)
-            order_by = "price_per_day ASC" if f_sort == 'price_asc' else "price_per_day DESC" if f_sort == 'price_desc' else "id DESC"
-            async with conn.execute(f"{query} ORDER BY {order_by}", params) as cursor:
+            # Fetch all matching rows
+            async with conn.execute(query, params) as cursor:
                 all_rows = await cursor.fetchall()
             
-            # NOW filter by metadata in Python (safe from malformed JSON)
+            # NOW filter and prepare items for sorting
             filtered_items = []
             for r in all_rows:
                 try:
                     m = json.loads(r['metadata'] or "{}")
                 except Exception:
-                    continue  # Skip items with bad JSON
+                    continue
                 
-                # Apply metadata filters
-                if f_nft and f_nft != 'all' and m.get("collection") != f_nft:
-                    continue
-                if f_model and f_model != 'all' and m.get("model") != f_model:
-                    continue
-                if f_bg and f_bg != 'all' and m.get("backdrop") != f_bg:
-                    continue
-                if f_symbol and f_symbol != 'all' and m.get("symbol") != f_symbol:
-                    continue
+                if f_nft and f_nft != 'all' and m.get("collection") != f_nft: continue
+                if f_model and f_model != 'all' and m.get("model") != f_model: continue
+                if f_bg and f_bg != 'all' and m.get("backdrop") != f_bg: continue
+                if f_symbol and f_symbol != 'all' and m.get("symbol") != f_symbol: continue
+                
+                # Extract number for sorting
+                title = r['title']
+                num_match = re.search(r'#(\d+)', title)
+                nft_num = int(num_match.group(1)) if num_match else 0
                 
                 filtered_items.append({
                     "id": r['id'],
                     "type": r['type'] or 'gift',
-                    "nft_name": r['title'],
+                    "nft_name": title,
                     "nft_address": r['nft_address'], 
                     "price_per_day": float(r['price_per_day']), 
                     "min_duration": r['min_duration'],
@@ -112,8 +112,34 @@ async def handle_live_items(request):
                     "_collection": {"name": m.get("collection", "Gift")}, 
                     "_modelName": m.get("model"), 
                     "_backdrop": m.get("backdrop"), 
-                    "_symbol": m.get("symbol")
+                    "_symbol": m.get("symbol"),
+                    "_num": nft_num
                 })
+
+            # Calculate Rarity (frequency-based) if needed
+            if f_sort in ['model_rare', 'bg_rare', 'symbol_rare']:
+                stat_key = "_modelName" if f_sort == 'model_rare' else "_backdrop" if f_sort == 'bg_rare' else "_symbol"
+                counts = {}
+                for it in filtered_items:
+                    v = it.get(stat_key) or "Unknown"
+                    counts[v] = counts.get(v, 0) + 1
+                for it in filtered_items:
+                    it['_rarity_score'] = counts.get(it.get(stat_key) or "Unknown", 9999)
+
+            # APPLY ADVANCED SORTING
+            if f_sort == 'price_asc':
+                filtered_items.sort(key=lambda x: x['price_per_day'])
+            elif f_sort == 'price_desc':
+                filtered_items.sort(key=lambda x: x['price_per_day'], reverse=True)
+            elif f_sort == 'num_asc':
+                filtered_items.sort(key=lambda x: x['_num'])
+            elif f_sort == 'num_desc':
+                filtered_items.sort(key=lambda x: x['_num'], reverse=True)
+            elif f_sort in ['model_rare', 'bg_rare', 'symbol_rare']:
+                # Lower frequency = more rare
+                filtered_items.sort(key=lambda x: x['_rarity_score'])
+            else:
+                filtered_items.sort(key=lambda x: x['id'], reverse=True)
             
             # Apply pagination
             total_found = len(filtered_items)
@@ -229,7 +255,6 @@ async def cors_middleware(request, handler):
 
 app = web.Application(middlewares=[cors_middleware])
 app.router.add_get('/', handle_index)
-app.router.add_static('/models/', path='./web/models/', name='models')
 app.router.add_get('/api/items', handle_live_items)
 app.router.add_get('/api/filters', handle_filter_data)
 app.router.add_get('/api/prepare_rent', handle_prepare_rent)

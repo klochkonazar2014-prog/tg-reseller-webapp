@@ -382,8 +382,8 @@ function getTelegifterUrl(type, name, collection, slugIndex = 0) {
     if (!name || name === 'Unknown' || name === 'Default' || name === 'Gift' || name === 'Gift #?') return null;
 
     if (type === 'symbol') {
-        // Symbols already have URLs in VISUAL_MAP, return null to let addFilterItem use them
-        return null;
+        const cleanName = name.replace(/[?#]/g, ''); // Basic sanitization
+        return `file/gifts/symbol/${cleanName}.webp`;
     }
 
     if (type === 'model') {
@@ -392,7 +392,7 @@ function getTelegifterUrl(type, name, collection, slugIndex = 0) {
         if (collection) {
             const colSlug = collection.toLowerCase().replace(/[^a-z0-9]/g, '');
             const modelSlug = name.toLowerCase().replace(/[^a-z0-9]/g, '');
-            return `/file/gifts/${colSlug}/model.${modelSlug}.webp`;
+            return `file/gifts/${colSlug}/model.${modelSlug}.webp`;
         }
 
         // Fallback or old logic if no collection context
@@ -407,7 +407,7 @@ function getTelegifterUrl(type, name, collection, slugIndex = 0) {
     if (type === 'nft') {
         // NFT collections use format: /file/gifts/collectionslug/thumb.webp
         const collectionSlug = name.toLowerCase().replace(/[^a-z0-9]/g, '');
-        return `/file/gifts/${collectionSlug}/thumb.webp`;
+        return `file/gifts/${collectionSlug}/thumb.webp`;
     }
 
     return null;
@@ -1195,13 +1195,12 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
     } else if (key === 'symbol') {
         const tgSymbol = getTelegifterUrl('symbol', name);
         const iconSrc = tgSymbol || (VISUAL_MAP.symbol ? VISUAL_MAP.symbol[name] : null);
-        if (iconSrc) {
-            visualHTML = `<img src="${iconSrc}" class="filter-img" style="filter: brightness(0) invert(1); width:28px; height:28px; object-fit:contain;" onerror="this.style.display='none'">`;
-        } else {
-            visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: rgba(255, 255, 255, 0.05); border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
-                <span style="color:#8b9bb4; font-size:11px; font-weight:700; z-index:1;">${name.substring(0, 3).toUpperCase()}</span>
-            </div>`;
-        }
+
+        // Robust rendering: Text underneath, Image on top. If Image fails, Text is visible.
+        visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: #000000; border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
+            <span style="color:#8b9bb4; font-size:11px; font-weight:700; position:absolute; z-index:1;">${name.substring(0, 3).toUpperCase()}</span>
+            ${iconSrc ? `<img src="${iconSrc}" style="filter: brightness(0) invert(1); width:28px; height:28px; object-fit:contain; z-index:2; opacity:0; transition:opacity 0.2s;" onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';" onerror="this.style.display='none'">` : ''}
+        </div>`;
     } else if (key === 'bg') {
         const bgStyle = (VISUAL_MAP.bg && VISUAL_MAP.bg[name]) || '#333';
         visualHTML = `<div class="filter-color-circle" style="background: ${bgStyle}; position:relative; overflow:hidden; width:52px; height:52px; border-radius:12px;">
@@ -1217,11 +1216,11 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
         let possibleImg = imgUrl;
         if (!possibleImg) {
             if (isNFT) {
-                possibleImg = `/file/gifts/${cleanName}/thumb.webp`;
+                possibleImg = `file/gifts/${cleanName}/thumb.webp`;
             } else if (isModel && collectionContext) {
                 const colSlug = collectionContext.toLowerCase().replace(/[^a-z0-9]/g, '');
                 const modelSlug = name.toLowerCase().replace(/[^a-z0-9]/g, '');
-                possibleImg = `/file/gifts/${colSlug}/model.${modelSlug}.webp`;
+                possibleImg = `file/gifts/${colSlug}/model.${modelSlug}.webp`;
             }
         }
 
