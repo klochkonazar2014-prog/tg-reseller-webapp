@@ -2879,6 +2879,15 @@ body.hide-filters .header-column {
     pointer-events: none;
 } */
 
+/* NEW: Make nav compact in profile */
+#profile-container:not([style*="display: none"])~.bottom-nav {
+    height: calc(75px + var(--safe-area-bottom)) !important;
+}
+
+#profile-container:not([style*="display: none"])~.bottom-nav .mode-toggle-container {
+    display: none !important;
+}
+
 .bottom-nav {
-    transition: transform 0.3s ease, opacity 0.3s ease;
+    transition: transform 0.3s ease, opacity 0.3s ease, height 0.3s ease;
 }
