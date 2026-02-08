@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://lesser-ball-makeup-aware.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://forbes-relationship-interface-pts.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -926,6 +926,7 @@ async function loadFilterData() {
         const res = await fetch(`${BACKEND_URL}/api/filters`);
         const data = await res.json();
         console.log('[FILTERS] Received keys:', Object.keys(data));
+        window.FILTERS_CACHE = data;
 
         if (data) {
             // NFTs = collections
@@ -1190,14 +1191,17 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
             <div style="position:absolute; top:0; left:0; width:100%; height:100%; background: url('https://telegifter.ru/wp-content/themes/gifts/assets/img/bg-logo-mini.webp'); opacity:0.3; background-size: 20px;"></div>
         </div>`;
     } else if (key === 'model' || key === 'nft' || (imgUrl && !isBadUrl(imgUrl))) {
-        // For models, prioritize local "clean" assets (no bg/symbol)
+        // CLEAN STRATEGY Phase 2:
+        // 1. Models: Prefer local /models/ asset
+        // 2. NFTs: Prefer TonAPI collection logo (extremely clean)
         let icon = imgUrl;
         if (key === 'model') {
-            // Force local model image
             icon = `/models/${name}.webp`;
+        } else if (key === 'nft' && window.FILTERS_CACHE && window.FILTERS_CACHE.nft_addresses && window.FILTERS_CACHE.nft_addresses[name]) {
+            const addr = window.FILTERS_CACHE.nft_addresses[name];
+            icon = `https://cache.tonapi.io/img/collection/${addr}/image.png`;
         } else if (!icon || isBadUrl(icon)) {
             if (key === 'nft') {
-                // If nft (collection) image is missing, try a generic fragment gift
                 let n = name;
                 if (n.endsWith('s') && n.length > 4) n = n.slice(0, -1);
                 const f = generateFragmentUrls(n + " #1", 0);
@@ -1205,10 +1209,7 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
             }
         }
 
-        const fallback = (fallbackImgUrl && !isBadUrl(fallbackImgUrl)) ? fallbackImgUrl : 'https://nft.fragment.com/guide/gift.svg';
-
         visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: rgba(255, 255, 255, 0.05); border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
-            <span style="color:#8b9bb4; font-size:11px; font-weight:700; position:absolute; z-index:1;">${name.substring(0, 3).toUpperCase()}</span>
             <img src="${icon}" class="filter-img" style="width:100%; height:100%; object-fit:contain; z-index:2; opacity:0; transition:opacity 0.2s;" 
                 onload="this.style.opacity='1';"
                 onerror="handleFilterImageError(this, '${name.replace(/'/g, "\\'")}', '${(collectionContext || '').replace(/'/g, "\\'")}', '${(fallbackImgUrl || '').replace(/'/g, "\\'")}', '${key}')">
@@ -1423,20 +1424,27 @@ function handleFilterImageError(img, name, collection, fallback, key) {
     const attempt = parseInt(img.dataset.attempt);
 
     if (attempt === 1) {
-        // 1. If it's a model and local load failed, try Fragment as fallback
-        if (key === 'model' && !img.src.includes('fragment.com')) {
-            const f = generateFragmentUrls(name + " #1", 0);
+        // 1. If it's a model and local load failed, try the Collection image (clean/base gift) from TonAPI
+        if (key === 'model' && collection && window.FILTERS_CACHE && window.FILTERS_CACHE.nft_addresses && window.FILTERS_CACHE.nft_addresses[collection]) {
+            const addr = window.FILTERS_CACHE.nft_addresses[collection];
+            img.src = `https://cache.tonapi.io/img/collection/${addr}/image.png`;
+            return;
+        }
+
+        // 2. If it's an NFT (collection) and TonAPI failed, try Fragment or base model
+        if (key === 'nft' && img.src.includes('tonapi.io')) {
+            let n = name;
+            if (n.endsWith('s') && n.length > 4) n = n.slice(0, -1);
+            const f = generateFragmentUrls(n + " #1", 0);
             if (f.image) {
                 img.src = f.image;
                 return;
             }
         }
 
-        // If it's an NFT (collection) and TonAPI failed, try Fragment
-        if (key === 'nft' && img.src.includes('tonapi.io')) {
-            let n = name;
-            if (n.endsWith('s') && n.length > 4) n = n.slice(0, -1);
-            const f = generateFragmentUrls(n + " #1", 0);
+        // 3. Last resort Fragment fallback for models if TonAPI also failed
+        if (key === 'model' && !img.src.includes('fragment.com') && !img.src.includes('tonapi.io')) {
+            const f = generateFragmentUrls(name + " #1", 0);
             if (f.image) {
                 img.src = f.image;
                 return;
