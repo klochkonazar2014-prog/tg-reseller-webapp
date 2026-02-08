@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://beneficial-chubby-coral-script.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://neil-vic-gzip-supposed.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -1457,86 +1457,86 @@ function handleGiftImageError(img, name) {
         if (card) {
             card.style.display = 'none';
         }
+    }
 
-        const SINGULAR_EXCEPTIONS = {
-            'blingbinkies': 'Bling Binky',
-            'berryboxes': 'Berry Box',
-            'artisanbricks': 'Artisan Brick',
-            'prettyposies': 'Pretty Posy',
-            'happybrownies': 'Happy Brownie',
-            'jellybunnies': 'Jelly Bunny',
-            'voodoodolls': 'Voodoo Doll',
-            'alphadogs': 'Alpha Dog',
-            'coffeecups': 'Coffee Cup',
-            'spyderlilies': 'Spyder Lily',
-            'tikitotems': 'Tiki Totem'
-        };
+    const SINGULAR_EXCEPTIONS = {
+        'blingbinkies': 'Bling Binky',
+        'berryboxes': 'Berry Box',
+        'artisanbricks': 'Artisan Brick',
+        'prettyposies': 'Pretty Posy',
+        'happybrownies': 'Happy Brownie',
+        'jellybunnies': 'Jelly Bunny',
+        'voodoodolls': 'Voodoo Doll',
+        'alphadogs': 'Alpha Dog',
+        'coffeecups': 'Coffee Cup',
+        'spyderlilies': 'Spyder Lily',
+        'tikitotems': 'Tiki Totem'
+    };
 
-        function singularizeCollection(name) {
-            if (!name) return '';
-            const lower = name.toLowerCase().replace(/[^a-z0-9]/g, '');
-            if (SINGULAR_EXCEPTIONS[lower]) return SINGULAR_EXCEPTIONS[lower];
+    function singularizeCollection(name) {
+        if (!name) return '';
+        const lower = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (SINGULAR_EXCEPTIONS[lower]) return SINGULAR_EXCEPTIONS[lower];
 
-            // Default heuristic: remove 's' at end if present
-            if (name.endsWith('s') && !name.endsWith('ss')) {
-                return name.slice(0, -1);
+        // Default heuristic: remove 's' at end if present
+        if (name.endsWith('s') && !name.endsWith('ss')) {
+            return name.slice(0, -1);
+        }
+        return name;
+    }
+
+    function handleFilterImageError(img, name, collection, fallback, key) {
+        img.dataset.attempt = img.dataset.attempt ? parseInt(img.dataset.attempt) + 1 : 1;
+        const attempt = parseInt(img.dataset.attempt);
+
+        if (attempt === 1) {
+            // 1. If it's a model and telegifter/local load failed
+            if (key === 'model') {
+                // 1.1 Try Telegifter Collection Image (Beautiful/Singular)
+                // This is the "Best Guess" fallback if the specific model image is missing
+                if (collection) {
+                    const singular = singularizeCollection(collection);
+                    const cleanSingular = encodeURIComponent(singular);
+                    img.src = `${TG_ASSETS_URL}/noupdate/${cleanSingular}.webp`;
+                    return;
+                }
             }
-            return name;
         }
 
-        function handleFilterImageError(img, name, collection, fallback, key) {
-            img.dataset.attempt = img.dataset.attempt ? parseInt(img.dataset.attempt) + 1 : 1;
-            const attempt = parseInt(img.dataset.attempt);
-
-            if (attempt === 1) {
-                // 1. If it's a model and telegifter/local load failed
-                if (key === 'model') {
-                    // 1.1 Try Telegifter Collection Image (Beautiful/Singular)
-                    // This is the "Best Guess" fallback if the specific model image is missing
-                    if (collection) {
-                        const singular = singularizeCollection(collection);
-                        const cleanSingular = encodeURIComponent(singular);
-                        img.src = `${TG_ASSETS_URL}/noupdate/${cleanSingular}.webp`;
-                        return;
-                    }
-                }
-            }
-
-            if (attempt === 2) {
-                // 1.2 Try hyphenated local name for Models
-                if (key === 'model' && !img.src.includes('attempt=hyphen')) {
-                    const hyphenated = name.replace(/\s+/g, '-');
-                    img.src = `/models/${hyphenated}.webp?attempt=hyphen`;
-                    return;
-                }
-
-                // 2. Try TonAPI collection logo
-                if (key === 'model' && collection && window.FILTERS_CACHE && window.FILTERS_CACHE.nft_addresses && window.FILTERS_CACHE.nft_addresses[collection]) {
-                    const addr = window.FILTERS_CACHE.nft_addresses[collection];
-                    img.src = `https://cache.tonapi.io/img/collection/${addr}/image.png`;
-                    return;
-                }
-
-                // 2.2 Try TonAPI for NFT collection if Telegifter failed
-                if (key === 'nft' && img.src.includes('telegifter.ru') && window.FILTERS_CACHE && window.FILTERS_CACHE.nft_addresses && window.FILTERS_CACHE.nft_addresses[name]) {
-                    return;
-                }
-            }
-
-            // 4. Last resort Fragment fallback for models if TonAPI also failed
-            if (key === 'model' && !img.src.includes('fragment.com') && !img.src.includes('tonapi.io')) {
-                const f = generateFragmentUrls(name + " #1", 0);
-                if (f.image) {
-                    img.src = f.image;
-                    return;
-                }
-            }
-
-            // Try cache-busting the current URL
-            if (img.src && !img.src.includes('?refresh=')) {
-                img.src = img.src + (img.src.includes('?') ? '&' : '?') + 'refresh=' + Date.now();
+        if (attempt === 2) {
+            // 1.2 Try hyphenated local name for Models
+            if (key === 'model' && !img.src.includes('attempt=hyphen')) {
+                const hyphenated = name.replace(/\s+/g, '-');
+                img.src = `/models/${hyphenated}.webp?attempt=hyphen`;
                 return;
             }
+
+            // 2. Try TonAPI collection logo
+            if (key === 'model' && collection && window.FILTERS_CACHE && window.FILTERS_CACHE.nft_addresses && window.FILTERS_CACHE.nft_addresses[collection]) {
+                const addr = window.FILTERS_CACHE.nft_addresses[collection];
+                img.src = `https://cache.tonapi.io/img/collection/${addr}/image.png`;
+                return;
+            }
+
+            // 2.2 Try TonAPI for NFT collection if Telegifter failed
+            if (key === 'nft' && img.src.includes('telegifter.ru') && window.FILTERS_CACHE && window.FILTERS_CACHE.nft_addresses && window.FILTERS_CACHE.nft_addresses[name]) {
+                return;
+            }
+        }
+
+        // 4. Last resort Fragment fallback for models if TonAPI also failed
+        if (key === 'model' && !img.src.includes('fragment.com') && !img.src.includes('tonapi.io')) {
+            const f = generateFragmentUrls(name + " #1", 0);
+            if (f.image) {
+                img.src = f.image;
+                return;
+            }
+        }
+
+        // Try cache-busting the current URL
+        if (img.src && !img.src.includes('?refresh=')) {
+            img.src = img.src + (img.src.includes('?') ? '&' : '?') + 'refresh=' + Date.now();
+            return;
         }
 
         if (attempt === 2) {
