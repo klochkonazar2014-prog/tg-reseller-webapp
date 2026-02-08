@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://tax-auctions-auburn-showtimes.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://connections-mime-publicly-countries.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -139,6 +139,9 @@ const TRANSLATIONS = {
         all: "Все",
         select_all: "Выбрать все",
         select_collection_first: "Выберите NFT коллекцию, чтобы увидеть список моделей.",
+        listing_warning: "Этот подарок был выставлен на аренду менее 24 часов назад.",
+        listing_help_title: "Ограничение 24 часа",
+        listing_help_text: "Telegram ограничивает смену отображаемого подарка в профиле: если вы арендуете этот подарок и установите его в профиль, вы не сможете сменить его на другой до истечения 24 часов с момента его последнего выставления (листинга).",
         search_filter_hint: "Поиск {label}...",
         search_filter_global: " (Все NFT)",
         sort_price_asc: "Цена (По возрастанию)",
@@ -230,6 +233,9 @@ const TRANSLATIONS = {
         all: "All",
         select_all: "Select all",
         select_collection_first: "Select an NFT collection first to see models.",
+        listing_warning: "This gift was listed less than 24 hours ago.",
+        listing_help_title: "24-hour Limit",
+        listing_help_text: "Telegram limits how often you can change the displayed gift in your profile. If you rent and display this gift, you won't be able to change it for another one until 24 hours have passed since its last listing.",
         search_filter_hint: "Search {label}...",
         search_filter_global: " (All NFTs)",
         sort_price_asc: "Price (Low to High)",
@@ -661,14 +667,23 @@ function loadUserOrders() {
 
 
 // --- Help Modal Logic ---
-function showHelp(amount) {
+function showHelp(type, amount) {
     const title = document.getElementById('help-title');
     const body = document.getElementById('help-body');
 
-    title.innerText = t('what_is_this');
-    body.innerHTML = `
-        <div style="font-weight:700; color:#fff; margin-bottom:10px;">${t('you_will_send', { amount: amount })}</div>
-    `;
+    if (type === 'fee') {
+        title.innerText = t('what_is_this');
+        body.innerHTML = `
+            <div style="font-weight:700; color:#fff; margin-bottom:10px;">${t('what_is_this_long')}</div>
+            <div style="color:#8b9bb4;">${t('you_will_send', { amount: amount || '0.2' })}</div>
+        `;
+    } else if (type === 'listing') {
+        title.innerText = t('listing_help_title');
+        body.innerHTML = `
+            <div style="font-weight:700; color:#fff; margin-bottom:10px;">${t('listing_warning')}</div>
+            <div style="color:#8b9bb4;">${t('listing_help_text')}</div>
+        `;
+    }
 
     document.getElementById('help-modal-overlay').classList.add('active');
     document.getElementById('help-modal').classList.add('active');
@@ -1640,6 +1655,28 @@ async function openProductView(item) {
     if (banner) { banner.style.display = 'none'; banner.className = 'status-banner'; }
     const countdownCont = document.getElementById('view-countdown-container');
     if (countdownCont) countdownCont.style.display = 'none';
+
+    // Listing Warning Logic
+    const listingWarningBox = document.getElementById('listing-warning-box');
+    const listedTimeEl = document.getElementById('view-listed-time');
+    if (listingWarningBox) {
+        if (item.type === 'gift' && item.listed_at) {
+            const now = Math.floor(Date.now() / 1000);
+            const diffHours = (now - item.listed_at) / 3600;
+
+            if (diffHours < 24) {
+                listingWarningBox.style.display = 'block';
+                const date = new Date(item.listed_at * 1000);
+                if (listedTimeEl) {
+                    listedTimeEl.innerText = date.toLocaleString();
+                }
+            } else {
+                listingWarningBox.style.display = 'none';
+            }
+        } else {
+            listingWarningBox.style.display = 'none';
+        }
+    }
 
     // Hide Address
     const addrDom = document.getElementById('view-address');
