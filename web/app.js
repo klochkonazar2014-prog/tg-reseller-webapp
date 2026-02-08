@@ -1421,14 +1421,23 @@ function handleFilterImageError(img, name, collection, fallback, key) {
     const attempt = parseInt(img.dataset.attempt);
 
     if (attempt === 1) {
-        // 1. If it's a model and local load failed, try the Collection image (clean/base gift) from TonAPI
+        // 1. If it's a model and local load failed, try hyphenated local name: "Big Brother" -> "Big-Brother.webp"
+        if (key === 'model' && !img.src.includes('-refresh=') && !img.src.includes('tonapi.io') && !img.src.includes('hyphen')) {
+            const hyphenated = name.replace(/\s+/g, '-');
+            if (hyphenated !== name) {
+                img.src = `/models/${hyphenated}.webp?attempt=hyphen`;
+                return;
+            }
+        }
+
+        // 2. Try the Collection image (clean/base gift) from TonAPI
         if (key === 'model' && collection && window.FILTERS_CACHE && window.FILTERS_CACHE.nft_addresses && window.FILTERS_CACHE.nft_addresses[collection]) {
             const addr = window.FILTERS_CACHE.nft_addresses[collection];
             img.src = `https://cache.tonapi.io/img/collection/${addr}/image.png`;
             return;
         }
 
-        // 2. If it's an NFT (collection) and TonAPI failed, try Fragment or base model
+        // 3. If it's an NFT (collection) and TonAPI failed, try Fragment or base model
         if (key === 'nft' && img.src.includes('tonapi.io')) {
             let n = name;
             if (n.endsWith('s') && n.length > 4) n = n.slice(0, -1);
@@ -1439,13 +1448,13 @@ function handleFilterImageError(img, name, collection, fallback, key) {
             }
         }
 
-        // 3. Last resort Fragment fallback for models if TonAPI also failed
+        // 4. Last resort Fragment fallback for models if TonAPI also failed
         if (key === 'model' && !img.src.includes('fragment.com') && !img.src.includes('tonapi.io')) {
-            const f = generateFragmentUrls(name + " #1", 0);
-            if (f.image) {
-                img.src = f.image;
-                return;
-            }
+             const f = generateFragmentUrls(name + " #1", 0);
+             if (f.image) {
+                 img.src = f.image;
+                 return;
+             }
         }
 
         // Try cache-busting the current URL
