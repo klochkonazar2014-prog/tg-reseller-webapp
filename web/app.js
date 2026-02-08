@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://marion-prot-robot-peter.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://rules-directed-kids-offering.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -1260,55 +1260,6 @@ function createItemCard(item) {
 
     const telegramIcon = "telegram_logo.svg";
 
-    const renderMediaHTML = (it, isModal = false) => {
-        const isNum = (it.type === 'number') || it.nft_name.includes('+888');
-        const isUser = (it.type === 'username') || it.nft_name.startsWith('@');
-        const minD = Math.floor((it.min_duration || 86400) / 86400);
-        const maxD = Math.floor((it.max_duration || 2592000) / 86400);
-        const daysLabel = `${t('days')}: ${minD} – ${maxD}`;
-
-        if (isNum || isUser) {
-            let inner = "";
-            const tIcon = "telegram_logo.svg";
-
-            // For Grid Card: Render text INSIDE placeholder
-            const rawName = it.nft_name.replace('Anonymous Number ', '').replace('@', '');
-            const isLong = rawName.length > (isModal ? 20 : 15);
-            const fontSize = rawName.length > 20 ? (isModal ? '20px' : '14px') : (isModal ? '24px' : '17px');
-
-            if (isNum) {
-                inner = `
-                    <div class="card-placeholder" style="background:${isModal ? '#0f1218' : '#1c1c1e'}; height:100%; width:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:8px;">
-                        <img src="${tIcon}" class="telegram-center-icon" style="flex-shrink:0;">
-                        <div style="font-size:${fontSize}; font-weight:700; color:#fff; width:100%; text-align:center; padding:0 4px; box-sizing:border-box; flex-shrink:0;">${rawName}</div>
-                    </div>`;
-            } else {
-                // USER REQUEST: Middle truncation for Usernames if > 9 chars
-                const displayName = truncateMiddle(rawName, isModal ? 20 : 15);
-                inner = `
-                    <div class="card-placeholder" style="background:${isModal ? '#1a1d29' : '#1c1c1e'}; height:100%; width:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:4px;">
-                         <div style="font-size:${isModal ? '80px' : '50px'}; color:#0088cc; font-weight:800; opacity:0.8; line-height:1; flex-shrink:0;">@</div>
-                         <div style="font-size:${fontSize}; font-weight:700; color:#fff; width:100%; text-align:center; padding:0 4px; box-sizing:border-box; flex-shrink:0;">${displayName}</div>
-                    </div>`;
-            }
-            if (!isModal) {
-                // Append badge for grid view inside placeholder
-                inner = inner.replace('</div>', `<div class="card-days-badge-bottom">${daysLabel}</div></div>`);
-            }
-            return inner;
-        } else {
-            let iSrc = it._realImage;
-            if (!iSrc || iSrc.includes('gift.svg') || iSrc.includes('ton_symbol')) {
-                const f = generateFragmentUrls(it.nft_name);
-                iSrc = f.image;
-            }
-            return `
-                <img src="${iSrc}" class="${isModal ? 'view-img-actual' : 'card-img'}" loading="lazy" onerror="this.src='https://nft.fragment.com/guide/gift.svg'">
-                <div class="card-days-badge-bottom">${daysLabel}</div>
-            `;
-        }
-    };
-
     const mediaHTML = renderMediaHTML(item);
     // REMOVED badgeText logic for Numbers/Usernames as it is now inside media
     // Only keep for generic Gifts or if image failed? No, Gifts have separate title.
@@ -1380,34 +1331,107 @@ function applyMrktModal() {
     loadLiveItems(true); // Trigger server-side refresh
 }
 
-function debounce(func, wait) {
-    let timeout;
-    return (...args) => { clearTimeout(timeout); timeout = setTimeout(() => func(...args), wait); };
-}
-function generateFragmentUrls(n) {
+function generateFragmentUrls(n, attempt = 0) {
     const match = n.match(/^(.*?)\s*#(\d+)$/);
     if (!match) return { image: null, lottie: null };
 
     const rawName = match[1].trim();
-    // 1. Try mapping first (case-insensitive)
-    const lookupKey = rawName.toLowerCase().replace(/[^a-z0-9-]/g, ''); // keep hyphens for lookup
+    const num = match[2];
+    // 1. Try mapping first
+    const lookupKey = rawName.toLowerCase().replace(/[^a-z0-9-]/g, '');
     let slug = SLUG_MAPPING[lookupKey] || SLUG_MAPPING[lookupKey.replace(/-/g, '')];
 
-    // 2. Fallback to automatic slug generation
     if (!slug) {
-        // IMPROVED: If it contains spaces, it's likely hyphenated on Fragment (like Eternal Rose -> eternal-rose)
-        if (rawName.includes(' ')) {
-            slug = rawName.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '-');
-        } else {
+        if (attempt === 0) {
+            // First attempt: try hyphenated for multi-word
+            if (rawName.includes(' ')) {
+                slug = rawName.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '-');
+            } else {
+                slug = rawName.toLowerCase().replace(/[^a-z0-9]/g, '');
+            }
+        } else if (attempt === 1) {
+            // Second attempt: try concatenated (no hyphens)
             slug = rawName.toLowerCase().replace(/[^a-z0-9]/g, '');
+        } else {
+            // Give up
+            return { image: 'https://nft.fragment.com/guide/gift.svg', lottie: null };
         }
+    } else if (attempt > 0) {
+        // If we already have a mapping but it failed (rare, maybe mapping is wrong)
+        return { image: 'https://nft.fragment.com/guide/gift.svg', lottie: null };
     }
 
     return {
-        image: `https://nft.fragment.com/gift/${slug}-${match[2]}.webp`,
-        lottie: `https://nft.fragment.com/gift/${slug}-${match[2]}.lottie.json`
+        image: `https://nft.fragment.com/gift/${slug}-${num}.webp`,
+        lottie: `https://nft.fragment.com/gift/${slug}-${num}.lottie.json`
     };
 }
+
+function handleGiftImageError(img, name) {
+    img.dataset.attempt = img.dataset.attempt ? parseInt(img.dataset.attempt) + 1 : 1;
+    const attempt = parseInt(img.dataset.attempt);
+    if (attempt <= 1) {
+        const f = generateFragmentUrls(name, attempt);
+        if (f.image && f.image !== img.src) {
+            img.src = f.image;
+            return;
+        }
+    }
+    img.src = 'https://nft.fragment.com/guide/gift.svg';
+    img.onerror = null; // Prevent loops
+}
+
+function renderMediaHTML(it, isModal = false) {
+    const isNum = (it.type === 'number') || it.nft_name.includes('+888');
+    const isUser = (it.type === 'username') || it.nft_name.startsWith('@');
+    const minD = Math.floor((it.min_duration || 86400) / 86400);
+    const maxD = Math.floor((it.max_duration || 2592000) / 86400);
+    const daysLabel = `${t('days')}: ${minD} – ${maxD}`;
+
+    if (isNum || isUser) {
+        let inner = "";
+        const tIcon = "telegram_logo.svg";
+
+        const rawName = it.nft_name.replace('Anonymous Number ', '').replace('@', '');
+        const isLong = rawName.length > (isModal ? 20 : 15);
+        const fontSize = rawName.length > 20 ? (isModal ? '20px' : '14px') : (isModal ? '24px' : '17px');
+
+        if (isNum) {
+            inner = `
+                <div class="card-placeholder" style="background:${isModal ? 'transparent' : '#1c1c1e'}; height:100%; width:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:${isModal ? '20px' : '8px'};">
+                    <img src="${tIcon}" class="${isModal ? '' : 'telegram-center-icon'}" style="${isModal ? 'width:80px; height:80px; opacity:0.9; filter: drop-shadow(0 0 20px rgba(0,136,204,0.4));' : 'flex-shrink:0;'}">
+                    <div style="${isModal ? 'background:#0088cc; font-size:24px; color:#fff; padding:10px 24px; border-radius:14px; font-weight:800; box-shadow:0 8px 24px rgba(0,136,204,0.5); font-family:monospace; letter-spacing:1px;' : 'font-size:' + fontSize + '; font-weight:700; color:#fff; width:100%; text-align:center; padding:0 4px; box-sizing:border-box; flex-shrink:0;'}">${rawName}</div>
+                </div>`;
+        } else {
+            const displayName = truncateMiddle(rawName, isModal ? 20 : 15);
+            inner = `
+                <div class="card-placeholder" style="background:${isModal ? 'transparent' : '#1c1c1e'}; height:100%; width:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:${isModal ? '10px' : '4px'};">
+                     <div style="font-size:${isModal ? '120px' : '50px'}; color:#0088cc; font-weight:${isModal ? '900' : '800'}; opacity:${isModal ? '0.9' : '0.8'}; line-height:1; flex-shrink:0; ${isModal ? 'filter: drop-shadow(0 0 30px rgba(0,136,204,0.3));' : ''}">@</div>
+                     <div style="${isModal ? 'background:#0088cc; font-size:24px; color:#fff; padding:10px 24px; border-radius:14px; font-weight:800; box-shadow:0 8px 24px rgba(0,136,204,0.5);' : 'font-size:' + fontSize + '; font-weight:700; color:#fff; width:100%; text-align:center; padding:0 4px; box-sizing:border-box; flex-shrink:0;'}">${displayName}</div>
+                </div>`;
+        }
+        if (!isModal) {
+            inner = inner.replace('</div>', `<div class="card-days-badge-bottom">${daysLabel}</div></div>`);
+        }
+        return inner;
+    } else {
+        let iSrc = it._realImage;
+        // ALWAYS try to fix fragment urls if they don't have hyphens but are gifts
+        if (iSrc && iSrc.includes('nft.fragment.com/gift/') && !iSrc.includes('-') && !SLUG_MAPPING[iSrc.split('/').pop().split('-')[0]]) {
+            const f = generateFragmentUrls(it.nft_name);
+            iSrc = f.image;
+        }
+        if (!iSrc || iSrc.includes('gift.svg') || iSrc.includes('ton_symbol')) {
+            const f = generateFragmentUrls(it.nft_name);
+            iSrc = f.image;
+        }
+        return `
+            <img src="${iSrc}" class="${isModal ? 'view-img-actual' : 'card-img'}" style="${isModal ? 'width:100%; height:100%; object-fit:contain;' : ''}" loading="lazy" onerror="handleGiftImageError(this, '${it.nft_name.replace(/'/g, "\\'")}')">
+            <div class="card-days-badge-bottom">${daysLabel}</div>
+        `;
+    }
+}
+
 function observeNewCards() {
     // Lottie disabled in feed to prevent lag on mobile
 }
@@ -1423,38 +1447,7 @@ async function openProductView(item) {
     const mediaCont = document.getElementById('view-media-container');
     if (mediaCont) {
         mediaCont.style.display = 'block';
-        const renderMediaHTML = (it) => {
-            const isNum = (it.type === 'number') || it.nft_name.includes('+888');
-            const isUser = (it.type === 'username') || it.nft_name.startsWith('@');
-            if (isNum || isUser) {
-                const rawName = it.nft_name.replace('Anonymous Number ', '').replace('@', '');
-                const tIcon = "telegram_logo.svg";
-                let inner = "";
-                if (isNum) {
-                    inner = `
-                        <div style="background: radial-gradient(circle at center, #1a1d29 0%, #0f1218 100%); width:100%; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:20px; position:relative; overflow:hidden; text-align:center;">
-                            <img src="${tIcon}" style="width:80px; height:80px; opacity:0.9; filter: drop-shadow(0 0 20px rgba(0,136,204,0.4));">
-                            <div style="background:#0088cc; font-size:24px; color:#fff; padding:10px 24px; border-radius:14px; font-weight:800; box-shadow:0 8px 24px rgba(0,136,204,0.5); font-family:monospace; letter-spacing:1px;">${rawName}</div>
-                        </div>`;
-                } else {
-                    const displayName = truncateMiddle(rawName, 20);
-                    inner = `
-                        <div style="background: radial-gradient(circle at center, #1a1d29 0%, #0f1218 100%); width:100%; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:10px; position:relative; overflow:hidden; text-align:center;">
-                            <div style="font-size:120px; color:#0088cc; font-weight:900; opacity:0.9; line-height:1; filter: drop-shadow(0 0 30px rgba(0,136,204,0.3));">@</div>
-                            <div style="background:#0088cc; font-size:24px; color:#fff; padding:10px 24px; border-radius:14px; font-weight:800; box-shadow:0 8px 24px rgba(0,136,204,0.5);">${it.nft_name.startsWith('@') ? '@' + displayName : displayName}</div>
-                        </div>`;
-                }
-                return inner;
-            } else {
-                let iSrc = it._realImage;
-                if (!iSrc || iSrc.includes('gift.svg') || iSrc.includes('ton_symbol')) {
-                    const f = generateFragmentUrls(it.nft_name);
-                    iSrc = f.image;
-                }
-                return `<img src="${iSrc}" style="width:100%; height:100%; object-fit:contain;" onerror="this.src='https://nft.fragment.com/guide/gift.svg'">`;
-            }
-        };
-        mediaCont.innerHTML = renderMediaHTML(item);
+        mediaCont.innerHTML = renderMediaHTML(item, true);
     }
 
     // NEW: Release Date Badge in Product View - NOW WITH LIVE COUNTDOWN
