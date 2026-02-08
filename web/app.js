@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://tract-remained-selective-checklist.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://loans-far-santa-exercise.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -2495,6 +2495,5 @@ async function fetchTonPrice() {
     } catch (e) {
         console.error("Failed to fetch TON price:", e);
     }
-}
 }
 });
