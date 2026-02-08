@@ -687,7 +687,6 @@ body {
     align-items: center;
     justify-content: flex-end;
     /* Кнопки внизу */
-    padding-top: 10px;
     z-index: 999;
     height: calc(125px + var(--safe-area-bottom));
 }
