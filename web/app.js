@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://vast-ethernet-containers-chain.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://feeling-vienna-curtis-utilize.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -1179,7 +1179,12 @@ function initFilterLists() {
             addFilterItem(cont, t('select_all'), "all", m.key, ACTIVE_FILTERS[m.key] === 'all');
         }
 
-        const items = (ATTR_STATS[m.key] && ATTR_STATS[m.key][selectedNFT]) || [];
+        let items = (ATTR_STATS[m.key] && ATTR_STATS[m.key][selectedNFT]) || [];
+        // Fallback to global for backgrounds and symbols if collection-specific ones not found
+        if (items.length === 0 && (m.key === 'bg' || m.key === 'symbol')) {
+            items = (ATTR_STATS[m.key] && ATTR_STATS[m.key]['global']) || [];
+        }
+
         items.forEach(item => {
             if (item.name.toLowerCase().includes(sVal)) {
                 // Try clean visual
@@ -1188,7 +1193,7 @@ function initFilterLists() {
                 else if (m.key === 'model') visual = getTelegifterUrl('model', item.name, selectedNFT);
 
                 let icon = visual || item.image;
-                if (!icon && (m.key === 'bg' || m.key === 'symbol')) icon = VISUAL_MAP[m.key][item.name] || null;
+                if (!icon && (m.key === 'bg' || m.key === 'symbol')) icon = (VISUAL_MAP[m.key] && VISUAL_MAP[m.key][item.name]) || null;
                 addFilterItem(cont, item.name, item.name, m.key, ACTIVE_FILTERS[m.key] === item.name, icon, selectedNFT, item.image);
             }
         });
