@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://technician-field-descending-than.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://kitchen-carlos-banners-disposal.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -369,13 +369,13 @@ const SLUG_MAPPING = {
     'kissedfrog': 'kissedfrog',
     'plushpepe': 'plushpepe',
     'ducks': 'ducks',
-    'eternalrose': 'eternal-rose',
-    'eternal-rose': 'eternal-rose',
-    'cloverpin': 'clover-pin',
+    'eternalrose': 'eternalrose',
+    'cloverpin': 'cloverpin',
     'whipcupcake': 'whipcupcake',
     'jellypuppy': 'jellypuppy',
     'magicmushroom': 'magicmushroom',
-    'goldstar': 'goldstar'
+    'goldstar': 'goldstar',
+    'khabibspapakha': 'khabibspapakha'
 };
 
 function getTelegifterUrl(type, name, collection, slugIndex = 0) {
@@ -1350,21 +1350,14 @@ function generateFragmentUrls(n, attempt = 0) {
 
     // Normalize for lookup: remove everything except a-z, 0-9
     const lookupKey = rawName.toLowerCase().replace(/[^a-z0-9]/g, '');
-    let slug = SLUG_MAPPING[lookupKey];
+    let slug = SLUG_MAPPING[lookupKey] || lookupKey; // Default to concatenated if not in mapping
 
-    if (!slug) {
-        if (attempt === 0) {
-            // First attempt: try hyphenated if it has spaces or already has hyphens
-            if (rawName.includes(' ') || rawName.includes('-')) {
-                slug = rawName.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/[\s-]+/g, '-').replace(/^-|-$/g, '');
-            } else {
-                slug = rawName.toLowerCase().replace(/[^a-z0-9]/g, '');
-            }
-        } else if (attempt === 1) {
-            // Second attempt: try concatenated (no hyphens)
-            slug = rawName.toLowerCase().replace(/[^a-z0-9]/g, '');
-        } else {
-            return { image: 'https://nft.fragment.com/guide/gift.svg', lottie: null };
+    // Specific attempt logic: 
+    // attempt 0: slug as is (usually concatenated)
+    // attempt 1: hyphenated (just in case)
+    if (attempt === 1) {
+        if (rawName.includes(' ') || rawName.includes('-')) {
+            slug = rawName.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/[\s-]+/g, '-').replace(/^-|-$/g, '');
         }
     }
 
@@ -1377,15 +1370,36 @@ function generateFragmentUrls(n, attempt = 0) {
 function handleGiftImageError(img, name) {
     img.dataset.attempt = img.dataset.attempt ? parseInt(img.dataset.attempt) + 1 : 1;
     const attempt = parseInt(img.dataset.attempt);
-    if (attempt <= 1) {
-        const f = generateFragmentUrls(name, attempt);
-        if (f.image && f.image !== img.src) {
+
+    if (attempt === 1) {
+        // Retry SAME URL but with cache buster in case browser cached a 404
+        if (img.src && !img.src.includes('?refresh=')) {
+            img.src = img.src + (img.src.includes('?') ? '&' : '?') + 'refresh=' + Date.now();
+            return;
+        }
+    }
+
+    if (attempt === 2) {
+        // Try hyphenated version
+        const f = generateFragmentUrls(name, 1);
+        if (f.image && f.image !== img.src.split('?')[0]) {
             img.src = f.image;
             return;
         }
     }
+
+    // Final fallback
     img.src = 'https://nft.fragment.com/guide/gift.svg';
     img.onerror = null; // Prevent loops
+
+    // NEW: If in catalog and failed all attempts, hide the whole card
+    if (img.classList.contains('card-img')) {
+        const card = img.closest('.card');
+        if (card) {
+            card.style.display = 'none';
+            console.warn("Hiding broken gift card:", name);
+        }
+    }
 }
 
 function renderMediaHTML(it, isModal = false) {

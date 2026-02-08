@@ -685,8 +685,8 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-end;
-    /* Кнопки внизу */
+    justify-content: center;
+    /* Changed from flex-end to center to lift elements */
     z-index: 999;
     height: calc(125px + var(--safe-area-bottom));
     transition: height 0.3s ease;
@@ -704,7 +704,8 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    gap: 2px;
+    /* Reduced gap between icon and text */
     color: #8b9bb4;
     font-size: 10px;
     font-weight: 500;
@@ -2350,7 +2351,8 @@ body.hide-filters .header-column {
 .mode-toggle-container {
     width: 94%;
     max-width: 440px;
-    margin: 8px auto 12px;
+    margin: 4px auto 8px;
+    /* Reduced from 8px auto 12px for a tighter look */
 }
 
 .mode-toggle-btn {
