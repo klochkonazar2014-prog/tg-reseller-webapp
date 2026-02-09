@@ -6,9 +6,9 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://shakira-stylus-durable-appear.trycloudflare.com"; // Updated to match actual hosting if needed, but for API calls it should probably be the tunnel. Wait, the user has a tunnel URL in line 9. Let's keep it but check why it might fail.
+const BACKEND_URL = "https://xbox-mineral-guam-populations.trycloudflare.com"; // Updated to match actual hosting if needed, but for API calls it should probably be the tunnel. Wait, the user has a tunnel URL in line 9. Let's keep it but check why it might fail.
 // Actual dynamic backend usually comes from env or is hardcoded. Looking at line 9:
-// const BACKEND_URL = "https://shakira-stylus-durable-appear.trycloudflare.com"; 
+// const BACKEND_URL = "https://xbox-mineral-guam-populations.trycloudflare.com"; 
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
