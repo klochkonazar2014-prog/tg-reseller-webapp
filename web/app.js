@@ -6,9 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://moisture-draws-merchandise-fence.trycloudflare.com"; // Updated to match actual hosting if needed, but for API calls it should probably be the tunnel. Wait, the user has a tunnel URL in line 9. Let's keep it but check why it might fail.
-// Actual dynamic backend usually comes from env or is hardcoded. Looking at line 9:
-// const BACKEND_URL = "https://moisture-draws-merchandise-fence.trycloudflare.com"; 
+const BACKEND_URL = window.location.origin; // Fix: use origin to avoid fetch errors
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -87,54 +85,29 @@ const TRANSLATIONS = {
         rent_days: "Аренда на {min}–{max} дн.",
         per_day: "В день",
         min_price: "Мин. цена",
-        you_will_send: "(Дополнительно вам потребуется отправить 0,2 тонны для обработки транзакции. Оставшаяся тонна будет вам возвращена. Что это значит?",
-        processing: "Подключение...",
-        success_tc: "Успешно! Теперь вернитесь на Fragment и нажмите Display in Telegram.",
-        tc_link_placeholder: "Вставьте tc:// ссылку с Fragment",
-        rarity: "Редкость",
-        model: "Модель",
-        symbol: "Символ",
-        backdrop: "Фон",
-        copy_success: "Скопировано",
-        lang_ru: "Русский",
-        lang_en: "English",
-        what_is_this: "Что это значит?",
-        settings_support: "Настройки и поддержка",
-        profile_settings: "Настройки и поддержка",
-        rental_history: "История аренды",
-        profile_history: "История аренды",
-        support_faq: "Поддержка и FAQ",
-        profile_support: "Поддержка и FAQ",
-        wallet_mgmt: "Управление кошельком",
-        profile_wallet: "Кошелек",
-        connect_wallet: "Подключить",
-        connect_wallet_full: "Подключить кошелек",
-        connected: "Подключено",
-        details: "Детали",
-        owner: "Владелец",
-        address: "Адрес",
-        auto_relist: "Авто-перевыставление",
-        auto_relist_desc: "Этот NFT будет автоматически доступен для аренды после окончания срока.",
-        rent_button: "Арендовать за {amount}",
-        rent_for: "Арендовать за",
-        preorder_for: "Забронировать за",
-        loading: "Загрузка...",
-        filters: "Фильтры",
-        gift_number: "Номер подарка",
-        sort_by: "Сортировка",
-        price: "Цена",
-        from: "От",
-        to: "До",
-        clear_all: "Очистить все",
-        show_results: "Показать результаты",
-        search_hint: "Поиск...",
-        history_empty: "История пуста",
-        invalid_tc_link: "Пожалуйста, вставьте корректную ссылку tc:// с Fragment",
-        status_pending: "Ожидает оплату",
-        status_rented: "Ожидает ссылку",
+        you_will_send: "(Дополнительно вам потребуется отправить {amount} TON для обработки транзакции. Оставшаяся тонна будет вам возвращена. Что это значит?",
         just_now: "Только что",
         hours_ago: "ч. назад",
-        what_is_this_long: "<b>Зачем нужны дополнительные 0,2 тонны?</b><br>Дополнительно 0,2 тонны отправляется для обработки транзакции по аренде в блокчейне.<br>Эти средства используются для оплаты сетевых сборов и выполнения смарт-контракта.<br>Фактические затраты обычно составляют всего несколько центов. Это можно увидеть в истории транзакций.<br><br><b>Это нормально?</b><br>Это стандартная практика для транзакций в сети TON и не только. Невозвратная часть идет на оплату комиссий сети, а не на оплату услуг платформы.",
+        what_is_this_long: "(Дополнительно вам потребуется отправить 0.2 TON для обработки транзакции. Оставшаяся тонна будет вам возвращена. Что это значит?",
+        listing_warning_short: "Подарок, выставленный на аренду менее чем на 24 часа.",
+        listing_help_title: "Подарок, выставленный на аренду менее чем на 24 часа.",
+        listing_help_body: `
+            <div style="font-weight:700; color:#fff; margin-bottom:10px;">Почему это важно?</div>
+            <p style="margin-bottom:12px;">Этот подарок недавно был выставлен на аренду (менее 24 часов назад).</p>
+            <p style="margin-bottom:12px;">Fragment устанавливает ограничение на количество раз в день, когда подарок может быть привязан к аккаунту Telegram.</p>
+            <div style="font-weight:700; color:#fff; margin-bottom:10px;">Что это значит?</div>
+            <p style="margin-bottom:12px;">Если предыдущий владелец или арендатор недавно исчерпал этот лимит, вы не сможете сразу привязать подарок к своему аккаунту в Telegram. Возможно, вам придётся подождать день.</p>
+            <p style="font-weight:700; color:#ff9500;">Аренда на свой страх и риск!</p>
+        `,
+        fee_help_title: "Зачем нужны дополнительные 0,2 тонны?",
+        fee_help_body: `
+            <div style="font-weight:700; color:#fff; margin-bottom:10px;">Зачем нужны дополнительные 0,2 тонны?</div>
+            <p style="margin-bottom:12px;">Дополнительно 0,2 тонны отправляется для обработки транзакции по аренде в блокчейне.</p>
+            <p style="margin-bottom:12px;">Эти средства используются для оплаты сетевых сборов и выполнения смарт-контракта.</p>
+            <p style="margin-bottom:12px;">Фактические затраты обычно составляют всего несколько центов. Это можно увидеть в истории транзакций.</p>
+            <div style="font-weight:700; color:#fff; margin-bottom:10px;">Это нормально?</div>
+            <p style="margin-bottom:12px;">Это стандартная практика для транзакций в сети TON и не только. Невозвратная часть идет на оплату комиссий сети, а не на оплату услуг платформы.</p>
+        `,
         wallet_mgmt: "Управление кошельком",
         copy_address: "Копировать адрес",
         disconnect_wallet: "Отключить кошелек",
@@ -168,9 +141,7 @@ const TRANSLATIONS = {
         ends_in: "Освободится через",
         days_label: "Дни",
         day_label: "День",
-        days_2_4: "Дня",
-        listing_warning_title: "Подарок, выставленный на аренду менее чем на 24 часа.",
-        listing_warning_body: `<b>Почему это важно?</b><br>Этот подарок недавно был выставлен на аренду (менее 24 часов назад).<br>Fragment устанавливает ограничение на количество раз в день, когда подарок может быть привязан к аккаунту Telegram.<br><br><b>Что это значит?</b><br>Если предыдущий владелец или арендатор недавно исчерпал этот лимит, вы не сможете сразу привязать подарок к своему аккаунту в Telegram. Возможно, вам придётся подождать день.<br><br>Аренда на свой страх и риск!`
+        days_2_4: "Дня"
     },
     en: {
         gifts: "Gifts",
@@ -230,7 +201,7 @@ const TRANSLATIONS = {
         status_rented: "Awaiting link",
         just_now: "Just now",
         hours_ago: "h ago",
-        what_is_this_long: "<b>Why an extra 0.2 TON?</b><br>An additional 0.2 TON is sent to process the rental transaction on the blockchain.<br>These funds are used to pay network fees and execute the smart contract.<br>Actual costs are usually just a few cents. You can see this in your transaction history.<br><br><b>Is this normal?</b><br>This is standard practice for transactions on the TON network and beyond. The non-refundable portion goes towards network fees, not platform service fees.",
+        what_is_this_long: "You are sending a small amount of TON to cover network fees and service operations. The remainder will be returned to you automatically.",
         all: "All",
         select_all: "Select all",
         select_collection_first: "Select an NFT collection first to see models.",
@@ -258,9 +229,7 @@ const TRANSLATIONS = {
         ends_in: "Ends in",
         days_label: "Days",
         day_label: "Day",
-        days_2_4: "Days",
-        listing_warning_title: "Gift listed for rent less than 24 hours ago.",
-        listing_warning_body: `<b>Why is this important?</b><br>This gift was recently listed for rent (less than 24 hours ago).<br>Fragment sets a limit on the number of times per day a gift can be linked to a Telegram account.<br><br><b>What does this mean?</b><br>If the previous owner or tenant has recently exhausted this limit, you won't be able to link the gift to your Telegram account immediately. You might have to wait a day.<br><br>Rent at your own risk!`
+        days_2_4: "Days"
     }
 };
 
@@ -667,18 +636,16 @@ function loadUserOrders() {
 
 
 // --- Help Modal Logic ---
-function showHelp(type, amount) {
+function showHelp(type) {
     const title = document.getElementById('help-title');
     const body = document.getElementById('help-body');
 
-    if (type === 'listing') {
-        title.innerText = t('listing_warning_title');
-        body.innerHTML = `<div style="color:#fff;">${t('listing_warning_body')}</div>`;
-    } else {
-        title.innerText = t('what_is_this');
-        body.innerHTML = `
-            <div style="font-weight:700; color:#fff; margin-bottom:10px;">${t('you_will_send', { amount: amount })}</div>
-        `;
+    if (type === 'fee') {
+        title.innerText = t('fee_help_title');
+        body.innerHTML = t('fee_help_body');
+    } else if (type === 'listing') {
+        title.innerText = t('listing_help_title');
+        body.innerHTML = t('listing_help_body');
     }
 
     document.getElementById('help-modal-overlay').classList.add('active');
@@ -1534,25 +1501,17 @@ async function openProductView(item) {
         mediaCont.innerHTML = renderMediaHTML(item, true);
     }
 
-    // NEW: Release Date Badge in Product View - NOW WITH LIVE COUNTDOWN
-    const releaseBadge = document.getElementById('view-release-badge');
-    if (releaseBadge) {
-        if (item.status === 'rented' && item.rent_ends_at) {
-            // Create a unique timer element ID
-            const timerId = 'release-timer-' + item.id;
-            releaseBadge.innerHTML = `<div id="${timerId}" style="margin-bottom:12px;"></div>`;
-            releaseBadge.style.display = 'block';
+    const statusOverlay = document.getElementById('view-media-status-overlay');
+    const rentBtn = document.getElementById('main-rent-action-btn');
+    const stepper = document.querySelector('.rent-period-stepper');
+    const feeNotice = document.querySelector('.fee-notice-box');
+    const warningBox = document.getElementById('listing-warning-box');
 
-            // Start the countdown timer
-            const timerEl = document.getElementById(timerId);
-            if (timerEl) {
-                startCountdown(parseInt(item.rent_ends_at), timerEl);
-            }
-        } else {
-            releaseBadge.style.display = 'none';
-        }
-    }
+    // 1. Reset/Default State
+    if (warningBox) warningBox.style.display = 'none';
+    if (statusOverlay) { statusOverlay.style.display = 'none'; statusOverlay.innerHTML = ''; }
 
+    // 2. Lottie Animation
     const lottieCont = document.getElementById('view-lottie');
     if (lottieCont) {
         lottieCont.innerHTML = '';
@@ -1574,42 +1533,14 @@ async function openProductView(item) {
 
     const colName = (item._collection && item._collection.name) ? item._collection.name : "Gifts";
     const viewTitle = document.getElementById('view-title');
-    if (viewTitle) {
-        viewTitle.innerText = item.nft_name;
-    }
+    if (viewTitle) viewTitle.innerText = item.nft_name;
 
-    // NEW: Status Pills
-    // NEW: Status Overlay (replaces badge row)
-    const statusOverlay = document.getElementById('view-media-status-overlay');
-    if (statusOverlay) {
-        statusOverlay.style.display = 'none';
-        statusOverlay.innerHTML = '';
-
-        let statusText = '';
-        let statusClass = '';
-
-        if (item.status === 'rented') {
-            statusText = t('rented');
-            statusClass = 'rented';
-        } else if (item.status === 'pending') {
-            statusText = t('pending');
-            statusClass = 'pending';
-        }
-
-        if (statusText) {
-            statusOverlay.innerHTML = `<div class="status-overlay-badge ${statusClass}">${statusText}</div>`;
-            statusOverlay.style.display = 'block';
-        }
-    }
     const viewCopyBtn = document.getElementById('view-copy-btn-main');
-    if (viewCopyBtn) {
-        viewCopyBtn.onclick = () => copyNftTitle(item.nft_name);
-    }
+    if (viewCopyBtn) viewCopyBtn.onclick = () => copyNftTitle(item.nft_name);
 
     const notifyBtn = document.getElementById('notify-btn');
-    if (notifyBtn) {
-        notifyBtn.style.display = (item.status === 'rented') ? 'block' : 'none';
-    }
+    if (notifyBtn) notifyBtn.style.display = (item.status === 'rented') ? 'block' : 'none';
+
     const colEl = document.getElementById('view-collection');
     if (colEl) {
         colEl.innerText = `${colName} >`;
@@ -1622,18 +1553,16 @@ async function openProductView(item) {
     }
 
     const ownerEl = document.getElementById('view-owner');
-    if (ownerEl) {
-        ownerEl.parentElement.style.display = 'none';
-    }
+    if (ownerEl) ownerEl.parentElement.style.display = 'none';
 
-    // Hide Details/Properties for Numbers & Usernames
+    // 3. Details/Properties Visibility
     const detailsTab = document.getElementById('details-tab');
     const propertiesCont = document.getElementById('view-properties');
     const isGift = (item.type && item.type.toLowerCase() === 'gift');
     if (detailsTab) detailsTab.style.display = isGift ? 'block' : 'none';
     if (propertiesCont) propertiesCont.style.display = isGift ? 'block' : 'none';
 
-    // Translation setup
+    // 4. Translation & Pricing
     const setChip = (id, key) => {
         const el = document.getElementById(id);
         if (el) el.innerText = t(key);
@@ -1646,43 +1575,41 @@ async function openProductView(item) {
     setChip('fee-what-mean', 'what_is_this');
     setChip('view-countdown-label', 'ends_in');
 
-    // Reset banners & countdown
     const banner = document.getElementById('view-status-banner');
     if (banner) { banner.style.display = 'none'; banner.className = 'status-banner'; }
     const countdownCont = document.getElementById('view-countdown-container');
     if (countdownCont) countdownCont.style.display = 'none';
-
-    // Hide Address
     const addrDom = document.getElementById('view-address');
     if (addrDom) addrDom.style.display = 'none';
 
-    // Pricing & Duration
     let rawP = parseFloat(item.price_per_day) || 0;
     const dailyPrice = rawP.toFixed(2);
-    document.getElementById('view-daily-price').innerHTML = renderTonAmount(dailyPrice);
+    const dailyPriceEl = document.getElementById('view-daily-price');
+    if (dailyPriceEl) dailyPriceEl.innerHTML = renderTonAmount(dailyPrice);
     if (GLOBAL_TON_PRICE) {
-        document.getElementById('view-daily-price-usd').innerText = `~$${(rawP * GLOBAL_TON_PRICE).toFixed(2)}`;
+        const usdEl = document.getElementById('view-daily-price-usd');
+        if (usdEl) usdEl.innerText = `~$${(rawP * GLOBAL_TON_PRICE).toFixed(2)}`;
     }
 
     const minDays = Math.floor((item.min_duration || 86400) / 86400);
     const maxDays = Math.floor((item.max_duration || 2592000) / 86400);
     const rangeEl = document.getElementById('view-duration-range');
     if (rangeEl) rangeEl.textContent = `${minDays} — ${maxDays}`;
-    document.getElementById('view-discount').innerText = "0.1%";
-    document.getElementById('rent-duration-input').value = minDays;
+    const discEl = document.getElementById('view-discount');
+    if (discEl) discEl.innerText = "0.1%";
+    const durInp = document.getElementById('rent-duration-input');
+    if (durInp) durInp.value = minDays;
 
-    // Attributes
-    const propCont = document.getElementById('view-properties');
-    if (propCont && item.type === 'gift') {
-        propCont.innerHTML = '';
-        // Attributes like Model/Backdrop/Symbol will be added via fetch later, or we can add static ones if available
+    // 5. Attributes (Gift Specific)
+    if (propertiesCont && item.type === 'gift') {
+        propertiesCont.innerHTML = '';
         const nftNumMatch = item.nft_name.match(/#(\d+)/);
         const nftNum = nftNumMatch ? nftNumMatch[1] : '1';
         const giftBaseName = item.nft_name.replace(/#\d+/, '').trim();
         const giftSlug = giftBaseName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join('');
         const tgNftLink = `https://t.me/nft/${giftSlug}-${nftNum}`;
 
-        const createPropRow = (label, value, statKey) => {
+        const createPropRow = (label, value) => {
             const displayValue = (!value || value === 'Unknown' || value === 'Gift') ? '—' : value;
             const row = document.createElement('div');
             row.className = 'property-item';
@@ -1692,66 +1619,47 @@ async function openProductView(item) {
             return row;
         };
 
-        const tgRow = document.createElement('div');
-        tgRow.className = 'property-item';
-        // Added .clickable-prop class from previous tasks
-        tgRow.innerHTML = `<div class="prop-left"><div class="prop-name">Telegram</div></div><div class="prop-right"><span style="color:var(--accent-blue); font-weight:600;">${giftBaseName} #${nftNum}</span></div>`;
+        const tgRow = createPropRow("Telegram", `${giftBaseName} #${nftNum}`);
         tgRow.onclick = () => tg.openTelegramLink(tgNftLink);
-        propCont.appendChild(tgRow);
+        propertiesCont.appendChild(tgRow);
 
-        // Helper for clickable properties
-        const appendClickableProp = (label, val, key) => {
+        const appendClickable = (label, val, key) => {
             if (!val) return;
-            const r = createPropRow(label, val, key);
-            r.classList.add('clickable-prop'); // Ensure visual feedback
-            // Add arrow
+            const r = createPropRow(label, val);
+            r.classList.add('clickable-prop');
             r.querySelector('.prop-right').innerHTML += `<span class="arrow-v" style="font-size:12px; margin-left:8px;">›</span>`;
-
             r.onclick = () => {
-                // FAILSAFE: Ensure we set the Collection filter too, otherwise Model list is disabled
-                if (key === 'model' || key === 'bg' || key === 'symbol') {
-                    ACTIVE_FILTERS.nft = colName;
-                }
+                if (key === 'model' || key === 'bg' || key === 'symbol') ACTIVE_FILTERS.nft = colName;
                 ACTIVE_FILTERS[key] = val;
                 closeProductView();
                 loadLiveItems(true);
             };
-            propCont.appendChild(r);
+            propertiesCont.appendChild(r);
         };
 
-        if (item._modelName) appendClickableProp(t('model'), item._modelName, 'model');
-        if (item._symbol) appendClickableProp(t('symbol'), item._symbol, 'symbol');
-        if (item._backdrop) appendClickableProp(t('backdrop'), item._backdrop, 'bg');
+        if (item._modelName) appendClickable(t('model'), item._modelName, 'model');
+        if (item._symbol) appendClickable(t('symbol'), item._symbol, 'symbol');
+        if (item._backdrop) appendClickable(t('backdrop'), item._backdrop, 'bg');
 
-        // Auto-relist status
         const reRow = createPropRow(t('auto_relist_label'), item.auto_relist ? t('yes') : t('no'));
         if (!item.auto_relist) reRow.querySelector('.prop-right span').style.color = '#ff3b30';
-        propCont.appendChild(reRow);
+        propertiesCont.appendChild(reRow);
     }
 
-    // Rent Button
-    const rentBtn = document.getElementById('main-rent-action-btn');
-    const stepper = document.querySelector('.rent-period-stepper');
-    const feeNotice = document.querySelector('.fee-notice-box');
-
+    // 6. Rent Button & Async Calls (24h warning, my orders, details)
     if (rentBtn) {
         rentBtn.style.display = 'flex';
         if (stepper) stepper.style.display = 'flex';
         if (feeNotice) feeNotice.style.display = 'block';
-
         updateTotalPrice();
         const rentBtnTextEl = rentBtn.querySelector('#rent-btn-text');
         if (rentBtnTextEl) rentBtnTextEl.textContent = t('rent_button', { amount: '' }).replace('{amount}', '').trim();
 
         rentBtn.onclick = async () => {
             if (!tonConnectUI.connected) { await tonConnectUI.openModal(); return; }
-
-            // ALERT: Check auto-relist for pre-orders
             if (item.status === 'rented' && !item.auto_relist) {
-                const confirmed = confirm(t('preorder_warning_no_relist'));
-                if (!confirmed) return;
+                if (!confirm(t('preorder_warning_no_relist'))) return;
             }
-
             const days = parseInt(document.getElementById('rent-duration-input').value) || 1;
             const originalHTML = rentBtn.innerHTML;
             rentBtn.innerHTML = t('loading');
@@ -1779,26 +1687,26 @@ async function openProductView(item) {
         };
     }
 
-    const warningBox = document.getElementById('listing-warning-box');
-    if (warningBox) warningBox.style.display = 'none';
-
-    if (item && item.nft_address) {
+    if (item.nft_address) {
         const userId = tg.initDataUnsafe?.user?.id || 0;
-
-        // Parallel fetch for details and user order status
         Promise.all([
             fetch(`${BACKEND_URL}/api/nft_details?nft_address=${item.nft_address}`).then(r => r.json()),
             fetch(`${BACKEND_URL}/api/my_orders?user_id=${userId}`).then(r => r.json())
         ]).then(([details, myOrders]) => {
             const myOrder = myOrders.find(o => o.nft_address === item.nft_address && (o.status === 'rented' || o.status === 'active' || o.status === 'paid'));
 
-            // 1. Status Banner Logic
-            // 1. Status Banner Logic - REMOVED PER USER REQUEST
-            // The banner is now handled by the image overlay only.
-            const banner = document.getElementById('view-status-banner');
-            if (banner) banner.style.display = 'none';
+            // Status Overlay
+            if (statusOverlay) {
+                let statusText = '', statusClass = '';
+                if (item.status === 'rented') { statusText = t('rented'); statusClass = 'rented'; }
+                else if (item.status === 'pending') { statusText = t('pending'); statusClass = 'pending'; }
+                if (statusText) {
+                    statusOverlay.innerHTML = `<div class="status-overlay-badge ${statusClass}">${statusText}</div>`;
+                    statusOverlay.style.display = 'block';
+                }
+            }
 
-            // 2. Button Logic for Own Order
+            // Own Order Button
             if (myOrder && myOrder.status === 'rented' && !myOrder.tc_link) {
                 if (rentBtn) {
                     rentBtn.innerHTML = t('connect_to_fragment');
@@ -1808,29 +1716,28 @@ async function openProductView(item) {
                 }
             }
 
-            // 3. Countdown Logic (Blocky V2)
+            // Countdown
             const endTime = details.rent?.ends_at || details.rent_ends_at;
             if (endTime && (item.status === 'rented' || (myOrder && myOrder.status === 'active'))) {
-                const countdownCont = document.getElementById('view-countdown-container');
                 const timerEl = document.getElementById('view-countdown-timer');
                 if (countdownCont && timerEl) {
                     countdownCont.style.display = 'block';
                     startCountdown(parseInt(endTime), timerEl);
                 }
-            } else {
-                const countdownCont = document.getElementById('view-countdown-container');
-                if (countdownCont) countdownCont.style.display = 'none';
             }
 
-            // 4. Existing warning logic and attributes
-            if (details.rent && details.rent.listed_at) {
-                const diffHrs = (Date.now() - (details.rent.listed_at * 1000)) / (1000 * 60 * 60);
+            // 24h Warning
+            const listedAt = details.rent?.listed_at || (item.last_updated ? new Date(item.last_updated).getTime() / 1000 : null);
+            if (listedAt) {
+                const diffHrs = (Date.now() - (listedAt * 1000)) / (1000 * 60 * 60);
                 if (diffHrs < 24) {
                     if (warningBox) warningBox.style.display = 'block';
                     const wt = document.getElementById('view-listed-time');
                     if (wt) wt.innerText = diffHrs < 1 ? t('just_now') : `${Math.round(diffHrs)} ${t('hours_ago')}`;
                 }
             }
+
+            // Attrs filter enhancement
             if (details.attributes) {
                 details.attributes.forEach(attr => {
                     const trait = attr.trait_type.toLowerCase();
@@ -1838,21 +1745,15 @@ async function openProductView(item) {
                     if (row) {
                         const valSpan = row.querySelector('.prop-right span');
                         if (valSpan) valSpan.textContent = attr.value;
-
-                        // NEW: Make attribute clickable to filter
                         row.classList.add('clickable-prop');
                         row.onclick = () => {
-                            let filterKey = trait;
-                            if (filterKey === 'backdrop' || filterKey === 'background' || filterKey === 'фон') {
-                                filterKey = 'bg';
-                            }
-                            if (ACTIVE_FILTERS.hasOwnProperty(filterKey)) {
-                                ACTIVE_FILTERS[filterKey] = attr.value;
+                            let fk = trait;
+                            if (fk === 'backdrop' || fk === 'background') fk = 'bg';
+                            if (ACTIVE_FILTERS.hasOwnProperty(fk)) {
+                                ACTIVE_FILTERS[fk] = attr.value;
                                 closeProductView();
-                                switchTab(0); // Go to Gifts
-                                initFilterLists();
-                                applyHeaderSearch();
-                                tg?.HapticFeedback?.impactOccurred('light');
+                                switchTab(0);
+                                loadLiveItems(true);
                             }
                         };
                     }
@@ -1861,13 +1762,7 @@ async function openProductView(item) {
         }).catch(e => console.error(e));
     }
 
-    // Reset scroll at the very end
-    if (pv) {
-        requestAnimationFrame(() => {
-            pv.scrollTop = 0;
-            pv.scrollTo({ top: 0, behavior: 'instant' });
-        });
-    }
+    if (pv) pv.scrollTop = 0;
 }
 
 function adjustDuration(delta) {
