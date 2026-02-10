@@ -2912,6 +2912,8 @@ body.hide-filters .header-column {
 .ton-icon-inline {
     width: 24px;
     height: 24px;
+    flex-shrink: 0;
+    /* Never shrink */
     vertical-align: middle;
     margin-left: 6px;
     /* Reduced slightly for tighter look */
@@ -2935,7 +2937,7 @@ body.hide-filters .header-column {
     width: 140px;
     overflow: hidden;
     height: 52px;
-    justify-content: center;
+    justify-content: space-between;
 }
 
 .rent-period-stepper button {
@@ -2950,7 +2952,6 @@ body.hide-filters .header-column {
     font-size: 24px;
     cursor: pointer;
     flex: none;
-    line-height: normal !important;
 }
 
 .rent-duration-input {
@@ -2965,8 +2966,10 @@ body.hide-filters .header-column {
     margin: 0 !important;
     height: 52px !important;
     line-height: 52px !important;
+    /* Force vertical centering inside fixed height */
     outline: none;
     display: block;
+    flex: 1;
 }
 
 .main-rent-btn {
