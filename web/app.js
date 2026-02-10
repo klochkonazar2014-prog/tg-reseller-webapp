@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://instruction-pockets-dave-hose.trycloudflare.com";
+const BACKEND_URL = "https://bull-projects-binary-laser.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -817,7 +817,7 @@ async function loadLiveItems(reset = true) {
         });
 
         let response;
-        let retries = 3;
+        let retries = 5;
         while (retries > 0) {
             try {
                 response = await fetch(`${BACKEND_URL}/api/items?${params.toString()}`);
@@ -826,7 +826,7 @@ async function loadLiveItems(reset = true) {
                 console.error(`Fetch attempt failed (${retries} retries left):`, err);
             }
             retries--;
-            if (retries > 0) await new Promise(r => setTimeout(r, 1000));
+            if (retries > 0) await new Promise(r => setTimeout(r, 2000));
         }
 
         if (!response || !response.ok) {
