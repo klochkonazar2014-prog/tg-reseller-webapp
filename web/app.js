@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://heights-feel-italic-colours.trycloudflare.com";
+const BACKEND_URL = "https://bedford-accessibility-suppliers-old.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -290,7 +290,7 @@ const copyToClipboard = (text) => {
         }).catch(err => console.error('Copy failed', err));
     }
 };
-const renderTonAmount = (val) => `<span class="tm-amount">${val}</span><img src="ton_symbol.png" class="ton-icon-inline" alt="TON">`;
+const renderTonAmount = (val) => `<span class="tm-amount">${val}</span><img src="pictures/ton.png" class="ton-icon-inline" alt="TON">`;
 const renderTonAmountNoIcon = (val) => `<span class="tm-amount" style="font-size:inherit;">${val}</span>`;
 
 function truncateMiddle(str, maxLength = 9) {
@@ -1811,13 +1811,18 @@ async function openProductView(item) {
 
             // 24h Warning
             const listedAt = details.rent?.listed_at || (item.last_updated ? new Date(item.last_updated).getTime() / 1000 : null);
+            const warningBox = document.getElementById('listing-warning-box');
             if (listedAt) {
                 const diffHrs = (Date.now() - (listedAt * 1000)) / (1000 * 60 * 60);
-                if (diffHrs < 24) {
+                if (diffHrs < 24 && diffHrs >= 0) {
                     if (warningBox) warningBox.style.display = 'block';
                     const wt = document.getElementById('view-listed-time');
                     if (wt) wt.innerText = diffHrs < 1 ? t('just_now') : `${Math.round(diffHrs)} ${t('hours_ago')}`;
+                } else {
+                    if (warningBox) warningBox.style.display = 'none';
                 }
+            } else {
+                if (warningBox) warningBox.style.display = 'none';
             }
 
             // Attrs filter enhancement
