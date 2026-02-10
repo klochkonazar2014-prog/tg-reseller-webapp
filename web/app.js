@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://bare-mattress-professor-wash.trycloudflare.com";
+const BACKEND_URL = "https://warehouse-determined-doctors-distant.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -296,7 +296,7 @@ const copyToClipboard = (text) => {
         }).catch(err => console.error('Copy failed', err));
     }
 };
-const renderTonAmount = (val) => `<img src="pictures/ton.png" class="ton-icon-inline" alt="TON"><span class="tm-amount">${val}</span>`;
+const renderTonAmount = (val) => `<span class="tm-amount">${val}</span><img src="pictures/ton.png" class="ton-icon-inline" alt="TON">`;
 const renderTonAmountNoIcon = (val) => `<span class="tm-amount" style="font-size:inherit;">${val}</span>`;
 
 function truncateMiddle(str, maxLength = 9) {
@@ -317,7 +317,11 @@ function handleTonError(e) {
     const msg = e.message || String(e);
     console.warn("Caught TON Error:", msg);
 
-    if (msg.includes("User rejects") || msg.includes("USER_REJECTS") || msg.includes("User rejected")) {
+    const isReject = msg.includes("User rejects") || msg.includes("USER_REJECTS") ||
+        msg.includes("User rejected") || msg.includes("Transaction was not sent") ||
+        msg.includes("Operation Aborted");
+
+    if (isReject) {
         tg.showAlert(t('error_user_rejected'));
     } else if (msg.includes("Wallet closed") || msg.includes("CLOSED_BY_USER")) {
         tg.showAlert(t('error_wallet_closed'));
