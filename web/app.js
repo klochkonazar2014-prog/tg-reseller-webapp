@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://issn-tips-democratic-societies.trycloudflare.com";
+const BACKEND_URL = "https://heights-feel-italic-colours.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -290,8 +290,8 @@ const copyToClipboard = (text) => {
         }).catch(err => console.error('Copy failed', err));
     }
 };
-const renderTonAmount = (val) => `<span class="icon-before icon-ton tm-amount">${val}</span>`;
-const renderTonAmountNoIcon = (val) => `<span class="tm-amount icon-ton" style="font-size:inherit;">${val}</span>`;
+const renderTonAmount = (val) => `<span class="tm-amount">${val}</span><img src="ton_symbol.png" class="ton-icon-inline" alt="TON">`;
+const renderTonAmountNoIcon = (val) => `<span class="tm-amount" style="font-size:inherit;">${val}</span>`;
 
 function truncateMiddle(str, maxLength = 9) {
     if (!str || str.length <= maxLength) return str;
@@ -1648,6 +1648,10 @@ async function openProductView(item) {
     const dailyPrice = rawP.toFixed(2);
     const dailyPriceEl = document.getElementById('view-daily-price');
     if (dailyPriceEl) dailyPriceEl.innerHTML = renderTonAmount(dailyPrice);
+
+    const usdPrice = (parseFloat(dailyPrice) * GLOBAL_TON_PRICE).toFixed(2);
+    const usdEl = document.getElementById('view-usd-price');
+    if (usdEl) usdEl.innerText = `~$${usdPrice}`;
     if (GLOBAL_TON_PRICE) {
         const usdEl = document.getElementById('view-daily-price-usd');
         if (usdEl) usdEl.innerText = `~$${(rawP * GLOBAL_TON_PRICE).toFixed(2)}`;
