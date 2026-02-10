@@ -2962,7 +2962,8 @@ body.hide-filters .header-column {
     background: transparent !important;
     border: none !important;
     color: white !important;
-    font-size: 22px !important;
+    font-size: 17px !important;
+    /* Smaller font as requested */
     font-weight: 800 !important;
     text-align: center !important;
     width: 44px !important;
@@ -2990,5 +2991,43 @@ body.hide-filters .header-column {
     /* Tight icon spacing */
     cursor: pointer;
     height: 52px;
+}
+
+/* Catalog Card Pricing Fixes */
+.card-pricing-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.02);
+    gap: 12px;
+}
+
+.pricing-col {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+}
+
+.pricing-col:last-child {
+    border-left: 1px solid rgba(255, 255, 255, 0.05);
+    padding-left: 12px;
+}
+
+.card-pricing-row .pricing-label {
+    font-size: 11px;
+    color: #8b9bb4;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.card-pricing-row .pricing-value {
+    font-size: 16px;
+    font-weight: 800;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 }
