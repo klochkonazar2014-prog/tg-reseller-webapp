@@ -2913,7 +2913,8 @@ body.hide-filters .header-column {
     width: 24px;
     height: 24px;
     vertical-align: middle;
-    margin-left: 8px;
+    margin-left: 6px;
+    /* Reduced slightly for tighter look */
     display: inline-block;
     filter: brightness(0) invert(1);
 }
@@ -2931,22 +2932,25 @@ body.hide-filters .header-column {
     align-items: center;
     background: rgba(255, 255, 255, 0.08);
     border-radius: 16px;
-    width: 130px;
+    width: 140px;
     overflow: hidden;
     height: 52px;
+    justify-content: center;
 }
 
 .rent-period-stepper button {
-    height: 100% !important;
+    height: 52px !important;
+    width: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
-    flex: 1;
     border: none;
     background: none;
     color: #8b9bb4;
-    font-size: 22px;
+    font-size: 24px;
     cursor: pointer;
+    flex: none;
+    line-height: normal !important;
 }
 
 .rent-duration-input {
@@ -2959,12 +2963,10 @@ body.hide-filters .header-column {
     width: 44px !important;
     padding: 0 !important;
     margin: 0 !important;
-    height: auto;
-    /* Let flex parent center it */
+    height: 52px !important;
+    line-height: 52px !important;
     outline: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: block;
 }
 
 .main-rent-btn {
