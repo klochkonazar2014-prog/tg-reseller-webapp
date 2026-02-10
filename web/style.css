@@ -2960,7 +2960,8 @@ body.hide-filters .header-column {
     font-size: 22px !important;
     font-weight: 800 !important;
     text-align: center !important;
-    width: 44px !important;
+    flex: 1;
+    /* Stretch to fill middle space */
     padding: 0 !important;
     margin: 0 !important;
     height: 52px !important;
