@@ -2908,13 +2908,18 @@ body.hide-filters .header-column {
     transition: transform 0.3s ease, opacity 0.3s ease, height 0.3s ease;
 }
 
-/* FINAL UI POLISH */
+.tm-amount {
+    font-weight: 800;
+    padding-left: 14px;
+    /* Shift digits slightly right */
+}
+
 .ton-icon-inline {
     width: 24px;
     height: 24px;
     vertical-align: middle;
-    margin-left: 6px;
-    /* Reduced slightly for tighter look */
+    margin-left: 2px;
+    /* Close to digits */
     display: inline-block;
     filter: brightness(0) invert(1);
 }
@@ -2961,7 +2966,8 @@ body.hide-filters .header-column {
     font-weight: 800 !important;
     text-align: center !important;
     width: 44px !important;
-    padding: 0 !important;
+    padding: 0 0 0 10px !important;
+    /* Shift digit right */
     margin: 0 !important;
     height: 52px !important;
     line-height: 52px !important;
@@ -2980,6 +2986,9 @@ body.hide-filters .header-column {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 6px;
+    /* Tight icon spacing */
+    cursor: pointer;
     height: 52px;
+}
 }
