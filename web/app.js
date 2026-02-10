@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://triangle-unfortunately-handmade-title.trycloudflare.com";
+const BACKEND_URL = "https://issn-tips-democratic-societies.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -156,7 +156,32 @@ const TRANSLATIONS = {
         listed_less_than_24h: "Этот подарок был выставлен на аренду менее 24 часов назад.",
         what_does_it_mean: "Что это значит?",
         listing_help_title: "Ограничение Fragment",
-        listing_help_body: "Fragment.com позволяет передавать подарки не ранее чем через 24 часа после их получения/выставления. Если вы арендуете этот товар сейчас, он будет отправлен вам сразу после истечения этого срока."
+        listing_help_body: "Fragment.com позволяет передавать подарки не ранее чем через 24 часа после их получения/выставления. Если вы арендуете этот товар сейчас, он будет отправлен вам сразу после истечения этого срока.",
+        auto_relist: "Авто-перевыставление",
+        auto_relist_desc: "Этот NFT будет автоматически перевыставлен после окончания срока аренды.",
+        what_is_this: "Что это значит?",
+        what_is_this_long: "Дополнительно вам потребуется отправить 0.2 TON для обработки транзакции. Оставшаяся часть будет вам возвращена.",
+        nft: "NFT",
+        model: "Модель",
+        backdrop: "Фон",
+        symbol: "Символ",
+        price: "Цена",
+        min_price: "Мин. цена",
+        per_day: "В день",
+        sort_by: "Сортировать по",
+        from: "От",
+        to: "До",
+        clear_all: "Очистить все",
+        show_results: "Показать результаты",
+        gift_number: "Номер подарка",
+        filters: "Фильтры",
+        owner: "Владелец",
+        address: "Адрес NFT",
+        details: "Подробности",
+        rental_history: "История аренды",
+        support_faq: "Поддержка и FAQ",
+        settings_support: "Настройки и поддержка",
+        connect_wallet: "Подключить кошелек"
     },
     en: {
         gifts: "Gifts",
@@ -456,7 +481,13 @@ function updateUILanguage() {
         'filter-search-nft': t('search_hint'),
         'filter-search-model': t('search_hint'),
         'filter-search-bg': t('search_hint'),
-        'filter-search-symbol': t('search_hint')
+        'filter-search-symbol': t('search_hint'),
+        'view-auto-relist-title': t('auto_relist'),
+        'view-auto-relist-desc': t('auto_relist_desc'),
+        'chip-label-nft': t('nft'),
+        'chip-label-model': t('model'),
+        'chip-label-bg': t('backdrop'),
+        'chip-label-symbol': t('symbol')
     };
     for (const [id, val] of Object.entries(map)) {
         const el = document.getElementById(id);
