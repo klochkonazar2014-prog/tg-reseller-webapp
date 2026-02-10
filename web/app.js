@@ -6,8 +6,9 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = window.location.origin; // Fix: use origin to avoid fetch errors
-console.log("Using backend:", BACKEND_URL);
+// Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
+const BACKEND_URL = '';
+console.log("Using relative backend path");
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -828,7 +829,9 @@ async function loadLiveItems(reset = true) {
         }
 
         if (!response || !response.ok) {
-            throw new Error(`Server status: ${response ? response.status : 'Network Error'}`);
+            const status = response ? response.status : 'Network Error';
+            const statusText = response ? response.statusText : '';
+            throw new Error(`Server Error: ${status} ${statusText}`);
         }
 
         const data = await response.json();
@@ -869,35 +872,26 @@ async function loadLiveItems(reset = true) {
         hideLoading();
     } catch (e) {
         console.error("Load Error details:", e);
-        if (reset && document.getElementById('top-loader')) document.getElementById('top-loader').innerText = "Ошибка соединения с сервером. Показываем демо-данные.";
 
-        // --- 🧪 DEV/DEMO FALLBACK: Inject mock data if backend is dead ---
         if (reset) {
-            console.log("Backend unreachable. Injecting demo cards for UI testing.");
-            const demoItems = [
-                {
-                    id: 9993, type: 'gift', nft_name: 'Premium Gift #001',
-                    price_per_day: '5.00', min_duration: 86400, max_duration: 86400,
-                    image: 'https://nft.fragment.com/gift/voodoodoll-1.webp',
-                    _realImage: 'https://nft.fragment.com/gift/voodoodoll-1.webp',
-                    _collection: { name: 'Gifts' }
-                },
-                {
-                    id: 9991, type: 'gift', nft_name: 'Mighty Arm #2006',
-                    price_per_day: '1.25', min_duration: 86400, max_duration: 86400,
-                    image: 'https://nft.fragment.com/gift/mightyarm-2006.webp',
-                    _realImage: 'https://nft.fragment.com/gift/mightyarm-2006.webp',
-                    _collection: { name: 'Gifts' }
-                },
-                {
-                    id: 9992, type: 'gift', nft_name: 'Plush Pepe #302',
-                    price_per_day: '0.50', min_duration: 86400, max_duration: 604800,
-                    image: 'https://nft.fragment.com/gift/plushpepe-302.webp',
-                    _realImage: 'https://nft.fragment.com/gift/plushpepe-302.webp',
-                    _collection: { name: 'Gifts' }
-                }
-            ];
-            renderItemsBatch(demoItems);
+            const errorMsg = e.message || "Unknown Error";
+            document.getElementById('items-view').innerHTML = `
+                <div class="error-msg" style="padding: 100px 20px; text-align:center;">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#FF3B30" stroke-width="1.5" style="margin-bottom: 20px;">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <div style="font-size: 18px; font-weight: 700; color: #fff;">Ошибка загрузки</div>
+                    <div style="color: #8b9bb4; margin-top: 8px; font-size: 14px; word-break: break-all;">${errorMsg}</div>
+                    <button onclick="loadLiveItems(true)" style="margin-top: 24px; background: var(--accent-blue); border:none; border-radius:12px; padding: 12px 24px; color:#fff; font-weight:700; cursor:pointer;">
+                        Попробовать снова
+                    </button>
+                    <div style="margin-top: 20px; font-size: 12px; color: #555;">Path: ${BACKEND_URL}/api/items</div>
+                </div>`;
+
+            // Still show demo data in console/dev context but not over error for user clarity
+            console.log("Check server logs. Demo items would be here if we weren't showing the error.");
         }
 
         if (document.getElementById('top-loader')) document.getElementById('top-loader').style.display = 'none';
