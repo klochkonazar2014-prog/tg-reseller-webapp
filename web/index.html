@@ -6,7 +6,7 @@
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>MRKT</title>
-    <script src="https://telegram.org/js/telegram-web-app.js?v=1770759068"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js?v=1770759314"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;800;900&display=swap" rel="stylesheet">
     <script src="lottie.min.js"></script>
@@ -33,7 +33,7 @@
             return false;
         };
     </script>
-    <link rel="stylesheet" href="style.css?v=1770759068">
+    <link rel="stylesheet" href="style.css?v=1770759314">
     <style>
         /* CRITICAL OVERRIDES - DO NOT REMOVE */
         .main-rent-btn svg,
@@ -162,7 +162,7 @@
                         </div>
                         <div class="pricing-value">
                             <div id="view-daily-price"
-                                style="font-size: 20px; font-weight:800; color:#fff; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+                                style="font-size: 20px; font-weight:800; color:#fff; display: flex; align-items: center; gap: 6px;">
                                 0.00</div>
                             <div id="view-daily-price-usd" style="font-size: 11px; color:#8794a1; margin-top:2px;">
                                 ~$0.00</div>
@@ -196,11 +196,14 @@
             </div>
 
             <div class="rent-action-row" style="display: flex; gap: 12px; margin-top: 16px;">
-                <div class="rent-period-stepper">
-                    <button class="step-minus" onclick="adjustDuration(-1)">−</button>
+                <div class="rent-period-stepper"
+                    style="display: flex; background: rgba(36, 46, 56, 0.9); border-radius: 16px; height: 52px; flex: 0.3; overflow: hidden; align-items:center;">
+                    <button class="step-minus" onclick="adjustDuration(-1)"
+                        style="flex:1; border:none; background:none; color:#8b9bb4; font-size:22px; cursor:pointer; height:100%;">−</button>
                     <input type="number" id="rent-duration-input" class="rent-duration-input" value="1" readonly
                         style="pointer-events:none;">
-                    <button class="step-plus" onclick="adjustDuration(1)">+</button>
+                    <button class="step-plus" onclick="adjustDuration(1)"
+                        style="flex:1; border:none; background:none; color:#8b9bb4; font-size:22px; cursor:pointer; height:100%;">+</button>
                 </div>
                 <button id="main-rent-action-btn" class="main-rent-btn"
                     style="flex: 1; background: linear-gradient(135deg, #0098EA 0%, #0077CC 100%); border:none; border-radius:16px; height:52px; color:#fff; font-weight:700; font-size:14px; display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer;">
@@ -627,7 +630,7 @@
         </div>
     </div>
 
-    <script src="app.js?v=1770759068"></script>
+    <script src="app.js?v=1770759314"></script>
 </body>
 
 </html>
