@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://your-path-human-biographies.trycloudflare.com";
+const BACKEND_URL = "https://wait-immune-behaviour-downloaded.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -1405,7 +1405,7 @@ function createItemCard(item) {
         </div>
         <div class="card-content">
             ${showTitleBelow ? `<div class="card-title">${badgeText}</div>` : ''}
-            <div class="card-pricing-row" ${!showTitleBelow ? 'style="margin-top:8px;"' : ''}>
+            <div class="card-pricing-row pricing-glass" ${!showTitleBelow ? 'style="margin-top:8px;"' : ''}>
                 <div class="pricing-col">
                     <span class="pricing-label">${t('per_day')}</span>
                     <span class="pricing-value">${renderTonAmount(myPrice)}</span>
