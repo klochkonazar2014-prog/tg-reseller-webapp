@@ -2913,8 +2913,8 @@ body.hide-filters .header-column {
     width: 24px;
     height: 24px;
     vertical-align: middle;
-    margin-left: 6px;
-    /* Reduced slightly for tighter look */
+    margin-left: 2px;
+    /* Tightened from 6px */
     display: inline-block;
     filter: brightness(0) invert(1);
 }
@@ -2922,7 +2922,8 @@ body.hide-filters .header-column {
 .product-action-row {
     display: flex;
     gap: 12px;
-    align-items: stretch;
+    align-items: center;
+    /* Changed from stretch to center if needed, but height is fixed */
     height: 52px;
     margin-top: 24px;
 }
@@ -2940,16 +2941,17 @@ body.hide-filters .header-column {
 
 .rent-period-stepper button {
     height: 52px !important;
-    width: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
     border: none;
     background: none;
     color: #8b9bb4;
-    font-size: 24px;
+    font-size: 40px !important;
+    /* Larger as requested */
     cursor: pointer;
-    flex: none;
+    flex: 1;
+    /* Match user request for flex:1 */
     line-height: normal !important;
 }
 
