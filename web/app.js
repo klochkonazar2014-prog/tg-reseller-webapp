@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://bull-projects-binary-laser.trycloudflare.com";
+const BACKEND_URL = "https://cindy-california-somehow-last.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -143,7 +143,20 @@ const TRANSLATIONS = {
         ends_in: "Освободится через",
         days_label: "Дни",
         day_label: "День",
-        days_2_4: "Дня"
+        days_2_4: "Дня",
+        rent_for: "Арендовать за",
+        preorder_for: "Предзаказ за",
+        status_pending: "Ожидание",
+        status_rented: "Арендовано",
+        profile_wallet: "Кошелек",
+        profile_settings: "Настройки",
+        profile_history: "История аренды",
+        profile_support: "Поддержка",
+        language_selector: "Язык",
+        listed_less_than_24h: "Этот подарок был выставлен на аренду менее 24 часов назад.",
+        what_does_it_mean: "Что это значит?",
+        listing_help_title: "Ограничение Fragment",
+        listing_help_body: "Fragment.com позволяет передавать подарки не ранее чем через 24 часа после их получения/выставления. Если вы арендуете этот товар сейчас, он будет отправлен вам сразу после истечения этого срока."
     },
     en: {
         gifts: "Gifts",
@@ -862,7 +875,30 @@ async function loadLiveItems(reset = true) {
                         <div style="color: #8b9bb4; margin-top: 8px;">${t('reset_filters')}</div>
                     </div>`;
             } else {
+                // Track media loading to hide spinner only when first items are ready
+                let mediaPromises = [];
+                if (reset && processed.length > 0) {
+                    processed.slice(0, 4).forEach(item => {
+                        const src = item._realImage;
+                        if (src) {
+                            mediaPromises.push(new Promise((resolve) => {
+                                const img = new Image();
+                                img.onload = resolve;
+                                img.onerror = resolve;
+                                img.src = src;
+                            }));
+                        }
+                    });
+                }
+
                 renderItemsBatch(processed);
+
+                if (mediaPromises.length > 0) {
+                    await Promise.race([
+                        Promise.all(mediaPromises),
+                        new Promise(r => setTimeout(r, 2000))
+                    ]);
+                }
             }
 
             if (reset) initFilterLists();
@@ -1641,6 +1677,23 @@ async function openProductView(item) {
         propertiesCont.appendChild(reRow);
     }
 
+    // 24h Warning Logic
+    const listedTime = item.listed_at ? new Date(item.listed_at).getTime() : 0;
+    const now = Date.now();
+    const diffHours = (now - listedTime) / (1000 * 60 * 60);
+
+    if (item.type === 'gift' && diffHours < 24 && listedTime > 0) {
+        if (warningBox) {
+            warningBox.style.display = 'block';
+            const warningTitle = warningBox.querySelector('div:first-child');
+            const warningDesc = warningBox.querySelector('div:last-child');
+            if (warningTitle) warningTitle.innerText = t('listed_less_than_24h');
+            if (warningDesc) warningDesc.innerHTML = `${t('listed_at')}: ${new Date(item.listed_at).toLocaleString()} <a href="javascript:void(0)" onclick="showHelp('listing')" style="color: #FF9500; text-decoration: underline;">${t('what_does_it_mean')}</a>`;
+        }
+    } else {
+        if (warningBox) warningBox.style.display = 'none';
+    }
+
     // 6. Rent Button & Async Calls (24h warning, my orders, details)
     if (rentBtn) {
         rentBtn.style.display = 'flex';
@@ -1823,6 +1876,14 @@ function updateTotalPrice() {
         if (textNode) {
             const isRented = CURRENT_PAYMENT_ITEM && CURRENT_PAYMENT_ITEM.status === 'rented';
             textNode.textContent = ' ' + (isRented ? t('preorder_for') : t('rent_for')) + ' ';
+        } else {
+            // Fallback for different button structures
+            const isRented = CURRENT_PAYMENT_ITEM && CURRENT_PAYMENT_ITEM.status === 'rented';
+            const baseText = isRented ? t('preorder_for') : t('rent_for');
+            const priceSpan = document.getElementById('rent-btn-price');
+            if (priceSpan) {
+                rentBtn.innerHTML = `${baseText} <span id="rent-btn-price" class="icon-ton">${total}</span>`;
+            }
         }
     }
 }

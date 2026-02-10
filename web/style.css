@@ -784,6 +784,7 @@ body {
 .modal-overlay.active {
     display: block;
     opacity: 1;
+    z-index: 2500;
 }
 
 .filter-panel {
@@ -793,7 +794,7 @@ body {
     right: 0;
     background: #0f0f12;
     border-radius: 28px 28px 0 0;
-    z-index: 1001;
+    z-index: 3000;
     padding: 0;
     transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1);
     transform: translateY(110%);
@@ -1117,11 +1118,12 @@ body {
     z-index: 2000;
     display: none;
     flex-direction: column;
-    overflow-y: scroll !important;
+    overflow-y: auto !important;
+    /* Allow scroll if content overflows */
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
-    padding-bottom: 100px;
-    /* Создаём кликабельную область */
+    padding-bottom: 120px;
+    /* Space for bottom nav or general breathing room */
 }
 
 .product-view.active {
