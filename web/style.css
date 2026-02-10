@@ -2907,3 +2907,73 @@ body.hide-filters .header-column {
 .bottom-nav {
     transition: transform 0.3s ease, opacity 0.3s ease, height 0.3s ease;
 }
+
+/* FINAL UI POLISH */
+.ton-icon-inline {
+    width: 14px;
+    height: 14px;
+    vertical-align: middle;
+    margin-right: 4px;
+    display: inline-block;
+    filter: brightness(0) invert(1);
+}
+
+.product-action-row {
+    display: flex;
+    gap: 12px;
+    align-items: stretch;
+    height: 52px;
+    margin-top: 24px;
+}
+
+.rent-period-stepper {
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    width: 130px;
+    overflow: hidden;
+    height: 52px;
+}
+
+.rent-period-stepper button {
+    height: 100% !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    border: none;
+    background: none;
+    color: #8b9bb4;
+    font-size: 22px;
+    cursor: pointer;
+}
+
+.rent-duration-input {
+    flex: 1;
+    background: transparent !important;
+    border: none !important;
+    color: white !important;
+    font-size: 19px !important;
+    font-weight: 800 !important;
+    text-align: center !important;
+    width: 40px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    height: 100%;
+}
+
+.main-rent-btn {
+    flex: 1;
+    border-radius: 16px;
+    border: none;
+    background: linear-gradient(135deg, #0098EA 0%, #0077CC 100%);
+    color: white;
+    font-weight: 800;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 52px;
+}

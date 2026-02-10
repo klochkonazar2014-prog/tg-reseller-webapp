@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://bedford-accessibility-suppliers-old.trycloudflare.com";
+const BACKEND_URL = "https://bare-mattress-professor-wash.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -126,6 +126,9 @@ const TRANSLATIONS = {
         sort_bg_rare: "Редкость фона",
         sort_symbol_rare: "Редкость символа",
         error_insufficient_funds: "Недостаточно средств на кошельке для совершения транзакции.",
+        error_user_rejected: "Вы отклонили транзакцию в кошельке.",
+        error_wallet_closed: "Окно кошелька было закрыто до подтверждения транзакции.",
+        error_transaction_failed: "Транзакция не удалась. Попробуйте снова.",
         available_from: "Освободится",
         preorder_warning_no_relist: "Внимание: у этого NFT выключен авто-перевыставление. Предзаказ может не сработать, если владелец не выставит его вручную.",
         mode_rent_btn: "Каталог арендованных товаров",
@@ -255,6 +258,9 @@ const TRANSLATIONS = {
         sort_bg_rare: "Backdrop Rarity",
         sort_symbol_rare: "Symbol Rarity",
         error_insufficient_funds: "Not enough funds in your wallet to complete the transaction.",
+        error_user_rejected: "You rejected the transaction in your wallet.",
+        error_wallet_closed: "Workflow was closed before the transaction was confirmed.",
+        error_transaction_failed: "Transaction failed. Please try again.",
         available_from: "Available from",
         preorder: "Pre-order",
         preorder_for: "Pre-order",
@@ -290,7 +296,7 @@ const copyToClipboard = (text) => {
         }).catch(err => console.error('Copy failed', err));
     }
 };
-const renderTonAmount = (val) => `<span class="tm-amount">${val}</span><img src="pictures/ton.png" class="ton-icon-inline" alt="TON">`;
+const renderTonAmount = (val) => `<img src="pictures/ton.png" class="ton-icon-inline" alt="TON"><span class="tm-amount">${val}</span>`;
 const renderTonAmountNoIcon = (val) => `<span class="tm-amount" style="font-size:inherit;">${val}</span>`;
 
 function truncateMiddle(str, maxLength = 9) {
@@ -305,6 +311,21 @@ function truncateMiddle(str, maxLength = 9) {
     const backChars = Math.floor(charsToShow / 2);
     const res = source.substr(0, frontChars) + '...' + source.substr(source.length - backChars);
     return isUser ? '@' + res : res;
+}
+
+function handleTonError(e) {
+    const msg = e.message || String(e);
+    console.warn("Caught TON Error:", msg);
+
+    if (msg.includes("User rejects") || msg.includes("USER_REJECTS") || msg.includes("User rejected")) {
+        tg.showAlert(t('error_user_rejected'));
+    } else if (msg.includes("Wallet closed") || msg.includes("CLOSED_BY_USER")) {
+        tg.showAlert(t('error_wallet_closed'));
+    } else if (msg.includes("No enough funds") || msg.includes("NOT_ENOUGH_FUNDS") || msg.includes("Insufficient funds")) {
+        tg.showAlert(t('error_insufficient_funds'));
+    } else {
+        tg.showAlert(t('error_transaction_failed') + "\n\n" + msg);
+    }
 }
 
 let ATTR_STATS = { model: {}, bg: {}, symbol: {} };
@@ -1761,8 +1782,7 @@ async function openProductView(item) {
                     startPollingOrder(d.order_id);
                 }
             } catch (e) {
-                console.error("Rent Error:", e);
-                tg.showAlert(e.message || "Error");
+                handleTonError(e);
             } finally {
                 rentBtn.innerHTML = originalHTML;
                 rentBtn.disabled = false;
