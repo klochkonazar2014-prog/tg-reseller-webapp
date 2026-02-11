@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://quarter-designs-commitment-cruz.trycloudflare.com";
+const BACKEND_URL = "https://companies-anytime-surgery-females.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -1653,6 +1653,30 @@ async function openProductView(item) {
     if (warningBox) warningBox.style.display = 'none';
     if (statusOverlay) { statusOverlay.style.display = 'none'; statusOverlay.innerHTML = ''; }
 
+    // 24h Warning Logic
+    if (item.type === 'gift' && item.listed_at && warningBox) {
+        const listedAt = parseInt(item.listed_at);
+        const now = Math.floor(Date.now() / 1000);
+        const diffHours = (now - listedAt) / 3600;
+
+        if (diffHours < 24) {
+            warningBox.style.display = 'block';
+            let timeText = "";
+            const diffSec = now - listedAt;
+            if (diffSec < 60) timeText = t('just_now');
+            else if (diffSec < 3600) timeText = `${Math.floor(diffSec / 60)}m ago`;
+            else timeText = `${Math.floor(diffHours)}h ${Math.floor((diffSec % 3600) / 60)}m ago`;
+
+            warningBox.innerHTML = `
+                <div class="listing-warning-title">${t('listed_less_than_24h')}</div>
+                <div class="listing-warning-text">
+                    Listed at: ${timeText} 
+                    <a href="#" class="listing-warning-link" onclick="event.preventDefault(); showHelp('listing')">${t('what_does_it_mean')}</a>
+                </div>
+            `;
+        }
+    }
+
     // 2. Lottie Animation
     const lottieCont = document.getElementById('view-lottie');
     if (lottieCont) {
@@ -2029,7 +2053,13 @@ function handleShareClick() {
     if (!CURRENT_PAYMENT_ITEM) return;
     const cleanName = CURRENT_PAYMENT_ITEM.nft_name.replace('@', '');
     if (tg && tg.switchInlineQuery) {
-        tg.switchInlineQuery(cleanName, ['users', 'groups', 'channels']);
+        // According to TG API, this will close the mini-app and open inline mode
+        // The user specifically asked to "prevent Mini App from closing before inline mode"
+        // In TMA, switchInlineQuery ALWAYS switches focus. 
+        // We can however try to COPY the link first or use share dialog.
+        // But for "inline mode", it must switch. 
+        // Maybe they meant the "share" button in general?
+        tg.switchInlineQuery(cleanName);
     } else {
         const botUser = "OctoRent_bot";
         const shareLink = `https://t.me/${botUser}?start=nft_${CURRENT_PAYMENT_ITEM.nft_address}`;
@@ -2201,21 +2231,21 @@ function startCountdown(endTime, targetEl) {
         const pad = (n) => n.toString().padStart(2, '0');
 
         targetEl.innerHTML = `
-            <div class="market-timer-row">
-                <span class="mt-label">${t('ends_in')}</span>
+            <div class="countdown-market-container">
+                <span class="countdown-market-label">${t('ends_in')}</span>
                 
-                <div class="mt-pill mt-wide">${d} ${t('days')}</div>
-                <span class="mt-sep">:</span>
+                <div class="countdown-market-pill">${d} days</div>
+                <span class="countdown-market-sep">:</span>
                 
-                <div class="mt-pill">${pad(h)}</div>
-                <span class="mt-sep">:</span>
+                <div class="countdown-market-pill">${pad(h)}</div>
+                <span class="countdown-market-sep">:</span>
                 
-                <div class="mt-pill">${pad(m)}</div>
-                <span class="mt-sep">:</span>
+                <div class="countdown-market-pill">${pad(m)}</div>
+                <span class="countdown-market-sep">:</span>
                 
-                <div class="mt-pill">${pad(s)}</div>
+                <div class="countdown-market-pill">${pad(s)}</div>
                 
-                <span class="mt-date">${dateStr}</span>
+                <span class="countdown-market-date">${dateStr}</span>
             </div>
         `;
     };

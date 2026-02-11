@@ -1901,7 +1901,8 @@ body.hide-filters .header-column {
     display: flex;
     align-items: center;
     gap: 16px;
-    margin-bottom: 24px;
+    margin-bottom: 2px;
+    /* Adjusted as per user feedback */
 }
 
 .avatar-glow-wrapper {
@@ -2826,6 +2827,35 @@ body.hide-filters .header-column {
     font-weight: 500;
     margin-left: 8px;
 }
+
+/* 24h Warning Box */
+.listing-warning-box {
+    background: rgba(255, 149, 0, 0.05);
+    border: 1px solid rgba(255, 149, 0, 0.3);
+    border-radius: 12px;
+    padding: 16px;
+    margin: 16px 0;
+}
+
+.listing-warning-title {
+    color: #fff;
+    font-weight: 700;
+    font-size: 15px;
+    margin-bottom: 4px;
+}
+
+.listing-warning-text {
+    color: #8b9bb4;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.listing-warning-link {
+    color: #0088cc;
+    text-decoration: none;
+    font-weight: 500;
+}
+
 
 /* --- COMPACT TIMER - APP STYLE (Gray-Black) --- */
 .market-timer-row {
