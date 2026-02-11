@@ -2501,6 +2501,7 @@ body.hide-filters .header-column {
     letter-spacing: 4px;
     background: linear-gradient(135deg, #fff 0%, #8b9bb4 100%);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     margin-top: 20px;
     animation: pulseText 2s infinite ease-in-out;
