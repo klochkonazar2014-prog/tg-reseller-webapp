@@ -36,10 +36,13 @@ body {
     white-space: nowrap;
     display: inline-flex;
     align-items: center;
-    margin-left: 4px;
-    /* Shift digits right */
+    margin-left: 2px;
     letter-spacing: 0.3px;
-    /* Better readability */
+    vertical-align: baseline;
+}
+
+.tm-amount-container {
+    vertical-align: middle;
 }
 
 .icon-ton::after {
@@ -2980,9 +2983,23 @@ body.hide-filters .header-column {
     color: white;
     font-weight: 800;
     font-size: 14px;
-    display: flex;
+    display: inline-flex;
+    /* Use inline-flex for better text/span alignment */
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 6px;
     height: 52px;
+    white-space: nowrap;
+    /* Prevent internal wrapping */
+    padding: 0 16px;
+}
+
+.tm-amount-container img {
+    margin-bottom: 0 !important;
+}
+
+.main-rent-btn .icon-ton {
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
 }

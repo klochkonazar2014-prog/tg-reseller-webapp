@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://hearts-smart-michigan-dealer.trycloudflare.com";
+const BACKEND_URL = "https://white-issued-lets-store.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -181,7 +181,8 @@ const TRANSLATIONS = {
         rental_history: "История аренды",
         support_faq: "Поддержка и FAQ",
         settings_support: "Настройки и поддержка",
-        connect_wallet: "Подключить кошелек"
+        connect_wallet: "Подключить",
+        connect_wallet_full: "Подключить кошелек"
     },
     en: {
         gifts: "Gifts",
@@ -290,7 +291,7 @@ const copyToClipboard = (text) => {
         }).catch(err => console.error('Copy failed', err));
     }
 };
-const renderTonAmount = (val) => `<span class="tm-amount">${val}</span><img src="pictures/ton.png" class="ton-icon-inline" alt="TON">`;
+const renderTonAmount = (val) => `<span class="tm-amount-container" style="display:inline-flex; align-items:center; white-space:nowrap;"><span class="tm-amount">${val}</span><img src="pictures/ton.png" class="ton-icon-inline" alt="TON"></span>`;
 const renderTonAmountNoIcon = (val) => `<span class="tm-amount" style="font-size:inherit;">${val}</span>`;
 
 function truncateMiddle(str, maxLength = 9) {
@@ -1911,20 +1912,16 @@ function updateTotalPrice() {
     // Обновить текст кнопки с учетом языка и статуса (Аренда vs Предзаказ)
     const rentBtn = document.getElementById('main-rent-action-btn');
     if (rentBtn) {
-        // Попробуем найти текстовый узел или элемент с текстом
-        const textNode = Array.from(rentBtn.childNodes).find(n => n.nodeType === Node.TEXT_NODE && n.textContent.trim().length > 0);
-        if (textNode) {
-            const isRented = CURRENT_PAYMENT_ITEM && CURRENT_PAYMENT_ITEM.status === 'rented';
-            textNode.textContent = ' ' + (isRented ? t('preorder_for') : t('rent_for')) + ' ';
-        } else {
-            // Fallback for different button structures
-            const isRented = CURRENT_PAYMENT_ITEM && CURRENT_PAYMENT_ITEM.status === 'rented';
-            const baseText = isRented ? t('preorder_for') : t('rent_for');
-            const priceSpan = document.getElementById('rent-btn-price');
-            if (priceSpan) {
-                rentBtn.innerHTML = `${baseText} <span id="rent-btn-price" class="icon-ton">${total}</span>`;
-            }
-        }
+        const isRented = CURRENT_PAYMENT_ITEM && CURRENT_PAYMENT_ITEM.status === 'rented';
+        const baseText = isRented ? t('preorder_for') : t('rent_for');
+
+        // Use a consistent structure to prevent "dancing" elements
+        rentBtn.innerHTML = `
+            <span style="display:inline-flex; align-items:center; gap:8px;">
+                ${baseText}
+                <span id="rent-btn-price" class="icon-ton" style="display:inline-flex; align-items:center;">${total}</span>
+            </span>
+        `;
     }
 }
 
