@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://employed-summaries-tested-connecting.trycloudflare.com";
+const BACKEND_URL = "https://sagem-measuring-millions-barcelona.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -183,7 +183,8 @@ const TRANSLATIONS = {
         support_faq: "Поддержка и FAQ",
         settings_support: "Настройки и поддержка",
         connect_wallet: "Подключить",
-        connect_wallet_full: "Подключить кошелек"
+        connect_wallet_full: "Подключить кошелек",
+        days_short: "дн"
     },
     en: {
         gifts: "Gifts",
@@ -215,6 +216,12 @@ const TRANSLATIONS = {
         lang_en: "English",
         what_is_this: "What does this mean?",
         settings_support: "Settings & Support",
+        disconnect_wallet: "Disconnect wallet",
+        share: "Share",
+        address_copied: "Address copied",
+        support: "Support",
+        how_it_works: "How it works",
+        days_short: "d",
         rental_history: "Rental History",
         support_faq: "Support & FAQ",
         wallet_mgmt: "Wallet Management",
