@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://enclosure-nebraska-die-including.trycloudflare.com";
+const BACKEND_URL = "https://quarter-designs-commitment-cruz.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -146,6 +146,7 @@ const TRANSLATIONS = {
         days_2_4: "Дня",
         rent_for: "Арендовать за",
         preorder_for: "Предзаказ за",
+        rented: "Арендовано",
         status_pending: "Ожидание",
         status_rented: "Арендовано",
         profile_wallet: "Кошелек",
@@ -237,6 +238,7 @@ const TRANSLATIONS = {
         show_results: "Show Results",
         search_hint: "Search...",
         history_empty: "History is empty",
+        rented: "Rented",
         invalid_tc_link: "Please paste a valid tc:// link from Fragment",
         status_pending: "Pending payment",
         status_rented: "Awaiting link",
@@ -1391,6 +1393,7 @@ function createItemCard(item) {
                     <span class="pricing-value">${renderTonAmount(minTotalPrice)}</span>
                 </div>
             </div>
+            ${item.status === 'rented' ? renderCardTimer(item) : ''}
         </div>
     `;
 
@@ -1401,6 +1404,82 @@ function createItemCard(item) {
     };
 
     return card;
+}
+
+function renderCardTimer(item) {
+    if (!item.rent_ends_at) return '';
+    const diff = (item.rent_ends_at * 1000) - Date.now();
+    if (diff <= 0) return '';
+
+    const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+    let text = "";
+    if (d > 0) text = `${d}d ${h}h`;
+    else if (h > 0) text = `${h}h ${m}m`;
+    else text = `${m}m`;
+
+    return `
+        <div class="market-timer-row card-timer" data-ends="${item.rent_ends_at}">
+            <span class="mt-label" style="font-size:10px; margin-right:4px;">${t('ends_in')}</span>
+            <span class="mt-pill mt-wide" style="font-size:11px; padding:2px 6px;">${text}</span>
+        </div>
+    `;
+}
+
+async function handleNotifyClick() {
+    if (!CURRENT_PAYMENT_ITEM) return;
+    const userId = tg.initDataUnsafe?.user?.id || 0;
+    if (!userId) { tg.showAlert("Please open the app via Telegram"); return; }
+
+    try {
+        const res = await fetch(`${BACKEND_URL}/api/toggle_notification`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                user_id: userId,
+                nft_address: CURRENT_PAYMENT_ITEM.nft_address
+            })
+        });
+        const data = await res.json();
+        if (data.status === 'ok') {
+            const btn = document.getElementById('notify-btn');
+            if (data.action === 'added') {
+                tg.showAlert("уведомление о окончании аренды включены");
+                if (btn) btn.classList.add('active');
+            } else {
+                if (btn) btn.classList.remove('active');
+            }
+            tg.HapticFeedback.notificationOccurred('success');
+        }
+    } catch (e) {
+        console.error("Notify Error:", e);
+    }
+}
+
+function updateAllCardTimers() {
+    const timers = document.querySelectorAll('.card-timer');
+    const now = Date.now();
+    timers.forEach(tEl => {
+        const ends = parseInt(tEl.dataset.ends) * 1000;
+        const diff = ends - now;
+        if (diff <= 0) {
+            tEl.style.display = 'none';
+            return;
+        }
+        const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+        let text = "";
+        if (d > 0) text = `${d}d ${h}h`;
+        else if (h > 0) text = `${h}h ${m}m`;
+        else text = `${m}m`;
+
+        const pill = tEl.querySelector('.mt-pill');
+        if (pill) pill.textContent = text;
+    });
 }
 
 function openAdvancedFilters() {
@@ -1602,7 +1681,16 @@ async function openProductView(item) {
     if (viewCopyBtn) viewCopyBtn.onclick = () => copyNftTitle(item.nft_name);
 
     const notifyBtn = document.getElementById('notify-btn');
-    if (notifyBtn) notifyBtn.style.display = (item.status === 'rented') ? 'block' : 'none';
+    if (notifyBtn) {
+        notifyBtn.style.display = (item.status === 'rented') ? 'block' : 'none';
+        notifyBtn.classList.remove('active'); // Reset initial
+        if (item.status === 'rented') {
+            const userId = tg.initDataUnsafe?.user?.id || 0;
+            fetch(`${BACKEND_URL}/api/check_notification_status?user_id=${userId}&nft_address=${item.nft_address}`)
+                .then(r => r.json())
+                .then(d => { if (d.subscribed) notifyBtn.classList.add('active'); });
+        }
+    }
 
     const colEl = document.getElementById('view-collection');
     if (colEl) {
@@ -2395,6 +2483,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize TON Price
     fetchTonPrice();
     setInterval(fetchTonPrice, 60000); // Update every minute
+
+    // Update card timers every minute
+    setInterval(updateAllCardTimers, 60000);
 });
 
 async function fetchTonPrice() {
