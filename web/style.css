@@ -2496,15 +2496,17 @@ body.hide-filters .header-column {
 }
 
 #loading-screen .loader-logo {
-    font-size: 24px;
+    font-size: 26px;
     font-weight: 900;
-    letter-spacing: 4px;
-    background: linear-gradient(135deg, #fff 0%, #8b9bb4 100%);
+    letter-spacing: 6px;
+    background: linear-gradient(135deg, #ffffff 0%, #8b9bb4 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
-    margin-top: 20px;
+    color: transparent;
+    margin-top: 24px;
     animation: pulseText 2s infinite ease-in-out;
+    text-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
 }
 
 @keyframes pulseText {
@@ -2897,7 +2899,8 @@ body.hide-filters .header-column {
     -webkit-backdrop-filter: blur(12px) !important;
     padding: 6px 4px !important;
     border: none !important;
-    border-radius: 0 !important;
+    border-top-left-radius: 12px !important;
+    border-top-right-radius: 12px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
