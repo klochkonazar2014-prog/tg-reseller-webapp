@@ -36,7 +36,7 @@ body {
     white-space: nowrap;
     display: inline-flex;
     align-items: center;
-    margin-left: 2px;
+    margin-left: 10px;
     letter-spacing: 0.3px;
     vertical-align: baseline;
 }
@@ -2919,11 +2919,10 @@ body.hide-filters .header-column {
 
 /* FINAL UI POLISH */
 .ton-icon-inline {
-    width: 20px;
-    /* Increased size */
-    height: 20px;
+    width: 25px;
+    height: 25px;
     vertical-align: middle;
-    margin-left: 6px;
+    margin-left: 1px;
     display: inline-block;
 }
 
@@ -2959,7 +2958,7 @@ body.hide-filters .header-column {
 }
 
 .rent-duration-input {
-    flex: 2;
+    flex: 1;
     /* As requested: flex: 2 */
     background: transparent !important;
     border: none !important;
