@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://electronics-boring-candle-insights.trycloudflare.com";
+const BACKEND_URL = "https://amanda-iso-casino-randy.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -1737,19 +1737,21 @@ async function openProductView(item) {
     if (ownerEl) ownerEl.parentElement.style.display = 'none';
 
     // 3. Details/Properties Visibility
+    // User requested to remove "Details" tab header entirely as it's redundant
     const detailsTab = document.getElementById('details-tab');
     const propertiesTabs = document.getElementById('view-properties-tabs');
-    const propertiesCont = document.getElementById('view-properties-properties');
-    // Wait, propertiesCont ID in index.html is 'view-properties' (line 258)
-    // Let's re-read app.js line 1741: const propertiesCont = document.getElementById('view-properties');
-
-    // I will use var names from existing code to be safe and just add propertiesTabs logic
     const propertiesContRef = document.getElementById('view-properties');
-    const isGift = (item.type && item.type.toLowerCase() === 'gift');
 
-    if (detailsTab) detailsTab.style.display = isGift ? 'block' : 'none';
-    if (propertiesTabs) propertiesTabs.style.display = isGift ? 'flex' : 'none';
-    if (propertiesContRef) propertiesContRef.style.display = isGift ? 'block' : 'none';
+    const isGift = (item.type && String(item.type).toLowerCase() === 'gift');
+
+    // Always hide the tabs header
+    if (detailsTab) detailsTab.style.display = 'none';
+    if (propertiesTabs) propertiesTabs.style.display = 'none';
+
+    // Show content container only for gifts (contains chips like Model, Symbol)
+    if (propertiesContRef) {
+        propertiesContRef.style.display = isGift ? 'block' : 'none';
+    }
 
     // 4. Translation & Pricing
     const setChip = (id, key) => {
