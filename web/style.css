@@ -2888,24 +2888,71 @@ body.hide-filters .header-column {
 
 .card-top-timer {
     position: absolute !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    width: 100% !important;
+    top: 8px !important;
+    left: 8px !important;
     z-index: 10 !important;
     margin: 0 !important;
-    background: rgba(0, 0, 0, 0.5) !important;
-    backdrop-filter: blur(12px) !important;
-    -webkit-backdrop-filter: blur(12px) !important;
-    padding: 6px 4px !important;
+    padding: 0 !important;
     border: none !important;
-    border-top-left-radius: 12px !important;
-    border-top-right-radius: 12px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 6px !important;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3) !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    width: auto !important;
+    right: auto !important;
+}
+
+.mt-pill-new {
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 6px;
+    /* Pill shape requested but image shows slight round rect */
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    display: inline-block;
+}
+
+/* --- DETAILED COUNTDOWN (Product View) --- */
+.view-countdown {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-family: 'Outfit', sans-serif;
+}
+
+.cd-segment {
+    background: #2c2c2e;
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 16px;
+    font-weight: 800;
+    color: #fff;
+    min-width: 36px;
+    text-align: center;
+}
+
+.cd-days {
+    min-width: auto;
+    padding: 6px 12px;
+}
+
+.cd-sep {
+    font-size: 16px;
+    font-weight: 800;
+    color: #8b9bb4;
+    margin-top: -2px;
+}
+
+.cd-date {
+    font-size: 13px;
+    color: #8b9bb4;
+    font-weight: 500;
+    margin-left: 8px;
 }
 
 .card-top-timer .mt-label {

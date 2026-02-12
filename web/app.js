@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://philip-invisible-conservative-lottery.trycloudflare.com";
+const BACKEND_URL = "https://rather-unions-baltimore-holding.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -1387,6 +1387,7 @@ function createItemCard(item) {
         <div class="card-glow"></div>
         <div class="card-image-wrapper">
              ${mediaHTML}
+             ${item.status === 'rented' ? renderCardTimer(item) : ''}
         </div>
         <div class="card-content">
             ${showTitleBelow ? `<div class="card-title">${badgeText}</div>` : ''}
@@ -1400,7 +1401,6 @@ function createItemCard(item) {
                     <span class="pricing-value">${renderTonAmount(minTotalPrice)}</span>
                 </div>
             </div>
-            ${item.status === 'rented' ? renderCardTimer(item) : ''}
         </div>
     `;
 
@@ -1428,9 +1428,8 @@ function renderCardTimer(item) {
     else text = `${m}m`;
 
     return `
-        <div class="market-timer-row card-timer" data-ends="${item.rent_ends_at}">
-            <span class="mt-label" style="font-size:10px; margin-right:4px;">${t('ends_in')}</span>
-            <span class="mt-pill mt-wide" style="font-size:11px; padding:2px 6px;">${text}</span>
+        <div class="card-top-timer card-timer" data-ends="${item.rent_ends_at}">
+            <span class="mt-pill-new">${text}</span>
         </div>
     `;
 }
@@ -2536,4 +2535,44 @@ async function fetchTonPrice() {
     } catch (e) {
         console.error("Failed to fetch TON price:", e);
     }
+}
+// --- COUNTDOWN LOGIC ---
+let countdownInterval = null;
+
+function startCountdown(endTime, element) {
+    if (countdownInterval) clearInterval(countdownInterval);
+
+    function update() {
+        const now = Date.now();
+        const diff = (endTime * 1000) - now;
+
+        if (diff <= 0) {
+            element.innerHTML = "Expired";
+            if (countdownInterval) clearInterval(countdownInterval);
+            return;
+        }
+
+        const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const s = Math.floor((diff % (1000 * 60)) / 1000);
+
+        // Format: [4 days] : [07] : [22] : [45] Month DD, YYYY
+        // We use a flexible layout
+        const dateStr = new Date(endTime * 1000).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+
+        element.innerHTML = `
+            <div class="cd-segment cd-days">${d} ${t('days')}</div>
+            <div class="cd-sep">:</div>
+            <div class="cd-segment">${String(h).padStart(2, '0')}</div>
+            <div class="cd-sep">:</div>
+            <div class="cd-segment">${String(m).padStart(2, '0')}</div>
+            <div class="cd-sep">:</div>
+            <div class="cd-segment">${String(s).padStart(2, '0')}</div>
+            <div class="cd-date">${dateStr}</div>
+        `;
+    }
+
+    update();
+    countdownInterval = setInterval(update, 1000);
 }
