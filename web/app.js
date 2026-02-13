@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://ref-geography-gathered-trip.trycloudflare.com";
+const BACKEND_URL = "https://introductory-resistance-toll-relate.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -704,7 +704,7 @@ async function loadReferralStats() {
             document.getElementById('ref-balance-val').innerText = data.balance.toFixed(2);
 
             // Construct ref link
-            const refLink = `https://t.me/OctoRentBot?start=r${userId}`;
+            const refLink = `https://t.me/OctoRent_bot?start=r${userId}`;
             document.getElementById('ref-link-input').value = refLink;
         }
     } catch (e) {
