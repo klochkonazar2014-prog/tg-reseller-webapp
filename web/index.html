@@ -5,8 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>MRKT</title>
-    <script src="https://telegram.org/js/telegram-web-app.js?v=1771024359"></script>
+    <title>OctoRent</title>
+    <script src="https://telegram.org/js/telegram-web-app.js?v=1771026119"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;800;900&display=swap" rel="stylesheet">
     <script src="lottie.min.js"></script>
@@ -33,7 +33,7 @@
             return false;
         };
     </script>
-    <link rel="stylesheet" href="style.css?v=1771024359">
+    <link rel="stylesheet" href="style.css?v=1771026119">
     <style>
         /* CRITICAL OVERRIDES - DO NOT REMOVE */
         .main-rent-btn svg,
@@ -244,7 +244,7 @@
     <div id="tc-modal-overlay" class="modal-overlay" onclick="closeTcModal()"></div>
     <div id="tc-modal" class="filter-panel"
         style="height: auto; max-height: 80vh; bottom: 0; border-radius: 24px 24px 0 0;">
-        <div class="mrkt-modal-header">
+        <div class="modal-header">
             <h3>Подключить Fragment</h3>
             <button onclick="closeTcModal()"
                 style="background:none; border:none; color:#8b9bb4; font-size:24px; cursor: pointer;">✕</button>
@@ -269,7 +269,7 @@
     <div id="help-modal-overlay" class="modal-overlay" onclick="closeHelpModal()"></div>
     <div id="help-modal" class="filter-panel"
         style="height: auto; max-height: 80vh; bottom: 0; border-radius: 24px 24px 0 0;">
-        <div class="mrkt-modal-header">
+        <div class="modal-header">
             <h3 id="help-title">Help</h3>
             <button onclick="closeHelpModal()"
                 style="background:none; border:none; color:#8b9bb4; font-size:24px; cursor: pointer;">✕</button>
@@ -284,7 +284,7 @@
         <div class="loader-logo">OCTORENT</div>
     </div>
 
-    <!-- Header MRKT -->
+    <!-- Header OctoRent -->
     <div class="header-column">
         <!-- Search -->
         <div class="search-row">
@@ -340,36 +340,37 @@
     </div>
 
     <!-- Filter Modal (Advanced) -->
-    <div id="mrkt-modal-overlay" class="modal-overlay" onclick="closeMrktModal()"></div>
-    <div id="mrkt-modal" class="filter-panel">
-        <div class="mrkt-modal-header">
-            <h3 id="mrkt-label-filters">Фильтры</h3>
-            <button onclick="closeMrktModal()"
-                style="background:none; border:none; color:#8b9bb4; font-size:24px; cursor: pointer;">✕</button>
+    <div id="filter-modal-overlay" class="modal-overlay" onclick="closeFilterModal()"></div>
+    <div id="filter-modal" class="filter-panel">
+        <div class="modal-header">
+            <h3 id="label-filters">Фильтры</h3>
+            <button onclick="closeFilterModal()"
+                style="background: none; border: none; color: #8b9bb4; padding: 10px; cursor: pointer;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
         </div>
+        <div class="filter-body">
+            <div id="label-gift-number" class="filter-section-title">Номер подарка</div>
+            <div class="filter-input-wrapper">
+                <input type="number" id="filter-id-input" placeholder="Например: 123">
+            </div>
 
-        <div class="filter-content">
-            <!-- Gift Number Section -->
-            <div id="mrkt-label-gift-number" class="filter-section-title">Номер подарка</div>
-            <div class="filter-input-row">
-                <div class="filter-input-wrapper">
-                    <span>#</span>
-                    <input type="number" id="filter-gift-number" placeholder="Номер">
+            <div class="filter-section">
+                <span id="label-sort">Сортировать по</span>
+                <div class="filter-toggle-row">
+                    <button id="sort-cheap" class="toggle-item-btn active" onclick="setSort('cheap')">Сначала
+                        дешевые</button>
+                    <button id="sort-expensive" class="toggle-item-btn" onclick="setSort('expensive')">Сначала
+                        дорогие</button>
                 </div>
             </div>
 
-            <!-- Sort Section -->
-            <div class="filter-accordion" onclick="toggleAccordion('sort-acc', this)">
-                <span id="mrkt-label-sort">Сортировать по</span>
-                <div class="filter-accordion-arrow">▼</div>
-            </div>
-            <div id="sort-acc" class="accordion-content">
-                <div id="sort-list-container" style="padding: 0 20px;"></div>
-            </div>
-
-            <!-- Price Section -->
-            <div class="filter-accordion" onclick="toggleAccordion('price-acc', this)">
-                <span id="mrkt-label-price">Цена</span>
+            <div class="filter-section">
+                <span id="label-price">Цена</span>
                 <div class="filter-accordion-arrow">▼</div>
             </div>
             <div id="price-acc" class="accordion-content">
@@ -435,9 +436,9 @@
             </div>
         </div>
 
-        <div class="mrkt-footer">
-            <button id="mrkt-btn-reset" class="btn-gray" onclick="resetMrktModal()">Очистить все</button>
-            <button id="mrkt-btn-apply" class="btn-yellow" onclick="applyMrktModal()">Показать результаты</button>
+        <div class="panel-footer">
+            <button id="btn-reset" class="btn-gray" onclick="resetFilterModal()">Очистить все</button>
+            <button id="btn-apply" class="btn-yellow" onclick="applyFilterModal()">Показать результаты</button>
         </div>
     </div>
 
@@ -516,8 +517,8 @@
             </div>
             <div class="bottom-sheet-body">
                 <p style="font-size: 15px; color: #8b9bb4; line-height: 1.6; margin-bottom: 24px;">
-                    Вы получаете <b style="color: #fff;">25%</b> от нашей прибыли (наценки) с каждой аренды вашего
-                    приглашенного друга. Доход начисляется мгновенно!
+                    Вы получаете <b style="color: #fff;">25%</b> от прибыли сервиса с каждой аренды вашего приглашенного
+                    друга. Бонусы начисляются мгновенно!
                 </p>
                 <div class="earnings-table-container"
                     style="background: rgba(255,255,255,0.03); border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05);">
@@ -741,7 +742,7 @@
         </div>
     </div>
 
-    <script src="app.js?v=1771024359"></script>
+    <script src="app.js?v=1771026119"></script>
 </body>
 
 </html>

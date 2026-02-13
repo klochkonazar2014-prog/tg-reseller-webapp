@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://carlo-road-nutritional-inventory.trycloudflare.com";
+const BACKEND_URL = "https://circuit-fraction-highlights-enb.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -491,12 +491,12 @@ function updateUILanguage() {
         'view-label-lang': t('language_selector'),
         'blue-wallet-text': t('connect_wallet'),
         'header-wallet-connect-text': t('connect_wallet'),
-        'mrkt-label-filters': t('filters'),
-        'mrkt-label-gift-number': t('gift_number'),
-        'mrkt-label-sort': t('sort_by'),
-        'mrkt-label-price': t('price'),
-        'mrkt-btn-reset': t('clear_all'),
-        'mrkt-btn-apply': t('show_results'),
+        'label-filters': t('filters'),
+        'label-gift-number': t('gift_number'),
+        'label-sort': t('sort_by'),
+        'label-price': t('price'),
+        'btn-reset': t('clear_all'),
+        'btn-apply': t('show_results'),
         'fee-notice-text': t('what_is_this_long'),
         'fee-what-mean': t('what_is_this'),
         'details-tab': t('details'),
@@ -1535,15 +1535,15 @@ function updateAllCardTimers() {
     });
 }
 
-function openAdvancedFilters() {
-    document.getElementById('mrkt-modal').classList.add('active');
-    document.getElementById('mrkt-modal-overlay').classList.add('active');
+function openFilterModal() {
+    document.getElementById('filter-modal').classList.add('active');
+    document.getElementById('filter-modal-overlay').classList.add('active');
 }
-function closeMrktModal() {
-    document.getElementById('mrkt-modal').classList.remove('active');
-    document.getElementById('mrkt-modal-overlay').classList.remove('active');
+function closeFilterModal() {
+    document.getElementById('filter-modal').classList.remove('active');
+    document.getElementById('filter-modal-overlay').classList.remove('active');
 }
-function resetMrktModal() {
+function resetFilterModal() {
     ACTIVE_FILTERS = { nft: 'all', model: 'all', bg: 'all', symbol: 'all', tags: 'all', sort: 'price_asc', price_from: null, price_to: null, gift_number: null, search: ACTIVE_FILTERS.search };
     document.getElementById('filter-gift-number').value = "";
     document.getElementById('filter-price-from').value = "";
@@ -1551,13 +1551,13 @@ function resetMrktModal() {
     initFilterLists();
     applyHeaderSearch();
 }
-function applyMrktModal() {
+function applyFilterModal() {
     // Collect from inputs
     ACTIVE_FILTERS.gift_number = document.getElementById('filter-gift-number').value;
     ACTIVE_FILTERS.price_from = document.getElementById('filter-price-from').value;
     ACTIVE_FILTERS.price_to = document.getElementById('filter-price-to').value;
 
-    closeMrktModal();
+    closeFilterModal();
     loadLiveItems(true); // Trigger server-side refresh
 }
 
@@ -1652,7 +1652,7 @@ function renderMediaHTML(it, isModal = false) {
             const displayName = truncateMiddle(rawName, isModal ? 20 : 15);
             inner = `
                 <div class="card-placeholder" style="background:${isModal ? 'transparent' : '#1c1c1e'}; height:100%; width:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:${isModal ? '10px' : '4px'};">
-                     <div style="font-size:${isModal ? '120px' : '50px'}; color:#0088cc; font-weight:${isModal ? '900' : '800'}; opacity:${isModal ? '0.9' : '0.8'}; line-height:1; flex-shrink:0; ${isModal ? 'filter: drop-shadow(0 0 30px rgba(0,136,204,0.3));' : ''}">@</div>
+                     <div style="font-size:${isModal ? '120px' : '50px'}; color:#0088cc; font-weight:${isModal ? '900' : '800'}; opacity:${isModal ? '0.9' : '0.8'}; line-height:1; flex-shrink:0; ${isModal ? 'filter: drop_shadow(0 0 30px rgba(0,136,204,0.3));' : ''}">@</div>
                      <div style="${isModal ? 'background:#0088cc; font-size:24px; color:#fff; padding:10px 24px; border-radius:14px; font-weight:800; box-shadow:0 8px 24px rgba(0,136,204,0.5);' : 'font-size:' + fontSize + '; font-weight:700; color:#fff; width:100%; text-align:center; padding:0 4px; box-sizing:border-box; flex-shrink:0;'}">${displayName}</div>
                 </div>`;
         }
@@ -2735,12 +2735,12 @@ async function loadFriendsList() {
         container.innerHTML = data.friends.map(f => {
             const name = f.full_name || f.username || `User ${f.user_id}`;
             const sub = f.username ? `@${f.username}` : `ID: ${f.user_id}`;
-            const avatar = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name)}&backgroundColor=0088cc&fontSize=40`;
+            const avatar = `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(name)}&backgroundColor=0088cc,00aaff,1c1c1e`;
 
             return `
-                <div class="friend-item" style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); padding: 12px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.02);">
+                <div class="friend-item" style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); padding: 12px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.02); margin-bottom: 8px;">
                     <div style="display: flex; align-items: center; gap: 12px;">
-                        <img src="${avatar}" style="width: 44px; height: 44px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+                        <img src="${avatar}" class="friend-avatar" style="width: 44px; height: 44px; border-radius: 12px;">
                         <div>
                             <div style="font-weight: 700; font-size: 15px;">${name}</div>
                             <div style="font-size: 12px; color: #8b9bb4;">${sub}</div>
@@ -2781,12 +2781,8 @@ function closeEarningsHelp() {
 function shareReferralLink() {
     if (window.Telegram && window.Telegram.WebApp) {
         const userId = tg.initDataUnsafe.user?.id;
-        const botUsername = "Telegifter_MRKT_bot"; // Assuming this is the bot username
-        const shareUrl = `https://t.me/${botUsername}?start=ref_${userId}`;
-        const text = "💎 Присоединяйся к MRKT и зарабатывай на аренде подарков вместе со мной!";
-
-        // This opens the full Telegram chat selection screen
-        tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(text)}`);
+        // This triggers the inline selection with a referral query
+        tg.switchInlineQuery(`ref_${userId}`, ["users", "groups", "channels"]);
 
         tg.HapticFeedback.impactOccurred('medium');
     }
