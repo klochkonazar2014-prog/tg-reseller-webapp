@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://introductory-resistance-toll-relate.trycloudflare.com";
+const BACKEND_URL = "https://publicly-flavor-definitely-nickel.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -621,7 +621,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 function switchTab(index) {
-    // Indices: 0 = Gifts, 1 = Usernames, 2 = Numbers, 3 = Referral, 4 = Profile
+    // Indices: 0 = Gifts, 1 = Usernames, 2 = Numbers, 3 = Profile
     const navItems = document.querySelectorAll('.nav-item');
     navItems.forEach((nav, i) => {
         nav.classList.toggle('active', i === index);
@@ -641,7 +641,6 @@ function switchTab(index) {
 
         document.getElementById('market-container').style.display = 'block';
         document.getElementById('profile-container').style.display = 'none';
-        document.getElementById('referral-container').style.display = 'none';
         document.getElementById('mode-toggle-container').style.display = 'block';
 
         const headerTitle = document.querySelector('.header h1') || document.querySelector('.logo-text');
@@ -651,20 +650,9 @@ function switchTab(index) {
             if (index === 2) baseTitle = t('numbers');
             headerTitle.innerText = baseTitle + (CURRENT_STATUS === 'rented' ? t('rent_title_suffix') : '');
         }
-    } else if (index === 3) { // Referral tab
-        document.getElementById('market-container').style.display = 'none';
-        document.getElementById('profile-container').style.display = 'none';
-        document.getElementById('referral-container').style.display = 'block';
-        document.getElementById('mode-toggle-container').style.display = 'none';
-
-        const headerTitle = document.querySelector('.header h1') || document.querySelector('.logo-text');
-        if (headerTitle) headerTitle.innerText = "Рефералы";
-
-        loadReferralStats();
     } else { // Profile tab
         document.getElementById('market-container').style.display = 'none';
         document.getElementById('profile-container').style.display = 'block';
-        document.getElementById('referral-container').style.display = 'none';
         document.getElementById('mode-toggle-container').style.display = 'none';
 
         const headerTitle = document.querySelector('.header h1') || document.querySelector('.logo-text');
@@ -672,6 +660,8 @@ function switchTab(index) {
         if (window.Telegram && window.Telegram.WebApp) {
             tg.HapticFeedback.impactOccurred('medium');
         }
+
+        updateProfileStats(); // Load stats when entering profile
 
         const bNav = document.querySelector('.bottom-nav');
         if (bNav) bNav.classList.add('profile-mode');
@@ -684,10 +674,25 @@ function switchTab(index) {
         document.body.classList.remove('hide-filters');
     }
 
-    if (index !== 4) {
+    if (index !== 3) { // Updated index from 4 to 3
         const bNav = document.querySelector('.bottom-nav');
         if (bNav) bNav.classList.remove('profile-mode');
     }
+}
+
+// Referral Drawer Management
+function openReferralDrawer() {
+    const drawer = document.getElementById('referral-drawer');
+    drawer.style.display = 'block';
+    loadReferralStats();
+    loadReferralDetailedStats();
+    if (window.Telegram && window.Telegram.WebApp) {
+        tg.HapticFeedback.impactOccurred('light');
+    }
+}
+
+function closeReferralDrawer() {
+    document.getElementById('referral-drawer').style.display = 'none';
 }
 
 async function loadReferralStats() {
@@ -699,8 +704,13 @@ async function loadReferralStats() {
         const data = await res.json();
 
         if (data && !data.error) {
-            document.getElementById('ref-count-val').innerText = data.referral_count;
-            document.getElementById('ref-total-val').innerText = data.total_earned.toFixed(2);
+            // Update both profile summary and drawer
+            const countLabels = document.querySelectorAll('#ref-count-val');
+            countLabels.forEach(el => el.innerText = data.referral_count);
+
+            const totalLabels = document.querySelectorAll('#ref-total-val');
+            totalLabels.forEach(el => el.innerText = data.total_earned.toFixed(2));
+
             document.getElementById('ref-balance-val').innerText = data.balance.toFixed(2);
 
             // Construct ref link
@@ -709,6 +719,53 @@ async function loadReferralStats() {
         }
     } catch (e) {
         console.error("Failed to load referral stats:", e);
+    }
+}
+
+async function loadReferralDetailedStats() {
+    const listEl = document.getElementById('referral-list-detailed');
+    listEl.innerHTML = '<div style="text-align:center; padding: 20px;"><div class="premium-spinner-mini"></div></div>';
+
+    try {
+        const userId = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : 0;
+        const r = await fetch(`${BACKEND_URL}/api/referral_detailed_stats?user_id=${userId}`);
+        const data = await r.json();
+
+        if (data.referrals && data.referrals.length > 0) {
+            listEl.innerHTML = '';
+            data.referrals.forEach(ref => {
+                const item = document.createElement('div');
+                item.className = 'ref-item-detailed';
+                item.style = `
+                    background: rgba(255, 255, 255, 0.03);
+                    border: 1px solid rgba(255, 255, 255, 0.05);
+                    border-radius: 16px;
+                    padding: 15px;
+                    margin-bottom: 10px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                `;
+
+                const date = new Date(ref.join_date).toLocaleDateString();
+
+                item.innerHTML = `
+                    <div class="ref-info">
+                        <div style="font-weight: 700; font-size: 14px; margin-bottom: 2px;">ID: ${ref.user_id}</div>
+                        <div style="font-size: 11px; color: #556677;">Присоединился: ${date}</div>
+                    </div>
+                    <div class="ref-profit" style="text-align: right;">
+                        <div style="font-size: 12px; color: #8794a1; margin-bottom: 2px;">Ваша прибыль</div>
+                        <div style="font-weight: 800; color: #00dd88;">+${ref.total_profit.toFixed(2)} TON</div>
+                    </div>
+                `;
+                listEl.appendChild(item);
+            });
+        } else {
+            listEl.innerHTML = '<div class="empty-refs" style="text-align: center; padding: 40px 0; color: #556677;">У вас пока нет рефералов. Пригласите друзей!</div>';
+        }
+    } catch (e) {
+        listEl.innerHTML = '<div style="color: #ff4444; text-align:center; padding: 20px;">Ошибка загрузки данных</div>';
     }
 }
 

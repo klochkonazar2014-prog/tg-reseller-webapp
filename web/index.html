@@ -6,7 +6,7 @@
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>MRKT</title>
-    <script src="https://telegram.org/js/telegram-web-app.js?v=1770992573"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js?v=1770993277"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;800;900&display=swap" rel="stylesheet">
     <script src="lottie.min.js"></script>
@@ -33,7 +33,7 @@
             return false;
         };
     </script>
-    <link rel="stylesheet" href="style.css?v=1770992573">
+    <link rel="stylesheet" href="style.css?v=1770993277">
     <style>
         /* CRITICAL OVERRIDES - DO NOT REMOVE */
         .main-rent-btn svg,
@@ -451,55 +451,6 @@
             <div id="loader-trigger" style="height: 40px;"></div>
         </div>
 
-        <!-- Referral Tab -->
-        <div id="referral-container" style="display:none; padding: 20px; padding-bottom: 120px;">
-            <div class="referral-header" style="text-align: center; margin-bottom: 30px;">
-                <h1 style="font-size: 28px; font-weight: 900; margin-bottom: 8px;">Рефералы</h1>
-                <p style="color: #8794a1; font-size: 14px;">Приглашайте друзей и получайте 25% от прибыли сервиса</p>
-            </div>
-
-            <div class="referral-stats-grid"
-                style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
-                <div class="stat-card"
-                    style="background: rgba(255, 255, 255, 0.05); border-radius: 20px; padding: 20px; text-align: center; border: 1px solid rgba(255, 255, 255, 0.1);">
-                    <div style="font-size: 12px; color: #8794a1; margin-bottom: 8px;">Рефералов</div>
-                    <div id="ref-count-val" style="font-size: 24px; font-weight: 800;">0</div>
-                </div>
-                <div class="stat-card"
-                    style="background: rgba(255, 255, 255, 0.05); border-radius: 20px; padding: 20px; text-align: center; border: 1px solid rgba(255, 255, 255, 0.1);">
-                    <div style="font-size: 12px; color: #8794a1; margin-bottom: 8px;">Всего заработано</div>
-                    <div id="ref-total-val" class="icon-ton" style="font-size: 24px; font-weight: 800; color: #fff;">
-                        0.00</div>
-                </div>
-            </div>
-
-            <div class="balance-card"
-                style="background: linear-gradient(135deg, rgba(0, 152, 234, 0.1) 0%, rgba(0, 119, 204, 0.1) 100%); border-radius: 24px; padding: 24px; margin-bottom: 24px; border: 1px solid rgba(0, 152, 234, 0.2); text-align: center;">
-                <div style="font-size: 14px; color: #8794a1; margin-bottom: 8px;">Доступно к выводу</div>
-                <div id="ref-balance-val" class="icon-ton"
-                    style="font-size: 36px; font-weight: 900; color: #0098EA; margin-bottom: 16px;">0.00</div>
-                <button onclick="requestWithdrawal()" id="withdraw-btn"
-                    style="width: 100%; background: #0098EA; color: #fff; border: none; border-radius: 16px; height: 50px; font-weight: 700; font-size: 16px; cursor: pointer;">Вывести
-                    TON</button>
-            </div>
-
-            <div class="link-card"
-                style="background: rgba(255, 255, 255, 0.03); border-radius: 20px; padding: 20px; border: 1px solid rgba(255, 255, 255, 0.05);">
-                <div style="font-size: 14px; font-weight: 700; margin-bottom: 12px;">Ваша ссылка</div>
-                <div style="display: flex; gap: 10px;">
-                    <input type="text" id="ref-link-input" readonly value="Загрузка..."
-                        style="flex: 1; background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 0 16px; color: #fff; font-size: 14px; height: 44px;">
-                    <button onclick="copyRefLink()"
-                        style="background: rgba(255, 255, 255, 0.1); border: none; border-radius: 12px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; cursor: pointer;">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-        </div>
 
         <!-- Profile Tab -->
         <div id="profile-container" style="display: none;">
@@ -530,6 +481,12 @@
             <!-- Services Section -->
             <div id="profile-label-settings" class="dash-section-title">Settings & Support</div>
             <div class="services-list">
+                <div class="service-item" onclick="openReferralDrawer()">
+                    <div class="service-icon" style="background: rgba(76, 175, 80, 0.1);">👥</div>
+                    <div class="service-text">Реферальная программа</div>
+                    <div class="service-arrow">›</div>
+                </div>
+
                 <div class="service-item" onclick="toggleHistory()">
                     <div class="service-icon history" style="background: rgba(0, 136, 204, 0.1);">🕒</div>
                     <div id="profile-label-history" class="service-text">Rental History</div>
@@ -602,7 +559,7 @@
                 <span id="nav-label-referral">Рефка</span>
             </div>
 
-            <div class="nav-item" onclick="switchTab(4)">
+            <div class="nav-item" id="nav-item-profile" onclick="switchTab(3)">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                     <circle cx="12" cy="7" r="4"></circle>
@@ -612,7 +569,54 @@
         </div>
     </div>
 
-    <!-- Language Selection Drawer (Bottom Sheet) -->
+    <!-- Referral Detailed Drawer (Bottom Sheet) -->
+    <div id="referral-drawer" class="bottom-sheet" style="display: none;">
+        <div class="bottom-sheet-backdrop" onclick="closeReferralDrawer()"></div>
+        <div class="bottom-sheet-content referral-sheet-content">
+            <div class="bottom-sheet-header">
+                <div class="bottom-sheet-dash"></div>
+                <h3 id="label-referrals-title">Реферальная программа</h3>
+                <p id="label-referrals-subtitle" style="font-size: 13px; color: #8794a1; margin-top: 4px;">Зарабатывайте
+                    25% от прибыли сервиса</p>
+            </div>
+
+            <div class="referral-sheet-scroll" style="max-height: 70vh; overflow-y: auto; padding: 0 16px 30px 16px;">
+                <!-- Link Box -->
+                <div class="ref-link-card-mini">
+                    <div style="font-size: 12px; color: #8794a1; margin-bottom: 8px;">Ваша ссылка</div>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="ref-link-input" readonly
+                            style="flex:1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 0 12px; color: #fff; height: 40px; font-size: 13px;">
+                        <button onclick="copyRefLink()" class="copy-btn-mini"
+                            style="background: #0088cc; border:none; border-radius:12px; padding: 0 15px; color:#fff; font-weight:700; height: 40px;">Копировать</button>
+                    </div>
+                </div>
+
+                <!-- Balance & Withdrawal -->
+                <div class="ref-balance-section"
+                    style="background: rgba(0, 136, 204, 0.05); border: 1px solid rgba(0, 136, 204, 0.1); border-radius: 20px; padding: 20px; margin-top: 16px; text-align: center;">
+                    <div style="font-size: 12px; color: #8794a1; margin-bottom: 4px;">Доступно к выводу</div>
+                    <div style="font-size: 28px; font-weight: 900; color: #00dd88; margin-bottom: 12px;">
+                        <span id="ref-balance-val">0.00</span> <span class="ton-icon-inline"></span>
+                    </div>
+                    <button id="withdraw-btn" class="blue-btn" onclick="requestWithdrawal()"
+                        style="width: 100%;">Вывести TON</button>
+                    <div id="profile-total-earned-ref" style="font-size: 11px; color: #556677; margin-top: 10px;">Всего
+                        заработано: <span id="ref-total-val">0.00</span> TON</div>
+                </div>
+
+                <!-- Detailed List -->
+                <div style="margin-top: 24px;">
+                    <h4 style="font-size: 15px; font-weight: 700; margin-bottom: 12px;">Ваши приглашенные</h4>
+                    <div id="referral-list-detailed" class="referral-list-detailed">
+                        <!-- Items injected by JS -->
+                        <div class="empty-refs" style="text-align: center; padding: 40px 0; color: #556677;">Здесь
+                            появится список ваших друзей</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     <div id="language-drawer" class="bottom-sheet" style="display: none;">
         <div class="bottom-sheet-backdrop" onclick="closeLanguageDrawer()"></div>
         <div class="bottom-sheet-content">
@@ -663,7 +667,7 @@
         </div>
     </div>
 
-    <script src="app.js?v=1770992573"></script>
+    <script src="app.js?v=1770993277"></script>
 </body>
 
 </html>
