@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://institute-tampa-authority-settled.trycloudflare.com";
+const BACKEND_URL = "https://civilian-purpose-creation-sellers.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -621,7 +621,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 function switchTab(index) {
-    // Indices: 0 = Gifts, 1 = Usernames, 2 = Numbers, 3 = Profile
+    // Indices: 0 = Gifts, 1 = Usernames, 2 = Numbers, 3 = Referral, 4 = Profile
     const navItems = document.querySelectorAll('.nav-item');
     navItems.forEach((nav, i) => {
         nav.classList.toggle('active', i === index);
@@ -641,6 +641,7 @@ function switchTab(index) {
 
         document.getElementById('market-container').style.display = 'block';
         document.getElementById('profile-container').style.display = 'none';
+        document.getElementById('referral-container').style.display = 'none';
         document.getElementById('mode-toggle-container').style.display = 'block';
 
         const headerTitle = document.querySelector('.header h1') || document.querySelector('.logo-text');
@@ -650,12 +651,20 @@ function switchTab(index) {
             if (index === 2) baseTitle = t('numbers');
             headerTitle.innerText = baseTitle + (CURRENT_STATUS === 'rented' ? t('rent_title_suffix') : '');
         }
+    } else if (index === 3) { // Referral tab
+        document.getElementById('market-container').style.display = 'none';
+        document.getElementById('profile-container').style.display = 'none';
+        document.getElementById('referral-container').style.display = 'block';
+        document.getElementById('mode-toggle-container').style.display = 'none';
 
-        // FIX: Removed - was hiding nav
-        // document.body.classList.remove('profile-active');
+        const headerTitle = document.querySelector('.header h1') || document.querySelector('.logo-text');
+        if (headerTitle) headerTitle.innerText = "Рефералы";
+
+        loadReferralStats();
     } else { // Profile tab
         document.getElementById('market-container').style.display = 'none';
         document.getElementById('profile-container').style.display = 'block';
+        document.getElementById('referral-container').style.display = 'none';
         document.getElementById('mode-toggle-container').style.display = 'none';
 
         const headerTitle = document.querySelector('.header h1') || document.querySelector('.logo-text');
@@ -664,23 +673,89 @@ function switchTab(index) {
             tg.HapticFeedback.impactOccurred('medium');
         }
 
-        // FIX: Nav should always be visible
-        // document.body.classList.add('profile-active');
         const bNav = document.querySelector('.bottom-nav');
         if (bNav) bNav.classList.add('profile-mode');
     }
 
-    // NEW: Filter visibility logic
-    if (index === 1 || index === 2) { // Usernames or Numbers
+    // Filter visibility logic
+    if (index === 1 || index === 2) {
         document.body.classList.add('hide-filters');
     } else {
         document.body.classList.remove('hide-filters');
     }
 
-    if (index !== 3) {
+    if (index !== 4) {
         const bNav = document.querySelector('.bottom-nav');
         if (bNav) bNav.classList.remove('profile-mode');
     }
+}
+
+async function loadReferralStats() {
+    const userId = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : 0;
+    if (!userId) return;
+
+    try {
+        const res = await fetch(`${BACKEND_URL}/api/user_stats?user_id=${userId}`);
+        const data = await res.json();
+
+        if (data && !data.error) {
+            document.getElementById('ref-count-val').innerText = data.referral_count;
+            document.getElementById('ref-total-val').innerText = data.total_earned.toFixed(2);
+            document.getElementById('ref-balance-val').innerText = data.balance.toFixed(2);
+
+            // Construct ref link
+            const refLink = `https://t.me/OctoRentBot?start=r${userId}`;
+            document.getElementById('ref-link-input').value = refLink;
+        }
+    } catch (e) {
+        console.error("Failed to load referral stats:", e);
+    }
+}
+
+function copyRefLink() {
+    const input = document.getElementById('ref-link-input');
+    input.select();
+    input.setSelectionRange(0, 99999);
+    navigator.clipboard.writeText(input.value);
+
+    if (window.Telegram && window.Telegram.WebApp) {
+        tg.HapticFeedback.notificationOccurred('success');
+        tg.showAlert("Ссылка скопирована!");
+    } else {
+        alert("Ссылка скопирована!");
+    }
+}
+
+async function requestWithdrawal() {
+    const userId = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : 0;
+    if (!userId) return;
+
+    const balance = parseFloat(document.getElementById('ref-balance-val').innerText);
+    if (balance <= 0) {
+        tg.showAlert("У вас пока нет доступных средств для вывода.");
+        return;
+    }
+
+    tg.showConfirm("Вы действительно хотите вывести " + balance.toFixed(2) + " TON на ваш кошелек?", async (ok) => {
+        if (!ok) return;
+
+        try {
+            const res = await fetch(`${BACKEND_URL}/api/request_withdrawal`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: userId })
+            });
+            const data = await res.json();
+            if (data.status === 'ok') {
+                tg.showAlert("Заявка отправлена! Админ скоро обработает её.");
+                loadReferralStats(); // Refresh
+            } else {
+                tg.showAlert("Ошибка: " + (data.error || "Неизвестная ошибка"));
+            }
+        } catch (e) {
+            tg.showAlert("Ошибка связи с сервером.");
+        }
+    });
 }
 
 // Obsolete loadUserOrders removed as tab is gone.
@@ -745,7 +820,11 @@ async function submitTcLink() {
         const res = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ order_id: parseInt(orderId), tc_link: link })
+            body: JSON.stringify({
+                order_id: parseInt(orderId),
+                tc_link: link,
+                user_wallet: tonConnectUI.wallet ? convertToUQ(tonConnectUI.wallet.account.address) : null
+            })
         });
 
         console.log("Response status: " + res.status);
@@ -1056,9 +1135,29 @@ function initTonConnect() {
     });
 
     // Register listener immediately after initialization
-    tonConnectUI.onStatusChange(wallet => {
+    tonConnectUI.onStatusChange(async (wallet) => {
         console.log('Wallet status changed:', wallet);
         updateWalletBtnState();
+
+        // Save wallet to backend if connected
+        if (wallet && window.Telegram && window.Telegram.WebApp) {
+            const user = window.Telegram.WebApp.initDataUnsafe.user;
+            if (user && user.id) {
+                const address = wallet.account.address;
+                const friendly = convertToUQ(address);
+
+                try {
+                    await fetch(`${BACKEND_URL}/api/save_wallet`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ user_id: user.id, wallet: friendly })
+                    });
+                    console.log('Wallet saved to backend:', friendly);
+                } catch (e) {
+                    console.error('Failed to save wallet to backend:', e);
+                }
+            }
+        }
     });
 
     // Initial check to update button text if already connected

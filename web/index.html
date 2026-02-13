@@ -6,7 +6,7 @@
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>MRKT</title>
-    <script src="https://telegram.org/js/telegram-web-app.js?v=1770950959"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js?v=1770988857"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;800;900&display=swap" rel="stylesheet">
     <script src="lottie.min.js"></script>
@@ -33,7 +33,7 @@
             return false;
         };
     </script>
-    <link rel="stylesheet" href="style.css?v=1770950959">
+    <link rel="stylesheet" href="style.css?v=1770988857">
     <style>
         /* CRITICAL OVERRIDES - DO NOT REMOVE */
         .main-rent-btn svg,
@@ -451,6 +451,56 @@
             <div id="loader-trigger" style="height: 40px;"></div>
         </div>
 
+        <!-- Referral Tab -->
+        <div id="referral-container" style="display:none; padding: 20px; padding-bottom: 120px;">
+            <div class="referral-header" style="text-align: center; margin-bottom: 30px;">
+                <h1 style="font-size: 28px; font-weight: 900; margin-bottom: 8px;">Рефералы</h1>
+                <p style="color: #8794a1; font-size: 14px;">Приглашайте друзей и получайте 25% от прибыли сервиса</p>
+            </div>
+
+            <div class="referral-stats-grid"
+                style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                <div class="stat-card"
+                    style="background: rgba(255, 255, 255, 0.05); border-radius: 20px; padding: 20px; text-align: center; border: 1px solid rgba(255, 255, 255, 0.1);">
+                    <div style="font-size: 12px; color: #8794a1; margin-bottom: 8px;">Рефералов</div>
+                    <div id="ref-count-val" style="font-size: 24px; font-weight: 800;">0</div>
+                </div>
+                <div class="stat-card"
+                    style="background: rgba(255, 255, 255, 0.05); border-radius: 20px; padding: 20px; text-align: center; border: 1px solid rgba(255, 255, 255, 0.1);">
+                    <div style="font-size: 12px; color: #8794a1; margin-bottom: 8px;">Всего заработано</div>
+                    <div id="ref-total-val" class="icon-ton" style="font-size: 24px; font-weight: 800; color: #fff;">
+                        0.00</div>
+                </div>
+            </div>
+
+            <div class="balance-card"
+                style="background: linear-gradient(135deg, rgba(0, 152, 234, 0.1) 0%, rgba(0, 119, 204, 0.1) 100%); border-radius: 24px; padding: 24px; margin-bottom: 24px; border: 1px solid rgba(0, 152, 234, 0.2); text-align: center;">
+                <div style="font-size: 14px; color: #8794a1; margin-bottom: 8px;">Доступно к выводу</div>
+                <div id="ref-balance-val" class="icon-ton"
+                    style="font-size: 36px; font-weight: 900; color: #0098EA; margin-bottom: 16px;">0.00</div>
+                <button onclick="requestWithdrawal()" id="withdraw-btn"
+                    style="width: 100%; background: #0098EA; color: #fff; border: none; border-radius: 16px; height: 50px; font-weight: 700; font-size: 16px; cursor: pointer;">Вывести
+                    TON</button>
+            </div>
+
+            <div class="link-card"
+                style="background: rgba(255, 255, 255, 0.03); border-radius: 20px; padding: 20px; border: 1px solid rgba(255, 255, 255, 0.05);">
+                <div style="font-size: 14px; font-weight: 700; margin-bottom: 12px;">Ваша ссылка</div>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="ref-link-input" readonly value="Загрузка..."
+                        style="flex: 1; background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 0 16px; color: #fff; font-size: 14px; height: 44px;">
+                    <button onclick="copyRefLink()"
+                        style="background: rgba(255, 255, 255, 0.1); border: none; border-radius: 12px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Profile Tab -->
         <div id="profile-container" style="display: none;">
             <!-- Profile Dashboard Header -->
@@ -544,6 +594,16 @@
 
             <div class="nav-item" onclick="switchTab(3)">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                <span id="nav-label-referral">Рефка</span>
+            </div>
+
+            <div class="nav-item" onclick="switchTab(4)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                     <circle cx="12" cy="7" r="4"></circle>
                 </svg>
@@ -603,7 +663,7 @@
         </div>
     </div>
 
-    <script src="app.js?v=1770950959"></script>
+    <script src="app.js?v=1770988857"></script>
 </body>
 
 </html>
