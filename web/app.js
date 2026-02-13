@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://merchants-dam-keys-component.trycloudflare.com";
+const BACKEND_URL = "https://son-issues-appendix-pockets.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -76,6 +76,7 @@ const TRANSLATIONS = {
         numbers: "Номера",
         rented_tab: "Арендовано",
         profile: "Профиль",
+        friends: "Друзья",
         search: "Поиск",
         no_items: "Ничего не найдено",
         reset_filters: "Попробуйте сбросить фильтры",
@@ -200,6 +201,7 @@ const TRANSLATIONS = {
         numbers: "Numbers",
         rented_tab: "Rented",
         profile: "Profile",
+        friends: "Friends",
         search: "Search",
         no_items: "Nothing found",
         reset_filters: "Try resetting filters",
@@ -644,7 +646,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 function switchTab(index) {
-    // Indices: 0 = Gifts, 1 = Usernames, 2 = Numbers, 3 = Profile
+    // Indices: 0 = Gifts, 1 = Usernames, 2 = Numbers, 3 = Friends, 4 = Profile
     const navItems = document.querySelectorAll('.nav-item');
     navItems.forEach((nav, i) => {
         nav.classList.toggle('active', i === index);
@@ -663,6 +665,7 @@ function switchTab(index) {
         }
 
         document.getElementById('market-container').style.display = 'block';
+        document.getElementById('friends-container').style.display = 'none';
         document.getElementById('profile-container').style.display = 'none';
         document.getElementById('mode-toggle-container').style.display = 'block';
 
@@ -674,10 +677,29 @@ function switchTab(index) {
             headerTitle.innerText = baseTitle + (CURRENT_STATUS === 'rented' ? t('rent_title_suffix') : '');
         }
 
-        // FIX: Removed - was hiding nav
-        // document.body.classList.remove('profile-active');
+        const bNav = document.querySelector('.bottom-nav');
+        if (bNav) bNav.classList.remove('profile-mode');
+
+    } else if (index === 3) { // Friends tab
+        document.getElementById('market-container').style.display = 'none';
+        document.getElementById('friends-container').style.display = 'block';
+        document.getElementById('profile-container').style.display = 'none';
+        document.getElementById('mode-toggle-container').style.display = 'none';
+
+        const headerTitle = document.querySelector('.header h1') || document.querySelector('.logo-text');
+        if (headerTitle) headerTitle.innerText = t('friends');
+
+        loadFriendsList();
+
+        const bNav = document.querySelector('.bottom-nav');
+        if (bNav) bNav.classList.remove('profile-mode');
+
+        if (window.Telegram && window.Telegram.WebApp) {
+            tg.HapticFeedback.impactOccurred('medium');
+        }
     } else { // Profile tab
         document.getElementById('market-container').style.display = 'none';
+        document.getElementById('friends-container').style.display = 'none';
         document.getElementById('profile-container').style.display = 'block';
         document.getElementById('mode-toggle-container').style.display = 'none';
 
@@ -687,22 +709,15 @@ function switchTab(index) {
             tg.HapticFeedback.impactOccurred('medium');
         }
 
-        // FIX: Nav should always be visible
-        // document.body.classList.add('profile-active');
         const bNav = document.querySelector('.bottom-nav');
         if (bNav) bNav.classList.add('profile-mode');
     }
 
-    // NEW: Filter visibility logic
-    if (index === 1 || index === 2) { // Usernames or Numbers
+    // Filter visibility logic
+    if (index === 1 || index === 2) {
         document.body.classList.add('hide-filters');
     } else {
         document.body.classList.remove('hide-filters');
-    }
-
-    if (index !== 3) {
-        const bNav = document.querySelector('.bottom-nav');
-        if (bNav) bNav.classList.remove('profile-mode');
     }
 }
 
@@ -2683,6 +2698,71 @@ async function handleReferralWithdraw() {
         tg.showAlert("Error processing withdrawal");
     }
 }
+async function loadFriendsList() {
+    const userId = tg.initDataUnsafe.user?.id;
+    if (!userId) return;
+
+    try {
+        const res = await fetch(`${BACKEND_URL}/api/referral/friends?user_id=${userId}`);
+        const data = await res.json();
+        const statsRes = await fetch(`${BACKEND_URL}/api/referral/stats?user_id=${userId}`);
+        const stats = await statsRes.json();
+
+        // Update balance
+        const balanceVal = document.getElementById('friends-balance-val');
+        if (balanceVal) balanceVal.innerText = stats.balance.toFixed(4);
+
+        const container = document.getElementById('friends-list-items');
+        if (!container) return;
+
+        if (!data.friends || data.friends.length === 0) {
+            document.getElementById('empty-friends-hint').style.display = 'block';
+            return;
+        }
+
+        document.getElementById('empty-friends-hint').style.display = 'none';
+
+        // Render friends
+        container.innerHTML = data.friends.map(f => {
+            const name = f.full_name || f.username || `User ${f.user_id}`;
+            const sub = f.username ? `@${f.username}` : `ID: ${f.user_id}`;
+            const avatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&color=fff`;
+
+            return `
+                <div class="friend-item" style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); padding: 12px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.02);">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <img src="${avatar}" style="width: 44px; height: 44px; border-radius: 12px;">
+                        <div>
+                            <div style="font-weight: 700; font-size: 15px;">${name}</div>
+                            <div style="font-size: 12px; color: #8b9bb4;">${sub}</div>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-weight: 800; font-size: 14px; color: #0088cc;">+${f.profit.toFixed(4)} TON</div>
+                        <div style="font-size: 11px; color: #8b9bb4; opacity: 0.6;">прибыль</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+    } catch (e) {
+        console.error("Load Friends Error:", e);
+    }
+}
+
+function showEarningsHelp() {
+    const sheet = document.getElementById('earnings-help-sheet');
+    if (sheet) sheet.style.display = 'block';
+    if (window.Telegram && window.Telegram.WebApp) {
+        tg.HapticFeedback.impactOccurred('light');
+    }
+}
+
+function closeEarningsHelp() {
+    const sheet = document.getElementById('earnings-help-sheet');
+    if (sheet) sheet.style.display = 'none';
+}
+
 function shareReferralLink() {
     if (window.Telegram && window.Telegram.WebApp) {
         window.Telegram.WebApp.switchInlineQuery("ref");

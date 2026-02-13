@@ -6,7 +6,7 @@
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>MRKT</title>
-    <script src="https://telegram.org/js/telegram-web-app.js?v=1771015183"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js?v=1771016571"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;800;900&display=swap" rel="stylesheet">
     <script src="lottie.min.js"></script>
@@ -33,7 +33,7 @@
             return false;
         };
     </script>
-    <link rel="stylesheet" href="style.css?v=1771015183">
+    <link rel="stylesheet" href="style.css?v=1771016571">
     <style>
         /* CRITICAL OVERRIDES - DO NOT REMOVE */
         .main-rent-btn svg,
@@ -452,100 +452,186 @@
         </div>
 
         <!-- Profile Tab -->
-        <div id="profile-container" style="display: none;">
-            <!-- Profile Dashboard Header -->
-            <div class="profile-dashboard-card">
-                <div class="profile-main-info">
-                    <div class="avatar-glow-wrapper">
-                        <img id="profile-avatar" src="https://ui-avatars.com/api/?name=User&background=0088cc&color=fff"
-                            class="dashboard-avatar">
-                    </div>
-                    <div class="profile-text-info">
-                        <h2 id="profile-name">Telegram User</h2>
-                        <p id="profile-id">ID: 000000000</p>
-                    </div>
-                </div>
+    </div>
 
+    <!-- Friends Tab -->
+    <div id="friends-container" style="display: none; padding-bottom: 80px;">
+        <div class="friends-balance-card"
+            style="background: linear-gradient(135deg, #0098EA 0%, #0077CC 100%); padding: 24px; border-radius: 20px; text-align: center; margin: 16px; box-shadow: 0 8px 16px rgba(0,136,204,0.3);">
+            <div
+                style="font-size: 13px; font-weight: 700; opacity: 0.8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
+                Доступный баланс</div>
+            <div
+                style="font-size: 36px; font-weight: 900; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                <span id="friends-balance-val">0.00</span>
+                <img src="pictures/ton.png" alt="TON"
+                    style="width: 28px; height: 28px; filter: brightness(0) invert(1);">
+            </div>
+            <button class="withdraw-btn-white" onclick="handleReferralWithdraw()"
+                style="margin-top: 20px; background: #ffffff; color: #0088cc; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 800; width: 100%; transition: transform 0.2s;"
+                onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">Вывести
+                средства</button>
+        </div>
+
+        <div class="commission-notice"
+            style="background: rgba(255,255,255,0.03); padding: 16px; border-radius: 16px; margin: 0 16px 24px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border: 1px solid rgba(255,255,255,0.05);">
+            <div style="font-size: 13px; color: #8b9bb4; line-height: 1.5;">Вы будете получать <b>25%</b> от комиссии
+                ваших друзей</div>
+            <button class="how-much-link" onclick="showEarningsHelp()"
+                style="background: rgba(0,136,204,0.15); border: none; color: #00aaff; padding: 8px 12px; border-radius: 10px; font-size: 12px; font-weight: 800; white-space: nowrap;">Сколько
+                это?</button>
+        </div>
+
+        <div class="friends-list-section" style="padding: 0 16px;">
+            <h3
+                style="font-size: 20px; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; gap: 10px;">
+                👥 <span id="friends-list-title">Мои друзья</span>
+            </h3>
+            <div id="friends-list-items" style="display: flex; flex-direction: column; gap: 12px;">
+                <!-- Items injected by JS -->
+                <div id="empty-friends-hint"
+                    style="text-align: center; padding: 60px 20px; color: #8b9bb4; font-size: 15px; background: rgba(255,255,255,0.02); border-radius: 16px; border: 1px dashed rgba(255,255,255,0.1);">
+                    У вас пока нет друзей в системе.<br><span
+                        style="font-size: 13px; opacity: 0.7; margin-top: 8px; display: block;">Поделитесь ссылкой,
+                        чтобы начать зарабатывать!</span>
+                </div>
             </div>
 
-            <!-- Wallet Connectivity -->
-            <div id="profile-label-wallet" class="dash-section-title">Wallet</div>
-            <div id="wallet-btn-container" style="margin-bottom: 24px; padding: 0 16px;">
-                <button id="profile-ton-connect-btn" class="blue-btn" onclick="handleProfileWalletClick()">
-                    <span class="icon-ton"></span>
-                    <span id="blue-wallet-text">Connect Wallet</span>
+            <div style="margin-top: 32px;">
+                <button class="btn-yellow" onclick="shareReferralLink()"
+                    style="width: 100%; height: 56px; font-weight: 900; font-size: 17px; border-radius: 16px; box-shadow: 0 4px 12px rgba(255,200,0,0.2);">
+                    💎 Пригласить друзей
                 </button>
             </div>
+        </div>
+    </div>
 
-            <!-- Services Section -->
-            <div id="profile-label-settings" class="dash-section-title">Settings & Support</div>
-            <div class="services-list">
-                <div class="service-item" onclick="toggleHistory()">
-                    <div class="service-icon history" style="background: rgba(0, 136, 204, 0.1);">🕒</div>
-                    <div id="profile-label-history" class="service-text">Rental History</div>
-                    <div class="service-arrow">›</div>
+    <!-- Earnings Help Bottom Sheet -->
+    <div id="earnings-help-sheet" class="bottom-sheet" style="display: none;">
+        <div class="bottom-sheet-backdrop" onclick="closeEarningsHelp()"></div>
+        <div class="bottom-sheet-content" style="padding-bottom: 30px;">
+            <div class="bottom-sheet-header">
+                <div class="bottom-sheet-dash"></div>
+                <h3>Система вознаграждений</h3>
+            </div>
+            <div class="bottom-sheet-body" style="padding: 24px;">
+                <p style="font-size: 15px; color: #8b9bb4; line-height: 1.6; margin-bottom: 24px;">
+                    Вы получаете <b style="color: #fff;">25%</b> от нашей прибыли (наценки) с каждой аренды вашего
+                    приглашенного друга. Доход начисляется мгновенно!
+                </p>
+                <div class="earnings-table-container"
+                    style="background: rgba(255,255,255,0.03); border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05);">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                        <thead style="background: rgba(255,255,255,0.05);">
+                            <tr>
+                                <th style="text-align: left; padding: 14px; color: #8b9bb4;">Цена аренды</th>
+                                <th style="text-align: right; padding: 14px; color: #8b9bb4;">Ваш доход</th>
+                            </tr>
+                        </thead>
+                        <tbody style="color: #ffffff;">
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                <td style="padding: 14px;">0.01 TON</td>
+                                <td style="padding: 14px; text-align: right; font-weight: 800; color: #00d488;">+0.0125
+                                    TON</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                <td style="padding: 14px;">0.1 TON</td>
+                                <td style="padding: 14px; text-align: right; font-weight: 800; color: #00d488;">+0.0125
+                                    TON</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                <td style="padding: 14px;">0.25 TON</td>
+                                <td style="padding: 14px; text-align: right; font-weight: 800; color: #00d488;">+0.025
+                                    TON</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                <td style="padding: 14px;">0.50 TON</td>
+                                <td style="padding: 14px; text-align: right; font-weight: 800; color: #00d488;">+0.0375
+                                    TON</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                <td style="padding: 14px;">1.00 TON</td>
+                                <td style="padding: 14px; text-align: right; font-weight: 800; color: #00d488;">+0.0625
+                                    TON</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                <td style="padding: 14px;">2.50 TON</td>
+                                <td style="padding: 14px; text-align: right; font-weight: 800; color: #00d488;">+0.1125
+                                    TON</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 14px;">5.00 TON</td>
+                                <td style="padding: 14px; text-align: right; font-weight: 800; color: #00d488;">+0.1875
+                                    TON</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
-                <div id="history-content"
-                    style="display: none; padding: 0 16px 16px 16px; background: rgba(255,255,255,0.02);">
-                    <div id="history-list">Loading history...</div>
+                <div
+                    style="background: rgba(0,136,204,0.1); padding: 14px; border-radius: 14px; margin-top: 24px; font-size: 13px; color: #00aaff; display: flex; gap: 12px; line-height: 1.4;">
+                    <span style="font-size: 18px;">💡</span>
+                    <span>Рекомендуйте друзьям брать на долгий срок — чем больше сумма сделки, тем больше ваш постоянный
+                        бонус!</span>
                 </div>
-
-                <div class="service-item" onclick="tg.openTelegramLink('https://t.me/Paulie_Gualtiery')">
-                    <div class="service-icon" style="background: rgba(255, 152, 0, 0.1);">❓</div>
-                    <div id="profile-label-support" class="service-text">Support & FAQ</div>
-                    <div class="service-arrow">›</div>
-                </div>
-
-                <div class="service-item" onclick="toggleReferrals()">
-                    <div class="service-icon referrals" style="background: rgba(76, 175, 80, 0.1);">🎁</div>
-                    <div id="profile-label-referrals" class="service-text">Referral Program</div>
-                    <div class="service-arrow">›</div>
-                </div>
-                <div id="referrals-content"
-                    style="display: none; padding: 16px; background: rgba(255,255,255,0.02); border-radius: 0 0 16px 16px; margin-top: -8px; margin-bottom: 16px;">
-                    <div class="referral-stats-grid"
-                        style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
-                        <div class="ref-stat-card"
-                            style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 12px;">
-                            <div style="font-size: 11px; color: #8b9bb4;" id="ref-label-count">Referrals</div>
-                            <div id="ref-count" style="font-size: 18px; font-weight: 700; margin-top: 4px;">0</div>
-                        </div>
-                        <div class="ref-stat-card"
-                            style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 12px;">
-                            <div style="font-size: 11px; color: #8b9bb4;" id="ref-label-balance">Balance</div>
-                            <div id="ref-balance" style="font-size: 18px; font-weight: 700; margin-top: 4px;">0.00 TON
-                            </div>
-                        </div>
-                    </div>
-
-                    <div style="margin-bottom: 16px;">
-                        <div style="font-size: 11px; color: #8b9bb4; margin-bottom: 8px;" id="ref-label-link">Your Link
-                        </div>
-                        <div class="ref-link-box"
-                            style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
-                            <input type="text" id="ref-link-input" readonly
-                                style="background: none; border: none; color: #fff; font-size: 13px; width: 100%; outline: none;">
-                            <button onclick="copyReferralLink()"
-                                style="background: #0088cc; border: none; color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer;">Copy</button>
-                            <button id="ref-share-btn" onclick="shareReferralLink()"
-                                style="background: #0088cc; border: none; color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer;">Share</button>
-                        </div>
-                    </div>
-
-                    <button id="ref-withdraw-btn" class="blue-btn" onclick="handleReferralWithdraw()"
-                        style="width: 100%; height: 44px; font-size: 14px; display: none;">
-                        Withdraw Funds
-                    </button>
-                </div>
-
-                <div class="service-item" onclick="switchLanguage()">
-                    <div class="service-icon" style="background: rgba(33, 150, 243, 0.1);">🌐</div>
-                    <div class="service-text">Language / Язык</div>
-                    <div id="lang-label" class="service-arrow"
-                        style="font-size: 14px; color: #8b9bb4; font-weight: 700;">Русский ›</div>
-                </div>
+                <button class="btn-yellow"
+                    style="width: 100%; margin-top: 28px; height: 50px; font-weight: 800; font-size: 16px; border-radius: 14px;"
+                    onclick="closeEarningsHelp()">Понятно</button>
             </div>
         </div>
+    </div>
+
+    <div id="profile-container" style="display: none;">
+        <!-- Profile Dashboard Header -->
+        <div class="profile-dashboard-card">
+            <div class="profile-main-info">
+                <div class="avatar-glow-wrapper">
+                    <img id="profile-avatar" src="https://ui-avatars.com/api/?name=User&background=0088cc&color=fff"
+                        class="dashboard-avatar">
+                </div>
+                <div class="profile-text-info">
+                    <h2 id="profile-name">Telegram User</h2>
+                    <p id="profile-id">ID: 000000000</p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Wallet Connectivity -->
+        <div id="profile-label-wallet" class="dash-section-title">Wallet</div>
+        <div id="wallet-btn-container" style="margin-bottom: 24px; padding: 0 16px;">
+            <button id="profile-ton-connect-btn" class="blue-btn" onclick="handleProfileWalletClick()">
+                <span class="icon-ton"></span>
+                <span id="blue-wallet-text">Connect Wallet</span>
+            </button>
+        </div>
+
+        <!-- Services Section -->
+        <div id="profile-label-settings" class="dash-section-title">Settings & Support</div>
+        <div class="services-list">
+            <div class="service-item" onclick="toggleHistory()">
+                <div class="service-icon history" style="background: rgba(0, 136, 204, 0.1);">🕒</div>
+                <div id="profile-label-history" class="service-text">Rental History</div>
+                <div class="service-arrow">›</div>
+            </div>
+            <div id="history-content"
+                style="display: none; padding: 0 16px 16px 16px; background: rgba(255,255,255,0.02);">
+                <div id="history-list">Loading history...</div>
+            </div>
+
+            <div class="service-item" onclick="tg.openTelegramLink('https://t.me/Paulie_Gualtiery')">
+                <div class="service-icon" style="background: rgba(255, 152, 0, 0.1);">❓</div>
+                <div id="profile-label-support" class="service-text">Support & FAQ</div>
+                <div class="service-arrow">›</div>
+            </div>
+
+            <div class="service-item" onclick="switchLanguage()">
+                <div class="service-icon" style="background: rgba(33, 150, 243, 0.1);">🌐</div>
+                <div class="service-text">Language / Язык</div>
+                <div id="lang-label" class="service-arrow" style="font-size: 14px; color: #8b9bb4; font-weight: 700;">
+                    Русский ›</div>
+            </div>
+        </div>
+    </div>
     </div>
 
     <!-- Bottom Nav -->
@@ -585,6 +671,16 @@
             </div>
 
             <div class="nav-item" onclick="switchTab(3)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                <span id="nav-label-friends">Друзья</span>
+            </div>
+
+            <div class="nav-item" onclick="switchTab(4)">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                     <circle cx="12" cy="7" r="4"></circle>
@@ -645,7 +741,7 @@
         </div>
     </div>
 
-    <script src="app.js?v=1771015183"></script>
+    <script src="app.js?v=1771016571"></script>
 </body>
 
 </html>
