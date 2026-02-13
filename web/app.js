@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://forecast-amazing-faq-reasonable.trycloudflare.com";
+const BACKEND_URL = "https://suggest-should-contributed-completing.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -678,7 +678,10 @@ function switchTab(index) {
         }
 
         const bNav = document.querySelector('.bottom-nav');
-        if (bNav) bNav.classList.remove('profile-mode');
+        if (bNav) {
+            bNav.classList.remove('profile-mode');
+            bNav.classList.remove('friends-mode');
+        }
 
     } else if (index === 3) { // Friends tab
         document.getElementById('market-container').style.display = 'none';
@@ -692,7 +695,10 @@ function switchTab(index) {
         loadFriendsList();
 
         const bNav = document.querySelector('.bottom-nav');
-        if (bNav) bNav.classList.remove('profile-mode');
+        if (bNav) {
+            bNav.classList.remove('profile-mode');
+            bNav.classList.add('friends-mode');
+        }
 
         if (window.Telegram && window.Telegram.WebApp) {
             tg.HapticFeedback.impactOccurred('medium');
@@ -710,7 +716,10 @@ function switchTab(index) {
         }
 
         const bNav = document.querySelector('.bottom-nav');
-        if (bNav) bNav.classList.add('profile-mode');
+        if (bNav) {
+            bNav.classList.add('profile-mode');
+            bNav.classList.remove('friends-mode');
+        }
     }
 
     // Filter visibility logic
@@ -2726,12 +2735,12 @@ async function loadFriendsList() {
         container.innerHTML = data.friends.map(f => {
             const name = f.full_name || f.username || `User ${f.user_id}`;
             const sub = f.username ? `@${f.username}` : `ID: ${f.user_id}`;
-            const avatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&color=fff`;
+            const avatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=2c2c2e&color=fff`;
 
             return `
                 <div class="friend-item" style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); padding: 12px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.02);">
                     <div style="display: flex; align-items: center; gap: 12px;">
-                        <img src="${avatar}" style="width: 44px; height: 44px; border-radius: 12px;">
+                        <img src="${avatar}" style="width: 44px; height: 44px; border-radius: 12px;" onerror="this.src='https://ui-avatars.com/api/?name=U&background=2c2c2e&color=fff'">
                         <div>
                             <div style="font-weight: 700; font-size: 15px;">${name}</div>
                             <div style="font-size: 12px; color: #8b9bb4;">${sub}</div>
@@ -2751,8 +2760,14 @@ async function loadFriendsList() {
 }
 
 function showEarningsHelp() {
+    console.log("showEarningsHelp called");
     const sheet = document.getElementById('earnings-help-sheet');
-    if (sheet) sheet.style.display = 'block';
+    if (sheet) {
+        sheet.style.display = 'block';
+        console.log("Sheet displayed");
+    } else {
+        console.error("Sheet element not found");
+    }
     if (window.Telegram && window.Telegram.WebApp) {
         tg.HapticFeedback.impactOccurred('light');
     }

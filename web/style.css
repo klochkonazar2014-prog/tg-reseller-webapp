@@ -703,6 +703,10 @@ body {
     height: calc(75px + var(--safe-area-bottom));
 }
 
+.bottom-nav.friends-mode {
+    height: calc(80px + var(--safe-area-bottom));
+}
+
 .bottom-nav.profile-mode .nav-items-row {
     padding-bottom: 8px;
 }
@@ -3127,3 +3131,8 @@ body.hide-filters .header-column {
     align-items: center;
     vertical-align: middle;
 }
+/* --- FRIENDS TAB PREMIUM STYLES --- */
+.bottom-nav.friends-mode { height: calc(80px + var(--safe-area-bottom)); }
+#earnings-help-sheet { z-index: 20000 !important; }
+.commission-notice { position: relative; z-index: 1001; }
+.how-much-link { pointer-events: auto !important; position: relative; z-index: 10; }

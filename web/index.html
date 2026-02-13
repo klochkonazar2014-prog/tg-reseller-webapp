@@ -6,7 +6,7 @@
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>MRKT</title>
-    <script src="https://telegram.org/js/telegram-web-app.js?v=1771017355"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js?v=1771019768"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;800;900&display=swap" rel="stylesheet">
     <script src="lottie.min.js"></script>
@@ -33,7 +33,7 @@
             return false;
         };
     </script>
-    <link rel="stylesheet" href="style.css?v=1771017355">
+    <link rel="stylesheet" href="style.css?v=1771019768">
     <style>
         /* CRITICAL OVERRIDES - DO NOT REMOVE */
         .main-rent-btn svg,
@@ -478,7 +478,7 @@
             <div style="font-size: 13px; color: #8b9bb4; line-height: 1.5;">Вы будете получать <b>25%</b> от комиссии
                 ваших друзей</div>
             <button class="how-much-link" onclick="showEarningsHelp()"
-                style="background: rgba(0,136,204,0.15); border: none; color: #00aaff; padding: 8px 12px; border-radius: 10px; font-size: 12px; font-weight: 800; white-space: nowrap;">Сколько
+                style="background: rgba(0,136,204,0.15); border: none; color: #00aaff; padding: 8px 12px; border-radius: 10px; font-size: 12px; font-weight: 800; white-space: nowrap; position: relative; z-index: 100; pointer-events: auto;">Сколько
                 это?</button>
         </div>
 
@@ -507,7 +507,7 @@
     </div>
 
     <!-- Earnings Help Bottom Sheet -->
-    <div id="earnings-help-sheet" class="bottom-sheet" style="display: none; z-index: 10000;">
+    <div id="earnings-help-sheet" class="bottom-sheet" style="display: none; position: fixed; z-index: 20000;">
         <div class="bottom-sheet-backdrop" onclick="closeEarningsHelp()"
             style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: -1;">
         </div>
@@ -744,7 +744,7 @@
         </div>
     </div>
 
-    <script src="app.js?v=1771017355"></script>
+    <script src="app.js?v=1771019768"></script>
 </body>
 
 </html>
