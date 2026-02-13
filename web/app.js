@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://suggest-should-contributed-completing.trycloudflare.com";
+const BACKEND_URL = "https://tropical-handled-dialogue-michael.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -2735,12 +2735,12 @@ async function loadFriendsList() {
         container.innerHTML = data.friends.map(f => {
             const name = f.full_name || f.username || `User ${f.user_id}`;
             const sub = f.username ? `@${f.username}` : `ID: ${f.user_id}`;
-            const avatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=2c2c2e&color=fff`;
+            const avatar = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name)}&backgroundColor=0088cc&fontSize=40`;
 
             return `
                 <div class="friend-item" style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); padding: 12px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.02);">
                     <div style="display: flex; align-items: center; gap: 12px;">
-                        <img src="${avatar}" style="width: 44px; height: 44px; border-radius: 12px;" onerror="this.src='https://ui-avatars.com/api/?name=U&background=2c2c2e&color=fff'">
+                        <img src="${avatar}" style="width: 44px; height: 44px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
                         <div>
                             <div style="font-weight: 700; font-size: 15px;">${name}</div>
                             <div style="font-size: 12px; color: #8b9bb4;">${sub}</div>
@@ -2760,13 +2760,10 @@ async function loadFriendsList() {
 }
 
 function showEarningsHelp() {
-    console.log("showEarningsHelp called");
     const sheet = document.getElementById('earnings-help-sheet');
     if (sheet) {
-        sheet.style.display = 'block';
-        console.log("Sheet displayed");
-    } else {
-        console.error("Sheet element not found");
+        sheet.classList.add('active');
+        document.body.style.overflow = 'hidden'; // Prevent background scrolling
     }
     if (window.Telegram && window.Telegram.WebApp) {
         tg.HapticFeedback.impactOccurred('light');
@@ -2775,11 +2772,22 @@ function showEarningsHelp() {
 
 function closeEarningsHelp() {
     const sheet = document.getElementById('earnings-help-sheet');
-    if (sheet) sheet.style.display = 'none';
+    if (sheet) {
+        sheet.classList.remove('active');
+        document.body.style.overflow = '';
+    }
 }
 
 function shareReferralLink() {
     if (window.Telegram && window.Telegram.WebApp) {
-        window.Telegram.WebApp.switchInlineQuery("ref");
+        const userId = tg.initDataUnsafe.user?.id;
+        const botUsername = "Telegifter_MRKT_bot"; // Assuming this is the bot username
+        const shareUrl = `https://t.me/${botUsername}?start=ref_${userId}`;
+        const text = "💎 Присоединяйся к MRKT и зарабатывай на аренде подарков вместе со мной!";
+
+        // This opens the full Telegram chat selection screen
+        tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(text)}`);
+
+        tg.HapticFeedback.impactOccurred('medium');
     }
 }
