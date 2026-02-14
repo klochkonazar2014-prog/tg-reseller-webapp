@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://cardiff-voip-cons-integral.trycloudflare.com";
+const BACKEND_URL = "https://parameters-systematic-reserves-groundwater.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -2735,7 +2735,12 @@ async function loadFriendsList() {
 
         // Update balance
         const balanceVal = document.getElementById('friends-balance-val');
-        if (balanceVal) balanceVal.innerText = stats.balance.toFixed(4);
+        if (balanceVal) {
+            const b = stats.balance || 0;
+            // Round down to 3 decimal places (in our side)
+            const rounded = Math.floor(b * 1000) / 1000;
+            balanceVal.innerText = rounded === 0 ? "0" : rounded.toString();
+        }
 
         const container = document.getElementById('friends-list-items');
         if (!container) return;
@@ -2752,7 +2757,8 @@ async function loadFriendsList() {
             const name = f.full_name || f.username || `User ${f.user_id}`;
             const sub = f.username ? `@${f.username}` : `ID: ${f.user_id}`;
             const nameForAvatar = name || (f.username ? `@${f.username}` : `U${f.user_id}`);
-            const avatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(nameForAvatar)}&background=0088cc&color=fff&size=128&bold=true`;
+            // Use api.dicebear.com as it's often more reliable in TMA environments
+            const avatar = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(nameForAvatar)}&backgroundColor=0088cc&fontSize=42&bold=true`;
 
             return `
                 <div class="friend-item" style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); padding: 12px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 10px;">
@@ -2765,7 +2771,7 @@ async function loadFriendsList() {
                         </div>
                     </div>
                     <div style="text-align: right;">
-                        <div style="font-weight: 800; font-size: 14px; color: #0088cc;">+${f.profit.toFixed(4)} TON</div>
+                        <div style="font-weight: 800; font-size: 14px; color: #0088cc;">+${(Math.floor(f.profit * 1000) / 1000).toString()} TON</div>
                         <div style="font-size: 11px; color: #8b9bb4; opacity: 0.6;">прибыль</div>
                     </div>
                 </div>
@@ -2792,6 +2798,8 @@ function closeEarningsHelp() {
     const sheet = document.getElementById('earnings-help-sheet');
     if (sheet) {
         sheet.classList.remove('active');
+        const content = sheet.querySelector('.bottom-sheet-content');
+        if (content) content.style.transform = '';
         document.body.style.overflow = '';
     }
 }
@@ -2799,12 +2807,63 @@ function closeEarningsHelp() {
 function shareReferralLink() {
     if (window.Telegram && window.Telegram.WebApp) {
         const userId = tg.initDataUnsafe.user?.id;
-        const botUsername = "OctoRent_bot";
-        const shareUrl = `https://t.me/${botUsername}?start=ref_${userId}`;
-        const text = "💎 Присоединяйся к OctoRent и начни зарабатывать вместе со мной!";
-
-        tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(text)}`);
-
+        // The user wants inline mode like "share gift"
+        tg.switchInlineQuery(`ref_${userId}`, ["users", "groups", "channels"]);
         tg.HapticFeedback.impactOccurred('medium');
     }
 }
+
+// Swipe-to-close for bottom sheet
+document.addEventListener('DOMContentLoaded', () => {
+    const sheet = document.getElementById('earnings-help-sheet');
+    if (!sheet) return;
+
+    const content = sheet.querySelector('.bottom-sheet-content');
+    const backdrop = sheet.querySelector('.bottom-sheet-backdrop');
+    if (!content) return;
+
+    let startY = 0;
+    let currentY = 0;
+    let isDragging = false;
+
+    const onStart = (e) => {
+        startY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+        isDragging = true;
+        content.classList.add('dragging');
+    };
+
+    const onMove = (e) => {
+        if (!isDragging) return;
+        currentY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+        const diff = currentY - startY;
+        if (diff > 0) {
+            content.style.transform = `translateY(${diff}px)`;
+            // Fade out backdrop slightly
+            const opacity = 1 - (diff / 400);
+            if (backdrop) backdrop.style.opacity = Math.max(0, opacity).toString();
+        }
+    };
+
+    const onEnd = () => {
+        if (!isDragging) return;
+        isDragging = false;
+        content.classList.remove('dragging');
+        const diff = currentY - startY;
+
+        if (diff > 120) {
+            closeEarningsHelp();
+        } else {
+            content.style.transform = '';
+            if (backdrop) backdrop.style.opacity = '';
+        }
+    };
+
+    content.addEventListener('touchstart', onStart, { passive: true });
+    content.addEventListener('touchmove', onMove, { passive: true });
+    content.addEventListener('touchend', onEnd);
+
+    // For desktop testing
+    content.addEventListener('mousedown', onStart);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onEnd);
+});
