@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://carrier-enhanced-pine-utilization.trycloudflare.com";
+const BACKEND_URL = "https://tyler-think-embedded-packed.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -903,6 +903,8 @@ async function loadLiveItems(reset = true) {
     if (IS_LOADING) return;
     if (!HAS_MORE && !reset) return;
 
+    IS_LOADING = true; // Move to top to prevent race conditions
+
     const hideLoading = () => {
         const screen = document.getElementById('loading-screen');
         if (screen) {
@@ -924,7 +926,7 @@ async function loadLiveItems(reset = true) {
         if (scrollLoader) scrollLoader.style.display = 'block';
     }
 
-    IS_LOADING = true;
+    // IS_LOADING = true; // Moved to top
 
     try {
         const params = new URLSearchParams({
@@ -2958,13 +2960,27 @@ function renderPremiumCountdown(item, container) {
 
         container.innerHTML = `
             <div class="countdown-market-label">${t('ends_in') || "Ends in"}</div>
-            <div class="countdown-market-pill">${d} ${t('days_short')}</div>
-            <div class="countdown-market-sep">:</div>
-            <div class="countdown-market-pill">${pad(h)}</div>
-            <div class="countdown-market-sep">:</div>
-            <div class="countdown-market-pill">${pad(m)}</div>
-            <div class="countdown-market-sep">:</div>
-            <div class="countdown-market-pill">${pad(s)}</div>
+            <div class="countdown-market-pills-row">
+                <div class="countdown-market-pill-box">
+                    <div class="pill-val">${d}</div>
+                    <div class="pill-lab">${t('days_short')}</div>
+                </div>
+                <div class="countdown-market-sep">:</div>
+                <div class="countdown-market-pill-box">
+                    <div class="pill-val">${pad(h)}</div>
+                    <div class="pill-lab">h</div>
+                </div>
+                <div class="countdown-market-sep">:</div>
+                <div class="countdown-market-pill-box">
+                    <div class="pill-val">${pad(m)}</div>
+                    <div class="pill-lab">m</div>
+                </div>
+                <div class="countdown-market-sep">:</div>
+                <div class="countdown-market-pill-box">
+                    <div class="pill-val">${pad(s)}</div>
+                    <div class="pill-lab">s</div>
+                </div>
+            </div>
             <div class="countdown-market-date">${dateStr}</div>
         `;
     };

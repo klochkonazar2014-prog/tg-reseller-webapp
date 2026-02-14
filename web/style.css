@@ -1725,59 +1725,87 @@ tc-root {
 
 /* .card.rented::before removed via user request */
 
-/* Blocky Countdown - Borderless Refinement */
+/* Blocky Countdown - Premium Redesign */
 .countdown-market-container {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    margin: 16px 0;
-    padding: 8px 16px;
-    background: rgba(255, 255, 255, 0.04);
-    border-radius: 100px;
-    border: none;
-    /* Borderless */
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    gap: 12px;
+    margin: 20px 0;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .countdown-market-label {
     color: #8b9bb4;
-    font-size: 13px;
-    font-weight: 600;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-.countdown-market-pill {
-    background: transparent;
-    border: none;
-    padding: 0;
-    min-width: unset;
+.countdown-market-pills-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.countdown-market-pill-box {
+    background: #1c1c1e;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 8px;
+    min-width: 44px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.countdown-market-pill-box .pill-val {
     color: white;
     font-weight: 800;
-    font-size: 14px;
+    font-size: 16px;
+    line-height: 1;
+}
+
+.countdown-market-pill-box .pill-lab {
+    color: #8b9bb4;
+    font-size: 9px;
+    font-weight: 600;
+    margin-top: 4px;
+    text-transform: uppercase;
 }
 
 .countdown-market-sep {
     color: rgba(255, 255, 255, 0.2);
     font-weight: 800;
-    font-size: 14px;
+    font-size: 18px;
+    margin-top: -12px;
 }
 
 .countdown-market-date {
     color: rgba(255, 255, 255, 0.3);
     font-size: 12px;
     font-weight: 600;
-    margin-left: 4px;
 }
 
 /* Notify Bell Refinement */
+.notify-btn svg {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 .notify-btn.active svg {
     color: #0088cc !important;
     fill: #0088cc !important;
+    transform: scale(1.1);
 }
 
 #notify-btn.active svg {
     color: #0088cc !important;
+    fill: #0088cc !important;
 }
 
 /* Filter Visibility Logic */
