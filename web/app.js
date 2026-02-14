@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://triangle-programme-column-difficulty.trycloudflare.com";
+const BACKEND_URL = "https://carrier-enhanced-pine-utilization.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -195,7 +195,9 @@ const TRANSLATIONS = {
         min_withdraw_error: "Минимальная сумма для вывода: 0.1 TON",
         withdraw_success: "Запрос на вывод отправлен! Средства поступят на ваш кошелек в ближайшее время.",
         notification_enabled: "Уведомление включено!",
-        notification_disabled: "Уведомление выключено!"
+        notification_disabled: "Уведомление выключено!",
+        notification_enabled_full: "Вы получите уведомление, когда NFT освободится",
+        notification_disabled_full: "Уведомление выключено"
     },
     en: {
         gifts: "Gifts",
@@ -1516,29 +1518,41 @@ async function handleNotifyClick() {
     const userId = tg.initDataUnsafe?.user?.id || 0;
     if (!userId) { tg.showAlert("Please open the app via Telegram"); return; }
 
+    const btn = document.getElementById('notify-btn');
+    const isSubscribed = btn ? btn.classList.contains('active') : false;
+
+    // Optimistic UI update
+    if (btn) btn.classList.toggle('active', !isSubscribed);
+
     try {
         const res = await fetch(`${BACKEND_URL}/api/toggle_notification`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 user_id: userId,
-                nft_address: CURRENT_PAYMENT_ITEM.nft_address
+                nft_address: CURRENT_PAYMENT_ITEM.nft_address,
+                subscribe: !isSubscribed
             })
         });
         const data = await res.json();
         if (data.status === 'ok') {
-            const btns = document.querySelectorAll('#notify-btn');
-            if (data.action === 'added') {
-                tg.showAlert(t('notification_enabled') || "уведомление о окончании аренды включено");
-                btns.forEach(btn => btn.classList.add('active'));
+            const finalSubscribed = data.action === 'added';
+            if (btn) btn.classList.toggle('active', finalSubscribed);
+
+            if (finalSubscribed) {
+                tg.showAlert(t('notification_enabled_full') || "Вы получите уведомление, когда NFT освободится");
             } else {
-                tg.showAlert(t('notification_disabled') || "уведомление выключено");
-                btns.forEach(btn => btn.classList.remove('active'));
+                tg.showAlert(t('notification_disabled_full') || "Уведомление выключено");
             }
             tg.HapticFeedback.notificationOccurred('success');
+        } else {
+            // Revert if error
+            if (btn) btn.classList.toggle('active', isSubscribed);
         }
     } catch (e) {
         console.error("Notify Error:", e);
+        // Revert if error
+        if (btn) btn.classList.toggle('active', isSubscribed);
     }
 }
 

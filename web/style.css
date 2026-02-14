@@ -1725,49 +1725,59 @@ tc-root {
 
 /* .card.rented::before removed via user request */
 
-/* Blocky Countdown */
+/* Blocky Countdown - Borderless Refinement */
 .countdown-market-container {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 6px;
     margin: 16px 0;
-    padding: 12px;
-    background: rgba(255, 255, 255, 0.03);
-    border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 100px;
+    border: none;
+    /* Borderless */
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
 
 .countdown-market-label {
     color: #8b9bb4;
     font-size: 13px;
     font-weight: 600;
-    margin-right: 4px;
 }
 
 .countdown-market-pill {
-    background: #1c1c1e;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 8px;
-    padding: 6px 10px;
-    min-width: 40px;
-    text-align: center;
+    background: transparent;
+    border: none;
+    padding: 0;
+    min-width: unset;
     color: white;
     font-weight: 800;
     font-size: 14px;
 }
 
 .countdown-market-sep {
-    color: #3a3a3c;
+    color: rgba(255, 255, 255, 0.2);
     font-weight: 800;
-    font-size: 16px;
+    font-size: 14px;
 }
 
 .countdown-market-date {
-    color: #8b9bb4;
-    font-size: 13px;
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 12px;
     font-weight: 600;
-    margin-left: 8px;
+    margin-left: 4px;
+}
+
+/* Notify Bell Refinement */
+.notify-btn.active svg {
+    color: #0088cc !important;
+    fill: #0088cc !important;
+}
+
+#notify-btn.active svg {
+    color: #0088cc !important;
 }
 
 /* Filter Visibility Logic */
