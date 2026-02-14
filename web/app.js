@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://dolls-adjustable-televisions-calvin.trycloudflare.com";
+const BACKEND_URL = "https://der-nickname-lesson-organizational.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -2937,6 +2937,7 @@ function renderPremiumCountdown(item, container) {
         const pad = (n) => n.toString().padStart(2, '0');
 
         container.innerHTML = `
+            <div class="countdown-market-label">${t('available_from') || "Available in"}:</div>
             <div class="countdown-market-pill">${d}d</div>
             <div class="countdown-market-sep">:</div>
             <div class="countdown-market-pill">${pad(h)}</div>
