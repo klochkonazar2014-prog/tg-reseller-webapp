@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://cant-becoming-destination-pocket.trycloudflare.com";
+const BACKEND_URL = "https://scientist-packets-tells-colour.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -1543,7 +1543,9 @@ async function handleNotifyClick() {
     const btn = document.getElementById('notify-btn');
     if (!btn) return;
 
-    const isSubscribed = btn.classList.contains('active');
+    // Disable temporarily to prevent double clicks
+    btn.style.pointerEvents = 'none';
+    const isCurrentlyActive = btn.classList.contains('active');
 
     try {
         const res = await fetch(`${BACKEND_URL}/api/toggle_notification`, {
@@ -1552,7 +1554,7 @@ async function handleNotifyClick() {
             body: JSON.stringify({
                 user_id: userId,
                 nft_address: CURRENT_PAYMENT_ITEM.nft_address,
-                subscribe: !isSubscribed
+                subscribe: !isCurrentlyActive
             })
         });
         const data = await res.json();
@@ -1562,20 +1564,17 @@ async function handleNotifyClick() {
             // Set final state directly based on server response
             if (finalSubscribed) {
                 btn.classList.add('active');
-            } else {
-                btn.classList.remove('active');
-            }
-
-            if (finalSubscribed) {
                 tg.showAlert(t('notification_enabled_full') || "Вы получите уведомление, когда NFT освободится");
             } else {
+                btn.classList.remove('active');
                 tg.showAlert(t('notification_disabled_full') || "Уведомление выключено");
             }
             tg.HapticFeedback.notificationOccurred('success');
         }
     } catch (e) {
         console.error("Notify Error:", e);
-        tg.showAlert("Ошибка при переключении уведомления");
+    } finally {
+        btn.style.pointerEvents = 'auto';
     }
 }
 
@@ -1844,7 +1843,10 @@ async function openProductView(item, myPrice) {
         .then(r => r.json())
         .then(details => {
             if (details) {
-                if (details.rent_end) item.rent_end = details.rent_end;
+                // Try to get end time from various possible formats
+                const endTime = details.rent?.ends_at || details.rent_ends_at || details.rent_end;
+                if (endTime) item.rent_end = endTime;
+
                 if (details.status) item.status = details.status;
             }
             updateProductViewStatus(item, notifyBtn, countdownCont);
@@ -1864,7 +1866,10 @@ function updateProductViewStatus(item, notifyBtn, countdownCont) {
             const userId = tg.initDataUnsafe?.user?.id || 0;
             fetch(`${BACKEND_URL}/api/check_notification_status?user_id=${userId}&nft_address=${item.nft_address}`)
                 .then(r => r.json())
-                .then(d => { if (d.subscribed) notifyBtn.classList.add('active'); });
+                .then(d => {
+                    if (d.subscribed) notifyBtn.classList.add('active');
+                    else notifyBtn.classList.remove('active');
+                });
 
             console.log('Timer debug:', { rent_end: item.rent_end, countdownCont: !!countdownCont, status: item.status });
 
