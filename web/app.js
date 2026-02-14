@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://covers-alternatives-agreements-bloggers.trycloudflare.com";
+const BACKEND_URL = "https://santa-mate-customs-drivers.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -2950,6 +2950,38 @@ function renderPremiumCountdown(item, container) {
 
     update();
     container._timer = setInterval(update, 1000);
+}
+
+function renderCardTimer(item) {
+    if (!item.rent_end) return "";
+    const id = `card-timer-${item.nft_address.slice(-6)}`;
+
+    // Auto-update logic
+    setTimeout(() => {
+        const el = document.getElementById(id);
+        if (!el) return;
+
+        const update = () => {
+            const now = Math.floor(Date.now() / 1000);
+            const diff = item.rent_end - now;
+            if (diff <= 0) {
+                el.innerText = "EXPIRED";
+                el.style.color = "#FF3B30";
+                return;
+            }
+            const d = Math.floor(diff / 86400);
+            const h = Math.floor((diff % 86400) / 3600);
+            const m = Math.floor((diff % 3600) / 60);
+            const s = diff % 60;
+            const pad = (n) => n.toString().padStart(2, '0');
+            el.innerText = `${d}d ${pad(h)}:${pad(m)}:${pad(s)}`;
+        };
+        update();
+        if (el._timer) clearInterval(el._timer);
+        el._timer = setInterval(update, 1000);
+    }, 50);
+
+    return `<div id="${id}" class="card-days-badge-bottom">...</div>`;
 }
 
 function handleNotifyClick() {

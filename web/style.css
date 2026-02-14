@@ -554,7 +554,7 @@ body {
 .card-pricing-row {
     display: flex;
     justify-content: space-between;
-    gap: 12px;
+    gap: 2px;
     width: 100%;
 }
 
@@ -3306,8 +3306,26 @@ body.hide-filters .header-column {
     white-space: nowrap;
 }
 
-#notify-btn {
+.notify-btn {
+    position: relative !important;
+    z-index: 9999 !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
     transition: all 0.3s ease;
+}
+
+.notify-btn:active {
+    transform: scale(0.9);
+    background: rgba(255, 255, 255, 0.1);
 }
 
 #notify-btn.active {
