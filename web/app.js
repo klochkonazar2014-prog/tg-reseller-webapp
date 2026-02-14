@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://circuit-fraction-highlights-enb.trycloudflare.com";
+const BACKEND_URL = "https://reason-essay-toddler-beverly.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -491,12 +491,12 @@ function updateUILanguage() {
         'view-label-lang': t('language_selector'),
         'blue-wallet-text': t('connect_wallet'),
         'header-wallet-connect-text': t('connect_wallet'),
-        'label-filters': t('filters'),
-        'label-gift-number': t('gift_number'),
-        'label-sort': t('sort_by'),
-        'label-price': t('price'),
-        'btn-reset': t('clear_all'),
-        'btn-apply': t('show_results'),
+        'octo-label-filters': t('filters'),
+        'octo-label-gift-number': t('gift_number'),
+        'octo-label-sort': t('sort_by'),
+        'octo-label-price': t('price'),
+        'octo-btn-reset': t('clear_all'),
+        'octo-btn-apply': t('show_results'),
         'fee-notice-text': t('what_is_this_long'),
         'fee-what-mean': t('what_is_this'),
         'details-tab': t('details'),
@@ -755,7 +755,7 @@ function showHelp(type) {
     document.getElementById('help-modal').classList.add('active');
 }
 
-function closeHelpModal() {
+function closeOctoModal() {
     document.getElementById('help-modal-overlay').classList.remove('active');
     document.getElementById('help-modal').classList.remove('active');
 }
@@ -1543,7 +1543,7 @@ function closeFilterModal() {
     document.getElementById('filter-modal').classList.remove('active');
     document.getElementById('filter-modal-overlay').classList.remove('active');
 }
-function resetFilterModal() {
+function resetOctoModal() {
     ACTIVE_FILTERS = { nft: 'all', model: 'all', bg: 'all', symbol: 'all', tags: 'all', sort: 'price_asc', price_from: null, price_to: null, gift_number: null, search: ACTIVE_FILTERS.search };
     document.getElementById('filter-gift-number').value = "";
     document.getElementById('filter-price-from').value = "";
@@ -1551,7 +1551,7 @@ function resetFilterModal() {
     initFilterLists();
     applyHeaderSearch();
 }
-function applyFilterModal() {
+function applyOctoModal() {
     // Collect from inputs
     ACTIVE_FILTERS.gift_number = document.getElementById('filter-gift-number').value;
     ACTIVE_FILTERS.price_from = document.getElementById('filter-price-from').value;
@@ -1831,7 +1831,7 @@ async function openProductView(item) {
     const rangeEl = document.getElementById('view-duration-range');
     if (rangeEl) rangeEl.textContent = `${minDays} — ${maxDays}`;
     const discEl = document.getElementById('view-discount');
-    if (discEl) discEl.innerText = "0.1%";
+    if (discEl) disc.innerText = "0.1%";
     const durInp = document.getElementById('rent-duration-input');
     if (durInp) durInp.value = minDays;
 
@@ -1867,6 +1867,7 @@ async function openProductView(item) {
                 if (key === 'model' || key === 'bg' || key === 'symbol') ACTIVE_FILTERS.nft = colName;
                 ACTIVE_FILTERS[key] = val;
                 closeProductView();
+                switchTab(0);
                 loadLiveItems(true);
             };
             propertiesCont.appendChild(r);
@@ -2735,12 +2736,14 @@ async function loadFriendsList() {
         container.innerHTML = data.friends.map(f => {
             const name = f.full_name || f.username || `User ${f.user_id}`;
             const sub = f.username ? `@${f.username}` : `ID: ${f.user_id}`;
-            const avatar = `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(name)}&backgroundColor=0088cc,00aaff,1c1c1e`;
+            const nameForAvatar = name || (f.username ? `@${f.username}` : `U${f.user_id}`);
+            const avatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(nameForAvatar)}&background=0088cc&color=fff&size=128&bold=true`;
 
             return `
-                <div class="friend-item" style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); padding: 12px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.02); margin-bottom: 8px;">
+                <div class="friend-item" style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); padding: 12px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 10px;">
                     <div style="display: flex; align-items: center; gap: 12px;">
-                        <img src="${avatar}" class="friend-avatar" style="width: 44px; height: 44px; border-radius: 12px;">
+                        <img src="${avatar}" style="width: 44px; height: 44px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); object-fit: cover;" 
+                             onerror="this.src='https://ui-avatars.com/api/?name=U&background=2c2c2e&color=fff'">
                         <div>
                             <div style="font-weight: 700; font-size: 15px;">${name}</div>
                             <div style="font-size: 12px; color: #8b9bb4;">${sub}</div>
@@ -2781,8 +2784,11 @@ function closeEarningsHelp() {
 function shareReferralLink() {
     if (window.Telegram && window.Telegram.WebApp) {
         const userId = tg.initDataUnsafe.user?.id;
-        // This triggers the inline selection with a referral query
-        tg.switchInlineQuery(`ref_${userId}`, ["users", "groups", "channels"]);
+        const botUsername = "OctoRent_bot";
+        const shareUrl = `https://t.me/${botUsername}?start=ref_${userId}`;
+        const text = "💎 Присоединяйся к OctoRent и начни зарабатывать вместе со мной!";
+
+        tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(text)}`);
 
         tg.HapticFeedback.impactOccurred('medium');
     }
