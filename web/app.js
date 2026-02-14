@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://aruba-such-detection-shall.trycloudflare.com";
+const BACKEND_URL = "https://enforcement-light-buried-butter.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -744,13 +744,39 @@ function loadUserOrders() {
 function showHelp(type) {
     const title = document.getElementById('help-title');
     const body = document.getElementById('help-body');
+    const modal = document.getElementById('help-modal');
+
+    if (modal) modal.classList.add('help-modal-premium');
 
     if (type === 'fee') {
-        title.innerText = t('fee_help_title');
-        body.innerHTML = t('fee_help_body');
+        title.innerText = ""; // Title is inside body for premium look
+        body.innerHTML = `
+            <div class="help-section">
+                <div class="help-section-title">Зачем нужны дополнительные 0,2 тонны?</div>
+                <div class="help-section-text">
+                    Дополнительные 0,2 тонны отправляются для обработки транзакции по аренде в блокчейне.
+                </div>
+            </div>
+            <div class="help-section">
+                <div class="help-section-text">
+                    Эти средства используются для оплаты сетевых сборов и выполнения смарт-контракта.
+                </div>
+            </div>
+            <div class="help-section">
+                <div class="help-section-text">
+                    Фактические затраты обычно составляют всего несколько центов. Это можно увидеть в истории транзакций.
+                </div>
+            </div>
+            <div class="help-section">
+                <div class="help-section-title">Это нормально?</div>
+                <div class="help-section-text">
+                    Это стандартная практика для транзакций в сети TON и не только. Невозвратная часть идет на оплату комиссий сети, а не на оплату услуг платформы.
+                </div>
+            </div>
+        `;
     } else if (type === 'listing') {
         title.innerText = t('listing_help_title');
-        body.innerHTML = t('listing_help_body');
+        body.innerHTML = `<div class="help-section-text">${t('listing_help_body')}</div>`;
     }
 
     document.getElementById('help-modal-overlay').classList.add('active');
@@ -2154,7 +2180,30 @@ function handleShareClick() {
 }
 
 function handleNotifyClick() {
-    showToast(CURRENT_LANG === 'ru' ? "Вы получите уведомление, когда NFT освободится" : "You will be notified when this NFT is available");
+    const btn = document.getElementById('notify-btn');
+    const isActive = btn.classList.toggle('notify-btn-active');
+
+    // Toggle bell icon path: normal vs slashed
+    // Normal: path(M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9), path(M13.73 21a2 2 0 0 1-3.46 0)
+    // Slashed: + line from 1 1 to 23 23
+    if (isActive) {
+        btn.innerHTML = `
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                <line x1="1" y1="1" x2="23" y2="23"></line>
+            </svg>`;
+        showToast(CURRENT_LANG === 'ru' ? "Уведомление об окончании аренды включено" : "Notification enabled");
+        tg.HapticFeedback.notificationOccurred('success');
+    } else {
+        btn.innerHTML = `
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>`;
+        showToast(CURRENT_LANG === 'ru' ? "Уведомления выключены" : "Notifications disabled");
+        tg.HapticFeedback.impactOccurred('light');
+    }
 }
 
 function copyNftTitle(name) {
@@ -2627,7 +2676,7 @@ function startCountdown(endTime, element) {
         const diff = (endTime * 1000) - now;
 
         if (diff <= 0) {
-            element.innerHTML = "Expired";
+            element.innerHTML = `<span style="color:#FF3B30; font-weight:800;">EXPIRED</span>`;
             if (countdownInterval) clearInterval(countdownInterval);
             return;
         }
@@ -2636,20 +2685,22 @@ function startCountdown(endTime, element) {
         const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
         const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
         const s = Math.floor((diff % (1000 * 60)) / 1000);
+        const pad = (n) => n.toString().padStart(2, '0');
 
-        // Format: [4 days] : [07] : [22] : [45] Month DD, YYYY
-        // We use a flexible layout
         const dateStr = new Date(endTime * 1000).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 
         element.innerHTML = `
-            <div class="cd-segment cd-days">${d} ${t('days')}</div>
-            <div class="cd-sep">:</div>
-            <div class="cd-segment">${String(h).padStart(2, '0')}</div>
-            <div class="cd-sep">:</div>
-            <div class="cd-segment">${String(m).padStart(2, '0')}</div>
-            <div class="cd-sep">:</div>
-            <div class="cd-segment">${String(s).padStart(2, '0')}</div>
-            <div class="cd-date">${dateStr}</div>
+            <div class="countdown-market-container">
+                <span class="countdown-market-label">Ends in</span>
+                <div class="countdown-market-pill">${d} days</div>
+                <span class="countdown-market-sep">:</span>
+                <div class="countdown-market-pill">${pad(h)}</div>
+                <span class="countdown-market-sep">:</span>
+                <div class="countdown-market-pill">${pad(m)}</div>
+                <span class="countdown-market-sep">:</span>
+                <div class="countdown-market-pill">${pad(s)}</div>
+                <span class="countdown-market-date">${dateStr}</span>
+            </div>
         `;
     }
 

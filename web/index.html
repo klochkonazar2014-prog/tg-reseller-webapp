@@ -6,7 +6,7 @@
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>OctoRent</title>
-    <script src="https://telegram.org/js/telegram-web-app.js?v=1771031676"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js?v=1771032894"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;800;900&display=swap" rel="stylesheet">
     <script src="lottie.min.js"></script>
@@ -33,7 +33,7 @@
             return false;
         };
     </script>
-    <link rel="stylesheet" href="style.css?v=1771031676">
+    <link rel="stylesheet" href="style.css?v=1771032894">
     <style>
         /* CRITICAL OVERRIDES - DO NOT REMOVE */
         .main-rent-btn svg,
@@ -145,10 +145,6 @@
 
             <div id="view-collection" class="product-collection-link">Collection ></div>
             <div id="view-address" style="display:none !important;"></div>
-            <div id="view-countdown-container" style="display:none; margin-top:12px; font-weight: 700;">
-                <span id="view-countdown-label">Ends in</span> <span id="view-countdown-timer" style="color: #fff;">00 :
-                    00 : 00 : 00</span>
-            </div>
             <div id="view-release-badge" style="display:none; margin-top:12px;"></div>
 
 
@@ -204,431 +200,446 @@
                     style="flex: 1; background: linear-gradient(135deg, #0098EA 0%, #0077CC 100%); border:none; border-radius:16px; height:52px; color:#fff; font-weight:700; font-size:14px; display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer;">
                     Арендовать за <span id="rent-btn-price" class="icon-ton">0.00</span>
                 </button>
-            </div>
-
-            <div class="fee-notice-box"
-                style="margin-top: 16px; background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 12px; font-size: 11px; color: #8794a1;">
-                <span><span id="fee-notice-text">(Дополнительно вам потребуется отправить 0.2 тонны для обработки
-                        транзакции. Оставшаяся тонна будет вам возвращена.</span>
-                    <a href="javascript:void(0)" onclick="showHelp('fee')"
-                        style="color: #0088cc; text-decoration: none;" id="fee-what-mean">Что это значит?</a>)</span>
-            </div>
-
-            <div id="listing-warning-box"
-                style="display: none; margin-top: 16px; background: rgba(255, 149, 0, 0.1); border: 1px solid rgba(255, 149, 0, 0.2); border-radius: 12px; padding: 12px; font-size: 11px; color: #FF9500;">
-                <div style="font-weight: 700; margin-bottom: 2px;">This gift was listed for rent less than 24 hours
-                    ago.
+                <div id="view-countdown-container" style="display:none; margin-top:16px;">
+                    <div id="view-countdown-timer"></div>
                 </div>
-                <div>Listed at: <span id="view-listed-time">...</span> <a href="javascript:void(0)"
-                        onclick="showHelp('listing')" style="color: #FF9500; text-decoration: underline;">What does
-                        it
-                        mean?</a></div>
-            </div>
 
-
-            <div id="view-properties-tabs" class="properties-tabs"
-                style="margin-top: 24px; border-bottom: 2px solid rgba(255,255,255,0.05); display: flex; gap: 20px;">
-                <div class="tab-item active" id="details-tab"
-                    style="color: #fff; font-weight: 700; font-size: 14px; padding-bottom: 8px; border-bottom: 2px solid var(--accent-blue); cursor: pointer;">
-                    Details</div>
-            </div>
-
-            <div id="view-properties" style="margin-top: 16px; margin-bottom: 40px;">
-                <!-- Dynamic props here -->
-            </div>
-
-        </div>
-    </div>
-
-    <!-- TC Link Modal -->
-    <div id="tc-modal-overlay" class="modal-overlay" onclick="closeTcModal()"></div>
-    <div id="tc-modal" class="filter-panel"
-        style="height: auto; max-height: 80vh; bottom: 0; border-radius: 24px 24px 0 0;">
-        <div class="modal-header">
-            <h3>Подключить Fragment</h3>
-            <button onclick="closeTcModal()"
-                style="background:none; border:none; color:#8b9bb4; font-size:24px; cursor: pointer;">✕</button>
-        </div>
-        <div style="padding: 20px; color: #8b9bb4; font-size: 14px;">
-            <p>1. Зайдите на Fragment.com (с компьютера или другого браузера).</p>
-            <p>2. Нажмите <b>Connect TON</b>.</p>
-            <p>3. Скопируйте ссылку <b>TON Connect Link</b> (кнопка рядом с QR-кодом).</p>
-            <p>4. Вставьте её сюда:</p>
-
-            <input type="text" id="tc-link-input" placeholder="tc://..."
-                style="width: 100%; height: 50px; background: rgba(255,255,255,0.05); border: 1px solid #333; border-radius: 12px; margin-top: 15px; color: #fff; padding: 0 15px;">
-
-            <input type="hidden" id="tc-current-order-id">
-
-            <button onclick="submitTcLink()" class="btn-yellow" style="width: 100%; margin-top: 20px;">Подключить
-                кошелек</button>
-        </div>
-    </div>
-
-    <!-- Help Modal -->
-    <div id="help-modal-overlay" class="modal-overlay" onclick="closeHelpModal()"></div>
-    <div id="help-modal" class="filter-panel"
-        style="height: auto; max-height: 80vh; bottom: 0; border-radius: 24px 24px 0 0;">
-        <div class="modal-header">
-            <h3 id="help-title">Help</h3>
-            <button onclick="closeHelpModal()"
-                style="background:none; border:none; color:#8b9bb4; font-size:24px; cursor: pointer;">✕</button>
-        </div>
-        <div id="help-body" style="padding: 20px; color: #fff; font-size: 14px; line-height: 1.6;">
-        </div>
-    </div>
-
-    <!-- Premium Loading Screen -->
-    <div id="loading-screen">
-        <div class="premium-spinner"></div>
-        <div class="loader-logo">OCTORENT</div>
-    </div>
-
-    <!-- Header OctoRent -->
-    <div class="header-column">
-        <!-- Search -->
-        <div class="search-row">
-            <div class="search-wrapper">
-                <svg style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #8b9bb4;"
-                    width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                </svg>
-                <input type="text" id="search-input" class="search-bar" placeholder="Поиск по названию">
-            </div>
-
-
-            <!-- Unified Header Badge (Pill) -->
-            <div id="header-unified-badge" class="header-unified-badge" onclick="handleHeaderBadgeClick()">
-                <div id="header-wallet-pill" class="header-pill-content" style="display:none;">
-                    <span class="icon-ton"></span>
-                    <span id="header-wallet-address">Wallet</span>
+                <div class="fee-notice-box"
+                    style="margin-top: 16px; background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 12px; font-size: 11px; color: #8794a1;">
+                    <span><span id="fee-notice-text">(Дополнительно вам потребуется отправить 0.2 тонны для обработки
+                            транзакции. Оставшаяся тонна будет вам возвращена.</span>
+                        <a href="javascript:void(0)" onclick="showHelp('fee')"
+                            style="color: #0088cc; text-decoration: none;" id="fee-what-mean">Что это
+                            значит?</a>)</span>
                 </div>
-                <div id="header-connect-pill" class="header-pill-content" style="display:flex;">
-                    <span class="icon-ton"></span>
-                    <span id="header-wallet-connect-text">Connect Wallet</span>
-                </div>
-                <img id="header-mini-avatar" src="https://ui-avatars.com/api/?name=U&background=2c2c2e&color=fff"
-                    class="header-badge-avatar">
-            </div>
-        </div>
 
-        <!-- Chips -->
-        <div class="chips-row">
-            <button class="chip-btn icon-only" onclick="openOctoModal()">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <path d="M4 21v-7m0-4V3m8 18v-9m0-4V3m8 18v-5m0-4V3M1 14h6m2-6h6m2 8h6"></path>
-                </svg>
-            </button>
-
-            <button class="chip-btn" onclick="toggleGenericModal('nft')">
-                <span id="chip-label-nft">NFT</span> <span class="arrow-v">▼</span>
-            </button>
-            <button class="chip-btn" onclick="toggleGenericModal('model')">
-                <span id="chip-label-model">Модель</span> <span class="arrow-v">▼</span>
-            </button>
-            <button class="chip-btn" onclick="toggleGenericModal('bg')">
-                <span id="chip-label-bg">Фон</span> <span class="arrow-v">▼</span>
-            </button>
-            <button class="chip-btn" onclick="toggleGenericModal('symbol')">
-                <span id="chip-label-symbol">Символ</span> <span class="arrow-v">▼</span>
-            </button>
-        </div>
-
-        <input type="hidden" id="filter-nft" value="all">
-        <input type="hidden" id="filter-sort" value="price_asc">
-    </div>
-
-    <!-- Filter Modal (Advanced) -->
-    <div id="octo-modal-overlay" class="modal-overlay" onclick="closeOctoModal()"></div>
-    <div id="octo-modal" class="filter-panel">
-        <div class="octo-modal-header">
-            <h3 id="octo-label-filters">Фильтры</h3>
-            <button onclick="closeOctoModal()"
-                style="background: none; border: none; color: #8b9bb4; padding: 10px; cursor: pointer;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-            </button>
-        </div>
-        <div class="filter-body">
-            <div id="octo-label-gift-number" class="filter-section-title">Номер подарка</div>
-            <div class="filter-input-wrapper">
-                <input type="number" id="filter-gift-number" placeholder="Например: 123">
-            </div>
-
-            <div class="filter-section">
-                <span id="octo-label-sort">Сортировать по</span>
-                <div id="sort-list-container" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;">
-                    <!-- Injected by JS -->
-                </div>
-            </div>
-
-            <div class="filter-section">
-                <span id="octo-label-price">Цена</span>
-                <div class="filter-accordion-arrow">▼</div>
-            </div>
-            <div id="price-acc" class="accordion-content">
-                <div class="filter-input-row" style="padding-top:10px;">
-                    <div class="filter-input-wrapper">
-                        <span>▼</span>
-                        <input type="number" id="filter-price-from" placeholder="От">
+                <div id="listing-warning-box"
+                    style="display: none; margin-top: 16px; background: rgba(255, 149, 0, 0.1); border: 1px solid rgba(255, 149, 0, 0.2); border-radius: 12px; padding: 12px; font-size: 11px; color: #FF9500;">
+                    <div style="font-weight: 700; margin-bottom: 2px;">This gift was listed for rent less than 24 hours
+                        ago.
                     </div>
-                    <div style="color:#555">—</div>
-                    <div class="filter-input-wrapper">
-                        <input type="number" id="filter-price-to" placeholder="До">
+                    <div>Listed at: <span id="view-listed-time">...</span> <a href="javascript:void(0)"
+                            onclick="showHelp('listing')" style="color: #FF9500; text-decoration: underline;">What does
+                            it
+                            mean?</a></div>
+                </div>
+
+
+                <div id="view-properties-tabs" class="properties-tabs"
+                    style="margin-top: 24px; border-bottom: 2px solid rgba(255,255,255,0.05); display: flex; gap: 20px;">
+                    <div class="tab-item active" id="details-tab"
+                        style="color: #fff; font-weight: 700; font-size: 14px; padding-bottom: 8px; border-bottom: 2px solid var(--accent-blue); cursor: pointer;">
+                        Details</div>
+                </div>
+
+                <div id="view-properties" style="margin-top: 16px; margin-bottom: 40px;">
+                    <!-- Dynamic props here -->
+                </div>
+
+            </div>
+        </div>
+
+        <!-- TC Link Modal -->
+        <div id="tc-modal-overlay" class="modal-overlay" onclick="closeTcModal()"></div>
+        <div id="tc-modal" class="filter-panel"
+            style="height: auto; max-height: 80vh; bottom: 0; border-radius: 24px 24px 0 0;">
+            <div class="modal-header">
+                <h3>Подключить Fragment</h3>
+                <button onclick="closeTcModal()"
+                    style="background:none; border:none; color:#8b9bb4; font-size:24px; cursor: pointer;">✕</button>
+            </div>
+            <div style="padding: 20px; color: #8b9bb4; font-size: 14px;">
+                <p>1. Зайдите на Fragment.com (с компьютера или другого браузера).</p>
+                <p>2. Нажмите <b>Connect TON</b>.</p>
+                <p>3. Скопируйте ссылку <b>TON Connect Link</b> (кнопка рядом с QR-кодом).</p>
+                <p>4. Вставьте её сюда:</p>
+
+                <input type="text" id="tc-link-input" placeholder="tc://..."
+                    style="width: 100%; height: 50px; background: rgba(255,255,255,0.05); border: 1px solid #333; border-radius: 12px; margin-top: 15px; color: #fff; padding: 0 15px;">
+
+                <input type="hidden" id="tc-current-order-id">
+
+                <button onclick="submitTcLink()" class="btn-yellow" style="width: 100%; margin-top: 20px;">Подключить
+                    кошелек</button>
+            </div>
+        </div>
+
+        <!-- Help Modal -->
+        <div id="help-modal-overlay" class="modal-overlay" onclick="closeHelpModal()"></div>
+        <div id="help-modal" class="filter-panel"
+            style="height: auto; max-height: 80vh; bottom: 0; border-radius: 24px 24px 0 0;">
+            <div class="modal-header">
+                <h3 id="help-title">Help</h3>
+                <button onclick="closeHelpModal()"
+                    style="background:none; border:none; color:#8b9bb4; font-size:24px; cursor: pointer;">✕</button>
+            </div>
+            <div id="help-body" style="padding: 20px; color: #fff; font-size: 14px; line-height: 1.6;">
+            </div>
+        </div>
+
+        <!-- Premium Loading Screen -->
+        <div id="loading-screen">
+            <div class="premium-spinner"></div>
+            <div class="loader-logo">OCTORENT</div>
+        </div>
+
+        <!-- Header OctoRent -->
+        <div class="header-column">
+            <!-- Search -->
+            <div class="search-row">
+                <div class="search-wrapper">
+                    <svg style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #8b9bb4;"
+                        width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" id="search-input" class="search-bar" placeholder="Поиск по названию">
+                </div>
+
+
+                <!-- Unified Header Badge (Pill) -->
+                <div id="header-unified-badge" class="header-unified-badge" onclick="handleHeaderBadgeClick()">
+                    <div id="header-wallet-pill" class="header-pill-content" style="display:none;">
+                        <span class="icon-ton"></span>
+                        <span id="header-wallet-address">Wallet</span>
                     </div>
+                    <div id="header-connect-pill" class="header-pill-content" style="display:flex;">
+                        <span class="icon-ton"></span>
+                        <span id="header-wallet-connect-text">Connect Wallet</span>
+                    </div>
+                    <img id="header-mini-avatar" src="https://ui-avatars.com/api/?name=U&background=2c2c2e&color=fff"
+                        class="header-badge-avatar">
                 </div>
             </div>
 
+            <!-- Chips -->
+            <div class="chips-row">
+                <button class="chip-btn icon-only" onclick="openOctoModal()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5">
+                        <path d="M4 21v-7m0-4V3m8 18v-9m0-4V3m8 18v-5m0-4V3M1 14h6m2-6h6m2 8h6"></path>
+                    </svg>
+                </button>
 
-            <div class="filter-accordion" onclick="toggleAccordion('nft-acc', this)">
-                <span>NFT</span>
-                <div class="filter-accordion-arrow">▼</div>
-            </div>
-            <div id="nft-acc" class="accordion-content">
-                <div class="filter-search-wrapper" style="padding: 10px 20px;">
-                    <input type="text" id="filter-search-nft" class="filter-search-input" placeholder="Поиск NFT..."
-                        oninput="filterList('nft')">
-                </div>
-                <div id="nft-list-container" style="padding: 0 20px;"></div>
-            </div>
-
-            <div class="filter-accordion" onclick="toggleAccordion('model-acc', this)">
-                <span>Модель</span>
-                <div class="filter-accordion-arrow">▼</div>
-            </div>
-            <div id="model-acc" class="accordion-content">
-                <div class="filter-search-wrapper" style="padding: 10px 20px;">
-                    <input type="text" id="filter-search-model" class="filter-search-input"
-                        placeholder="Поиск модели..." oninput="filterList('model')">
-                </div>
-                <div id="model-list-container" style="padding: 0 20px;"></div>
-            </div>
-
-            <div class="filter-accordion" onclick="toggleAccordion('bg-acc', this)">
-                <span>Фон</span>
-                <div class="filter-accordion-arrow">▼</div>
-            </div>
-            <div id="bg-acc" class="accordion-content">
-                <div class="filter-search-wrapper" style="padding: 10px 20px;">
-                    <input type="text" id="filter-search-bg" class="filter-search-input" placeholder="Поиск фона..."
-                        oninput="filterList('bg')">
-                </div>
-                <div id="bg-list-container" style="padding: 0 20px;"></div>
-            </div>
-
-            <div class="filter-accordion" onclick="toggleAccordion('symbol-acc', this)">
-                <span>Символ</span>
-                <div class="filter-accordion-arrow">▼</div>
-            </div>
-            <div id="symbol-acc" class="accordion-content">
-                <div class="filter-search-wrapper" style="padding: 10px 20px;">
-                    <input type="text" id="filter-search-symbol" class="filter-search-input"
-                        placeholder="Поиск символа..." oninput="filterList('symbol')">
-                </div>
-                <div id="symbol-list-container" style="padding: 0 20px;"></div>
-            </div>
-        </div>
-
-        <div class="octo-footer">
-            <button id="octo-btn-reset" class="btn-gray" onclick="resetOctoModal()">Очистить все</button>
-            <button id="octo-btn-apply" class="btn-yellow" onclick="applyOctoModal()">Показать результаты</button>
-        </div>
-    </div>
-
-    <!-- Content -->
-    <div class="container">
-        <!-- Market Tab -->
-        <div id="market-container">
-            <div id="top-loader" class="loader">Загрузка данных рынка...</div>
-            <div id="items-view" class="grid"></div>
-            <div id="scroll-loader" class="premium-spinner" style="display:none; margin: 20px auto;"></div>
-            <div id="loader-trigger" style="height: 40px;"></div>
-        </div>
-
-        <!-- Profile Tab -->
-    </div>
-
-    <!-- Friends Tab -->
-    <div id="friends-container" style="display: none; padding-bottom: 80px;">
-        <div class="friends-balance-card"
-            style="background: linear-gradient(135deg, #0098EA 0%, #0077CC 100%); padding: 24px; border-radius: 20px; text-align: center; margin: 16px; box-shadow: 0 8px 16px rgba(0,136,204,0.3);">
-            <div
-                style="font-size: 13px; font-weight: 700; opacity: 0.8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
-                Доступный баланс</div>
-            <div
-                style="font-size: 36px;font-weight: 900;display: flex;align-items: center;justify-content: center;gap: 5px;">
-                <span id="friends-balance-val">0</span>
-                <img src="pictures/ton.png" alt="TON"
-                    style="width: 50px; height: 50px; filter: brightness(0) invert(1);">
-            </div>
-            <button class="withdraw-btn-white" onclick="handleReferralWithdraw()"
-                style="margin-top: 20px; background: rgb(255, 255, 255); color: rgb(0, 136, 204); border: none; padding: 12px 24px; border-radius: 12px; font-weight: 800; width: 100%; transition: transform 0.2s; transform: scale(1);"
-                onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">Вывести
-                средства</button>
-        </div>
-
-        <div class="commission-notice"
-            style="background: rgba(255,255,255,0.03); padding: 16px; border-radius: 16px; margin: 0 16px 24px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border: 1px solid rgba(255,255,255,0.05);">
-            <div style="font-size: 13px; color: #8b9bb4; line-height: 1.5;">За каждую аренду твоего друга мы выплачиваем
-                тебе бонус <b>25%</b>! 💸</div>
-            <button class="how-much-link" onclick="showEarningsHelp()"
-                style="background: rgba(0,136,204,0.15); border: none; color: #00aaff; padding: 8px 12px; border-radius: 10px; font-size: 12px; font-weight: 800; white-space: nowrap;">Сколько
-                это?</button>
-        </div>
-
-        <div class="friends-list-section" style="padding: 0 16px;">
-            <h3
-                style="font-size: 20px; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; gap: 10px;">
-                👥 <span id="friends-list-title">Мои друзья</span>
-            </h3>
-            <div id="friends-list-items" style="display: flex; flex-direction: column; gap: 12px;">
-                <!-- Items injected by JS -->
-                <div id="empty-friends-hint"
-                    style="text-align: center; padding: 60px 20px; color: #8b9bb4; font-size: 15px; background: rgba(255,255,255,0.02); border-radius: 16px; border: 1px dashed rgba(255,255,255,0.1);">
-                    У вас пока нет друзей в системе.<br><span
-                        style="font-size: 13px; opacity: 0.7; margin-top: 8px; display: block;">Поделитесь ссылкой,
-                        чтобы начать зарабатывать!</span>
-                </div>
-            </div>
-
-            <div style="margin-top: 32px;">
-                <button class="btn-yellow" onclick="shareReferralLink()"
-                    style="width: 100%; height: 56px; font-weight: 900; font-size: 17px; border-radius: 16px; box-shadow: 0 4px 12px rgba(255,200,0,0.2);">
-                    Пригласить друзей
+                <button class="chip-btn" onclick="toggleGenericModal('nft')">
+                    <span id="chip-label-nft">NFT</span> <span class="arrow-v">▼</span>
+                </button>
+                <button class="chip-btn" onclick="toggleGenericModal('model')">
+                    <span id="chip-label-model">Модель</span> <span class="arrow-v">▼</span>
+                </button>
+                <button class="chip-btn" onclick="toggleGenericModal('bg')">
+                    <span id="chip-label-bg">Фон</span> <span class="arrow-v">▼</span>
+                </button>
+                <button class="chip-btn" onclick="toggleGenericModal('symbol')">
+                    <span id="chip-label-symbol">Символ</span> <span class="arrow-v">▼</span>
                 </button>
             </div>
-        </div>
-    </div>
 
-    <!-- Earnings Help Bottom Sheet -->
-    <div id="earnings-help-sheet" class="bottom-sheet">
-        <div class="bottom-sheet-backdrop" onclick="closeEarningsHelp()"></div>
-        <div class="bottom-sheet-content">
-            <div class="bottom-sheet-header">
-                <div class="bottom-sheet-dash"></div>
-                <h3>Бонусная программа</h3>
+            <input type="hidden" id="filter-nft" value="all">
+            <input type="hidden" id="filter-sort" value="price_asc">
+        </div>
+
+        <!-- Filter Modal (Advanced) -->
+        <div id="octo-modal-overlay" class="modal-overlay" onclick="closeOctoModal()"></div>
+        <div id="octo-modal" class="filter-panel">
+            <div class="octo-modal-header">
+                <h3 id="octo-label-filters">Фильтры</h3>
+                <button onclick="closeOctoModal()"
+                    style="background: none; border: none; color: #8b9bb4; padding: 10px; cursor: pointer;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
             </div>
-            <div class="bottom-sheet-body">
-                <p style="font-size: 15px; color: #8b9bb4; line-height: 1.6; margin-bottom: 24px;">
-                    За каждую аренду твоего друга мы выплачиваем тебе бонус — <b style="color: #fff;">25%</b> от суммы
-                    нашей комиссии! Нам не жалко, мы просто делимся прибылью за твою активность! 💸
-                </p>
-                <div class="earnings-table-container"
-                    style="background: rgba(255,255,255,0.03); border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05);">
-                    <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
-                        <thead style="background: rgba(255,255,255,0.05);">
-                            <tr>
-                                <th style="text-align: left; padding: 14px; color: #8b9bb4;">Цена аренды</th>
-                                <th style="text-align: right; padding: 14px; color: #8b9bb4;">Ваш доход</th>
-                            </tr>
-                        </thead>
-                        <tbody style="color: #ffffff;">
-                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                                <td style="padding: 14px;">0.01 TON</td>
-                                <td style="padding: 14px; text-align: right; font-weight: 800; color: #00d488;">+0.012
-                                    TON</td>
-                            </tr>
-                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                                <td style="padding: 14px;">0.1 TON</td>
-                                <td style="padding: 14px; text-align: right; font-weight: 800; color: #00d488;">+0.012
-                                    TON</td>
-                            </tr>
-                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                                <td style="padding: 14px;">0.25 TON</td>
-                                <td style="padding: 14px; text-align: right; font-weight: 800; color: #00d488;">+0.025
-                                    TON</td>
-                            </tr>
-                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                                <td style="padding: 14px;">0.50 TON</td>
-                                <td style="padding: 14px; text-align: right; font-weight: 800; color: #00d488;">+0.037
-                                    TON</td>
-                            </tr>
-                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                                <td style="padding: 14px;">1.00 TON</td>
-                                <td style="padding: 14px; text-align: right; font-weight: 800; color: #00d488;">+0.062
-                                    TON</td>
-                            </tr>
-                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                                <td style="padding: 14px;">2.50 TON</td>
-                                <td style="padding: 14px; text-align: right; font-weight: 800; color: #00d488;">+0.112
-                                    TON</td>
-                            </tr>
-                            <tr>
-                                <td style="padding: 14px;">5.00 TON</td>
-                                <td style="padding: 14px; text-align: right; font-weight: 800; color: #00d488;">+0.187
-                                    TON</td>
-                            </tr>
-                        </tbody>
-                    </table>
+            <div class="filter-body">
+                <div id="octo-label-gift-number" class="filter-section-title">Номер подарка</div>
+                <div class="filter-input-wrapper">
+                    <input type="number" id="filter-gift-number" placeholder="Например: 123">
                 </div>
+
+                <div class="filter-section">
+                    <span id="octo-label-sort">Сортировать по</span>
+                    <div id="sort-list-container" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;">
+                        <!-- Injected by JS -->
+                    </div>
+                </div>
+
+                <div class="filter-section">
+                    <span id="octo-label-price">Цена</span>
+                    <div class="filter-accordion-arrow">▼</div>
+                </div>
+                <div id="price-acc" class="accordion-content">
+                    <div class="filter-input-row" style="padding-top:10px;">
+                        <div class="filter-input-wrapper">
+                            <span>▼</span>
+                            <input type="number" id="filter-price-from" placeholder="От">
+                        </div>
+                        <div style="color:#555">—</div>
+                        <div class="filter-input-wrapper">
+                            <input type="number" id="filter-price-to" placeholder="До">
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="filter-accordion" onclick="toggleAccordion('nft-acc', this)">
+                    <span>NFT</span>
+                    <div class="filter-accordion-arrow">▼</div>
+                </div>
+                <div id="nft-acc" class="accordion-content">
+                    <div class="filter-search-wrapper" style="padding: 10px 20px;">
+                        <input type="text" id="filter-search-nft" class="filter-search-input" placeholder="Поиск NFT..."
+                            oninput="filterList('nft')">
+                    </div>
+                    <div id="nft-list-container" style="padding: 0 20px;"></div>
+                </div>
+
+                <div class="filter-accordion" onclick="toggleAccordion('model-acc', this)">
+                    <span>Модель</span>
+                    <div class="filter-accordion-arrow">▼</div>
+                </div>
+                <div id="model-acc" class="accordion-content">
+                    <div class="filter-search-wrapper" style="padding: 10px 20px;">
+                        <input type="text" id="filter-search-model" class="filter-search-input"
+                            placeholder="Поиск модели..." oninput="filterList('model')">
+                    </div>
+                    <div id="model-list-container" style="padding: 0 20px;"></div>
+                </div>
+
+                <div class="filter-accordion" onclick="toggleAccordion('bg-acc', this)">
+                    <span>Фон</span>
+                    <div class="filter-accordion-arrow">▼</div>
+                </div>
+                <div id="bg-acc" class="accordion-content">
+                    <div class="filter-search-wrapper" style="padding: 10px 20px;">
+                        <input type="text" id="filter-search-bg" class="filter-search-input" placeholder="Поиск фона..."
+                            oninput="filterList('bg')">
+                    </div>
+                    <div id="bg-list-container" style="padding: 0 20px;"></div>
+                </div>
+
+                <div class="filter-accordion" onclick="toggleAccordion('symbol-acc', this)">
+                    <span>Символ</span>
+                    <div class="filter-accordion-arrow">▼</div>
+                </div>
+                <div id="symbol-acc" class="accordion-content">
+                    <div class="filter-search-wrapper" style="padding: 10px 20px;">
+                        <input type="text" id="filter-search-symbol" class="filter-search-input"
+                            placeholder="Поиск символа..." oninput="filterList('symbol')">
+                    </div>
+                    <div id="symbol-list-container" style="padding: 0 20px;"></div>
+                </div>
+            </div>
+
+            <div class="octo-footer">
+                <button id="octo-btn-reset" class="btn-gray" onclick="resetOctoModal()">Очистить все</button>
+                <button id="octo-btn-apply" class="btn-yellow" onclick="applyOctoModal()">Показать результаты</button>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="container">
+            <!-- Market Tab -->
+            <div id="market-container">
+                <div id="top-loader" class="loader">Загрузка данных рынка...</div>
+                <div id="items-view" class="grid"></div>
+                <div id="scroll-loader" class="premium-spinner" style="display:none; margin: 20px auto;"></div>
+                <div id="loader-trigger" style="height: 40px;"></div>
+            </div>
+
+            <!-- Profile Tab -->
+        </div>
+
+        <!-- Friends Tab -->
+        <div id="friends-container" style="display: none; padding-bottom: 80px;">
+            <div class="friends-balance-card"
+                style="background: linear-gradient(135deg, #0098EA 0%, #0077CC 100%); padding: 24px; border-radius: 20px; text-align: center; margin: 16px; box-shadow: 0 8px 16px rgba(0,136,204,0.3);">
                 <div
-                    style="background: rgba(0,136,204,0.1); padding: 14px; border-radius: 14px; margin-top: 24px; font-size: 13px; color: #00aaff; display: flex; gap: 12px; line-height: 1.4;">
-                    <span style="font-size: 18px;">💡</span>
-                    <span>Рекомендуй OctoRent друзьям и получай пассивный доход <b>25%</b> с каждой их аренды!</span>
+                    style="font-size: 13px; font-weight: 700; opacity: 0.8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
+                    Доступный баланс</div>
+                <div
+                    style="font-size: 36px;font-weight: 900;display: flex;align-items: center;justify-content: center;gap: 5px;">
+                    <span id="friends-balance-val">0</span>
+                    <img src="pictures/ton.png" alt="TON"
+                        style="width: 50px; height: 50px; filter: brightness(0) invert(1);">
                 </div>
-                <button class="btn-yellow"
-                    style="width: 100%; margin-top: 28px; height: 50px; font-weight: 800; font-size: 16px; border-radius: 14px;"
-                    onclick="closeEarningsHelp()">Понятно</button>
+                <button class="withdraw-btn-white" onclick="handleReferralWithdraw()"
+                    style="margin-top: 20px; background: rgb(255, 255, 255); color: rgb(0, 136, 204); border: none; padding: 12px 24px; border-radius: 12px; font-weight: 800; width: 100%; transition: transform 0.2s; transform: scale(1);"
+                    onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">Вывести
+                    средства</button>
             </div>
-        </div>
-    </div>
 
-    <div id="profile-container" style="display: none;">
-        <!-- Profile Dashboard Header -->
-        <div class="profile-dashboard-card">
-            <div class="profile-main-info">
-                <div class="avatar-glow-wrapper">
-                    <img id="profile-avatar" src="https://ui-avatars.com/api/?name=User&background=0088cc&color=fff"
-                        class="dashboard-avatar">
+            <div class="commission-notice"
+                style="background: rgba(255,255,255,0.03); padding: 16px; border-radius: 16px; margin: 0 16px 24px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                <div style="font-size: 13px; color: #8b9bb4; line-height: 1.5;">За каждую аренду твоего друга мы
+                    выплачиваем
+                    тебе бонус <b>25%</b>! 💸</div>
+                <button class="how-much-link" onclick="showEarningsHelp()"
+                    style="background: rgba(0,136,204,0.15); border: none; color: #00aaff; padding: 8px 12px; border-radius: 10px; font-size: 12px; font-weight: 800; white-space: nowrap;">Сколько
+                    это?</button>
+            </div>
+
+            <div class="friends-list-section" style="padding: 0 16px;">
+                <h3
+                    style="font-size: 20px; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; gap: 10px;">
+                    👥 <span id="friends-list-title">Мои друзья</span>
+                </h3>
+                <div id="friends-list-items" style="display: flex; flex-direction: column; gap: 12px;">
+                    <!-- Items injected by JS -->
+                    <div id="empty-friends-hint"
+                        style="text-align: center; padding: 60px 20px; color: #8b9bb4; font-size: 15px; background: rgba(255,255,255,0.02); border-radius: 16px; border: 1px dashed rgba(255,255,255,0.1);">
+                        У вас пока нет друзей в системе.<br><span
+                            style="font-size: 13px; opacity: 0.7; margin-top: 8px; display: block;">Поделитесь ссылкой,
+                            чтобы начать зарабатывать!</span>
+                    </div>
                 </div>
-                <div class="profile-text-info">
-                    <h2 id="profile-name">Telegram User</h2>
-                    <p id="profile-id">ID: 000000000</p>
+
+                <div style="margin-top: 32px;">
+                    <button class="btn-yellow" onclick="shareReferralLink()"
+                        style="width: 100%; height: 56px; font-weight: 900; font-size: 17px; border-radius: 16px; box-shadow: 0 4px 12px rgba(255,200,0,0.2);">
+                        Пригласить друзей
+                    </button>
                 </div>
             </div>
-
         </div>
 
-        <!-- Wallet Connectivity -->
-        <div id="profile-label-wallet" class="dash-section-title">Wallet</div>
-        <div id="wallet-btn-container" style="margin-bottom: 24px; padding: 0 16px;">
-            <button id="profile-ton-connect-btn" class="blue-btn" onclick="handleProfileWalletClick()">
-                <span class="icon-ton"></span>
-                <span id="blue-wallet-text">Connect Wallet</span>
-            </button>
+        <!-- Earnings Help Bottom Sheet -->
+        <div id="earnings-help-sheet" class="bottom-sheet">
+            <div class="bottom-sheet-backdrop" onclick="closeEarningsHelp()"></div>
+            <div class="bottom-sheet-content">
+                <div class="bottom-sheet-header">
+                    <div class="bottom-sheet-dash"></div>
+                    <h3>Бонусная программа</h3>
+                </div>
+                <div class="bottom-sheet-body">
+                    <p style="font-size: 15px; color: #8b9bb4; line-height: 1.6; margin-bottom: 24px;">
+                        За каждую аренду твоего друга мы выплачиваем тебе бонус — <b style="color: #fff;">25%</b> от
+                        суммы
+                        нашей комиссии! Нам не жалко, мы просто делимся прибылью за твою активность! 💸
+                    </p>
+                    <div class="earnings-table-container"
+                        style="background: rgba(255,255,255,0.03); border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05);">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                            <thead style="background: rgba(255,255,255,0.05);">
+                                <tr>
+                                    <th style="text-align: left; padding: 14px; color: #8b9bb4;">Цена аренды</th>
+                                    <th style="text-align: right; padding: 14px; color: #8b9bb4;">Ваш доход</th>
+                                </tr>
+                            </thead>
+                            <tbody style="color: #ffffff;">
+                                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                    <td style="padding: 14px;">0.01 TON</td>
+                                    <td style="padding: 14px; text-align: right; font-weight: 800; color: #00d488;">
+                                        +0.012
+                                        TON</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                    <td style="padding: 14px;">0.1 TON</td>
+                                    <td style="padding: 14px; text-align: right; font-weight: 800; color: #00d488;">
+                                        +0.012
+                                        TON</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                    <td style="padding: 14px;">0.25 TON</td>
+                                    <td style="padding: 14px; text-align: right; font-weight: 800; color: #00d488;">
+                                        +0.025
+                                        TON</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                    <td style="padding: 14px;">0.50 TON</td>
+                                    <td style="padding: 14px; text-align: right; font-weight: 800; color: #00d488;">
+                                        +0.037
+                                        TON</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                    <td style="padding: 14px;">1.00 TON</td>
+                                    <td style="padding: 14px; text-align: right; font-weight: 800; color: #00d488;">
+                                        +0.062
+                                        TON</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                    <td style="padding: 14px;">2.50 TON</td>
+                                    <td style="padding: 14px; text-align: right; font-weight: 800; color: #00d488;">
+                                        +0.112
+                                        TON</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 14px;">5.00 TON</td>
+                                    <td style="padding: 14px; text-align: right; font-weight: 800; color: #00d488;">
+                                        +0.187
+                                        TON</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div
+                        style="background: rgba(0,136,204,0.1); padding: 14px; border-radius: 14px; margin-top: 24px; font-size: 13px; color: #00aaff; display: flex; gap: 12px; line-height: 1.4;">
+                        <span style="font-size: 18px;">💡</span>
+                        <span>Рекомендуй OctoRent друзьям и получай пассивный доход <b>25%</b> с каждой их
+                            аренды!</span>
+                    </div>
+                    <button class="btn-yellow"
+                        style="width: 100%; margin-top: 28px; height: 50px; font-weight: 800; font-size: 16px; border-radius: 14px;"
+                        onclick="closeEarningsHelp()">Понятно</button>
+                </div>
+            </div>
         </div>
 
-        <!-- Services Section -->
-        <div id="profile-label-settings" class="dash-section-title">Settings & Support</div>
-        <div class="services-list">
-            <div class="service-item" onclick="toggleHistory()">
-                <div class="service-icon history" style="background: rgba(0, 136, 204, 0.1);">🕒</div>
-                <div id="profile-label-history" class="service-text">Rental History</div>
-                <div class="service-arrow">›</div>
-            </div>
-            <div id="history-content"
-                style="display: none; padding: 0 16px 16px 16px; background: rgba(255,255,255,0.02);">
-                <div id="history-list">Loading history...</div>
+        <div id="profile-container" style="display: none;">
+            <!-- Profile Dashboard Header -->
+            <div class="profile-dashboard-card">
+                <div class="profile-main-info">
+                    <div class="avatar-glow-wrapper">
+                        <img id="profile-avatar" src="https://ui-avatars.com/api/?name=User&background=0088cc&color=fff"
+                            class="dashboard-avatar">
+                    </div>
+                    <div class="profile-text-info">
+                        <h2 id="profile-name">Telegram User</h2>
+                        <p id="profile-id">ID: 000000000</p>
+                    </div>
+                </div>
+
             </div>
 
-            <div class="service-item" onclick="tg.openTelegramLink('https://t.me/Paulie_Gualtiery')">
-                <div class="service-icon" style="background: rgba(255, 152, 0, 0.1);">❓</div>
-                <div id="profile-label-support" class="service-text">Support & FAQ</div>
-                <div class="service-arrow">›</div>
+            <!-- Wallet Connectivity -->
+            <div id="profile-label-wallet" class="dash-section-title">Wallet</div>
+            <div id="wallet-btn-container" style="margin-bottom: 24px; padding: 0 16px;">
+                <button id="profile-ton-connect-btn" class="blue-btn" onclick="handleProfileWalletClick()">
+                    <span class="icon-ton"></span>
+                    <span id="blue-wallet-text">Connect Wallet</span>
+                </button>
             </div>
 
-            <div class="service-item" onclick="switchLanguage()">
-                <div class="service-icon" style="background: rgba(33, 150, 243, 0.1);">🌐</div>
-                <div class="service-text">Language / Язык</div>
-                <div id="lang-label" class="service-arrow" style="font-size: 14px; color: #8b9bb4; font-weight: 700;">
-                    Русский ›</div>
+            <!-- Services Section -->
+            <div id="profile-label-settings" class="dash-section-title">Settings & Support</div>
+            <div class="services-list">
+                <div class="service-item" onclick="toggleHistory()">
+                    <div class="service-icon history" style="background: rgba(0, 136, 204, 0.1);">🕒</div>
+                    <div id="profile-label-history" class="service-text">Rental History</div>
+                    <div class="service-arrow">›</div>
+                </div>
+                <div id="history-content"
+                    style="display: none; padding: 0 16px 16px 16px; background: rgba(255,255,255,0.02);">
+                    <div id="history-list">Loading history...</div>
+                </div>
+
+                <div class="service-item" onclick="tg.openTelegramLink('https://t.me/Paulie_Gualtiery')">
+                    <div class="service-icon" style="background: rgba(255, 152, 0, 0.1);">❓</div>
+                    <div id="profile-label-support" class="service-text">Support & FAQ</div>
+                    <div class="service-arrow">›</div>
+                </div>
+
+                <div class="service-item" onclick="switchLanguage()">
+                    <div class="service-icon" style="background: rgba(33, 150, 243, 0.1);">🌐</div>
+                    <div class="service-text">Language / Язык</div>
+                    <div id="lang-label" class="service-arrow"
+                        style="font-size: 14px; color: #8b9bb4; font-weight: 700;">
+                        Русский ›</div>
+                </div>
             </div>
         </div>
-    </div>
     </div>
 
     <!-- Bottom Nav -->
@@ -738,7 +749,7 @@
         </div>
     </div>
 
-    <script src="app.js?v=1771031676"></script>
+    <script src="app.js?v=1771032894"></script>
 </body>
 
 </html>
