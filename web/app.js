@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://camping-ralph-confidence-speakers.trycloudflare.com";
+const BACKEND_URL = "https://aruba-such-detection-shall.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -1662,7 +1662,7 @@ function renderMediaHTML(it, isModal = false) {
         if (isNum) {
             inner = `
                 <div class="card-placeholder" style="background:${isModal ? 'transparent' : '#1c1c1e'}; height:100%; width:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:${isModal ? '20px' : '8px'};">
-                    <div style="${isModal ? 'width:80px; height:80px;' : 'width:44px; height:44px;'} opacity:0.9; filter: drop-shadow(0 0 20px rgba(0,136,204,0.4)); flex-shrink:0;">${TG_LOGO_SVG}</div>
+                    <img src="telegram_logo.svg" class="${isModal ? '' : 'telegram-center-icon'}" style="${isModal ? 'width:80px; height:80px; opacity:0.9; filter: drop-shadow(0 0 20px rgba(0,136,204,0.4));' : 'flex-shrink:0;'}">
                     <div style="${isModal ? 'background:#0088cc; font-size:24px; color:#fff; padding:10px 24px; border-radius:14px; font-weight:800; box-shadow:0 8px 24px rgba(0,136,204,0.5); font-family:monospace; letter-spacing:1px;' : 'font-size:' + fontSize + '; font-weight:700; color:#fff; width:100%; text-align:center; padding:0 4px; box-sizing:border-box; flex-shrink:0;'}">${rawName}</div>
                 </div>`;
         } else {
@@ -1849,7 +1849,7 @@ async function openProductView(item, myPrice) {
     const rangeEl = document.getElementById('view-duration-range');
     if (rangeEl) rangeEl.textContent = `${minDays} — ${maxDays}`;
     const discEl = document.getElementById('view-discount');
-    if (discEl) disc.innerText = "0.1%";
+    if (discEl) discEl.innerText = "0.1%";
     const durInp = document.getElementById('rent-duration-input');
     if (durInp) durInp.value = minDays;
 
@@ -1927,6 +1927,7 @@ async function openProductView(item, myPrice) {
         rentBtn.style.display = 'flex';
         if (stepper) stepper.style.display = 'flex';
         if (feeNotice) feeNotice.style.display = 'block';
+        CURRENT_PAYMENT_ITEM.price_per_day = rawP; // Sync price for updateTotalPrice
         updateTotalPrice();
         const rentBtnTextEl = rentBtn.querySelector('#rent-btn-text');
         if (rentBtnTextEl) rentBtnTextEl.textContent = t('rent_button', { amount: '' }).replace('{amount}', '').trim();
