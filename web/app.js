@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://tyler-think-embedded-packed.trycloudflare.com";
+const BACKEND_URL = "https://afford-pulled-cookies-farms.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -970,16 +970,36 @@ async function loadLiveItems(reset = true) {
         if (data && data.items) {
             const items = data.items;
             if (items.length < BATCH_SIZE) HAS_MORE = false;
-            GLOBAL_OFFSET += items.length;
+
+            // Fix duplicates: use a Set to track seen addresses
+            const seen = new Set();
+            const container = document.getElementById('items-view');
+            if (reset) {
+                container.innerHTML = '';
+                GLOBAL_OFFSET = 0;
+            } else {
+                // If appending, track existing ones
+                container.querySelectorAll('.card').forEach(c => {
+                    const addr = c.getAttribute('data-addr');
+                    if (addr) seen.add(addr);
+                });
+            }
 
             const processed = items
-                .filter(item => item.type === CURRENT_TYPE) // Strict client-side type check
+                .filter(item => {
+                    if (item.type !== CURRENT_TYPE) return false;
+                    if (seen.has(item.nft_address)) return false;
+                    seen.add(item.nft_address);
+                    return true;
+                })
                 .map(item => {
                     const match = item.nft_name.match(/#(\d+)/);
                     item._nftNum = match ? parseInt(match[1]) : 0;
                     item._realImage = item.image || item.image_url;
                     return item;
                 });
+
+            GLOBAL_OFFSET += processed.length;
 
             if (reset && items.length === 0) {
                 document.getElementById('items-view').innerHTML = `
@@ -1818,19 +1838,38 @@ async function openProductView(item, myPrice) {
     const notifyBtn = document.getElementById('notify-btn');
     const countdownCont = document.getElementById('product-countdown-container');
 
+    // Fetch fresh details for status and rent_end
+    fetch(`${BACKEND_URL}/api/nft_details?nft_address=${item.nft_address}`)
+        .then(r => r.json())
+        .then(details => {
+            if (details) {
+                if (details.rent_end) item.rent_end = details.rent_end;
+                if (details.status) item.status = details.status;
+            }
+            updateProductViewStatus(item, notifyBtn, countdownCont);
+        }).catch(e => {
+            console.error("Details fetch error:", e);
+            updateProductViewStatus(item, notifyBtn, countdownCont);
+        });
+}
+
+function updateProductViewStatus(item, notifyBtn, countdownCont) {
     if (notifyBtn) {
         notifyBtn.style.display = (item.status === 'rented') ? 'block' : 'none';
-        notifyBtn.classList.remove('active'); // Reset initial
+        notifyBtn.classList.remove('active');
         if (item.status === 'rented') {
             const userId = tg.initDataUnsafe?.user?.id || 0;
             fetch(`${BACKEND_URL}/api/check_notification_status?user_id=${userId}&nft_address=${item.nft_address}`)
                 .then(r => r.json())
                 .then(d => { if (d.subscribed) notifyBtn.classList.add('active'); });
 
-            // RENDER PREMIUM COUNTDOWN
             if (countdownCont) {
-                countdownCont.style.display = 'flex';
-                renderPremiumCountdown(item, countdownCont);
+                if (item.rent_end) {
+                    countdownCont.style.display = 'flex';
+                    renderPremiumCountdown(item, countdownCont);
+                } else {
+                    countdownCont.style.display = 'none';
+                }
             }
         } else {
             if (countdownCont) countdownCont.style.display = 'none';

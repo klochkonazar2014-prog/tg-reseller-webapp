@@ -1727,7 +1727,8 @@ tc-root {
 
 /* Blocky Countdown - Premium Redesign */
 .countdown-market-container {
-    display: flex;
+    display: flex !important;
+    /* Force visibility when content exists */
     flex-direction: column;
     align-items: center;
     justify-content: center;
@@ -1737,6 +1738,8 @@ tc-root {
     background: rgba(255, 255, 255, 0.03);
     border-radius: 20px;
     border: 1px solid rgba(255, 255, 255, 0.05);
+    min-height: 80px;
+    /* Prevent "strip" look */
 }
 
 .countdown-market-label {
@@ -1744,68 +1747,73 @@ tc-root {
     font-size: 12px;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 1px;
 }
 
 .countdown-market-pills-row {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
 }
 
 .countdown-market-pill-box {
     background: #1c1c1e;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 12px;
-    padding: 8px;
-    min-width: 44px;
+    padding: 10px;
+    min-width: 48px;
     display: flex;
     flex-direction: column;
     align-items: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .countdown-market-pill-box .pill-val {
     color: white;
     font-weight: 800;
-    font-size: 16px;
+    font-size: 18px;
     line-height: 1;
+    font-family: 'Outfit', sans-serif;
 }
 
 .countdown-market-pill-box .pill-lab {
-    color: #8b9bb4;
-    font-size: 9px;
-    font-weight: 600;
-    margin-top: 4px;
+    color: #0088cc;
+    font-size: 10px;
+    font-weight: 700;
+    margin-top: 6px;
     text-transform: uppercase;
+    opacity: 0.8;
 }
 
 .countdown-market-sep {
-    color: rgba(255, 255, 255, 0.2);
-    font-weight: 800;
-    font-size: 18px;
-    margin-top: -12px;
+    color: rgba(255, 255, 255, 0.15);
+    font-weight: 300;
+    font-size: 24px;
+    margin-top: -14px;
 }
 
 .countdown-market-date {
-    color: rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.25);
     font-size: 12px;
-    font-weight: 600;
+    font-weight: 500;
+    margin-top: 4px;
 }
 
 /* Notify Bell Refinement */
+.notify-btn {
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
 .notify-btn svg {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    stroke: currentColor;
+    fill: none;
 }
 
 .notify-btn.active svg {
     color: #0088cc !important;
     fill: #0088cc !important;
-    transform: scale(1.1);
-}
-
-#notify-btn.active svg {
-    color: #0088cc !important;
-    fill: #0088cc !important;
+    stroke: #0088cc !important;
 }
 
 /* Filter Visibility Logic */
