@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://scientist-packets-tells-colour.trycloudflare.com";
+const BACKEND_URL = "https://text-outer-rachel-dialog.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -1844,7 +1844,10 @@ async function openProductView(item, myPrice) {
         .then(details => {
             if (details) {
                 // Try to get end time from various possible formats
-                const endTime = details.rent?.ends_at || details.rent_ends_at || details.rent_end;
+                const endTime = details.rent?.ends_at ||
+                    details.rent_ends_at ||
+                    details.rent_end ||
+                    details.status_details?.end_time;
                 if (endTime) item.rent_end = endTime;
 
                 if (details.status) item.status = details.status;
@@ -1867,8 +1870,11 @@ function updateProductViewStatus(item, notifyBtn, countdownCont) {
             fetch(`${BACKEND_URL}/api/check_notification_status?user_id=${userId}&nft_address=${item.nft_address}`)
                 .then(r => r.json())
                 .then(d => {
-                    if (d.subscribed) notifyBtn.classList.add('active');
-                    else notifyBtn.classList.remove('active');
+                    // Only update if not currently being toggled by user
+                    if (notifyBtn.style.pointerEvents !== 'none') {
+                        if (d.subscribed) notifyBtn.classList.add('active');
+                        else notifyBtn.classList.remove('active');
+                    }
                 });
 
             console.log('Timer debug:', { rent_end: item.rent_end, countdownCont: !!countdownCont, status: item.status });
