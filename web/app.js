@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://santa-mate-customs-drivers.trycloudflare.com";
+const BACKEND_URL = "https://triangle-programme-column-difficulty.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -1527,12 +1527,13 @@ async function handleNotifyClick() {
         });
         const data = await res.json();
         if (data.status === 'ok') {
-            const btn = document.getElementById('notify-btn');
+            const btns = document.querySelectorAll('#notify-btn');
             if (data.action === 'added') {
-                tg.showAlert("уведомление о окончании аренды включены");
-                if (btn) btn.classList.add('active');
+                tg.showAlert(t('notification_enabled') || "уведомление о окончании аренды включено");
+                btns.forEach(btn => btn.classList.add('active'));
             } else {
-                if (btn) btn.classList.remove('active');
+                tg.showAlert(t('notification_disabled') || "уведомление выключено");
+                btns.forEach(btn => btn.classList.remove('active'));
             }
             tg.HapticFeedback.notificationOccurred('success');
         }
@@ -2936,15 +2937,21 @@ function renderPremiumCountdown(item, container) {
 
         const pad = (n) => n.toString().padStart(2, '0');
 
+        // Target Date Formatting: e.g., "Feb 21, 2026"
+        const targetDate = new Date(item.rent_end * 1000);
+        const options = { month: 'short', day: 'numeric', year: 'numeric' };
+        const dateStr = targetDate.toLocaleDateString('en-US', options);
+
         container.innerHTML = `
-            <div class="countdown-market-label">${t('available_from') || "Available in"}:</div>
-            <div class="countdown-market-pill">${d}d</div>
+            <div class="countdown-market-label">${t('ends_in') || "Ends in"}</div>
+            <div class="countdown-market-pill">${d} ${t('days_short')}</div>
             <div class="countdown-market-sep">:</div>
             <div class="countdown-market-pill">${pad(h)}</div>
             <div class="countdown-market-sep">:</div>
             <div class="countdown-market-pill">${pad(m)}</div>
             <div class="countdown-market-sep">:</div>
             <div class="countdown-market-pill">${pad(s)}</div>
+            <div class="countdown-market-date">${dateStr}</div>
         `;
     };
 
@@ -2984,42 +2991,8 @@ function renderCardTimer(item) {
     return `<div id="${id}" class="card-days-badge-bottom">...</div>`;
 }
 
-function handleNotifyClick() {
-    if (!CURRENT_PAYMENT_ITEM || CURRENT_PAYMENT_ITEM.status !== 'rented') return;
+// function handleNotifyClick() removed as it was a duplicate and unified above.
 
-    const btn = document.getElementById('notify-btn');
-    if (!btn) return;
-
-    const userId = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user.id : 0;
-    const addr = CURRENT_PAYMENT_ITEM.nft_address;
-    const isSubscribed = btn.classList.contains('active');
-
-    // Haptic feedback
-    if (typeof tg !== 'undefined' && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
-
-    fetch(`${BACKEND_URL}/api/toggle_notification`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            user_id: userId,
-            nft_address: addr,
-            subscribe: !isSubscribed
-        })
-    }).then(r => r.json()).then(d => {
-        if (d.success) {
-            if (!isSubscribed) {
-                btn.classList.add('active');
-                showToast(t('notification_enabled') || "Notification enabled!");
-            } else {
-                btn.classList.remove('active');
-                showToast(t('notification_disabled') || "Notification disabled!");
-            }
-        }
-    }).catch(e => {
-        console.error("Notify toggle error:", e);
-        showToast("Error toggling notification");
-    });
-}
 
 function showToast(msg) {
     if (typeof tg !== 'undefined' && tg.showAlert) {

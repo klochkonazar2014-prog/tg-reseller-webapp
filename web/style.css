@@ -1726,52 +1726,48 @@ tc-root {
 /* .card.rented::before removed via user request */
 
 /* Blocky Countdown */
-.countdown-container-v2 {
+.countdown-market-container {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
-    margin-top: 15px;
+    margin: 16px 0;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.countdown-label-v2 {
+.countdown-market-label {
     color: #8b9bb4;
     font-size: 13px;
     font-weight: 600;
+    margin-right: 4px;
 }
 
-.countdown-blocks-v2 {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.countdown-block-item {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.countdown-box {
+.countdown-market-pill {
     background: #1c1c1e;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 8px;
     padding: 6px 10px;
-    min-width: 34px;
+    min-width: 40px;
     text-align: center;
     color: white;
     font-weight: 800;
     font-size: 14px;
 }
 
-.countdown-unit {
-    color: #8b9bb4;
-    font-size: 12px;
-    font-weight: 600;
-}
-
-.countdown-sep {
+.countdown-market-sep {
     color: #3a3a3c;
     font-weight: 800;
+    font-size: 16px;
+}
+
+.countdown-market-date {
+    color: #8b9bb4;
+    font-size: 13px;
+    font-weight: 600;
+    margin-left: 8px;
 }
 
 /* Filter Visibility Logic */
