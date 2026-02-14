@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://professor-until-gnome-navigator.trycloudflare.com";
+const BACKEND_URL = "https://cant-becoming-destination-pocket.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -1541,10 +1541,9 @@ async function handleNotifyClick() {
     if (!userId) { tg.showAlert("Please open the app via Telegram"); return; }
 
     const btn = document.getElementById('notify-btn');
-    const isSubscribed = btn ? btn.classList.contains('active') : false;
+    if (!btn) return;
 
-    // Optimistic UI update
-    if (btn) btn.classList.toggle('active', !isSubscribed);
+    const isSubscribed = btn.classList.contains('active');
 
     try {
         const res = await fetch(`${BACKEND_URL}/api/toggle_notification`, {
@@ -1559,7 +1558,13 @@ async function handleNotifyClick() {
         const data = await res.json();
         if (data.status === 'ok') {
             const finalSubscribed = data.action === 'added';
-            if (btn) btn.classList.toggle('active', finalSubscribed);
+
+            // Set final state directly based on server response
+            if (finalSubscribed) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
 
             if (finalSubscribed) {
                 tg.showAlert(t('notification_enabled_full') || "Вы получите уведомление, когда NFT освободится");
@@ -1567,14 +1572,10 @@ async function handleNotifyClick() {
                 tg.showAlert(t('notification_disabled_full') || "Уведомление выключено");
             }
             tg.HapticFeedback.notificationOccurred('success');
-        } else {
-            // Revert if error
-            if (btn) btn.classList.toggle('active', isSubscribed);
         }
     } catch (e) {
         console.error("Notify Error:", e);
-        // Revert if error
-        if (btn) btn.classList.toggle('active', isSubscribed);
+        tg.showAlert("Ошибка при переключении уведомления");
     }
 }
 
@@ -1865,13 +1866,19 @@ function updateProductViewStatus(item, notifyBtn, countdownCont) {
                 .then(r => r.json())
                 .then(d => { if (d.subscribed) notifyBtn.classList.add('active'); });
 
+            console.log('Timer debug:', { rent_end: item.rent_end, countdownCont: !!countdownCont, status: item.status });
+
             if (countdownCont) {
-                if (item.rent_end) {
-                    countdownCont.style.display = 'flex';
+                if (item.rent_end && item.rent_end > 0) {
+                    countdownCont.style.display = 'block';
+                    countdownCont.style.visibility = 'visible';
                     renderPremiumCountdown(item, countdownCont);
                 } else {
+                    console.warn('No rent_end for rented item:', item.nft_address);
                     countdownCont.style.display = 'none';
                 }
+            } else {
+                console.warn('No countdownCont element found');
             }
         } else {
             if (countdownCont) countdownCont.style.display = 'none';
