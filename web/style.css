@@ -1725,83 +1725,73 @@ tc-root {
 
 /* .card.rented::before removed via user request */
 
-/* Blocky Countdown - Premium Redesign */
-.countdown-market-container {
-    display: flex !important;
-    /* Force visibility when content exists */
+/* PREMIUM TIMER - PILLS DESIGN */
+.premium-timer-layout {
+    display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 12px;
-    margin: 20px 0;
-    padding: 16px;
-    background: rgba(255, 255, 255, 0.03);
-    border-radius: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    min-height: 80px;
-    /* Prevent "strip" look */
+    gap: 16px;
+    width: 100%;
+    padding: 24px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+    border-radius: 28px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
-.countdown-market-label {
+.premium-timer-label {
     color: #8b9bb4;
-    font-size: 12px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.countdown-market-pills-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.countdown-market-pill-box {
-    background: #1c1c1e;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 12px;
-    padding: 10px;
-    min-width: 48px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-.countdown-market-pill-box .pill-val {
-    color: white;
+    font-size: 13px;
     font-weight: 800;
-    font-size: 18px;
-    line-height: 1;
-    font-family: 'Outfit', sans-serif;
-}
-
-.countdown-market-pill-box .pill-lab {
-    color: #0088cc;
-    font-size: 10px;
-    font-weight: 700;
-    margin-top: 6px;
     text-transform: uppercase;
+    letter-spacing: 1.5px;
     opacity: 0.8;
 }
 
-.countdown-market-sep {
-    color: rgba(255, 255, 255, 0.15);
-    font-weight: 300;
-    font-size: 24px;
-    margin-top: -14px;
+.premium-timer-pills {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
-.countdown-market-date {
-    color: rgba(255, 255, 255, 0.25);
-    font-size: 12px;
-    font-weight: 500;
-    margin-top: 4px;
+.timer-pill {
+    background: #1c1c1e;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 16px;
+    padding: 12px 0;
+    width: 54px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.timer-pill .timer-val {
+    color: #fff;
+    font-size: 20px;
+    font-weight: 800;
+    font-family: 'Outfit', sans-serif;
+    line-height: 1;
+}
+
+.timer-pill .timer-unit {
+    color: #0088cc;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    margin-top: 6px;
+}
+
+.premium-timer-date {
+    color: rgba(255, 255, 255, 0.2);
+    font-size: 13px;
+    font-weight: 600;
 }
 
 /* Notify Bell Refinement */
 .notify-btn {
-    transition: transform 0.2s ease, opacity 0.2s ease;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .notify-btn svg {
@@ -1814,6 +1804,7 @@ tc-root {
     color: #0088cc !important;
     fill: #0088cc !important;
     stroke: #0088cc !important;
+    filter: drop-shadow(0 0 8px rgba(0, 136, 204, 0.4));
 }
 
 /* Filter Visibility Logic */
