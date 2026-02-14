@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://reason-essay-toddler-beverly.trycloudflare.com";
+const BACKEND_URL = "https://cardiff-voip-cons-integral.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -528,7 +528,7 @@ function updateUILanguage() {
         const el = document.getElementById(id);
         if (el) {
             if (el.tagName === 'INPUT') el.placeholder = val;
-            else el.innerText = val;
+            else el.innerHTML = val; // Switching to innerHTML for potential <b> tags in translations
         }
     }
 }
@@ -1154,31 +1154,36 @@ function toggleGenericModal(key) {
 
 function initFilterLists() {
     const sortCont = document.getElementById('sort-list-container');
-    const sorts = [
-        { id: 'price_asc', n: t('sort_price_asc') },
-        { id: 'price_desc', n: t('sort_price_desc') },
-        { id: 'num_asc', n: t('sort_num_asc') },
-        { id: 'num_desc', n: t('sort_num_desc') },
-        { id: 'model_rare', n: t('sort_model_rare') },
-        { id: 'bg_rare', n: t('sort_bg_rare') },
-        { id: 'symbol_rare', n: t('sort_symbol_rare') }
-    ];
-    sortCont.innerHTML = '';
-    sorts.forEach(s => addFilterItem(sortCont, s.n, s.id, 'sort', ACTIVE_FILTERS.sort === s.id));
-
-    const nftCont = document.getElementById('nft-list-container');
-    const nftSearch = document.getElementById('filter-search-nft').value.toLowerCase();
-    nftCont.innerHTML = '';
-
-    if (!nftSearch || t('all').toLowerCase().includes(nftSearch)) {
-        addFilterItem(nftCont, t('all'), "all", 'nft', ACTIVE_FILTERS.nft === 'all');
+    if (sortCont) {
+        const sorts = [
+            { id: 'price_asc', n: t('sort_price_asc') },
+            { id: 'price_desc', n: t('sort_price_desc') },
+            { id: 'num_asc', n: t('sort_num_asc') },
+            { id: 'num_desc', n: t('sort_num_desc') },
+            { id: 'model_rare', n: t('sort_model_rare') },
+            { id: 'bg_rare', n: t('sort_bg_rare') },
+            { id: 'symbol_rare', n: t('sort_symbol_rare') }
+        ];
+        sortCont.innerHTML = '';
+        sorts.forEach(s => addFilterItem(sortCont, s.n, s.id, 'sort', ACTIVE_FILTERS.sort === s.id));
     }
 
-    (window.STATIC_COLLECTIONS || []).forEach(col => {
-        if (col.name.toLowerCase().includes(nftSearch)) {
-            addFilterItem(nftCont, col.name, col.name, 'nft', ACTIVE_FILTERS.nft === col.name, col.image);
+    const nftCont = document.getElementById('nft-list-container');
+    if (nftCont) {
+        const nftSearchInp = document.getElementById('filter-search-nft');
+        const nftSearch = nftSearchInp ? nftSearchInp.value.toLowerCase() : '';
+        nftCont.innerHTML = '';
+
+        if (!nftSearch || t('all').toLowerCase().includes(nftSearch)) {
+            addFilterItem(nftCont, t('all'), "all", 'nft', ACTIVE_FILTERS.nft === 'all');
         }
-    });
+
+        (window.STATIC_COLLECTIONS || []).forEach(col => {
+            if (col.name.toLowerCase().includes(nftSearch)) {
+                addFilterItem(nftCont, col.name, col.name, 'nft', ACTIVE_FILTERS.nft === col.name, col.image);
+            }
+        });
+    }
 
     const maps = [
         { id: 'model-list-container', key: 'model', search: 'filter-search-model', label: t('model').toLowerCase() },
@@ -1535,29 +1540,39 @@ function updateAllCardTimers() {
     });
 }
 
-function openFilterModal() {
-    document.getElementById('filter-modal').classList.add('active');
-    document.getElementById('filter-modal-overlay').classList.add('active');
+function openOctoModal() {
+    const modal = document.getElementById('octo-modal');
+    const overlay = document.getElementById('octo-modal-overlay');
+    if (modal) modal.classList.add('active');
+    if (overlay) overlay.classList.add('active');
 }
-function closeFilterModal() {
-    document.getElementById('filter-modal').classList.remove('active');
-    document.getElementById('filter-modal-overlay').classList.remove('active');
+function closeOctoModal() {
+    const modal = document.getElementById('octo-modal');
+    const overlay = document.getElementById('octo-modal-overlay');
+    if (modal) modal.classList.remove('active');
+    if (overlay) overlay.classList.remove('active');
 }
 function resetOctoModal() {
     ACTIVE_FILTERS = { nft: 'all', model: 'all', bg: 'all', symbol: 'all', tags: 'all', sort: 'price_asc', price_from: null, price_to: null, gift_number: null, search: ACTIVE_FILTERS.search };
-    document.getElementById('filter-gift-number').value = "";
-    document.getElementById('filter-price-from').value = "";
-    document.getElementById('filter-price-to').value = "";
+    const idInp = document.getElementById('filter-gift-number');
+    const fromInp = document.getElementById('filter-price-from');
+    const toInp = document.getElementById('filter-price-to');
+    if (idInp) idInp.value = "";
+    if (fromInp) fromInp.value = "";
+    if (toInp) toInp.value = "";
     initFilterLists();
     applyHeaderSearch();
 }
 function applyOctoModal() {
     // Collect from inputs
-    ACTIVE_FILTERS.gift_number = document.getElementById('filter-gift-number').value;
-    ACTIVE_FILTERS.price_from = document.getElementById('filter-price-from').value;
-    ACTIVE_FILTERS.price_to = document.getElementById('filter-price-to').value;
+    const idInp = document.getElementById('filter-gift-number');
+    const fromInp = document.getElementById('filter-price-from');
+    const toInp = document.getElementById('filter-price-to');
+    if (idInp) ACTIVE_FILTERS.gift_number = idInp.value;
+    if (fromInp) ACTIVE_FILTERS.price_from = fromInp.value;
+    if (toInp) ACTIVE_FILTERS.price_to = toInp.value;
 
-    closeFilterModal();
+    closeOctoModal();
     loadLiveItems(true); // Trigger server-side refresh
 }
 
