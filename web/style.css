@@ -9,6 +9,31 @@
     --safe-area-bottom: env(safe-area-inset-bottom, 20px);
 }
 
+/* CUSTOM SCROLLBAR */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #444;
+}
+
+/* For Firefox */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #333 transparent;
+}
+
 * {
     box-sizing: border-box;
     margin: 0;
@@ -2197,9 +2222,17 @@ body.hide-filters .header-column {
     width: 100vw;
     height: 100vh;
     z-index: 2000;
-    display: none;
+    display: flex;
     flex-direction: column;
     justify-content: flex-end;
+    visibility: hidden;
+    opacity: 0;
+    transition: visibility 0.4s, opacity 0.4s;
+}
+
+.bottom-sheet.active {
+    visibility: visible;
+    opacity: 1;
 }
 
 .bottom-sheet-backdrop {

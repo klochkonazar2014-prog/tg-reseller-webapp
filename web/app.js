@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://parameters-systematic-reserves-groundwater.trycloudflare.com";
+const BACKEND_URL = "https://significant-phpbb-mandate-psychiatry.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -2757,14 +2757,14 @@ async function loadFriendsList() {
             const name = f.full_name || f.username || `User ${f.user_id}`;
             const sub = f.username ? `@${f.username}` : `ID: ${f.user_id}`;
             const nameForAvatar = name || (f.username ? `@${f.username}` : `U${f.user_id}`);
-            // Use api.dicebear.com as it's often more reliable in TMA environments
-            const avatar = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(nameForAvatar)}&backgroundColor=0088cc&fontSize=42&bold=true`;
+            const initialsAvatar = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(nameForAvatar)}&backgroundColor=0088cc&fontSize=42&bold=true`;
+            const realAvatar = `${BACKEND_URL}/api/user-avatar?user_id=${f.user_id}`;
 
             return `
                 <div class="friend-item" style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); padding: 12px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 10px;">
                     <div style="display: flex; align-items: center; gap: 12px;">
-                        <img src="${avatar}" style="width: 44px; height: 44px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); object-fit: cover;" 
-                             onerror="this.src='https://ui-avatars.com/api/?name=U&background=2c2c2e&color=fff'">
+                        <img src="${realAvatar}" onerror="this.src='${initialsAvatar}'" 
+                            style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover;">
                         <div>
                             <div style="font-weight: 700; font-size: 15px;">${name}</div>
                             <div style="font-size: 12px; color: #8b9bb4;">${sub}</div>
