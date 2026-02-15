@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://carefully-assumed-percent-intimate.trycloudflare.com";
+const BACKEND_URL = "https://reliability-regardless-card-left.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -196,7 +196,7 @@ const TRANSLATIONS = {
         withdraw_success: "Запрос на вывод отправлен! Средства поступят на ваш кошелек в ближайшее время.",
         notification_enabled: "Уведомление включено!",
         notification_disabled: "Уведомление выключено!",
-        notification_enabled_full: "Вы получите уведомление, когда NFT освободится",
+        notification_enabled_full: "Уведомление включено. Мы сообщим, когда NFT станет доступен или потребует подключения.",
         notification_disabled_full: "Уведомление выключено"
     },
     en: {
@@ -303,8 +303,9 @@ const TRANSLATIONS = {
         min_withdraw_error: "Minimum withdrawal amount: 0.1 TON",
         withdraw_success: "Withdrawal request submitted! Funds will arrive at your wallet shortly.",
         notification_enabled: "Notification enabled!",
-        notification_disabled: "Notification disabled!"
-
+        notification_disabled: "Notification disabled!",
+        notification_enabled_full: "Notification enabled. We will notify you when the NFT becomes available or requires connection.",
+        notification_disabled_full: "Notification disabled"
     }
 };
 
