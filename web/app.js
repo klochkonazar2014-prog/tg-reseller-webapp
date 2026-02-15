@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://reliability-regardless-card-left.trycloudflare.com";
+const BACKEND_URL = "https://usually-alternative-trailers-toddler.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -1547,8 +1547,10 @@ async function handleNotifyClick() {
     // Disable temporarily to prevent double clicks
     btn.style.pointerEvents = 'none';
     const isCurrentlyActive = btn.classList.contains('active');
+    console.log('[NOTIFY CLICK] Current state:', isCurrentlyActive ? 'ACTIVE' : 'INACTIVE');
 
     try {
+        console.log('[NOTIFY CLICK] Sending request for:', CURRENT_PAYMENT_ITEM.nft_address);
         const res = await fetch(`${BACKEND_URL}/api/toggle_notification`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1563,12 +1565,28 @@ async function handleNotifyClick() {
             const finalSubscribed = data.action === 'added';
 
             // Set final state directly based on server response
+            console.log('[NOTIFY CLICK] Server action:', data.action);
+
             if (finalSubscribed) {
                 btn.classList.add('active');
-                tg.showAlert(t('notification_enabled_full') || "Вы получите уведомление, когда NFT освободится");
+                // FORCE VISUAL UPDATE for debugging/fix
+                const svg = btn.querySelector('svg');
+                if (svg) {
+                    svg.style.fill = '#0088cc';
+                    svg.style.stroke = '#0088cc';
+                    svg.style.color = '#0088cc';
+                }
+                tg.showAlert(t('notification_enabled_full') || "Notification enabled");
             } else {
                 btn.classList.remove('active');
-                tg.showAlert(t('notification_disabled_full') || "Уведомление выключено");
+                // FORCE VISUAL RESET
+                const svg = btn.querySelector('svg');
+                if (svg) {
+                    svg.style.fill = 'none';
+                    svg.style.stroke = 'currentColor';
+                    svg.style.color = 'inherit';
+                }
+                tg.showAlert(t('notification_disabled_full') || "Notification disabled");
             }
             tg.HapticFeedback.notificationOccurred('success');
         }
