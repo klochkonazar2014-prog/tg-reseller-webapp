@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://riders-pledge-bibliographic-anniversary.trycloudflare.com";
+const BACKEND_URL = "https://sport-essays-annual-grab.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -1516,22 +1516,26 @@ function createItemCard(item) {
 }
 
 function renderCardTimer(item) {
-    if (!item.rent_ends_at) return '';
-    const diff = (item.rent_ends_at * 1000) - Date.now();
+    // Property is rent_end (UNIX timestamp in seconds)
+    const endTime = item.rent_end || item.rent_ends_at;
+    if (!endTime) return '';
+
+    const now = Math.floor(Date.now() / 1000);
+    const diff = endTime - now;
     if (diff <= 0) return '';
 
-    const d = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const d = Math.floor(diff / 86400);
+    const h = Math.floor((diff % 86400) / 3600);
+    const m = Math.floor((diff % 3600) / 60);
 
     let text = "";
-    if (d > 0) text = `${d}d ${h}h`;
-    else if (h > 0) text = `${h}h ${m}m`;
-    else text = `${m}m`;
+    if (d > 0) text = `${d}д ${h}ч`;
+    else if (h > 0) text = `${h}ч ${m}м`;
+    else text = `${m}м`;
 
     return `
-        <div class="card-top-timer card-timer" data-ends="${item.rent_ends_at}">
-            <span class="mt-pill-new">${text}</span>
+        <div class="card-mini-timer">
+            <span class="mini-time">${text}</span>
         </div>
     `;
 }
@@ -3030,35 +3034,29 @@ function renderPremiumCountdown(item, container) {
         const minutes = Math.floor((diff % 3600) / 60);
         const seconds = diff % 60;
 
-        // New Fragment-style Layout
+        // Compact timer - only digits
         container.innerHTML = `
             <div class="premium-timer-layout">
-                 <div class="timer-label-row">
-                    <span>Available in</span>
-                </div>
                 <div class="timer-digits-row">
                     <div class="timer-box">
                         <span class="t-val">${days}</span>
-                        <span class="t-label">d</span>
+                        <span class="t-label">д</span>
                     </div>
                     <div class="timer-sep">:</div>
                     <div class="timer-box">
                         <span class="t-val">${hours.toString().padStart(2, '0')}</span>
-                        <span class="t-label">h</span>
+                        <span class="t-label">ч</span>
                     </div>
                     <div class="timer-sep">:</div>
                     <div class="timer-box">
                         <span class="t-val">${minutes.toString().padStart(2, '0')}</span>
-                        <span class="t-label">m</span>
+                        <span class="t-label">м</span>
                     </div>
                     <div class="timer-sep">:</div>
                     <div class="timer-box">
                         <span class="t-val">${seconds.toString().padStart(2, '0')}</span>
-                        <span class="t-label">s</span>
+                        <span class="t-label">с</span>
                     </div>
-                </div>
-                 <div class="timer-date-row">
-                    ${new Date(item.rent_end * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                 </div>
             </div>
         `;
@@ -3067,43 +3065,6 @@ function renderPremiumCountdown(item, container) {
     update();
     container._timer = setInterval(update, 1000);
 }
-
-
-
-function renderCardTimer(item) {
-    if (!item.rent_end) return "";
-    const id = `card-timer-${item.nft_address.slice(-6)}`;
-
-    // Auto-update logic
-    setTimeout(() => {
-        const el = document.getElementById(id);
-        if (!el) return;
-
-        const update = () => {
-            const now = Math.floor(Date.now() / 1000);
-            const diff = item.rent_end - now;
-            if (diff <= 0) {
-                el.innerText = "EXPIRED";
-                el.style.color = "#FF3B30";
-                return;
-            }
-            const d = Math.floor(diff / 86400);
-            const h = Math.floor((diff % 86400) / 3600);
-            const m = Math.floor((diff % 3600) / 60);
-            const s = diff % 60;
-            const pad = (n) => n.toString().padStart(2, '0');
-            el.innerText = `${d}d ${pad(h)}:${pad(m)}:${pad(s)}`;
-        };
-        update();
-        if (el._timer) clearInterval(el._timer);
-        el._timer = setInterval(update, 1000);
-    }, 50);
-
-    return `<div id="${id}" class="card-days-badge-bottom">...</div>`;
-}
-
-// function handleNotifyClick() removed as it was a duplicate and unified above.
-
 
 function showToast(msg) {
     if (typeof tg !== 'undefined' && tg.showAlert) {
