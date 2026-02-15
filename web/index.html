@@ -6,7 +6,7 @@
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>OctoRent</title>
-    <script src="https://telegram.org/js/telegram-web-app.js?v=1771186595"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js?v=1771188261"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;800;900&display=swap" rel="stylesheet">
     <script src="lottie.min.js"></script>
@@ -33,7 +33,7 @@
             return false;
         };
     </script>
-    <link rel="stylesheet" href="style.css?v=1771186595">
+    <link rel="stylesheet" href="style.css?v=1771188261">
     <style>
         /* CRITICAL OVERRIDES - DO NOT REMOVE */
         .main-rent-btn svg,
@@ -578,6 +578,78 @@
         </div>
     </div>
 
+    <!-- NFT Filter Sheet -->
+    <div id="sheet-nft" class="bottom-sheet">
+        <div class="bottom-sheet-backdrop" onclick="closeGenericSheet()"></div>
+        <div class="bottom-sheet-content">
+            <div class="bottom-sheet-header">
+                <div class="bottom-sheet-dash"></div>
+                <h3 id="sheet-label-nft">NFT</h3>
+            </div>
+            <div class="bottom-sheet-body">
+                <div class="filter-search-wrapper">
+                    <input type="text" id="sheet-search-nft" class="filter-search-input" placeholder="Поиск NFT..."
+                        oninput="filterListSheet('nft')">
+                </div>
+                <div id="sheet-list-nft" class="bottom-sheet-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Model Filter Sheet -->
+    <div id="sheet-model" class="bottom-sheet">
+        <div class="bottom-sheet-backdrop" onclick="closeGenericSheet()"></div>
+        <div class="bottom-sheet-content">
+            <div class="bottom-sheet-header">
+                <div class="bottom-sheet-dash"></div>
+                <h3 id="sheet-label-model">Модель</h3>
+            </div>
+            <div class="bottom-sheet-body">
+                <div class="filter-search-wrapper">
+                    <input type="text" id="sheet-search-model" class="filter-search-input" placeholder="Поиск модели..."
+                        oninput="filterListSheet('model')">
+                </div>
+                <div id="sheet-list-model" class="bottom-sheet-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Backdrop Filter Sheet -->
+    <div id="sheet-bg" class="bottom-sheet">
+        <div class="bottom-sheet-backdrop" onclick="closeGenericSheet()"></div>
+        <div class="bottom-sheet-content">
+            <div class="bottom-sheet-header">
+                <div class="bottom-sheet-dash"></div>
+                <h3 id="sheet-label-bg">Фон</h3>
+            </div>
+            <div class="bottom-sheet-body">
+                <div class="filter-search-wrapper">
+                    <input type="text" id="sheet-search-bg" class="filter-search-input" placeholder="Поиск фона..."
+                        oninput="filterListSheet('bg')">
+                </div>
+                <div id="sheet-list-bg" class="bottom-sheet-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Symbol Filter Sheet -->
+    <div id="sheet-symbol" class="bottom-sheet">
+        <div class="bottom-sheet-backdrop" onclick="closeGenericSheet()"></div>
+        <div class="bottom-sheet-content">
+            <div class="bottom-sheet-header">
+                <div class="bottom-sheet-dash"></div>
+                <h3 id="sheet-label-symbol">Символ</h3>
+            </div>
+            <div class="bottom-sheet-body">
+                <div class="filter-search-wrapper">
+                    <input type="text" id="sheet-search-symbol" class="filter-search-input"
+                        placeholder="Поиск символа..." oninput="filterListSheet('symbol')">
+                </div>
+                <div id="sheet-list-symbol" class="bottom-sheet-list"></div>
+            </div>
+        </div>
+    </div>
+
     <div id="profile-container" style="display: none;">
         <!-- Profile Dashboard Header -->
         <div class="profile-dashboard-card">
@@ -739,7 +811,7 @@
         </div>
     </div>
 
-    <script src="app.js?v=1771186595"></script>
+    <script src="app.js?v=1771188261"></script>
 </body>
 
 </html>

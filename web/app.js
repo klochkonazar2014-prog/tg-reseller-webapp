@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://realize-calculations-environment-deadline.trycloudflare.com";
+const BACKEND_URL = "https://talks-vic-dos-reveals.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -440,19 +440,23 @@ function getTelegifterUrl(type, name, collection, slugIndex = 0) {
     };
 
     if (type === 'symbol') {
-        const cleanName = name.replace(/[?#]/g, ''); // Basic sanitization
+        const cleanName = name.replace(/[?#]/g, '');
         return `file/gifts/symbol/${cleanName}.webp`;
     }
 
     if (type === 'model') {
-        // Models use format: /file/gifts/collectionslug/model.webp
         if (collection) {
             const colSlug = getMappedSlug(collection);
             const modelSlug = name.toLowerCase().replace(/[^a-z0-9]/g, '');
-            return `file/gifts/${colSlug}/model.${modelSlug}.webp`;
+            // Most subfolders in file/gifts are plurals (artisanbricks, berryboxes)
+            // But slug mapping sometimes gives singulars. 
+            // Priority: Local plural folder > Local singular > Fragment
+
+            // We assume the user wants local first
+            const pluralCol = colSlug.endsWith('s') ? colSlug : (colSlug + 's');
+            return `file/gifts/${pluralCol}/model.${modelSlug}.webp`;
         }
 
-        // Fallback to Fragment URL
         const slugBase = getMappedSlug(name);
         const numbers = [888, 1, 777, 555, 123, 100];
         if (slugIndex < numbers.length) {
@@ -462,8 +466,9 @@ function getTelegifterUrl(type, name, collection, slugIndex = 0) {
     }
 
     if (type === 'nft') {
-        const collectionSlug = getMappedSlug(name);
-        return `file/gifts/${collectionSlug}/thumb.webp`;
+        const colSlug = getMappedSlug(name);
+        const pluralCol = colSlug.endsWith('s') ? colSlug : (colSlug + 's');
+        return `file/gifts/${pluralCol}/thumb.webp`;
     }
 
     return null;
@@ -534,7 +539,15 @@ function updateUILanguage() {
         'ref-label-balance': t('referral_balance'),
         'ref-label-link': t('referral_link'),
         'ref-withdraw-btn': t('withdraw_funds'),
-        'ref-share-btn': t('share')
+        'ref-share-btn': t('share'),
+        'sheet-label-nft': t('nft'),
+        'sheet-label-model': t('model'),
+        'sheet-label-bg': t('backdrop'),
+        'sheet-label-symbol': t('symbol'),
+        'sheet-search-nft': t('search_hint'),
+        'sheet-search-model': t('search_hint'),
+        'sheet-search-bg': t('search_hint'),
+        'sheet-search-symbol': t('search_hint')
     };
     for (const [id, val] of Object.entries(map)) {
         const el = document.getElementById(id);
@@ -1185,164 +1198,132 @@ function filterList(key) {
 }
 
 function toggleGenericModal(key) {
-    openAdvancedFilters();
-    const accMap = {
-        'nft': 'nft-acc',
-        'model': 'model-acc',
-        'bg': 'bg-acc',
-        'symbol': 'symbol-acc'
-    };
+    openFilterSheet(key);
+}
+
+function openFilterSheet(key) {
+    const sheetId = `sheet-${key}`;
+    const sheet = document.getElementById(sheetId);
+    if (!sheet) return;
 
     // Ensure data is loaded
     if (!window.STATIC_COLLECTIONS || window.STATIC_COLLECTIONS.length === 0) {
         loadFilterData();
     }
 
-    const targetId = accMap[key];
-    if (targetId) {
-        const btn = document.querySelector(`.filter-accordion[onclick*="${targetId}"]`);
-        toggleAccordion(targetId, btn);
-    }
+    sheet.classList.add('active');
+    initFilterLists(true, key); // true means it's for sheet
 }
 
-function initFilterLists() {
-    const sortCont = document.getElementById('sort-list-container');
-    if (sortCont) {
-        const sorts = [
-            { id: 'price_asc', n: t('sort_price_asc') },
-            { id: 'price_desc', n: t('sort_price_desc') },
-            { id: 'num_asc', n: t('sort_num_asc') },
-            { id: 'num_desc', n: t('sort_num_desc') },
-            { id: 'model_rare', n: t('sort_model_rare') },
-            { id: 'bg_rare', n: t('sort_bg_rare') },
-            { id: 'symbol_rare', n: t('sort_symbol_rare') }
-        ];
-        sortCont.innerHTML = '';
-        sorts.forEach(s => addFilterItem(sortCont, s.n, s.id, 'sort', ACTIVE_FILTERS.sort === s.id));
+function closeGenericSheet() {
+    const sheets = document.querySelectorAll('.bottom-sheet');
+    sheets.forEach(s => s.classList.remove('active'));
+}
+
+function filterListSheet(key) {
+    initFilterLists(true, key);
+}
+
+function initFilterLists(isSheet = false, sheetKey = null) {
+    const prefix = isSheet ? 'sheet-' : '';
+    const listPrefix = isSheet ? 'sheet-list-' : '';
+    const searchPrefix = isSheet ? 'sheet-search-' : '';
+
+    if (!isSheet || sheetKey === 'sort') {
+        const sortCont = document.getElementById('sort-list-container');
+        if (sortCont) {
+            const sorts = [
+                { id: 'price_asc', n: t('sort_price_asc') },
+                { id: 'price_desc', n: t('sort_price_desc') },
+                { id: 'num_asc', n: t('sort_num_asc') },
+                { id: 'num_desc', n: t('sort_num_desc') },
+                { id: 'model_rare', n: t('sort_model_rare') },
+                { id: 'bg_rare', n: t('sort_bg_rare') },
+                { id: 'symbol_rare', n: t('sort_symbol_rare') }
+            ];
+            sortCont.innerHTML = '';
+            sorts.forEach(s => addFilterItem(sortCont, s.n, s.id, 'sort', ACTIVE_FILTERS.sort === s.id, null, null, null, isSheet));
+        }
     }
 
-    const nftCont = document.getElementById('nft-list-container');
-    if (nftCont) {
-        const nftSearchInp = document.getElementById('filter-search-nft');
-        const nftSearch = nftSearchInp ? nftSearchInp.value.toLowerCase() : '';
-        nftCont.innerHTML = '';
+    if (!isSheet || sheetKey === 'nft') {
+        const nftCont = document.getElementById(isSheet ? 'sheet-list-nft' : 'nft-list-container');
+        if (nftCont) {
+            const nftSearchInp = document.getElementById(isSheet ? 'sheet-search-nft' : 'filter-search-nft');
+            const nftSearch = nftSearchInp ? nftSearchInp.value.toLowerCase() : '';
+            nftCont.innerHTML = '';
 
-        if (!nftSearch || t('all').toLowerCase().includes(nftSearch)) {
-            addFilterItem(nftCont, t('all'), "all", 'nft', ACTIVE_FILTERS.nft === 'all');
-        }
-
-        (window.STATIC_COLLECTIONS || []).forEach(col => {
-            if (col.name.toLowerCase().includes(nftSearch)) {
-                addFilterItem(nftCont, col.name, col.name, 'nft', ACTIVE_FILTERS.nft === col.name, col.image);
+            if (!nftSearch || t('all').toLowerCase().includes(nftSearch)) {
+                addFilterItem(nftCont, t('all'), "all", 'nft', ACTIVE_FILTERS.nft === 'all', null, null, null, isSheet);
             }
-        });
+
+            (window.STATIC_COLLECTIONS || []).forEach(col => {
+                if (col.name.toLowerCase().includes(nftSearch)) {
+                    addFilterItem(nftCont, col.name, col.name, 'nft', ACTIVE_FILTERS.nft === col.name, col.image, null, null, isSheet);
+                }
+            });
+        }
     }
 
     const maps = [
-        { id: 'model-list-container', key: 'model', search: 'filter-search-model', label: t('model').toLowerCase() },
-        { id: 'bg-list-container', key: 'bg', search: 'filter-search-bg', label: t('backdrop').toLowerCase() },
-        { id: 'symbol-list-container', key: 'symbol', search: 'filter-search-symbol', label: t('symbol').toLowerCase() }
+        { id: isSheet ? 'sheet-list-model' : 'model-list-container', key: 'model', search: isSheet ? 'sheet-search-model' : 'filter-search-model', label: t('model').toLowerCase() },
+        { id: isSheet ? 'sheet-list-bg' : 'bg-list-container', key: 'bg', search: isSheet ? 'sheet-search-bg' : 'filter-search-bg', label: t('backdrop').toLowerCase() },
+        { id: isSheet ? 'sheet-list-symbol' : 'symbol-list-container', key: 'symbol', search: isSheet ? 'sheet-search-symbol' : 'filter-search-symbol', label: t('symbol').toLowerCase() }
     ];
 
     const selectedNFT = ACTIVE_FILTERS.nft;
 
     maps.forEach(m => {
+        if (isSheet && m.key !== sheetKey) return;
         const cont = document.getElementById(m.id);
         const sInput = document.getElementById(m.search);
         if (!cont || !sInput) return;
         const sVal = sInput.value.toLowerCase();
         cont.innerHTML = '';
 
-        if (selectedNFT === 'all') {
-            // MODELS: Require NFT selection first
-            if (m.key === 'model') {
-                cont.innerHTML = `<div style="padding:20px; color:#8b9bb4; text-align:center; font-size:13px; background:rgba(255,255,255,0.03); border-radius:12px; margin-top:10px;">${t('select_collection_first')}</div>`;
-                sInput.disabled = true;
-                return;
-            }
-
-            // BG & SYMBOLS: Global selection allowed
-            const allItemsMap = {};
-            // Iterate OVER COLLECTIONS to preserve context
-            Object.entries(ATTR_STATS[m.key] || {}).forEach(([colName, list]) => {
-                if (!Array.isArray(list)) return; // Safety check
-                list.forEach(item => {
-                    if (!item.name || item.name.toLowerCase() === 'default' || item.name.toLowerCase() === 'none') return;
-                    // Store image AND collection for URL generation
-                    if (!allItemsMap[item.name]) {
-                        allItemsMap[item.name] = { image: item.image, collection: colName };
-                    }
-                    else if (isBadUrl(allItemsMap[item.name].image) && !isBadUrl(item.image)) {
-                        allItemsMap[item.name].image = item.image;
-                        allItemsMap[item.name].collection = colName;
-                    }
-                });
-            });
-            const allItems = Object.entries(allItemsMap)
-                .map(([n, data]) => ({ name: n, image: data.image, collection: data.collection }))
-                .sort((a, b) => a.name.localeCompare(b.name));
-
-            sInput.disabled = false;
-            sInput.placeholder = t('search_filter_hint', { label: m.label }) + t('search_filter_global');
-
-            if (!sVal || t('select_all').toLowerCase().includes(sVal)) {
-                addFilterItem(cont, t('select_all'), "all", m.key, ACTIVE_FILTERS[m.key] === 'all');
-            }
-
-            allItems.forEach(item => {
-                if (item.name.toLowerCase().includes(sVal)) {
-                    // Try to get clean visual first
-                    let icon = null;
-                    if (m.key === 'symbol') icon = getTelegifterUrl('symbol', item.name);
-                    else if (m.key === 'model') icon = getTelegifterUrl('model', item.name, item.collection);
-                    else if (m.key === 'nft') icon = item.image; // Use existing image for NFT collections
-
-                    if (!icon && (m.key === 'bg' || m.key === 'symbol')) icon = (VISUAL_MAP[m.key] && VISUAL_MAP[m.key][item.name]) || null;
-
-                    // NEW: Ensure we try Fragment URL if other methods failed and it's a Model
-                    if (!icon && m.key === 'model') {
-                        const slug = item.name.toLowerCase().replace(/[^a-z0-9]/g, '');
-                        // We use a generic model #1 for the filter icon preview if possible
-                        icon = `https://nft.fragment.com/gift/${slug}-1.webp`;
-                    }
-
-                    addFilterItem(cont, item.name, item.name, m.key, ACTIVE_FILTERS[m.key] === item.name, icon, item.collection, item.image);
-                }
-            });
+        if (selectedNFT === 'all' && m.key === 'model') {
+            cont.innerHTML = `<div style="padding:20px; color:#8b9bb4; text-align:center; font-size:13px; background:rgba(255,255,255,0.03); border-radius:12px; margin: 10px 20px;">${t('select_collection_first')}</div>`;
+            sInput.disabled = true;
             return;
         }
 
         sInput.disabled = false;
-        sInput.placeholder = t('search_filter_hint', { label: m.label });
+        sInput.placeholder = t('search_filter_hint', { label: m.label }) + (selectedNFT === 'all' ? t('search_filter_global') : '');
 
         if (!sVal || t('select_all').toLowerCase().includes(sVal)) {
-            addFilterItem(cont, t('select_all'), "all", m.key, ACTIVE_FILTERS[m.key] === 'all');
+            addFilterItem(cont, t('select_all'), "all", m.key, ACTIVE_FILTERS[m.key] === 'all', null, null, null, isSheet);
         }
 
-        let items = (ATTR_STATS[m.key] && ATTR_STATS[m.key][selectedNFT]) || [];
-
-        // Symbols & Backgrounds: If no specific items for this collection, show ALL global ones
-        if (items.length === 0 && (m.key === 'symbol' || m.key === 'bg')) {
-            items = (ATTR_STATS[m.key] && ATTR_STATS[m.key]['ALL']) || [];
+        let items = [];
+        if (selectedNFT === 'all') {
+            const allItemsMap = {};
+            Object.entries(ATTR_STATS[m.key] || {}).forEach(([colName, list]) => {
+                if (!Array.isArray(list)) return;
+                list.forEach(item => {
+                    if (!item.name || item.name.toLowerCase() === 'default' || item.name.toLowerCase() === 'none') return;
+                    if (!allItemsMap[item.name]) {
+                        allItemsMap[item.name] = { image: item.image, collection: colName };
+                    }
+                });
+            });
+            items = Object.entries(allItemsMap).map(([n, data]) => ({ name: n, image: data.image, collection: data.collection }));
+        } else {
+            items = (ATTR_STATS[m.key] && ATTR_STATS[m.key][selectedNFT]) || [];
+            if (items.length === 0 && (m.key === 'symbol' || m.key === 'bg')) {
+                items = (ATTR_STATS[m.key] && ATTR_STATS[m.key]['ALL']) || [];
+            }
         }
 
-        items.forEach(item => {
-            if (!item.name || item.name.toLowerCase() === 'default' || item.name.toLowerCase() === 'none') return;
+        items.sort((a, b) => a.name.localeCompare(b.name)).forEach(item => {
             if (item.name.toLowerCase().includes(sVal)) {
-                // Try clean visual
-                let visual = null;
-                if (m.key === 'symbol') visual = getTelegifterUrl('symbol', item.name);
-                else if (m.key === 'model') visual = getTelegifterUrl('model', item.name, selectedNFT);
-
-                let icon = visual || item.image;
-                if (!icon && (m.key === 'bg' || m.key === 'symbol')) icon = (VISUAL_MAP[m.key] && VISUAL_MAP[m.key][item.name]) || null;
-                addFilterItem(cont, item.name, item.name, m.key, ACTIVE_FILTERS[m.key] === item.name, icon, selectedNFT, item.image);
+                let icon = getTelegifterUrl(m.key, item.name, item.collection || selectedNFT) || item.image;
+                addFilterItem(cont, item.name, item.name, m.key, ACTIVE_FILTERS[m.key] === item.name, icon, item.collection || selectedNFT, item.image, isSheet);
             }
         });
     });
 }
 
-function addFilterItem(container, name, value, key, isSelected, imgUrl, collectionContext, fallbackImgUrl) {
+function addFilterItem(container, name, value, key, isSelected, imgUrl, collectionContext, fallbackImgUrl, isSheet = false) {
     const div = document.createElement('div');
     div.className = `filter-list-item ${isSelected ? 'selected' : ''}`;
 
@@ -1422,7 +1403,11 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
             });
         }
 
-        initFilterLists();
+        if (isSheet) {
+            closeGenericSheet();
+        }
+
+        initFilterLists(isSheet, isSheet ? key : null);
         applyHeaderSearch();
     };
     container.appendChild(div);
