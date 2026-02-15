@@ -3341,14 +3341,141 @@ body.hide-filters .header-column {
     border-radius: 10px;
 }
 
-/* --- FRIENDS TAB REFINEMENTS --- */
-.bottom-nav.friends-mode {
-    height: calc(82px + var(--safe-area-bottom));
+/* --- MAIN FILTER MODAL (OCTO-SHEET) --- */
+#octo-modal .bottom-sheet-content {
+    background: rgba(18, 18, 20, 0.9);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
 }
 
-.commission-notice {
-    position: relative;
+.filter-group {
+    margin-bottom: 24px;
+    padding: 0 20px;
+}
+
+.filter-group-header {
+    margin-bottom: 12px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #8b9bb4;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Price Range Styling */
+.price-range-inputs {
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 4px;
+    gap: 0;
+}
+
+.price-input-box {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+}
+
+.price-input-prefix {
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 13px;
+    font-weight: 600;
+    margin-right: 8px;
+    user-select: none;
+}
+
+.price-input-box input {
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    width: 100%;
+    outline: none;
+}
+
+.price-range-divider {
+    width: 1px;
+    height: 24px;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+/* Sorting Options Grid */
+.sort-options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.sort-options-grid .filter-list-item {
+    margin: 0;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    justify-content: center;
+    text-align: center;
+    font-size: 13px;
+}
+
+.sort-options-grid .filter-list-item.selected {
+    background: rgba(0, 136, 204, 0.12);
+    border-color: rgba(0, 136, 204, 0.3);
+}
+
+/* ID Input Wrapper */
+.id-input-wrapper {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 12px 16px;
+}
+
+.id-input-wrapper input {
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 15px;
+    width: 100%;
+    outline: none;
+}
+
+/* Fixed Footer for Sheets */
+.sheet-footer-fixed {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 16px 20px calc(16px + var(--safe-area-bottom));
+    background: linear-gradient(to top, rgba(18, 18, 20, 1) 70%, rgba(18, 18, 20, 0));
+    display: flex;
+    gap: 12px;
     z-index: 10;
+}
+
+.sheet-footer-fixed button {
+    flex: 1;
+    height: 54px;
+    border-radius: 18px;
+    font-weight: 800;
+    font-size: 16px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-primary-glow {
+    background: #0088cc;
+    color: #fff;
+    border: none;
+    box-shadow: 0 4px 20px rgba(0, 136, 204, 0.4);
+}
+
+.btn-primary-glow:active {
+    transform: scale(0.96);
+    box-shadow: 0 2px 10px rgba(0, 136, 204, 0.2);
 }
 
 .how-much-link {

@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://marina-eugene-uploaded-vanilla.trycloudflare.com";
+const BACKEND_URL = "https://clothes-pan-briefs-tall.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -121,8 +121,10 @@ const TRANSLATIONS = {
         search_filter_global: " (Все NFT)",
         sort_price_asc: "Цена (По возрастанию)",
         sort_price_desc: "Цена (По убыванию)",
-        sort_num_asc: "Номер (По возрастанию)",
-        sort_num_desc: "Номер (По убыванию)",
+        sort_duration_asc: "Срок (По возрастанию)",
+        sort_duration_desc: "Срок (По убыванию)",
+        sort_num_asc: "Item ID (По возрастанию)",
+        sort_num_desc: "Item ID (По убыванию)",
         sort_model_rare: "Редкость модели",
         sort_bg_rare: "Редкость фона",
         sort_symbol_rare: "Редкость символа",
@@ -1235,11 +1237,10 @@ function initFilterLists(isSheet = false, sheetKey = null) {
             const sorts = [
                 { id: 'price_asc', n: t('sort_price_asc') },
                 { id: 'price_desc', n: t('sort_price_desc') },
+                { id: 'duration_asc', n: t('sort_duration_asc') },
+                { id: 'duration_desc', n: t('sort_duration_desc') },
                 { id: 'num_asc', n: t('sort_num_asc') },
-                { id: 'num_desc', n: t('sort_num_desc') },
-                { id: 'model_rare', n: t('sort_model_rare') },
-                { id: 'bg_rare', n: t('sort_bg_rare') },
-                { id: 'symbol_rare', n: t('sort_symbol_rare') }
+                { id: 'num_desc', n: t('sort_num_desc') }
             ];
             sortCont.innerHTML = '';
             sorts.forEach(s => addFilterItem(sortCont, s.n, s.id, 'sort', ACTIVE_FILTERS.sort === s.id, null, null, null, isSheet));
