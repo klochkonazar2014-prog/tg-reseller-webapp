@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://usually-alternative-trailers-toddler.trycloudflare.com";
+const BACKEND_URL = "https://marshall-travis-optimal-inherited.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -3005,63 +3005,50 @@ function renderPremiumCountdown(item, container) {
     if (container._timer) clearInterval(container._timer);
 
     const update = () => {
-        const now = Math.floor(Date.now() / 1000);
+        const now = Math.floor(Date.now() / 1000); // Current time in seconds
         const diff = item.rent_end - now;
 
         if (diff <= 0) {
-            container.innerHTML = `<span style="color: #FF3B30; font-weight:800; font-size:14px;">EXPIRED</span>`;
+            container.innerHTML = `<div class="premium-timer-ended">Rental Ended</div>`;
             clearInterval(container._timer);
             return;
         }
 
-        const d = Math.floor(diff / 86400);
-        const h = Math.floor((diff % 86400) / 3600);
-        const m = Math.floor((diff % 3600) / 60);
-        const s = diff % 60;
+        const days = Math.floor(diff / 86400);
+        const hours = Math.floor((diff % 86400) / 3600);
+        const minutes = Math.floor((diff % 3600) / 60);
+        const seconds = diff % 60;
 
-        const pad = (n) => n.toString().padStart(2, '0');
-
-        // Target Date Formatting: e.g., "Feb 21, 2026"
-        const targetDate = new Date(item.rent_end * 1000);
-        const options = { month: 'short', day: 'numeric', year: 'numeric' };
-        const dateStr = targetDate.toLocaleDateString('en-US', options);
-
-        // New Fragment-like Design
-        // Layout: [Ends in] [4 days] : [23] : [59] : [29] [Date]
-
+        // New Fragment-style Layout
         container.innerHTML = `
             <div class="premium-timer-layout">
-                <span class="ends-in-label">${t('ends_in') || "Ends in"}</span>
-                <div class="premium-timer-pills">
-                    
-                    <div class="timer-box days-box">
-                        <span class="t-val">${d}</span>
-                        <span class="t-unit">${t('days_short') || "d"}</span>
-                    </div>
-
-                    <div class="timer-sep">:</div>
-
-                    <div class="timer-box">
-                        <span class="t-val">${pad(h)}</span>
-                        <!-- <span class="t-unit">h</span> -->
-                    </div>
-
-                    <div class="timer-sep">:</div>
-
-                    <div class="timer-box">
-                        <span class="t-val">${pad(m)}</span>
-                        <!-- <span class="t-unit">m</span> -->
-                    </div>
-
-                    <div class="timer-sep">:</div>
-
-                    <div class="timer-box">
-                        <span class="t-val">${pad(s)}</span>
-                        <!-- <span class="t-unit">s</span> -->
-                    </div>
-
+                 <div class="timer-label-row">
+                    <span>Available in</span>
                 </div>
-                <div class="premium-timer-date">${dateStr}</div>
+                <div class="timer-digits-row">
+                    <div class="timer-box">
+                        <span class="t-val">${days}</span>
+                        <span class="t-label">d</span>
+                    </div>
+                    <div class="timer-sep">:</div>
+                    <div class="timer-box">
+                        <span class="t-val">${hours.toString().padStart(2, '0')}</span>
+                        <span class="t-label">h</span>
+                    </div>
+                    <div class="timer-sep">:</div>
+                    <div class="timer-box">
+                        <span class="t-val">${minutes.toString().padStart(2, '0')}</span>
+                        <span class="t-label">m</span>
+                    </div>
+                    <div class="timer-sep">:</div>
+                    <div class="timer-box">
+                        <span class="t-val">${seconds.toString().padStart(2, '0')}</span>
+                        <span class="t-label">s</span>
+                    </div>
+                </div>
+                 <div class="timer-date-row">
+                    ${new Date(item.rent_end * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                </div>
             </div>
         `;
     };
@@ -3069,6 +3056,8 @@ function renderPremiumCountdown(item, container) {
     update();
     container._timer = setInterval(update, 1000);
 }
+
+
 
 function renderCardTimer(item) {
     if (!item.rent_end) return "";
