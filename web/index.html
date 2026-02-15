@@ -6,7 +6,7 @@
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>OctoRent</title>
-    <script src="https://telegram.org/js/telegram-web-app.js?v=1771192992"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js?v=1771194154"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;800;900&display=swap" rel="stylesheet">
     <script src="lottie.min.js"></script>
@@ -33,7 +33,7 @@
             return false;
         };
     </script>
-    <link rel="stylesheet" href="style.css?v=1771192992">
+    <link rel="stylesheet" href="style.css?v=1771194154">
     <style>
         /* CRITICAL OVERRIDES - DO NOT REMOVE */
         .main-rent-btn svg,
@@ -376,44 +376,62 @@
                         </div>
                     </div>
 
-                    <!-- Filter Categories Drill-down -->
+                    <!-- Filter Categories Accordion -->
                     <div class="filter-group">
-                        <div class="filter-group-header"><span>Настройки поиска</span></div>
-                        <div class="category-drilldown-list">
-                            <div class="category-row" onclick="openFilterSheet('sort')">
-                                <div class="category-info">
-                                    <div class="category-icon-bg"><span>⏳</span></div>
-                                    <span>Сортировка</span>
-                                </div>
-                                <div class="category-arrow">→</div>
+                        <div class="filter-group-header"><span>Параметры</span></div>
+
+                        <!-- Sort -->
+                        <div class="accordion-item">
+                            <div class="accordion-header" onclick="toggleFilterAccordion('sort')">
+                                <div class="acc-title"><span>⏳</span> Сортировка</div>
+                                <div class="acc-arrow" id="acc-arrow-sort">›</div>
                             </div>
-                            <div class="category-row" onclick="openFilterSheet('nft')">
-                                <div class="category-info">
-                                    <div class="category-icon-bg"><span>💎</span></div>
-                                    <span>Коллекции</span>
-                                </div>
-                                <div class="category-arrow">→</div>
+                            <div class="accordion-content" id="acc-content-sort">
+                                <div id="acc-list-sort" class="filter-list-scrollable"></div>
                             </div>
-                            <div class="category-row" onclick="openFilterSheet('model')">
-                                <div class="category-info">
-                                    <div class="category-icon-bg"><span>🤖</span></div>
-                                    <span>Модель</span>
-                                </div>
-                                <div class="category-arrow">→</div>
+                        </div>
+
+                        <!-- NFT -->
+                        <div class="accordion-item">
+                            <div class="accordion-header" onclick="toggleFilterAccordion('nft')">
+                                <div class="acc-title"><span>💎</span> Коллекции</div>
+                                <div class="acc-arrow" id="acc-arrow-nft">›</div>
                             </div>
-                            <div class="category-row" onclick="openFilterSheet('symbol')">
-                                <div class="category-info">
-                                    <div class="category-icon-bg"><span>✨</span></div>
-                                    <span>Символ</span>
-                                </div>
-                                <div class="category-arrow">→</div>
+                            <div class="accordion-content" id="acc-content-nft">
+                                <div id="acc-list-nft" class="filter-list-scrollable"></div>
                             </div>
-                            <div class="category-row" onclick="openFilterSheet('bg')">
-                                <div class="category-info">
-                                    <div class="category-icon-bg"><span>🖼️</span></div>
-                                    <span>Фон</span>
-                                </div>
-                                <div class="category-arrow">→</div>
+                        </div>
+
+                        <!-- Model -->
+                        <div class="accordion-item">
+                            <div class="accordion-header" onclick="toggleFilterAccordion('model')">
+                                <div class="acc-title"><span>🤖</span> Модели</div>
+                                <div class="acc-arrow" id="acc-arrow-model">›</div>
+                            </div>
+                            <div class="accordion-content" id="acc-content-model">
+                                <div id="acc-list-model" class="filter-list-scrollable"></div>
+                            </div>
+                        </div>
+
+                        <!-- Symbol -->
+                        <div class="accordion-item">
+                            <div class="accordion-header" onclick="toggleFilterAccordion('symbol')">
+                                <div class="acc-title"><span>✨</span> Символы</div>
+                                <div class="acc-arrow" id="acc-arrow-symbol">›</div>
+                            </div>
+                            <div class="accordion-content" id="acc-content-symbol">
+                                <div id="acc-list-symbol" class="filter-list-scrollable"></div>
+                            </div>
+                        </div>
+
+                        <!-- BG -->
+                        <div class="accordion-item">
+                            <div class="accordion-header" onclick="toggleFilterAccordion('bg')">
+                                <div class="acc-title"><span>🖼️</span> Фоны</div>
+                                <div class="acc-arrow" id="acc-arrow-bg">›</div>
+                            </div>
+                            <div class="accordion-content" id="acc-content-bg">
+                                <div id="acc-list-bg" class="filter-list-scrollable"></div>
                             </div>
                         </div>
                     </div>
@@ -426,75 +444,6 @@
         </div>
     </div>
 
-    <!-- 2. Sorting Sheet -->
-    <div id="sheet-sort" class="bottom-sheet">
-        <div class="bottom-sheet-backdrop" onclick="closeGenericSheet()"></div>
-        <div class="bottom-sheet-content">
-            <div class="bottom-sheet-header">
-                <div class="bottom-sheet-dash"></div>
-                <h3>Сортировка</h3>
-            </div>
-            <div class="bottom-sheet-body">
-                <div id="sheet-sort-container" class="filter-list-scrollable"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 3. NFT Sheet -->
-    <div id="sheet-nft" class="bottom-sheet">
-        <div class="bottom-sheet-backdrop" onclick="closeGenericSheet()"></div>
-        <div class="bottom-sheet-content">
-            <div class="bottom-sheet-header">
-                <div class="bottom-sheet-dash"></div>
-                <h3>Коллекции</h3>
-            </div>
-            <div class="bottom-sheet-body">
-                <div id="sheet-nft-container" class="filter-list-scrollable"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 4. Model Sheet -->
-    <div id="sheet-model" class="bottom-sheet">
-        <div class="bottom-sheet-backdrop" onclick="closeGenericSheet()"></div>
-        <div class="bottom-sheet-content">
-            <div class="bottom-sheet-header">
-                <div class="bottom-sheet-dash"></div>
-                <h3>Модели</h3>
-            </div>
-            <div class="bottom-sheet-body">
-                <div id="sheet-model-container" class="filter-list-scrollable"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 5. Symbol Sheet -->
-    <div id="sheet-symbol" class="bottom-sheet">
-        <div class="bottom-sheet-backdrop" onclick="closeGenericSheet()"></div>
-        <div class="bottom-sheet-content">
-            <div class="bottom-sheet-header">
-                <div class="bottom-sheet-dash"></div>
-                <h3>Символы</h3>
-            </div>
-            <div class="bottom-sheet-body">
-                <div id="sheet-symbol-container" class="filter-list-scrollable"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 6. BG Sheet -->
-    <div id="sheet-bg" class="bottom-sheet">
-        <div class="bottom-sheet-backdrop" onclick="closeGenericSheet()"></div>
-        <div class="bottom-sheet-content">
-            <div class="bottom-sheet-header">
-                <div class="bottom-sheet-dash"></div>
-                <h3>Фоны</h3>
-            </div>
-            <div class="bottom-sheet-body">
-                <div id="sheet-bg-container" class="filter-list-scrollable"></div>
-            </div>
-        </div>
-    </div>
 
     <!-- Content -->
     <div class="container">
@@ -865,7 +814,7 @@
         </div>
     </div>
 
-    <script src="app.js?v=1771192992"></script>
+    <script src="app.js?v=1771194154"></script>
 </body>
 
 </html>

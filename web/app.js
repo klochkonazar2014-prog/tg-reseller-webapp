@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://barcelona-and-quantities-reactions.trycloudflare.com";
+const BACKEND_URL = "https://travelers-punch-visibility-peoples.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -1222,16 +1222,80 @@ function closeGenericSheet() {
     sheets.forEach(s => s.classList.remove('active'));
 }
 
+/**
+ * Core helper to get lists for categories. Resolves the "not defined" error.
+ */
+function getStaticList(key, selectedNFT) {
+    if (selectedNFT === 'all') {
+        const allItemsMap = {};
+        const dict = (key === 'model' ? ATTR_STATS.model : (key === 'symbol' ? ATTR_STATS.symbol : ATTR_STATS.bg));
+        if (dict) {
+            Object.entries(dict).forEach(([col, list]) => {
+                list.forEach(item => {
+                    if (!allItemsMap[item.name]) allItemsMap[item.name] = { ...item, collection: col };
+                });
+            });
+        }
+        return Object.values(allItemsMap).sort((a, b) => a.name.localeCompare(b.name));
+    } else {
+        const dict = (key === 'model' ? ATTR_STATS.model : (key === 'symbol' ? ATTR_STATS.symbol : ATTR_STATS.bg));
+        let list = (dict && dict[selectedNFT]) ? dict[selectedNFT] : [];
+        if (list.length === 0 && (key === 'symbol' || key === 'bg')) {
+            list = (dict && dict['ALL']) ? dict['ALL'] : [];
+        }
+        return [...list].sort((a, b) => a.name.localeCompare(b.name));
+    }
+}
+
+/**
+ * Returns premium gift asset URLs from Telegifter.
+ */
+function getTelegifterUrl(type, name, collection) {
+    if (!name || name === 'all') return null;
+    const slug = name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+    let colSlug = collection ? collection.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') : 'gifts';
+
+    if (type === 'model') return `https://telegifter.ru/wp-content/themes/gifts/assets/img/models/${slug}.webp`;
+    if (type === 'symbol') return `https://telegifter.ru/wp-content/themes/gifts/assets/img/symbols/${slug}.svg`;
+    if (type === 'bg') return null; // Colors are handled via CSS gradients
+    if (type === 'nft') return `https://telegifter.ru/wp-content/themes/gifts/assets/img/collections/${slug}.webp`;
+    return null;
+}
+
+function toggleFilterAccordion(key) {
+    const content = document.getElementById(`acc-content-${key}`);
+    const arrow = document.getElementById(`acc-arrow-${key}`);
+    if (!content) return;
+
+    const isHidden = content.style.display === 'none' || !content.style.display;
+
+    // Close others? User said "downward", so multiple can be open or single. Usually single is cleaner.
+    // document.querySelectorAll('.filter-accordion-content').forEach(c => {
+    //     if (c.id !== `acc-content-${key}`) { c.style.display = 'none'; }
+    // });
+
+    if (isHidden) {
+        content.style.display = 'block';
+        if (arrow) arrow.style.transform = 'rotate(90deg)';
+        initFilterLists(key); // Refresh content
+    } else {
+        content.style.display = 'none';
+        if (arrow) arrow.style.transform = 'rotate(0deg)';
+    }
+
+    if (tg) tg.HapticFeedback.impactOccurred('light');
+}
+
 function filterListSheet(key) {
     initFilterLists(true, key);
 }
 
-function initFilterLists(isSheet = false, sheetKey = null) {
-    console.log('[FILTER INIT] isSheet:', isSheet, 'sheetKey:', sheetKey);
+function initFilterLists(sheetKey = null) {
+    console.log('[FILTER INIT] sheetKey:', sheetKey);
 
-    // 1. Sorting (Sheet Only)
+    // 1. Sorting
     if (!sheetKey || sheetKey === 'sort') {
-        const cont = document.getElementById('sheet-sort-container');
+        const cont = document.getElementById('acc-list-sort');
         if (cont) {
             cont.innerHTML = '';
             const sorts = [
@@ -1242,18 +1306,18 @@ function initFilterLists(isSheet = false, sheetKey = null) {
                 { id: 'id_asc', n: t('sort_num_asc') || 'Item ID (По возрастанию)' },
                 { id: 'id_desc', n: t('sort_num_desc') || 'Item ID (По убыванию)' }
             ];
-            sorts.forEach(s => addFilterItem(cont, s.n, s.id, 'sort', ACTIVE_FILTERS.sort === s.id, null, null, null, true));
+            sorts.forEach(s => addFilterItem(cont, s.n, s.id, 'sort', ACTIVE_FILTERS.sort === s.id));
         }
     }
 
     // 2. Collections (NFT)
     if (!sheetKey || sheetKey === 'nft') {
-        const cont = document.getElementById(isSheet ? 'sheet-nft-container' : 'nft-list-container');
+        const cont = document.getElementById('acc-list-nft');
         if (cont) {
             cont.innerHTML = '';
-            addFilterItem(cont, t('all_short') || 'Все', 'all', 'nft', ACTIVE_FILTERS.nft === 'all', null, null, null, isSheet);
+            addFilterItem(cont, t('all_short') || 'Все', 'all', 'nft', ACTIVE_FILTERS.nft === 'all');
             (window.STATIC_COLLECTIONS || []).forEach(c => {
-                addFilterItem(cont, c.name, c.name, 'nft', ACTIVE_FILTERS.nft === c.name, c.image, null, null, isSheet);
+                addFilterItem(cont, c.name, c.name, 'nft', ACTIVE_FILTERS.nft === c.name, c.image);
             });
         }
     }
@@ -1261,9 +1325,9 @@ function initFilterLists(isSheet = false, sheetKey = null) {
     // 3. Categories (Model, Symbol, BG)
     const selectedNFT = ACTIVE_FILTERS.nft;
     const cats = [
-        { key: 'model', id: 'sheet-model-container' },
-        { key: 'symbol', id: 'sheet-symbol-container' },
-        { key: 'bg', id: 'sheet-bg-container' }
+        { key: 'model', id: 'acc-list-model' },
+        { key: 'symbol', id: 'acc-list-symbol' },
+        { key: 'bg', id: 'acc-list-bg' }
     ];
 
     cats.forEach(m => {
@@ -1273,40 +1337,20 @@ function initFilterLists(isSheet = false, sheetKey = null) {
         cont.innerHTML = '';
 
         const items = getStaticList(m.key, selectedNFT);
-        addFilterItem(cont, t('all_short') || 'Все', 'all', m.key, ACTIVE_FILTERS[m.key] === 'all', null, selectedNFT, null, true);
+        addFilterItem(cont, t('all_short') || 'Все', 'all', m.key, ACTIVE_FILTERS[m.key] === 'all', null, selectedNFT);
 
         items.forEach(item => {
             let icon = getTelegifterUrl(m.key, item.name, item.collection || selectedNFT) || item.image;
-            addFilterItem(cont, item.name, item.name, m.key, ACTIVE_FILTERS[m.key] === item.name, icon, item.collection || selectedNFT, item.image, true);
+            addFilterItem(cont, item.name, item.name, m.key, ACTIVE_FILTERS[m.key] === item.name, icon, item.collection || selectedNFT, item.image);
         });
     });
 }
 
-function openFilterSheet(key) {
-    const sheet = document.getElementById(`sheet-${key}`);
-    if (!sheet) return;
+/** Simple stubs removed as they are re-pivoted */
+function openFilterSheet(key) { toggleFilterAccordion(key); }
+function closeGenericSheet() { closeOctoModal(); }
 
-    // Drill-down logic: close current then open new
-    closeOctoModal();
-
-    setTimeout(() => {
-        sheet.classList.add('active');
-        initFilterLists(true, key);
-        if (tg) tg.HapticFeedback.impactOccurred('light');
-    }, 100);
-}
-
-function closeGenericSheet() {
-    const sheets = document.querySelectorAll('.bottom-sheet');
-    sheets.forEach(s => s.classList.remove('active'));
-
-    // Return to main
-    setTimeout(() => {
-        openOctoModal();
-    }, 100);
-}
-
-function addFilterItem(container, name, value, key, isSelected, imgUrl, collectionContext, fallbackImgUrl, isSheet = false) {
+function addFilterItem(container, name, value, key, isSelected, imgUrl, collectionContext, fallbackImgUrl) {
     const div = document.createElement('div');
     div.className = `filter-list-item ${isSelected ? 'selected' : ''}`;
 
