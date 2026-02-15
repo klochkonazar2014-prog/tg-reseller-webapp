@@ -3350,7 +3350,22 @@ body.hide-filters .header-column {
 
 .filter-group {
     margin-bottom: 24px;
-    padding: 0 20px;
+    padding: 0;
+    /* Full width accordions */
+}
+
+/* Ensure headers still have padding */
+.filter-group-header {
+    margin-left: 20px;
+}
+
+/* Price range still needs padding to not touch the very edge if not desired, 
+   but for accordions we want full width. 
+   Actually, let's keep price range with padding but make accordions full width. */
+.price-range-inputs,
+.id-input-wrapper {
+    margin-left: 16px;
+    margin-right: 16px;
 }
 
 .filter-group-header {
@@ -3409,7 +3424,8 @@ body.hide-filters .header-column {
     max-height: 280px;
     /* Bit more compact for nested view */
     overflow-y: auto;
-    padding: 8px 16px 16px 16px;
+    padding: 8px 0 16px 0;
+    /* Remove horizontal padding for full width items */
     -webkit-overflow-scrolling: touch;
 }
 
@@ -3443,9 +3459,12 @@ body.hide-filters .header-column {
 /* --- Accordion Specific Styles --- */
 .accordion-item {
     background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 16px;
-    margin-bottom: 12px;
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    /* Separator line instead of box */
+    border-radius: 0;
+    /* Full width look */
+    margin-bottom: 0;
     overflow: hidden;
     transition: all 0.3s ease;
 }

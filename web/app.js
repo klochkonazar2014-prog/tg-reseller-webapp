@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://travelers-punch-visibility-peoples.trycloudflare.com";
+const BACKEND_URL = "https://roman-boxing-default-wrapped.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -1263,27 +1263,30 @@ function getTelegifterUrl(type, name, collection) {
 }
 
 function toggleFilterAccordion(key) {
+    console.log('[ACCORDION] Toggling:', key);
     const content = document.getElementById(`acc-content-${key}`);
     const arrow = document.getElementById(`acc-arrow-${key}`);
-    if (!content) return;
+    if (!content) {
+        console.warn(`[ACCORDION] Content not found for key: ${key}`);
+        return;
+    }
 
-    const isHidden = content.style.display === 'none' || !content.style.display;
-
-    // Close others? User said "downward", so multiple can be open or single. Usually single is cleaner.
-    // document.querySelectorAll('.filter-accordion-content').forEach(c => {
-    //     if (c.id !== `acc-content-${key}`) { c.style.display = 'none'; }
-    // });
+    // Use computed style for more reliable detection
+    const isHidden = window.getComputedStyle(content).display === 'none';
+    console.log('[ACCORDION] isHidden:', isHidden);
 
     if (isHidden) {
         content.style.display = 'block';
         if (arrow) arrow.style.transform = 'rotate(90deg)';
-        initFilterLists(key); // Refresh content
+        initFilterLists(key); // Refresh content for this specific accordion
     } else {
         content.style.display = 'none';
         if (arrow) arrow.style.transform = 'rotate(0deg)';
     }
 
-    if (tg) tg.HapticFeedback.impactOccurred('light');
+    if (window.Telegram && window.Telegram.WebApp) {
+        tg.HapticFeedback.impactOccurred('light');
+    }
 }
 
 function filterListSheet(key) {
