@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://theft-resume-dining-recreation.trycloudflare.com";
+const BACKEND_URL = "https://strengthen-tar-gamecube-craps.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -121,10 +121,8 @@ const TRANSLATIONS = {
         search_filter_global: " (Все NFT)",
         sort_price_asc: "Цена (По возрастанию)",
         sort_price_desc: "Цена (По убыванию)",
-        sort_duration_asc: "Срок (По возрастанию)",
-        sort_duration_desc: "Срок (По убыванию)",
-        sort_num_asc: "Item ID (По возрастанию)",
-        sort_num_desc: "Item ID (По убыванию)",
+        sort_num_asc: "Номер (По возрастанию)",
+        sort_num_desc: "Номер (По убыванию)",
         sort_model_rare: "Редкость модели",
         sort_bg_rare: "Редкость фона",
         sort_symbol_rare: "Редкость символа",
@@ -436,41 +434,33 @@ const TG_LOGO_SVG = `<svg id="Livello_1" data-name="Livello 1" xmlns="http://www
 function getTelegifterUrl(type, name, collection, slugIndex = 0) {
     if (!name || name === 'Unknown' || name === 'Default' || name === 'Gift' || name === 'Gift #?') return null;
 
-    const getMappedSlug = (base) => {
-        const s = base.toLowerCase().replace(/[^a-z0-9]/g, '');
-        return SLUG_MAPPING[s] || s;
-    };
-
     if (type === 'symbol') {
-        const cleanName = name.replace(/[?#]/g, '');
+        const cleanName = name.replace(/[?#]/g, ''); // Basic sanitization
         return `file/gifts/symbol/${cleanName}.webp`;
     }
 
     if (type === 'model') {
+        // Models use format: /file/gifts/collectionslug/model.webp
+        // We need collection slug for this
         if (collection) {
-            const colSlug = getMappedSlug(collection);
+            const colSlug = collection.toLowerCase().replace(/[^a-z0-9]/g, '');
             const modelSlug = name.toLowerCase().replace(/[^a-z0-9]/g, '');
-            // Most subfolders in file/gifts are plurals (artisanbricks, berryboxes)
-            // But slug mapping sometimes gives singulars. 
-            // Priority: Local plural folder > Local singular > Fragment
-
-            // We assume the user wants local first
-            const pluralCol = colSlug.endsWith('s') ? colSlug : (colSlug + 's');
-            return `file/gifts/${pluralCol}/model.${modelSlug}.webp`;
+            return `file/gifts/${colSlug}/model.${modelSlug}.webp`;
         }
 
-        const slugBase = getMappedSlug(name);
+        // Fallback or old logic if no collection context
+        const slugBase = name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/[\s]+/g, '');
         const numbers = [888, 1, 777, 555, 123, 100];
         if (slugIndex < numbers.length) {
             return `https://nft.fragment.com/gift/${slugBase}-${numbers[slugIndex]}.medium.jpg`;
         }
-        return `https://nft.fragment.com/gift/${slugBase}-1.webp`;
+        return null;
     }
 
     if (type === 'nft') {
-        const colSlug = getMappedSlug(name);
-        const pluralCol = colSlug.endsWith('s') ? colSlug : (colSlug + 's');
-        return `file/gifts/${pluralCol}/thumb.webp`;
+        // NFT collections use format: /file/gifts/collectionslug/thumb.webp
+        const collectionSlug = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+        return `file/gifts/${collectionSlug}/thumb.webp`;
     }
 
     return null;
@@ -541,15 +531,7 @@ function updateUILanguage() {
         'ref-label-balance': t('referral_balance'),
         'ref-label-link': t('referral_link'),
         'ref-withdraw-btn': t('withdraw_funds'),
-        'ref-share-btn': t('share'),
-        'sheet-label-nft': t('nft'),
-        'sheet-label-model': t('model'),
-        'sheet-label-bg': t('backdrop'),
-        'sheet-label-symbol': t('symbol'),
-        'sheet-search-nft': t('search_hint'),
-        'sheet-search-model': t('search_hint'),
-        'sheet-search-bg': t('search_hint'),
-        'sheet-search-symbol': t('search_hint')
+        'ref-share-btn': t('share')
     };
     for (const [id, val] of Object.entries(map)) {
         const el = document.getElementById(id);
@@ -1200,175 +1182,164 @@ function filterList(key) {
 }
 
 function toggleGenericModal(key) {
-    openFilterSheet(key);
-}
-
-function openFilterSheet(key) {
-    const sheetId = `sheet-${key}`;
-    const sheet = document.getElementById(sheetId);
-    if (!sheet) return;
+    openAdvancedFilters();
+    const accMap = {
+        'nft': 'nft-acc',
+        'model': 'model-acc',
+        'bg': 'bg-acc',
+        'symbol': 'symbol-acc'
+    };
 
     // Ensure data is loaded
     if (!window.STATIC_COLLECTIONS || window.STATIC_COLLECTIONS.length === 0) {
         loadFilterData();
     }
 
-    sheet.classList.add('active');
-    initFilterLists(true, key); // true means it's for sheet
+    const targetId = accMap[key];
+    if (targetId) {
+        const btn = document.querySelector(`.filter-accordion[onclick*="${targetId}"]`);
+        toggleAccordion(targetId, btn);
+    }
 }
 
-function closeGenericSheet() {
-    const sheets = document.querySelectorAll('.bottom-sheet');
-    sheets.forEach(s => s.classList.remove('active'));
-}
+function initFilterLists() {
+    const sortCont = document.getElementById('sort-list-container');
+    if (sortCont) {
+        const sorts = [
+            { id: 'price_asc', n: t('sort_price_asc') },
+            { id: 'price_desc', n: t('sort_price_desc') },
+            { id: 'num_asc', n: t('sort_num_asc') },
+            { id: 'num_desc', n: t('sort_num_desc') },
+            { id: 'model_rare', n: t('sort_model_rare') },
+            { id: 'bg_rare', n: t('sort_bg_rare') },
+            { id: 'symbol_rare', n: t('sort_symbol_rare') }
+        ];
+        sortCont.innerHTML = '';
+        sorts.forEach(s => addFilterItem(sortCont, s.n, s.id, 'sort', ACTIVE_FILTERS.sort === s.id));
+    }
 
-/**
- * Core helper to get lists for categories. Resolves the "not defined" error.
- */
-function getStaticList(key, selectedNFT) {
-    if (selectedNFT === 'all') {
-        const allItemsMap = {};
-        const dict = (key === 'model' ? ATTR_STATS.model : (key === 'symbol' ? ATTR_STATS.symbol : ATTR_STATS.bg));
-        if (dict) {
-            Object.entries(dict).forEach(([col, list]) => {
-                list.forEach(item => {
-                    if (!allItemsMap[item.name]) allItemsMap[item.name] = { ...item, collection: col };
-                });
-            });
+    const nftCont = document.getElementById('nft-list-container');
+    if (nftCont) {
+        const nftSearchInp = document.getElementById('filter-search-nft');
+        const nftSearch = nftSearchInp ? nftSearchInp.value.toLowerCase() : '';
+        nftCont.innerHTML = '';
+
+        if (!nftSearch || t('all').toLowerCase().includes(nftSearch)) {
+            addFilterItem(nftCont, t('all'), "all", 'nft', ACTIVE_FILTERS.nft === 'all');
         }
-        return Object.values(allItemsMap).sort((a, b) => a.name.localeCompare(b.name));
-    } else {
-        const dict = (key === 'model' ? ATTR_STATS.model : (key === 'symbol' ? ATTR_STATS.symbol : ATTR_STATS.bg));
-        let list = (dict && dict[selectedNFT]) ? dict[selectedNFT] : [];
-        if (list.length === 0 && (key === 'symbol' || key === 'bg')) {
-            list = (dict && dict['ALL']) ? dict['ALL'] : [];
-        }
-        return [...list].sort((a, b) => a.name.localeCompare(b.name));
-    }
-}
 
-/**
- * Returns premium gift asset URLs from Telegifter.
- */
-function getTelegifterUrl(type, name, collection) {
-    if (!name || name === 'all') return null;
-    const slug = name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
-    let colSlug = collection ? collection.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') : 'gifts';
-
-    if (type === 'model') return `https://telegifter.ru/wp-content/themes/gifts/assets/img/models/${slug}.webp`;
-    if (type === 'symbol') return `https://telegifter.ru/wp-content/themes/gifts/assets/img/symbols/${slug}.svg`;
-    if (type === 'bg') return null; // Colors are handled via CSS gradients
-    if (type === 'nft') return `https://telegifter.ru/wp-content/themes/gifts/assets/img/collections/${slug}.webp`;
-    return null;
-}
-
-function toggleFilterAccordion(key) {
-    console.log('[ACCORDION] Toggling:', key);
-    const content = document.getElementById(`acc-content-${key}`);
-    const arrow = document.getElementById(`acc-arrow-${key}`);
-    const listCont = document.getElementById(`acc-list-${key}`);
-    if (!content) {
-        console.warn(`[ACCORDION] Content not found for key: ${key}`);
-        return;
+        (window.STATIC_COLLECTIONS || []).forEach(col => {
+            if (col.name.toLowerCase().includes(nftSearch)) {
+                addFilterItem(nftCont, col.name, col.name, 'nft', ACTIVE_FILTERS.nft === col.name, col.image);
+            }
+        });
     }
 
-    // Use computed style for more reliable detection
-    const isHidden = window.getComputedStyle(content).display === 'none';
-    console.log('[ACCORDION] isHidden:', isHidden);
-
-    if (isHidden) {
-        // Force the display and ensure it has auto height
-        content.style.display = 'block';
-        content.style.height = 'auto';
-        content.style.opacity = '1';
-        content.style.visibility = 'visible';
-
-        if (arrow) arrow.style.transform = 'rotate(90deg)';
-        initFilterLists(key);
-
-        // Diagnostic log: check if content actually has height now
-        setTimeout(() => {
-            console.log(`[ACCORDION] Diagnostic - ${key} offsetHeight:`, content.offsetHeight, 'scrollHeight:', content.scrollHeight);
-            if (listCont) console.log(`[ACCORDION] Diagnostic - ${key} list child count:`, listCont.children.length);
-        }, 50);
-    } else {
-        content.style.display = 'none';
-        if (arrow) arrow.style.transform = 'rotate(0deg)';
-    }
-
-    if (window.Telegram && window.Telegram.WebApp) {
-        tg.HapticFeedback.impactOccurred('light');
-    }
-}
-
-function filterListSheet(key) {
-    initFilterLists(true, key);
-}
-
-function initFilterLists(sheetKey = null) {
-    console.log('[FILTER INIT] sheetKey:', sheetKey);
-
-    // 1. Sorting
-    if (!sheetKey || sheetKey === 'sort') {
-        const cont = document.getElementById('acc-list-sort');
-        console.log('[FILTER] Target Sort Container:', cont);
-        if (cont) {
-            cont.innerHTML = '';
-            const sorts = [
-                { id: 'price_asc', n: t('sort_price_asc') || 'Цена (По возрастанию)' },
-                { id: 'price_desc', n: t('sort_price_desc') || 'Цена (По убыванию)' },
-                { id: 'duration_asc', n: t('sort_duration_asc') || 'Срок (По возрастанию)' },
-                { id: 'duration_desc', n: t('sort_duration_desc') || 'Срок (По убыванию)' },
-                { id: 'id_asc', n: t('sort_num_asc') || 'Item ID (По возрастанию)' },
-                { id: 'id_desc', n: t('sort_num_desc') || 'Item ID (По убыванию)' }
-            ];
-            console.log('[FILTER] Appending sorts, count:', sorts.length);
-            sorts.forEach(s => addFilterItem(cont, s.n, s.id, 'sort', ACTIVE_FILTERS.sort === s.id));
-        }
-    }
-
-    // 2. Collections (NFT)
-    if (!sheetKey || sheetKey === 'nft') {
-        const cont = document.getElementById('acc-list-nft');
-        if (cont) {
-            cont.innerHTML = '';
-            addFilterItem(cont, t('all_short') || 'Все', 'all', 'nft', ACTIVE_FILTERS.nft === 'all');
-            (window.STATIC_COLLECTIONS || []).forEach(c => {
-                addFilterItem(cont, c.name, c.name, 'nft', ACTIVE_FILTERS.nft === c.name, c.image);
-            });
-        }
-    }
-
-    // 3. Categories (Model, Symbol, BG)
-    const selectedNFT = ACTIVE_FILTERS.nft;
-    const cats = [
-        { key: 'model', id: 'acc-list-model' },
-        { key: 'symbol', id: 'acc-list-symbol' },
-        { key: 'bg', id: 'acc-list-bg' }
+    const maps = [
+        { id: 'model-list-container', key: 'model', search: 'filter-search-model', label: t('model').toLowerCase() },
+        { id: 'bg-list-container', key: 'bg', search: 'filter-search-bg', label: t('backdrop').toLowerCase() },
+        { id: 'symbol-list-container', key: 'symbol', search: 'filter-search-symbol', label: t('symbol').toLowerCase() }
     ];
 
-    cats.forEach(m => {
-        if (sheetKey && sheetKey !== m.key) return;
+    const selectedNFT = ACTIVE_FILTERS.nft;
+
+    maps.forEach(m => {
         const cont = document.getElementById(m.id);
-        if (!cont) return;
+        const sInput = document.getElementById(m.search);
+        if (!cont || !sInput) return;
+        const sVal = sInput.value.toLowerCase();
         cont.innerHTML = '';
 
-        const items = getStaticList(m.key, selectedNFT);
-        addFilterItem(cont, t('all_short') || 'Все', 'all', m.key, ACTIVE_FILTERS[m.key] === 'all', null, selectedNFT);
+        if (selectedNFT === 'all') {
+            // MODELS: Require NFT selection first
+            if (m.key === 'model') {
+                cont.innerHTML = `<div style="padding:20px; color:#8b9bb4; text-align:center; font-size:13px; background:rgba(255,255,255,0.03); border-radius:12px; margin-top:10px;">${t('select_collection_first')}</div>`;
+                sInput.disabled = true;
+                return;
+            }
+
+            // BG & SYMBOLS: Global selection allowed
+            const allItemsMap = {};
+            // Iterate OVER COLLECTIONS to preserve context
+            Object.entries(ATTR_STATS[m.key] || {}).forEach(([colName, list]) => {
+                if (!Array.isArray(list)) return; // Safety check
+                list.forEach(item => {
+                    if (!item.name || item.name.toLowerCase() === 'default' || item.name.toLowerCase() === 'none') return;
+                    // Store image AND collection for URL generation
+                    if (!allItemsMap[item.name]) {
+                        allItemsMap[item.name] = { image: item.image, collection: colName };
+                    }
+                    else if (isBadUrl(allItemsMap[item.name].image) && !isBadUrl(item.image)) {
+                        allItemsMap[item.name].image = item.image;
+                        allItemsMap[item.name].collection = colName;
+                    }
+                });
+            });
+            const allItems = Object.entries(allItemsMap)
+                .map(([n, data]) => ({ name: n, image: data.image, collection: data.collection }))
+                .sort((a, b) => a.name.localeCompare(b.name));
+
+            sInput.disabled = false;
+            sInput.placeholder = t('search_filter_hint', { label: m.label }) + t('search_filter_global');
+
+            if (!sVal || t('select_all').toLowerCase().includes(sVal)) {
+                addFilterItem(cont, t('select_all'), "all", m.key, ACTIVE_FILTERS[m.key] === 'all');
+            }
+
+            allItems.forEach(item => {
+                if (item.name.toLowerCase().includes(sVal)) {
+                    // Try to get clean visual first
+                    let icon = null;
+                    if (m.key === 'symbol') icon = getTelegifterUrl('symbol', item.name);
+                    else if (m.key === 'model') icon = getTelegifterUrl('model', item.name, item.collection);
+                    else if (m.key === 'nft') icon = item.image; // Use existing image for NFT collections
+
+                    if (!icon && (m.key === 'bg' || m.key === 'symbol')) icon = (VISUAL_MAP[m.key] && VISUAL_MAP[m.key][item.name]) || null;
+
+                    // NEW: Ensure we try Fragment URL if other methods failed and it's a Model
+                    if (!icon && m.key === 'model') {
+                        const slug = item.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+                        // We use a generic model #1 for the filter icon preview if possible
+                        icon = `https://nft.fragment.com/gift/${slug}-1.webp`;
+                    }
+
+                    addFilterItem(cont, item.name, item.name, m.key, ACTIVE_FILTERS[m.key] === item.name, icon, item.collection, item.image);
+                }
+            });
+            return;
+        }
+
+        sInput.disabled = false;
+        sInput.placeholder = t('search_filter_hint', { label: m.label });
+
+        if (!sVal || t('select_all').toLowerCase().includes(sVal)) {
+            addFilterItem(cont, t('select_all'), "all", m.key, ACTIVE_FILTERS[m.key] === 'all');
+        }
+
+        let items = (ATTR_STATS[m.key] && ATTR_STATS[m.key][selectedNFT]) || [];
+
+        // Symbols & Backgrounds: If no specific items for this collection, show ALL global ones
+        if (items.length === 0 && (m.key === 'symbol' || m.key === 'bg')) {
+            items = (ATTR_STATS[m.key] && ATTR_STATS[m.key]['ALL']) || [];
+        }
 
         items.forEach(item => {
-            let icon = getTelegifterUrl(m.key, item.name, item.collection || selectedNFT) || item.image;
-            addFilterItem(cont, item.name, item.name, m.key, ACTIVE_FILTERS[m.key] === item.name, icon, item.collection || selectedNFT, item.image);
+            if (!item.name || item.name.toLowerCase() === 'default' || item.name.toLowerCase() === 'none') return;
+            if (item.name.toLowerCase().includes(sVal)) {
+                // Try clean visual
+                let visual = null;
+                if (m.key === 'symbol') visual = getTelegifterUrl('symbol', item.name);
+                else if (m.key === 'model') visual = getTelegifterUrl('model', item.name, selectedNFT);
+
+                let icon = visual || item.image;
+                if (!icon && (m.key === 'bg' || m.key === 'symbol')) icon = (VISUAL_MAP[m.key] && VISUAL_MAP[m.key][item.name]) || null;
+                addFilterItem(cont, item.name, item.name, m.key, ACTIVE_FILTERS[m.key] === item.name, icon, selectedNFT, item.image);
+            }
         });
     });
 }
 
-/** Simple stubs removed as they are re-pivoted */
-function openFilterSheet(key) { toggleFilterAccordion(key); }
-function closeGenericSheet() { closeOctoModal(); }
-
 function addFilterItem(container, name, value, key, isSelected, imgUrl, collectionContext, fallbackImgUrl) {
-    if (!container) return;
     const div = document.createElement('div');
     div.className = `filter-list-item ${isSelected ? 'selected' : ''}`;
 
@@ -1376,49 +1347,62 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
 
     let visualHTML = '';
     if (isAll) {
-        visualHTML = `<div style="width:52px; height:52px; border-radius:14px; background: linear-gradient(135deg, #1c1c1e, #0a0a0b); border: 1px solid rgba(255,255,255,0.08); display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; overflow:hidden;">
-            <div style="font-size:11px; font-weight:900; color:#fff; letter-spacing:1px; z-index:2; font-family: 'Outfit', sans-serif;">ВСЕ</div>
-            <div style="width:20px; height:2px; background: #0088cc; margin-top:4px; border-radius:1px; z-index:2;"></div>
+        visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: linear-gradient(135deg, #2a2a2a, #1a1a1a); border: 1px solid rgba(255,255,255,0.1); display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; overflow:hidden;">
+            <div style="font-size:10px; font-weight:900; color:#fff; letter-spacing:1px; z-index:2; font-family: 'Outfit', sans-serif;">ВСЕ</div>
+            <div style="width:16px; height:2px; background: #0088cc; margin-top:4px; border-radius:1px; z-index:2;"></div>
             <div style="position:absolute; top:0; left:0; width:100%; height:100%; background: url('https://telegifter.ru/wp-content/themes/gifts/assets/img/bg-logo-mini.webp'); opacity:0.1; background-size: 20px;"></div>
         </div>`;
     } else if (key === 'symbol') {
-        const iconSrc = imgUrl || (VISUAL_MAP.symbol ? VISUAL_MAP.symbol[name] : null);
-        visualHTML = `<div style="width:52px; height:52px; border-radius:14px; background: #000000; border:1px solid rgba(255, 255, 255, 0.08); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
+        const tgSymbol = getTelegifterUrl('symbol', name);
+        const iconSrc = tgSymbol || (VISUAL_MAP.symbol ? VISUAL_MAP.symbol[name] : null);
+
+        // Robust rendering: Text underneath, Image on top. If Image fails, Text is visible.
+        visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: #000000; border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
             <span style="color:#8b9bb4; font-size:11px; font-weight:700; position:absolute; z-index:1;">${name.substring(0, 3).toUpperCase()}</span>
-            ${iconSrc ? `<img src="${iconSrc}" style="filter: brightness(0) invert(1); width:32px; height:32px; object-fit:contain; z-index:2; opacity:0; transition:opacity 0.2s;" onload="this.style.opacity='1'; if(this.previousElementSibling) this.previousElementSibling.style.display='none';" onerror="this.style.display='none'">` : ''}
+            ${iconSrc ? `<img src="${iconSrc}" style="filter: brightness(0) invert(1); width:28px; height:28px; object-fit:contain; z-index:2; opacity:0; transition:opacity 0.2s;" onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';" onerror="this.style.display='none'">` : ''}
         </div>`;
     } else if (key === 'bg') {
         const bgStyle = (VISUAL_MAP.bg && VISUAL_MAP.bg[name]) || '#333';
-        visualHTML = `<div class="filter-color-circle" style="background: ${bgStyle}; position:relative; overflow:hidden; width:52px; height:52px; border-radius:14px; border:1px solid rgba(255,255,255,0.1) !important;">
+        visualHTML = `<div class="filter-color-circle" style="background: ${bgStyle}; position:relative; overflow:hidden; width:52px; height:52px; border-radius:12px;">
             <div style="position:absolute; top:0; left:0; width:100%; height:100%; background: url('https://telegifter.ru/wp-content/themes/gifts/assets/img/bg-logo-mini.webp'); opacity:0.3; background-size: 20px;"></div>
         </div>`;
-    } else if (key === 'sort') {
-        const isDesc = name.toLowerCase().includes('убыванию') || name.toLowerCase().includes('desc');
-        visualHTML = `<div style="width:40px; height:40px; border-radius:12px; background: rgba(0, 136, 204, 0.1); border: 1px solid rgba(0, 136, 204, 0.2); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; flex-shrink:0;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${isSelected ? '#0088cc' : 'rgba(255,255,255,0.6)'}" stroke-width="2.5" style="transform: ${isDesc ? 'rotate(180deg)' : 'none'}; transition: all 0.3s;">
-                <path d="M12 19V5M5 12l7-7 7 7" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-        </div>`;
     } else {
+        // Model or NFT or fallback
+        const isNFT = key === 'nft';
+        const isModel = key === 'model';
+        const cleanName = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+        // Generate local path if it's NFT or Model
         let possibleImg = imgUrl;
         if (!possibleImg) {
-            possibleImg = getTelegifterUrl(key, name, collectionContext);
+            if (isNFT) {
+                possibleImg = `file/gifts/${cleanName}/thumb.webp`;
+            } else if (isModel && collectionContext) {
+                const colSlug = collectionContext.toLowerCase().replace(/[^a-z0-9]/g, '');
+                const modelSlug = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+                possibleImg = `file/gifts/${colSlug}/model.${modelSlug}.webp`;
+            }
         }
 
-        visualHTML = `<div style="width:44px; height:44px; border-radius:10px; background: rgba(255, 255, 255, 0.03); border:1px solid rgba(255, 255, 255, 0.08); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; flex-shrink:0;">
-            <span class="filter-item-letter" style="color:#8b9bb4; font-size:10px; font-weight:700; position:absolute; z-index:1;">${name.substring(0, 3).toUpperCase()}</span>
+        // Fallback to Fragment URL if no local path or specifically requested
+        if (!possibleImg) {
+            possibleImg = `https://nft.fragment.com/gift/${cleanName}-1.webp`;
+        }
+
+        visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: rgba(255, 255, 255, 0.05); border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
+            <span class="filter-item-letter" style="color:#8b9bb4; font-size:11px; font-weight:700; position:absolute; z-index:1;">${name.substring(0, 3).toUpperCase()}</span>
             <img src="${possibleImg}" class="filter-img" style="width:100%; height:100%; object-fit:contain; z-index:2; opacity:0; transition:opacity 0.2s;" 
-                onload="this.style.opacity='1'; if(this.previousElementSibling) this.previousElementSibling.style.display='none';"
+                onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';"
                 onerror="
                     const name = '${name.replace(/'/g, "\\\\'")}';
                     const col = '${(collectionContext || '').replace(/'/g, "\\\\'")}';
                     this.dataset.slugIndex = this.dataset.slugIndex ? parseInt(this.dataset.slugIndex) + 1 : 1;
                     const nextUrl = getTelegifterUrl('${key}', name, col, parseInt(this.dataset.slugIndex));
-                    if (nextUrl && parseInt(this.dataset.slugIndex) < 5) {
+                    if (nextUrl) {
                         this.src = nextUrl;
                     } else {
                         this.style.display = 'none';
-                        if(this.previousElementSibling) this.previousElementSibling.style.display = 'block';
+                        this.previousElementSibling.style.display = 'block';
                     }
                 ">
         </div>`;
@@ -1428,31 +1412,30 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
         <div class="filter-item-left" style="overflow: hidden;">
             ${visualHTML}
             <div style="display:flex; flex-direction:column; margin-left:14px; overflow: hidden;">
-                <span class="filter-item-name" style="font-size:15px; font-weight:700; color:#fff;">${name}</span>
+                <span class="filter-item-name">${name}</span>
             </div>
         </div>
-        <div class="checkbox-box" style="flex-shrink:0; width:22px; height:22px; border-radius:7px; border:2px solid ${isSelected ? '#0088cc' : 'rgba(255,255,255,0.15)'}; background: ${isSelected ? 'rgba(0,136,204,0.1)' : 'transparent'}; display:flex; align-items:center; justify-content:center; margin-left:10px; transition: all 0.2s;">
-            ${isSelected ? '<div style="width:10px; height:10px; background:#0088cc; border-radius:2px; box-shadow: 0 0 10px rgba(0,136,204,0.4);"></div>' : ''}
+        <div class="checkbox-box" style="flex-shrink:0; width:22px; height:22px; border-radius:6px; border:2px solid ${isSelected ? '#0088cc' : '#333'}; display:flex; align-items:center; justify-content:center; margin-left:10px;">
+            ${isSelected ? '<div style="width:10px; height:10px; background:#0088cc; border-radius:2px;"></div>' : ''}
         </div>
     `;
-
     div.onclick = (e) => {
         e.stopPropagation();
-        if (typeof tg !== 'undefined' && tg.HapticFeedback) tg.HapticFeedback.selectionChanged();
+        ACTIVE_FILTERS[key] = value ? value.trim() : value;
 
-        ACTIVE_FILTERS[key] = value ? String(value).trim() : value;
-
+        // Reset sub-filters if collection changed
         if (key === 'nft') {
             ACTIVE_FILTERS.model = 'all';
             ACTIVE_FILTERS.bg = 'all';
             ACTIVE_FILTERS.symbol = 'all';
+            // Also clear search inputs for sub-filters
             ['model', 'bg', 'symbol'].forEach(k => {
                 const inp = document.getElementById(`filter-search-${k}`);
                 if (inp) inp.value = '';
             });
         }
 
-        initFilterLists(key); // Refresh view
+        initFilterLists();
         applyHeaderSearch();
     };
     container.appendChild(div);
@@ -1533,26 +1516,22 @@ function createItemCard(item) {
 }
 
 function renderCardTimer(item) {
-    // Property is rent_end (UNIX timestamp in seconds)
-    const endTime = item.rent_end || item.rent_ends_at;
-    if (!endTime) return '';
-
-    const now = Math.floor(Date.now() / 1000);
-    const diff = endTime - now;
+    if (!item.rent_ends_at) return '';
+    const diff = (item.rent_ends_at * 1000) - Date.now();
     if (diff <= 0) return '';
 
-    const d = Math.floor(diff / 86400);
-    const h = Math.floor((diff % 86400) / 3600);
-    const m = Math.floor((diff % 3600) / 60);
+    const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
 
     let text = "";
-    if (d > 0) text = `${d}д ${h}ч`;
-    else if (h > 0) text = `${h}ч ${m}м`;
-    else text = `${m}м`;
+    if (d > 0) text = `${d}d ${h}h`;
+    else if (h > 0) text = `${h}h ${m}m`;
+    else text = `${m}m`;
 
     return `
-        <div class="card-mini-timer">
-            <span class="mini-time">${text}</span>
+        <div class="card-top-timer card-timer" data-ends="${item.rent_ends_at}">
+            <span class="mt-pill-new">${text}</span>
         </div>
     `;
 }
@@ -3051,29 +3030,35 @@ function renderPremiumCountdown(item, container) {
         const minutes = Math.floor((diff % 3600) / 60);
         const seconds = diff % 60;
 
-        // Compact timer - only digits
+        // New Fragment-style Layout
         container.innerHTML = `
             <div class="premium-timer-layout">
+                 <div class="timer-label-row">
+                    <span>Available in</span>
+                </div>
                 <div class="timer-digits-row">
                     <div class="timer-box">
                         <span class="t-val">${days}</span>
-                        <span class="t-label">д</span>
+                        <span class="t-label">d</span>
                     </div>
                     <div class="timer-sep">:</div>
                     <div class="timer-box">
                         <span class="t-val">${hours.toString().padStart(2, '0')}</span>
-                        <span class="t-label">ч</span>
+                        <span class="t-label">h</span>
                     </div>
                     <div class="timer-sep">:</div>
                     <div class="timer-box">
                         <span class="t-val">${minutes.toString().padStart(2, '0')}</span>
-                        <span class="t-label">м</span>
+                        <span class="t-label">m</span>
                     </div>
                     <div class="timer-sep">:</div>
                     <div class="timer-box">
                         <span class="t-val">${seconds.toString().padStart(2, '0')}</span>
-                        <span class="t-label">с</span>
+                        <span class="t-label">s</span>
                     </div>
+                </div>
+                 <div class="timer-date-row">
+                    ${new Date(item.rent_end * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                 </div>
             </div>
         `;
@@ -3082,6 +3067,43 @@ function renderPremiumCountdown(item, container) {
     update();
     container._timer = setInterval(update, 1000);
 }
+
+
+
+function renderCardTimer(item) {
+    if (!item.rent_end) return "";
+    const id = `card-timer-${item.nft_address.slice(-6)}`;
+
+    // Auto-update logic
+    setTimeout(() => {
+        const el = document.getElementById(id);
+        if (!el) return;
+
+        const update = () => {
+            const now = Math.floor(Date.now() / 1000);
+            const diff = item.rent_end - now;
+            if (diff <= 0) {
+                el.innerText = "EXPIRED";
+                el.style.color = "#FF3B30";
+                return;
+            }
+            const d = Math.floor(diff / 86400);
+            const h = Math.floor((diff % 86400) / 3600);
+            const m = Math.floor((diff % 3600) / 60);
+            const s = diff % 60;
+            const pad = (n) => n.toString().padStart(2, '0');
+            el.innerText = `${d}d ${pad(h)}:${pad(m)}:${pad(s)}`;
+        };
+        update();
+        if (el._timer) clearInterval(el._timer);
+        el._timer = setInterval(update, 1000);
+    }, 50);
+
+    return `<div id="${id}" class="card-days-badge-bottom">...</div>`;
+}
+
+// function handleNotifyClick() removed as it was a duplicate and unified above.
+
 
 function showToast(msg) {
     if (typeof tg !== 'undefined' && tg.showAlert) {

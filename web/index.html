@@ -6,7 +6,7 @@
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>OctoRent</title>
-    <script src="https://telegram.org/js/telegram-web-app.js?v=1771198653"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js?v=1771199386"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;800;900&display=swap" rel="stylesheet">
     <script src="lottie.min.js"></script>
@@ -33,7 +33,7 @@
             return false;
         };
     </script>
-    <link rel="stylesheet" href="style.css?v=1771198653">
+    <link rel="stylesheet" href="style.css?v=1771199386">
     <style>
         /* CRITICAL OVERRIDES - DO NOT REMOVE */
         .main-rent-btn svg,
@@ -342,108 +342,105 @@
         <input type="hidden" id="filter-sort" value="price_asc">
     </div>
 
-    <!-- 1. Main Filter Sheet (OctoModal) -->
-    <div id="octo-modal" class="bottom-sheet">
-        <div class="bottom-sheet-backdrop" onclick="closeOctoModal()"></div>
-        <div class="bottom-sheet-content">
-            <div class="bottom-sheet-header">
-                <div class="bottom-sheet-dash"></div>
-                <h3>Параметры</h3>
+    <!-- Filter Modal (Advanced) -->
+    <div id="octo-modal-overlay" class="modal-overlay" onclick="closeOctoModal()"></div>
+    <div id="octo-modal" class="filter-panel">
+        <div class="octo-modal-header">
+            <h3 id="octo-label-filters">Фильтры</h3>
+            <button onclick="closeOctoModal()"
+                style="background: none; border: none; color: #8b9bb4; padding: 10px; cursor: pointer;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="filter-body">
+            <div id="octo-label-gift-number" class="filter-section-title">Номер подарка</div>
+            <div class="filter-input-wrapper">
+                <input type="number" id="filter-gift-number" placeholder="Например: 123">
             </div>
-            <div class="bottom-sheet-body">
-                <div class="bottom-sheet-list">
-                    <!-- Price Range -->
-                    <div class="filter-group">
-                        <div class="filter-group-header"><span>Цена</span></div>
-                        <div class="price-range-inputs">
-                            <div class="price-input-box">
-                                <span class="price-input-prefix">От</span>
-                                <input type="number" id="filter-price-from" placeholder="0">
-                            </div>
-                            <div class="price-range-divider"></div>
-                            <div class="price-input-box">
-                                <span class="price-input-prefix">До</span>
-                                <input type="number" id="filter-price-to" placeholder="max">
-                            </div>
-                        </div>
+
+            <div class="filter-section">
+                <span id="octo-label-sort">Сортировать по</span>
+                <div id="sort-list-container" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;">
+                    <!-- Injected by JS -->
+                </div>
+            </div>
+
+            <div class="filter-section">
+                <span id="octo-label-price">Цена</span>
+                <div class="filter-accordion-arrow">▼</div>
+            </div>
+            <div id="price-acc" class="accordion-content">
+                <div class="filter-input-row" style="padding-top:10px;">
+                    <div class="filter-input-wrapper">
+                        <span>▼</span>
+                        <input type="number" id="filter-price-from" placeholder="От">
                     </div>
-
-                    <!-- Gift ID -->
-                    <div class="filter-group">
-                        <div class="filter-group-header"><span>Номер подарка</span></div>
-                        <div class="id-input-wrapper">
-                            <input type="number" id="filter-gift-number" placeholder="Например: 123">
-                        </div>
-                    </div>
-
-                    <!-- Filter Categories Accordion -->
-                    <div class="filter-group">
-                        <div class="filter-group-header"><span>Параметры</span></div>
-
-                        <!-- Sort -->
-                        <div class="accordion-item">
-                            <div class="accordion-header" onclick="toggleFilterAccordion('sort')">
-                                <div class="acc-title"><span>⏳</span> Сортировка</div>
-                                <div class="acc-arrow" id="acc-arrow-sort">›</div>
-                            </div>
-                            <div class="accordion-content" id="acc-content-sort">
-                                <div id="acc-list-sort" class="filter-list-scrollable"></div>
-                            </div>
-                        </div>
-
-                        <!-- NFT -->
-                        <div class="accordion-item">
-                            <div class="accordion-header" onclick="toggleFilterAccordion('nft')">
-                                <div class="acc-title"><span>💎</span> Коллекции</div>
-                                <div class="acc-arrow" id="acc-arrow-nft">›</div>
-                            </div>
-                            <div class="accordion-content" id="acc-content-nft">
-                                <div id="acc-list-nft" class="filter-list-scrollable"></div>
-                            </div>
-                        </div>
-
-                        <!-- Model -->
-                        <div class="accordion-item">
-                            <div class="accordion-header" onclick="toggleFilterAccordion('model')">
-                                <div class="acc-title"><span>🤖</span> Модели</div>
-                                <div class="acc-arrow" id="acc-arrow-model">›</div>
-                            </div>
-                            <div class="accordion-content" id="acc-content-model">
-                                <div id="acc-list-model" class="filter-list-scrollable"></div>
-                            </div>
-                        </div>
-
-                        <!-- Symbol -->
-                        <div class="accordion-item">
-                            <div class="accordion-header" onclick="toggleFilterAccordion('symbol')">
-                                <div class="acc-title"><span>✨</span> Символы</div>
-                                <div class="acc-arrow" id="acc-arrow-symbol">›</div>
-                            </div>
-                            <div class="accordion-content" id="acc-content-symbol">
-                                <div id="acc-list-symbol" class="filter-list-scrollable"></div>
-                            </div>
-                        </div>
-
-                        <!-- BG -->
-                        <div class="accordion-item">
-                            <div class="accordion-header" onclick="toggleFilterAccordion('bg')">
-                                <div class="acc-title"><span>🖼️</span> Фоны</div>
-                                <div class="acc-arrow" id="acc-arrow-bg">›</div>
-                            </div>
-                            <div class="accordion-content" id="acc-content-bg">
-                                <div id="acc-list-bg" class="filter-list-scrollable"></div>
-                            </div>
-                        </div>
+                    <div style="color:#555">—</div>
+                    <div class="filter-input-wrapper">
+                        <input type="number" id="filter-price-to" placeholder="До">
                     </div>
                 </div>
-                <div class="sheet-footer-fixed">
-                    <button class="btn-gray" onclick="resetOctoModal()">Сбросить</button>
-                    <button class="btn-primary-glow" onclick="applyOctoModal()">Применить</button>
+            </div>
+
+
+            <div class="filter-accordion" onclick="toggleAccordion('nft-acc', this)">
+                <span>NFT</span>
+                <div class="filter-accordion-arrow">▼</div>
+            </div>
+            <div id="nft-acc" class="accordion-content">
+                <div class="filter-search-wrapper" style="padding: 10px 20px;">
+                    <input type="text" id="filter-search-nft" class="filter-search-input" placeholder="Поиск NFT..."
+                        oninput="filterList('nft')">
                 </div>
+                <div id="nft-list-container" style="padding: 0 20px;"></div>
+            </div>
+
+            <div class="filter-accordion" onclick="toggleAccordion('model-acc', this)">
+                <span>Модель</span>
+                <div class="filter-accordion-arrow">▼</div>
+            </div>
+            <div id="model-acc" class="accordion-content">
+                <div class="filter-search-wrapper" style="padding: 10px 20px;">
+                    <input type="text" id="filter-search-model" class="filter-search-input"
+                        placeholder="Поиск модели..." oninput="filterList('model')">
+                </div>
+                <div id="model-list-container" style="padding: 0 20px;"></div>
+            </div>
+
+            <div class="filter-accordion" onclick="toggleAccordion('bg-acc', this)">
+                <span>Фон</span>
+                <div class="filter-accordion-arrow">▼</div>
+            </div>
+            <div id="bg-acc" class="accordion-content">
+                <div class="filter-search-wrapper" style="padding: 10px 20px;">
+                    <input type="text" id="filter-search-bg" class="filter-search-input" placeholder="Поиск фона..."
+                        oninput="filterList('bg')">
+                </div>
+                <div id="bg-list-container" style="padding: 0 20px;"></div>
+            </div>
+
+            <div class="filter-accordion" onclick="toggleAccordion('symbol-acc', this)">
+                <span>Символ</span>
+                <div class="filter-accordion-arrow">▼</div>
+            </div>
+            <div id="symbol-acc" class="accordion-content">
+                <div class="filter-search-wrapper" style="padding: 10px 20px;">
+                    <input type="text" id="filter-search-symbol" class="filter-search-input"
+                        placeholder="Поиск символа..." oninput="filterList('symbol')">
+                </div>
+                <div id="symbol-list-container" style="padding: 0 20px;"></div>
             </div>
         </div>
-    </div>
 
+        <div class="octo-footer">
+            <button id="octo-btn-reset" class="btn-gray" onclick="resetOctoModal()">Очистить все</button>
+            <button id="octo-btn-apply" class="btn-yellow" onclick="applyOctoModal()">Показать результаты</button>
+        </div>
+    </div>
 
     <!-- Content -->
     <div class="container">
@@ -577,78 +574,6 @@
                 <button class="btn-yellow"
                     style="width: 100%; margin-top: 28px; height: 50px; font-weight: 800; font-size: 16px; border-radius: 14px;"
                     onclick="closeEarningsHelp()">Понятно</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- NFT Filter Sheet -->
-    <div id="sheet-nft" class="bottom-sheet">
-        <div class="bottom-sheet-backdrop" onclick="closeGenericSheet()"></div>
-        <div class="bottom-sheet-content">
-            <div class="bottom-sheet-header">
-                <div class="bottom-sheet-dash"></div>
-                <h3 id="sheet-label-nft">NFT</h3>
-            </div>
-            <div class="bottom-sheet-body">
-                <div class="filter-search-wrapper">
-                    <input type="text" id="sheet-search-nft" class="filter-search-input" placeholder="Поиск NFT..."
-                        oninput="filterListSheet('nft')">
-                </div>
-                <div id="sheet-list-nft" class="bottom-sheet-list"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Model Filter Sheet -->
-    <div id="sheet-model" class="bottom-sheet">
-        <div class="bottom-sheet-backdrop" onclick="closeGenericSheet()"></div>
-        <div class="bottom-sheet-content">
-            <div class="bottom-sheet-header">
-                <div class="bottom-sheet-dash"></div>
-                <h3 id="sheet-label-model">Модель</h3>
-            </div>
-            <div class="bottom-sheet-body">
-                <div class="filter-search-wrapper">
-                    <input type="text" id="sheet-search-model" class="filter-search-input" placeholder="Поиск модели..."
-                        oninput="filterListSheet('model')">
-                </div>
-                <div id="sheet-list-model" class="bottom-sheet-list"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Backdrop Filter Sheet -->
-    <div id="sheet-bg" class="bottom-sheet">
-        <div class="bottom-sheet-backdrop" onclick="closeGenericSheet()"></div>
-        <div class="bottom-sheet-content">
-            <div class="bottom-sheet-header">
-                <div class="bottom-sheet-dash"></div>
-                <h3 id="sheet-label-bg">Фон</h3>
-            </div>
-            <div class="bottom-sheet-body">
-                <div class="filter-search-wrapper">
-                    <input type="text" id="sheet-search-bg" class="filter-search-input" placeholder="Поиск фона..."
-                        oninput="filterListSheet('bg')">
-                </div>
-                <div id="sheet-list-bg" class="bottom-sheet-list"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Symbol Filter Sheet -->
-    <div id="sheet-symbol" class="bottom-sheet">
-        <div class="bottom-sheet-backdrop" onclick="closeGenericSheet()"></div>
-        <div class="bottom-sheet-content">
-            <div class="bottom-sheet-header">
-                <div class="bottom-sheet-dash"></div>
-                <h3 id="sheet-label-symbol">Символ</h3>
-            </div>
-            <div class="bottom-sheet-body">
-                <div class="filter-search-wrapper">
-                    <input type="text" id="sheet-search-symbol" class="filter-search-input"
-                        placeholder="Поиск символа..." oninput="filterListSheet('symbol')">
-                </div>
-                <div id="sheet-list-symbol" class="bottom-sheet-list"></div>
             </div>
         </div>
     </div>
@@ -814,7 +739,7 @@
         </div>
     </div>
 
-    <script src="app.js?v=1771198653"></script>
+    <script src="app.js?v=1771199386"></script>
 </body>
 
 </html>
