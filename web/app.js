@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://frame-dylan-cork-internal.trycloudflare.com";
+const BACKEND_URL = "https://barcelona-and-quantities-reactions.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -1227,101 +1227,83 @@ function filterListSheet(key) {
 }
 
 function initFilterLists(isSheet = false, sheetKey = null) {
-    const prefix = isSheet ? 'sheet-' : '';
-    const listPrefix = isSheet ? 'sheet-list-' : '';
-    const searchPrefix = isSheet ? 'sheet-search-' : '';
+    console.log('[FILTER INIT] isSheet:', isSheet, 'sheetKey:', sheetKey);
 
-    if (!isSheet || sheetKey === 'sort') {
-        const sortCont = document.getElementById('sort-list-container');
-        if (sortCont) {
+    // 1. Sorting (Sheet Only)
+    if (!sheetKey || sheetKey === 'sort') {
+        const cont = document.getElementById('sheet-sort-container');
+        if (cont) {
+            cont.innerHTML = '';
             const sorts = [
-                { id: 'price_asc', n: t('sort_price_asc') },
-                { id: 'price_desc', n: t('sort_price_desc') },
-                { id: 'duration_asc', n: t('sort_duration_asc') },
-                { id: 'duration_desc', n: t('sort_duration_desc') },
-                { id: 'num_asc', n: t('sort_num_asc') },
-                { id: 'num_desc', n: t('sort_num_desc') }
+                { id: 'price_asc', n: t('sort_price_asc') || 'Цена (По возрастанию)' },
+                { id: 'price_desc', n: t('sort_price_desc') || 'Цена (По убыванию)' },
+                { id: 'duration_asc', n: t('sort_duration_asc') || 'Срок (По возрастанию)' },
+                { id: 'duration_desc', n: t('sort_duration_desc') || 'Срок (По убыванию)' },
+                { id: 'id_asc', n: t('sort_num_asc') || 'Item ID (По возрастанию)' },
+                { id: 'id_desc', n: t('sort_num_desc') || 'Item ID (По убыванию)' }
             ];
-            sortCont.innerHTML = '';
-            sorts.forEach(s => addFilterItem(sortCont, s.n, s.id, 'sort', ACTIVE_FILTERS.sort === s.id, null, null, null, isSheet));
+            sorts.forEach(s => addFilterItem(cont, s.n, s.id, 'sort', ACTIVE_FILTERS.sort === s.id, null, null, null, true));
         }
     }
 
-    if (!isSheet || sheetKey === 'nft') {
-        const nftCont = document.getElementById(isSheet ? 'sheet-list-nft' : 'nft-list-container');
-        if (nftCont) {
-            const nftSearchInp = document.getElementById(isSheet ? 'sheet-search-nft' : 'filter-search-nft');
-            const nftSearch = nftSearchInp ? nftSearchInp.value.toLowerCase() : '';
-            nftCont.innerHTML = '';
-
-            if (!nftSearch || t('all').toLowerCase().includes(nftSearch)) {
-                addFilterItem(nftCont, t('all'), "all", 'nft', ACTIVE_FILTERS.nft === 'all', null, null, null, isSheet);
-            }
-
-            (window.STATIC_COLLECTIONS || []).forEach(col => {
-                if (col.name.toLowerCase().includes(nftSearch)) {
-                    addFilterItem(nftCont, col.name, col.name, 'nft', ACTIVE_FILTERS.nft === col.name, col.image, null, null, isSheet);
-                }
+    // 2. Collections (NFT)
+    if (!sheetKey || sheetKey === 'nft') {
+        const cont = document.getElementById(isSheet ? 'sheet-nft-container' : 'nft-list-container');
+        if (cont) {
+            cont.innerHTML = '';
+            addFilterItem(cont, t('all_short') || 'Все', 'all', 'nft', ACTIVE_FILTERS.nft === 'all', null, null, null, isSheet);
+            (window.STATIC_COLLECTIONS || []).forEach(c => {
+                addFilterItem(cont, c.name, c.name, 'nft', ACTIVE_FILTERS.nft === c.name, c.image, null, null, isSheet);
             });
         }
     }
 
-    const maps = [
-        { id: isSheet ? 'sheet-list-model' : 'model-list-container', key: 'model', search: isSheet ? 'sheet-search-model' : 'filter-search-model', label: t('model').toLowerCase() },
-        { id: isSheet ? 'sheet-list-bg' : 'bg-list-container', key: 'bg', search: isSheet ? 'sheet-search-bg' : 'filter-search-bg', label: t('backdrop').toLowerCase() },
-        { id: isSheet ? 'sheet-list-symbol' : 'symbol-list-container', key: 'symbol', search: isSheet ? 'sheet-search-symbol' : 'filter-search-symbol', label: t('symbol').toLowerCase() }
+    // 3. Categories (Model, Symbol, BG)
+    const selectedNFT = ACTIVE_FILTERS.nft;
+    const cats = [
+        { key: 'model', id: 'sheet-model-container' },
+        { key: 'symbol', id: 'sheet-symbol-container' },
+        { key: 'bg', id: 'sheet-bg-container' }
     ];
 
-    const selectedNFT = ACTIVE_FILTERS.nft;
-
-    maps.forEach(m => {
-        if (isSheet && m.key !== sheetKey) return;
+    cats.forEach(m => {
+        if (sheetKey && sheetKey !== m.key) return;
         const cont = document.getElementById(m.id);
-        const sInput = document.getElementById(m.search);
-        if (!cont || !sInput) return;
-        const sVal = sInput.value.toLowerCase();
+        if (!cont) return;
         cont.innerHTML = '';
 
-        if (selectedNFT === 'all' && m.key === 'model') {
-            cont.innerHTML = `<div style="padding:20px; color:#8b9bb4; text-align:center; font-size:13px; background:rgba(255,255,255,0.03); border-radius:12px; margin: 10px 20px;">${t('select_collection_first')}</div>`;
-            sInput.disabled = true;
-            return;
-        }
+        const items = getStaticList(m.key, selectedNFT);
+        addFilterItem(cont, t('all_short') || 'Все', 'all', m.key, ACTIVE_FILTERS[m.key] === 'all', null, selectedNFT, null, true);
 
-        sInput.disabled = false;
-        sInput.placeholder = t('search_filter_hint', { label: m.label }) + (selectedNFT === 'all' ? t('search_filter_global') : '');
-
-        if (!sVal || t('select_all').toLowerCase().includes(sVal)) {
-            addFilterItem(cont, t('select_all'), "all", m.key, ACTIVE_FILTERS[m.key] === 'all', null, null, null, isSheet);
-        }
-
-        let items = [];
-        if (selectedNFT === 'all') {
-            const allItemsMap = {};
-            Object.entries(ATTR_STATS[m.key] || {}).forEach(([colName, list]) => {
-                if (!Array.isArray(list)) return;
-                list.forEach(item => {
-                    if (!item.name || item.name.toLowerCase() === 'default' || item.name.toLowerCase() === 'none') return;
-                    if (!allItemsMap[item.name]) {
-                        allItemsMap[item.name] = { image: item.image, collection: colName };
-                    }
-                });
-            });
-            items = Object.entries(allItemsMap).map(([n, data]) => ({ name: n, image: data.image, collection: data.collection }));
-        } else {
-            items = (ATTR_STATS[m.key] && ATTR_STATS[m.key][selectedNFT]) || [];
-            if (items.length === 0 && (m.key === 'symbol' || m.key === 'bg')) {
-                items = (ATTR_STATS[m.key] && ATTR_STATS[m.key]['ALL']) || [];
-            }
-        }
-
-        items.sort((a, b) => a.name.localeCompare(b.name)).forEach(item => {
-            if (item.name.toLowerCase().includes(sVal)) {
-                let icon = getTelegifterUrl(m.key, item.name, item.collection || selectedNFT) || item.image;
-                addFilterItem(cont, item.name, item.name, m.key, ACTIVE_FILTERS[m.key] === item.name, icon, item.collection || selectedNFT, item.image, isSheet);
-            }
+        items.forEach(item => {
+            let icon = getTelegifterUrl(m.key, item.name, item.collection || selectedNFT) || item.image;
+            addFilterItem(cont, item.name, item.name, m.key, ACTIVE_FILTERS[m.key] === item.name, icon, item.collection || selectedNFT, item.image, true);
         });
     });
+}
+
+function openFilterSheet(key) {
+    const sheet = document.getElementById(`sheet-${key}`);
+    if (!sheet) return;
+
+    // Drill-down logic: close current then open new
+    closeOctoModal();
+
+    setTimeout(() => {
+        sheet.classList.add('active');
+        initFilterLists(true, key);
+        if (tg) tg.HapticFeedback.impactOccurred('light');
+    }, 100);
+}
+
+function closeGenericSheet() {
+    const sheets = document.querySelectorAll('.bottom-sheet');
+    sheets.forEach(s => s.classList.remove('active'));
+
+    // Return to main
+    setTimeout(() => {
+        openOctoModal();
+    }, 100);
 }
 
 function addFilterItem(container, name, value, key, isSelected, imgUrl, collectionContext, fallbackImgUrl, isSheet = false) {
@@ -1350,8 +1332,8 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
         </div>`;
     } else if (key === 'sort') {
         const isDesc = name.toLowerCase().includes('убыванию') || name.toLowerCase().includes('desc');
-        visualHTML = `<div style="width:40px; height:40px; border-radius:12px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255,255,255,0.08); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; flex-shrink:0;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${isSelected ? '#0088cc' : 'rgba(255,255,255,0.4)'}" stroke-width="2.5" style="transform: ${isDesc ? 'rotate(180deg)' : 'none'}; transition: all 0.3s;">
+        visualHTML = `<div style="width:40px; height:40px; border-radius:12px; background: rgba(0, 136, 204, 0.1); border: 1px solid rgba(0, 136, 204, 0.2); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; flex-shrink:0;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${isSelected ? '#0088cc' : 'rgba(255,255,255,0.6)'}" stroke-width="2.5" style="transform: ${isDesc ? 'rotate(180deg)' : 'none'}; transition: all 0.3s;">
                 <path d="M12 19V5M5 12l7-7 7 7" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
         </div>`;
@@ -1364,8 +1346,8 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
             possibleImg = getTelegifterUrl(key, name, collectionContext);
         }
 
-        visualHTML = `<div style="width:52px; height:52px; border-radius:14px; background: rgba(255, 255, 255, 0.03); border:1px solid rgba(255, 255, 255, 0.08); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
-            <span class="filter-item-letter" style="color:#8b9bb4; font-size:11px; font-weight:700; position:absolute; z-index:1;">${name.substring(0, 3).toUpperCase()}</span>
+        visualHTML = `<div style="width:44px; height:44px; border-radius:10px; background: rgba(255, 255, 255, 0.03); border:1px solid rgba(255, 255, 255, 0.08); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; flex-shrink:0;">
+            <span class="filter-item-letter" style="color:#8b9bb4; font-size:10px; font-weight:700; position:absolute; z-index:1;">${name.substring(0, 3).toUpperCase()}</span>
             <img src="${possibleImg}" class="filter-img" style="width:100%; height:100%; object-fit:contain; z-index:2; opacity:0; transition:opacity 0.2s;" 
                 onload="this.style.opacity='1'; if(this.previousElementSibling) this.previousElementSibling.style.display='none';"
                 onerror="

@@ -6,7 +6,7 @@
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>OctoRent</title>
-    <script src="https://telegram.org/js/telegram-web-app.js?v=1771190401"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js?v=1771192992"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;800;900&display=swap" rel="stylesheet">
     <script src="lottie.min.js"></script>
@@ -33,7 +33,7 @@
             return false;
         };
     </script>
-    <link rel="stylesheet" href="style.css?v=1771190401">
+    <link rel="stylesheet" href="style.css?v=1771192992">
     <style>
         /* CRITICAL OVERRIDES - DO NOT REMOVE */
         .main-rent-btn svg,
@@ -342,22 +342,19 @@
         <input type="hidden" id="filter-sort" value="price_asc">
     </div>
 
-    <!-- Main Filter Sheet (OctoModal) -->
+    <!-- 1. Main Filter Sheet (OctoModal) -->
     <div id="octo-modal" class="bottom-sheet">
         <div class="bottom-sheet-backdrop" onclick="closeOctoModal()"></div>
         <div class="bottom-sheet-content">
             <div class="bottom-sheet-header">
                 <div class="bottom-sheet-dash"></div>
-                <h3 id="octo-label-filters">Фильтры</h3>
+                <h3>Параметры</h3>
             </div>
-
             <div class="bottom-sheet-body">
                 <div class="bottom-sheet-list">
-                    <!-- 1. Price Range Section -->
+                    <!-- Price Range -->
                     <div class="filter-group">
-                        <div class="filter-group-header">
-                            <span id="octo-label-price">Цена</span>
-                        </div>
+                        <div class="filter-group-header"><span>Цена</span></div>
                         <div class="price-range-inputs">
                             <div class="price-input-box">
                                 <span class="price-input-prefix">От</span>
@@ -371,59 +368,130 @@
                         </div>
                     </div>
 
-                    <!-- 2. Sorting Section -->
+                    <!-- Gift ID -->
                     <div class="filter-group">
-                        <div class="filter-group-header">
-                            <span id="octo-label-sort">Сортировать по</span>
-                        </div>
-                        <div id="sort-list-container" class="sort-options-grid">
-                            <!-- Injected by JS: Price, Duration, Item ID -->
-                        </div>
-                    </div>
-
-                    <!-- 3. Gift ID Section (Small) -->
-                    <div class="filter-group">
-                        <div class="filter-group-header">
-                            <span id="octo-label-gift-number">Номер подарка</span>
-                        </div>
+                        <div class="filter-group-header"><span>Номер подарка</span></div>
                         <div class="id-input-wrapper">
                             <input type="number" id="filter-gift-number" placeholder="Например: 123">
                         </div>
                     </div>
 
-                    <!-- 4. Categories Drill-down buttons -->
+                    <!-- Filter Categories Drill-down -->
                     <div class="filter-group">
-                        <div class="filter-group-header"><span>Категории</span></div>
+                        <div class="filter-group-header"><span>Настройки поиска</span></div>
                         <div class="category-drilldown-list">
+                            <div class="category-row" onclick="openFilterSheet('sort')">
+                                <div class="category-info">
+                                    <div class="category-icon-bg"><span>⏳</span></div>
+                                    <span>Сортировка</span>
+                                </div>
+                                <div class="category-arrow">→</div>
+                            </div>
                             <div class="category-row" onclick="openFilterSheet('nft')">
                                 <div class="category-info">
-                                    <div class="category-icon-bg"><span class="icon-nft-small">💎</span></div>
-                                    <span>Коллекции (NFT)</span>
+                                    <div class="category-icon-bg"><span>💎</span></div>
+                                    <span>Коллекции</span>
+                                </div>
+                                <div class="category-arrow">→</div>
+                            </div>
+                            <div class="category-row" onclick="openFilterSheet('model')">
+                                <div class="category-info">
+                                    <div class="category-icon-bg"><span>🤖</span></div>
+                                    <span>Модель</span>
                                 </div>
                                 <div class="category-arrow">→</div>
                             </div>
                             <div class="category-row" onclick="openFilterSheet('symbol')">
                                 <div class="category-info">
-                                    <div class="category-icon-bg"><span class="icon-symbol-small">✨</span></div>
-                                    <span>Символы</span>
+                                    <div class="category-icon-bg"><span>✨</span></div>
+                                    <span>Символ</span>
                                 </div>
                                 <div class="category-arrow">→</div>
                             </div>
                             <div class="category-row" onclick="openFilterSheet('bg')">
                                 <div class="category-info">
-                                    <div class="category-icon-bg"><span class="icon-backdrop-small">🖼️</span></div>
-                                    <span>Фоны</span>
+                                    <div class="category-icon-bg"><span>🖼️</span></div>
+                                    <span>Фон</span>
                                 </div>
                                 <div class="category-arrow">→</div>
                             </div>
                         </div>
                     </div>
                 </div>
-
                 <div class="sheet-footer-fixed">
-                    <button id="octo-btn-reset" class="btn-gray" onclick="resetOctoModal()">Сбросить</button>
-                    <button id="octo-btn-apply" class="btn-primary-glow" onclick="applyOctoModal()">Показать</button>
+                    <button class="btn-gray" onclick="resetOctoModal()">Сбросить</button>
+                    <button class="btn-primary-glow" onclick="applyOctoModal()">Применить</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Sorting Sheet -->
+    <div id="sheet-sort" class="bottom-sheet">
+        <div class="bottom-sheet-backdrop" onclick="closeGenericSheet()"></div>
+        <div class="bottom-sheet-content">
+            <div class="bottom-sheet-header">
+                <div class="bottom-sheet-dash"></div>
+                <h3>Сортировка</h3>
+            </div>
+            <div class="bottom-sheet-body">
+                <div id="sheet-sort-container" class="filter-list-scrollable"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. NFT Sheet -->
+    <div id="sheet-nft" class="bottom-sheet">
+        <div class="bottom-sheet-backdrop" onclick="closeGenericSheet()"></div>
+        <div class="bottom-sheet-content">
+            <div class="bottom-sheet-header">
+                <div class="bottom-sheet-dash"></div>
+                <h3>Коллекции</h3>
+            </div>
+            <div class="bottom-sheet-body">
+                <div id="sheet-nft-container" class="filter-list-scrollable"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. Model Sheet -->
+    <div id="sheet-model" class="bottom-sheet">
+        <div class="bottom-sheet-backdrop" onclick="closeGenericSheet()"></div>
+        <div class="bottom-sheet-content">
+            <div class="bottom-sheet-header">
+                <div class="bottom-sheet-dash"></div>
+                <h3>Модели</h3>
+            </div>
+            <div class="bottom-sheet-body">
+                <div id="sheet-model-container" class="filter-list-scrollable"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. Symbol Sheet -->
+    <div id="sheet-symbol" class="bottom-sheet">
+        <div class="bottom-sheet-backdrop" onclick="closeGenericSheet()"></div>
+        <div class="bottom-sheet-content">
+            <div class="bottom-sheet-header">
+                <div class="bottom-sheet-dash"></div>
+                <h3>Символы</h3>
+            </div>
+            <div class="bottom-sheet-body">
+                <div id="sheet-symbol-container" class="filter-list-scrollable"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. BG Sheet -->
+    <div id="sheet-bg" class="bottom-sheet">
+        <div class="bottom-sheet-backdrop" onclick="closeGenericSheet()"></div>
+        <div class="bottom-sheet-content">
+            <div class="bottom-sheet-header">
+                <div class="bottom-sheet-dash"></div>
+                <h3>Фоны</h3>
+            </div>
+            <div class="bottom-sheet-body">
+                <div id="sheet-bg-container" class="filter-list-scrollable"></div>
             </div>
         </div>
     </div>
@@ -797,7 +865,7 @@
         </div>
     </div>
 
-    <script src="app.js?v=1771190401"></script>
+    <script src="app.js?v=1771192992"></script>
 </body>
 
 </html>
