@@ -947,9 +947,9 @@ body {
 }
 
 .accordion-content.active {
-    max-height: 250px;
-    /* Reduced to show following buttons */
-    padding-bottom: 10px;
+    max-height: 400px;
+    /* Increased to show more items */
+    padding-bottom: 20px;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
@@ -969,20 +969,23 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 14px 20px;
-    margin: 4px 12px;
-    border-radius: 16px;
-    transition: all 0.2s;
+    padding: 12px 16px;
+    margin: 6px 12px;
+    border-radius: 18px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.03);
 }
 
 .filter-list-item:active {
-    transform: scale(0.98);
-    background: rgba(255, 255, 255, 0.05);
+    transform: scale(0.97);
+    background: rgba(255, 255, 255, 0.06);
 }
 
 .filter-list-item.selected {
-    background: rgba(0, 136, 204, 0.1);
+    background: rgba(0, 136, 204, 0.15);
+    border-color: rgba(0, 136, 204, 0.3);
 }
 
 .filter-item-left {
@@ -999,10 +1002,10 @@ body {
 }
 
 .filter-img {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
-    object-fit: cover;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    object-fit: contain;
 }
 
 .filter-item-name {
@@ -1535,9 +1538,9 @@ body {
 }
 
 .filter-list-item {
-    padding: 8px 12px !important;
-    margin: 4px 8px !important;
-    border-radius: 14px !important;
+    padding: 12px 16px !important;
+    margin: 6px 10px !important;
+    border-radius: 18px !important;
 }
 
 /* Header TonConnect Overrides */

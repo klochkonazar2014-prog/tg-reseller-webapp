@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://sport-essays-annual-grab.trycloudflare.com";
+const BACKEND_URL = "https://realize-calculations-environment-deadline.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -434,6 +434,11 @@ const TG_LOGO_SVG = `<svg id="Livello_1" data-name="Livello 1" xmlns="http://www
 function getTelegifterUrl(type, name, collection, slugIndex = 0) {
     if (!name || name === 'Unknown' || name === 'Default' || name === 'Gift' || name === 'Gift #?') return null;
 
+    const getMappedSlug = (base) => {
+        const s = base.toLowerCase().replace(/[^a-z0-9]/g, '');
+        return SLUG_MAPPING[s] || s;
+    };
+
     if (type === 'symbol') {
         const cleanName = name.replace(/[?#]/g, ''); // Basic sanitization
         return `file/gifts/symbol/${cleanName}.webp`;
@@ -441,25 +446,23 @@ function getTelegifterUrl(type, name, collection, slugIndex = 0) {
 
     if (type === 'model') {
         // Models use format: /file/gifts/collectionslug/model.webp
-        // We need collection slug for this
         if (collection) {
-            const colSlug = collection.toLowerCase().replace(/[^a-z0-9]/g, '');
+            const colSlug = getMappedSlug(collection);
             const modelSlug = name.toLowerCase().replace(/[^a-z0-9]/g, '');
             return `file/gifts/${colSlug}/model.${modelSlug}.webp`;
         }
 
-        // Fallback or old logic if no collection context
-        const slugBase = name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/[\s]+/g, '');
+        // Fallback to Fragment URL
+        const slugBase = getMappedSlug(name);
         const numbers = [888, 1, 777, 555, 123, 100];
         if (slugIndex < numbers.length) {
             return `https://nft.fragment.com/gift/${slugBase}-${numbers[slugIndex]}.medium.jpg`;
         }
-        return null;
+        return `https://nft.fragment.com/gift/${slugBase}-1.webp`;
     }
 
     if (type === 'nft') {
-        // NFT collections use format: /file/gifts/collectionslug/thumb.webp
-        const collectionSlug = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const collectionSlug = getMappedSlug(name);
         return `file/gifts/${collectionSlug}/thumb.webp`;
     }
 
@@ -1347,62 +1350,45 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
 
     let visualHTML = '';
     if (isAll) {
-        visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: linear-gradient(135deg, #2a2a2a, #1a1a1a); border: 1px solid rgba(255,255,255,0.1); display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; overflow:hidden;">
-            <div style="font-size:10px; font-weight:900; color:#fff; letter-spacing:1px; z-index:2; font-family: 'Outfit', sans-serif;">ВСЕ</div>
-            <div style="width:16px; height:2px; background: #0088cc; margin-top:4px; border-radius:1px; z-index:2;"></div>
+        visualHTML = `<div style="width:52px; height:52px; border-radius:14px; background: linear-gradient(135deg, #1c1c1e, #0a0a0b); border: 1px solid rgba(255,255,255,0.08); display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; overflow:hidden;">
+            <div style="font-size:11px; font-weight:900; color:#fff; letter-spacing:1px; z-index:2; font-family: 'Outfit', sans-serif;">ВСЕ</div>
+            <div style="width:20px; height:2px; background: #0088cc; margin-top:4px; border-radius:1px; z-index:2;"></div>
             <div style="position:absolute; top:0; left:0; width:100%; height:100%; background: url('https://telegifter.ru/wp-content/themes/gifts/assets/img/bg-logo-mini.webp'); opacity:0.1; background-size: 20px;"></div>
         </div>`;
     } else if (key === 'symbol') {
-        const tgSymbol = getTelegifterUrl('symbol', name);
-        const iconSrc = tgSymbol || (VISUAL_MAP.symbol ? VISUAL_MAP.symbol[name] : null);
-
-        // Robust rendering: Text underneath, Image on top. If Image fails, Text is visible.
-        visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: #000000; border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
+        const iconSrc = imgUrl || (VISUAL_MAP.symbol ? VISUAL_MAP.symbol[name] : null);
+        visualHTML = `<div style="width:52px; height:52px; border-radius:14px; background: #000000; border:1px solid rgba(255, 255, 255, 0.08); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
             <span style="color:#8b9bb4; font-size:11px; font-weight:700; position:absolute; z-index:1;">${name.substring(0, 3).toUpperCase()}</span>
-            ${iconSrc ? `<img src="${iconSrc}" style="filter: brightness(0) invert(1); width:28px; height:28px; object-fit:contain; z-index:2; opacity:0; transition:opacity 0.2s;" onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';" onerror="this.style.display='none'">` : ''}
+            ${iconSrc ? `<img src="${iconSrc}" style="filter: brightness(0) invert(1); width:32px; height:32px; object-fit:contain; z-index:2; opacity:0; transition:opacity 0.2s;" onload="this.style.opacity='1'; if(this.previousElementSibling) this.previousElementSibling.style.display='none';" onerror="this.style.display='none'">` : ''}
         </div>`;
     } else if (key === 'bg') {
         const bgStyle = (VISUAL_MAP.bg && VISUAL_MAP.bg[name]) || '#333';
-        visualHTML = `<div class="filter-color-circle" style="background: ${bgStyle}; position:relative; overflow:hidden; width:52px; height:52px; border-radius:12px;">
+        visualHTML = `<div class="filter-color-circle" style="background: ${bgStyle}; position:relative; overflow:hidden; width:52px; height:52px; border-radius:14px; border:1px solid rgba(255,255,255,0.1) !important;">
             <div style="position:absolute; top:0; left:0; width:100%; height:100%; background: url('https://telegifter.ru/wp-content/themes/gifts/assets/img/bg-logo-mini.webp'); opacity:0.3; background-size: 20px;"></div>
         </div>`;
     } else {
-        // Model or NFT or fallback
         const isNFT = key === 'nft';
         const isModel = key === 'model';
-        const cleanName = name.toLowerCase().replace(/[^a-z0-9]/g, '');
-
-        // Generate local path if it's NFT or Model
         let possibleImg = imgUrl;
+
         if (!possibleImg) {
-            if (isNFT) {
-                possibleImg = `file/gifts/${cleanName}/thumb.webp`;
-            } else if (isModel && collectionContext) {
-                const colSlug = collectionContext.toLowerCase().replace(/[^a-z0-9]/g, '');
-                const modelSlug = name.toLowerCase().replace(/[^a-z0-9]/g, '');
-                possibleImg = `file/gifts/${colSlug}/model.${modelSlug}.webp`;
-            }
+            possibleImg = getTelegifterUrl(key, name, collectionContext);
         }
 
-        // Fallback to Fragment URL if no local path or specifically requested
-        if (!possibleImg) {
-            possibleImg = `https://nft.fragment.com/gift/${cleanName}-1.webp`;
-        }
-
-        visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: rgba(255, 255, 255, 0.05); border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
+        visualHTML = `<div style="width:52px; height:52px; border-radius:14px; background: rgba(255, 255, 255, 0.03); border:1px solid rgba(255, 255, 255, 0.08); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
             <span class="filter-item-letter" style="color:#8b9bb4; font-size:11px; font-weight:700; position:absolute; z-index:1;">${name.substring(0, 3).toUpperCase()}</span>
             <img src="${possibleImg}" class="filter-img" style="width:100%; height:100%; object-fit:contain; z-index:2; opacity:0; transition:opacity 0.2s;" 
-                onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';"
+                onload="this.style.opacity='1'; if(this.previousElementSibling) this.previousElementSibling.style.display='none';"
                 onerror="
                     const name = '${name.replace(/'/g, "\\\\'")}';
                     const col = '${(collectionContext || '').replace(/'/g, "\\\\'")}';
                     this.dataset.slugIndex = this.dataset.slugIndex ? parseInt(this.dataset.slugIndex) + 1 : 1;
                     const nextUrl = getTelegifterUrl('${key}', name, col, parseInt(this.dataset.slugIndex));
-                    if (nextUrl) {
+                    if (nextUrl && parseInt(this.dataset.slugIndex) < 5) {
                         this.src = nextUrl;
                     } else {
                         this.style.display = 'none';
-                        this.previousElementSibling.style.display = 'block';
+                        if(this.previousElementSibling) this.previousElementSibling.style.display = 'block';
                     }
                 ">
         </div>`;
@@ -1412,23 +1398,24 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
         <div class="filter-item-left" style="overflow: hidden;">
             ${visualHTML}
             <div style="display:flex; flex-direction:column; margin-left:14px; overflow: hidden;">
-                <span class="filter-item-name">${name}</span>
+                <span class="filter-item-name" style="font-size:15px; font-weight:700;">${name}</span>
             </div>
         </div>
-        <div class="checkbox-box" style="flex-shrink:0; width:22px; height:22px; border-radius:6px; border:2px solid ${isSelected ? '#0088cc' : '#333'}; display:flex; align-items:center; justify-content:center; margin-left:10px;">
-            ${isSelected ? '<div style="width:10px; height:10px; background:#0088cc; border-radius:2px;"></div>' : ''}
+        <div class="checkbox-box" style="flex-shrink:0; width:24px; height:24px; border-radius:8px; border:2px solid ${isSelected ? '#0088cc' : 'rgba(255,255,255,0.1)'}; background: ${isSelected ? 'rgba(0,136,204,0.1)' : 'transparent'}; display:flex; align-items:center; justify-content:center; margin-left:10px; transition: all 0.2s;">
+            ${isSelected ? '<div style="width:12px; height:12px; background:#0088cc; border-radius:3px; box-shadow: 0 0 10px rgba(0,136,204,0.4);"></div>' : ''}
         </div>
     `;
+
     div.onclick = (e) => {
         e.stopPropagation();
-        ACTIVE_FILTERS[key] = value ? value.trim() : value;
+        if (tg) tg.HapticFeedback.selectionChanged();
 
-        // Reset sub-filters if collection changed
+        ACTIVE_FILTERS[key] = value ? String(value).trim() : value;
+
         if (key === 'nft') {
             ACTIVE_FILTERS.model = 'all';
             ACTIVE_FILTERS.bg = 'all';
             ACTIVE_FILTERS.symbol = 'all';
-            // Also clear search inputs for sub-filters
             ['model', 'bg', 'symbol'].forEach(k => {
                 const inp = document.getElementById(`filter-search-${k}`);
                 if (inp) inp.value = '';
