@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://healthy-allocation-away-signatures.trycloudflare.com";
+const BACKEND_URL = "https://theft-resume-dining-recreation.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -1266,6 +1266,7 @@ function toggleFilterAccordion(key) {
     console.log('[ACCORDION] Toggling:', key);
     const content = document.getElementById(`acc-content-${key}`);
     const arrow = document.getElementById(`acc-arrow-${key}`);
+    const listCont = document.getElementById(`acc-list-${key}`);
     if (!content) {
         console.warn(`[ACCORDION] Content not found for key: ${key}`);
         return;
@@ -1276,9 +1277,20 @@ function toggleFilterAccordion(key) {
     console.log('[ACCORDION] isHidden:', isHidden);
 
     if (isHidden) {
+        // Force the display and ensure it has auto height
         content.style.display = 'block';
+        content.style.height = 'auto';
+        content.style.opacity = '1';
+        content.style.visibility = 'visible';
+
         if (arrow) arrow.style.transform = 'rotate(90deg)';
-        initFilterLists(key); // Refresh content for this specific accordion
+        initFilterLists(key);
+
+        // Diagnostic log: check if content actually has height now
+        setTimeout(() => {
+            console.log(`[ACCORDION] Diagnostic - ${key} offsetHeight:`, content.offsetHeight, 'scrollHeight:', content.scrollHeight);
+            if (listCont) console.log(`[ACCORDION] Diagnostic - ${key} list child count:`, listCont.children.length);
+        }, 50);
     } else {
         content.style.display = 'none';
         if (arrow) arrow.style.transform = 'rotate(0deg)';
