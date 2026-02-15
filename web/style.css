@@ -1727,10 +1727,6 @@ tc-root {
 
 /* PREMIUM TIMER - FRAGMENT STYLE */
 .premium-timer-layout {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
     width: 100%;
     padding: 16px;
     background: transparent;
