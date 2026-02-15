@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://located-assembly-singing-feedback.trycloudflare.com";
+const BACKEND_URL = "https://healthy-allocation-away-signatures.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -1299,6 +1299,7 @@ function initFilterLists(sheetKey = null) {
     // 1. Sorting
     if (!sheetKey || sheetKey === 'sort') {
         const cont = document.getElementById('acc-list-sort');
+        console.log('[FILTER] Target Sort Container:', cont);
         if (cont) {
             cont.innerHTML = '';
             const sorts = [
@@ -1309,6 +1310,7 @@ function initFilterLists(sheetKey = null) {
                 { id: 'id_asc', n: t('sort_num_asc') || 'Item ID (По возрастанию)' },
                 { id: 'id_desc', n: t('sort_num_desc') || 'Item ID (По убыванию)' }
             ];
+            console.log('[FILTER] Appending sorts, count:', sorts.length);
             sorts.forEach(s => addFilterItem(cont, s.n, s.id, 'sort', ACTIVE_FILTERS.sort === s.id));
         }
     }
@@ -1354,6 +1356,7 @@ function openFilterSheet(key) { toggleFilterAccordion(key); }
 function closeGenericSheet() { closeOctoModal(); }
 
 function addFilterItem(container, name, value, key, isSelected, imgUrl, collectionContext, fallbackImgUrl) {
+    if (!container) return;
     const div = document.createElement('div');
     div.className = `filter-list-item ${isSelected ? 'selected' : ''}`;
 
@@ -1385,10 +1388,7 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
             </svg>
         </div>`;
     } else {
-        const isNFT = key === 'nft';
-        const isModel = key === 'model';
         let possibleImg = imgUrl;
-
         if (!possibleImg) {
             possibleImg = getTelegifterUrl(key, name, collectionContext);
         }
@@ -1416,7 +1416,7 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
         <div class="filter-item-left" style="overflow: hidden;">
             ${visualHTML}
             <div style="display:flex; flex-direction:column; margin-left:14px; overflow: hidden;">
-                <span class="filter-item-name" style="font-size:15px; font-weight:700;">${name}</span>
+                <span class="filter-item-name" style="font-size:15px; font-weight:700; color:#fff;">${name}</span>
             </div>
         </div>
         <div class="checkbox-box" style="flex-shrink:0; width:22px; height:22px; border-radius:7px; border:2px solid ${isSelected ? '#0088cc' : 'rgba(255,255,255,0.15)'}; background: ${isSelected ? 'rgba(0,136,204,0.1)' : 'transparent'}; display:flex; align-items:center; justify-content:center; margin-left:10px; transition: all 0.2s;">
@@ -1426,7 +1426,7 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
 
     div.onclick = (e) => {
         e.stopPropagation();
-        if (tg) tg.HapticFeedback.selectionChanged();
+        if (typeof tg !== 'undefined' && tg.HapticFeedback) tg.HapticFeedback.selectionChanged();
 
         ACTIVE_FILTERS[key] = value ? String(value).trim() : value;
 
@@ -1440,11 +1440,7 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
             });
         }
 
-        if (isSheet) {
-            closeGenericSheet();
-        }
-
-        initFilterLists(isSheet, isSheet ? key : null);
+        initFilterLists(key); // Refresh view
         applyHeaderSearch();
     };
     container.appendChild(div);
