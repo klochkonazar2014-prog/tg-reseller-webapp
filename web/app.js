@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://strengthen-tar-gamecube-craps.trycloudflare.com";
+const BACKEND_URL = "https://nor-privilege-lowest-burlington.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -1537,23 +1537,12 @@ function renderCardTimer(item) {
 }
 
 async function handleNotifyClick() {
-    console.log('[NOTIFY DEBUG] handleNotifyClick called');
-
-    if (!CURRENT_PAYMENT_ITEM) {
-        console.log('[NOTIFY DEBUG] Aborting: CURRENT_PAYMENT_ITEM is null');
-        return;
-    }
-
+    if (!CURRENT_PAYMENT_ITEM) return;
     const userId = tg.initDataUnsafe?.user?.id || 0;
-    console.log('[NOTIFY DEBUG] UserID:', userId);
-
     if (!userId) { tg.showAlert("Please open the app via Telegram"); return; }
 
     const btn = document.getElementById('notify-btn');
-    if (!btn) {
-        console.log('[NOTIFY DEBUG] Aborting: #notify-btn not found');
-        return;
-    }
+    if (!btn) return;
 
     // Disable temporarily to prevent double clicks
     btn.style.pointerEvents = 'none';
