@@ -6,7 +6,7 @@
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>OctoRent</title>
-    <script src="https://telegram.org/js/telegram-web-app.js?v=1771189802"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js?v=1771190401"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;800;900&display=swap" rel="stylesheet">
     <script src="lottie.min.js"></script>
@@ -33,7 +33,7 @@
             return false;
         };
     </script>
-    <link rel="stylesheet" href="style.css?v=1771189802">
+    <link rel="stylesheet" href="style.css?v=1771190401">
     <style>
         /* CRITICAL OVERRIDES - DO NOT REMOVE */
         .main-rent-btn svg,
@@ -391,20 +391,32 @@
                         </div>
                     </div>
 
-                    <!-- 4. Categories (NFT, Symbols, etc.) -->
+                    <!-- 4. Categories Drill-down buttons -->
                     <div class="filter-group">
-                        <div class="filter-group-header"><span>NFT</span></div>
-                        <div id="nft-list-container"></div>
-                    </div>
-
-                    <div class="filter-group">
-                        <div class="filter-group-header"><span>Символ</span></div>
-                        <div id="symbol-list-container"></div>
-                    </div>
-
-                    <div class="filter-group">
-                        <div class="filter-group-header"><span>Фон</span></div>
-                        <div id="bg-list-container"></div>
+                        <div class="filter-group-header"><span>Категории</span></div>
+                        <div class="category-drilldown-list">
+                            <div class="category-row" onclick="openFilterSheet('nft')">
+                                <div class="category-info">
+                                    <div class="category-icon-bg"><span class="icon-nft-small">💎</span></div>
+                                    <span>Коллекции (NFT)</span>
+                                </div>
+                                <div class="category-arrow">→</div>
+                            </div>
+                            <div class="category-row" onclick="openFilterSheet('symbol')">
+                                <div class="category-info">
+                                    <div class="category-icon-bg"><span class="icon-symbol-small">✨</span></div>
+                                    <span>Символы</span>
+                                </div>
+                                <div class="category-arrow">→</div>
+                            </div>
+                            <div class="category-row" onclick="openFilterSheet('bg')">
+                                <div class="category-info">
+                                    <div class="category-icon-bg"><span class="icon-backdrop-small">🖼️</span></div>
+                                    <span>Фоны</span>
+                                </div>
+                                <div class="category-arrow">→</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -785,7 +797,7 @@
         </div>
     </div>
 
-    <script src="app.js?v=1771189802"></script>
+    <script src="app.js?v=1771190401"></script>
 </body>
 
 </html>

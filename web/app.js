@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://clothes-pan-briefs-tall.trycloudflare.com";
+const BACKEND_URL = "https://frame-dylan-cork-internal.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -1348,6 +1348,13 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
         visualHTML = `<div class="filter-color-circle" style="background: ${bgStyle}; position:relative; overflow:hidden; width:52px; height:52px; border-radius:14px; border:1px solid rgba(255,255,255,0.1) !important;">
             <div style="position:absolute; top:0; left:0; width:100%; height:100%; background: url('https://telegifter.ru/wp-content/themes/gifts/assets/img/bg-logo-mini.webp'); opacity:0.3; background-size: 20px;"></div>
         </div>`;
+    } else if (key === 'sort') {
+        const isDesc = name.toLowerCase().includes('убыванию') || name.toLowerCase().includes('desc');
+        visualHTML = `<div style="width:40px; height:40px; border-radius:12px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255,255,255,0.08); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; flex-shrink:0;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${isSelected ? '#0088cc' : 'rgba(255,255,255,0.4)'}" stroke-width="2.5" style="transform: ${isDesc ? 'rotate(180deg)' : 'none'}; transition: all 0.3s;">
+                <path d="M12 19V5M5 12l7-7 7 7" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </div>`;
     } else {
         const isNFT = key === 'nft';
         const isModel = key === 'model';
@@ -1383,8 +1390,8 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
                 <span class="filter-item-name" style="font-size:15px; font-weight:700;">${name}</span>
             </div>
         </div>
-        <div class="checkbox-box" style="flex-shrink:0; width:24px; height:24px; border-radius:8px; border:2px solid ${isSelected ? '#0088cc' : 'rgba(255,255,255,0.1)'}; background: ${isSelected ? 'rgba(0,136,204,0.1)' : 'transparent'}; display:flex; align-items:center; justify-content:center; margin-left:10px; transition: all 0.2s;">
-            ${isSelected ? '<div style="width:12px; height:12px; background:#0088cc; border-radius:3px; box-shadow: 0 0 10px rgba(0,136,204,0.4);"></div>' : ''}
+        <div class="checkbox-box" style="flex-shrink:0; width:22px; height:22px; border-radius:7px; border:2px solid ${isSelected ? '#0088cc' : 'rgba(255,255,255,0.15)'}; background: ${isSelected ? 'rgba(0,136,204,0.1)' : 'transparent'}; display:flex; align-items:center; justify-content:center; margin-left:10px; transition: all 0.2s;">
+            ${isSelected ? '<div style="width:10px; height:10px; background:#0088cc; border-radius:2px; box-shadow: 0 0 10px rgba(0,136,204,0.4);"></div>' : ''}
         </div>
     `;
 
