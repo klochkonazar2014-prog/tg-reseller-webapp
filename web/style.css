@@ -1725,69 +1725,76 @@ tc-root {
 
 /* .card.rented::before removed via user request */
 
-/* PREMIUM TIMER - PILLS DESIGN */
+/* PREMIUM TIMER - FRAGMENT STYLE */
 .premium-timer-layout {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: 16px;
+    justify-content: center;
+    gap: 12px;
     width: 100%;
-    padding: 24px;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
-    border-radius: 28px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    padding: 16px;
+    background: transparent;
 }
 
-.premium-timer-label {
+.premium-timer-layout .ends-in-label {
     color: #8b9bb4;
-    font-size: 13px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    opacity: 0.8;
+    font-size: 14px;
+    font-weight: 500;
+    margin-right: 4px;
 }
 
 .premium-timer-pills {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 6px;
 }
 
-.timer-pill {
-    background: #1c1c1e;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 16px;
-    padding: 12px 0;
-    width: 54px;
+.timer-box {
+    background: #2c2c2e;
+    border-radius: 8px;
+    padding: 4px 8px;
+    min-width: 40px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
-.timer-pill .timer-val {
+.timer-box .t-val {
     color: #fff;
-    font-size: 20px;
-    font-weight: 800;
-    font-family: 'Outfit', sans-serif;
-    line-height: 1;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.2;
 }
 
-.timer-pill .timer-unit {
-    color: #0088cc;
-    font-size: 10px;
-    font-weight: 800;
-    text-transform: uppercase;
-    margin-top: 6px;
+.timer-box .t-unit {
+    font-size: 14px;
+    font-weight: 500;
+    margin-left: 4px;
+}
+
+/* Specific style for "4 days" block which is wider */
+.timer-box.days-box {
+    flex-direction: row;
+    align-items: baseline;
+    padding: 6px 12px;
+}
+
+.timer-sep {
+    color: #8b9bb4;
+    font-weight: 700;
+    font-size: 16px;
+    margin-top: -2px;
+    /* Visual alignment */
 }
 
 .premium-timer-date {
-    color: rgba(255, 255, 255, 0.2);
-    font-size: 13px;
-    font-weight: 600;
+    color: #8b9bb4;
+    font-size: 14px;
+    font-weight: 500;
+    margin-left: 8px;
 }
+
 
 /* Notify Bell Refinement */
 .notify-btn {

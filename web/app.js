@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://hybrid-uncertainty-gates-pets.trycloudflare.com";
+const BACKEND_URL = "https://carefully-assumed-percent-intimate.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -1574,7 +1574,14 @@ async function handleNotifyClick() {
     } catch (e) {
         console.error("Notify Error:", e);
     } finally {
-        btn.style.pointerEvents = 'auto';
+        // Re-enable interactions after a short delay to prevent spam
+        setTimeout(() => {
+            btn.style.pointerEvents = 'auto';
+            // Ensure visual state matches class
+            if (btn.classList.contains('active')) {
+                // Keep active
+            }
+        }, 300);
     }
 }
 
@@ -1838,25 +1845,42 @@ async function openProductView(item, myPrice) {
     const notifyBtn = document.getElementById('notify-btn');
     const countdownCont = document.getElementById('product-countdown-container');
 
-    // Fetch fresh details for status and rent_end
-    fetch(`${BACKEND_URL}/api/nft_details?nft_address=${item.nft_address}`)
-        .then(r => r.json())
-        .then(details => {
-            if (details) {
-                // Try to get end time from various possible formats
-                const endTime = details.rent?.ends_at ||
-                    details.rent_ends_at ||
-                    details.rent_end ||
-                    details.status_details?.end_time;
-                if (endTime) item.rent_end = endTime;
+    // 1. Render immediately with cached data so user sees something
+    updateProductViewStatus(item, notifyBtn, countdownCont);
 
-                if (details.status) item.status = details.status;
-            }
-            updateProductViewStatus(item, notifyBtn, countdownCont);
-        }).catch(e => {
-            console.error("Details fetch error:", e);
-            updateProductViewStatus(item, notifyBtn, countdownCont);
-        });
+    // 2. Smart Refresh: Fetch fresh details if not updated recently (or always for safety if rented)
+    // The user requested: "as soon as someone enters... make a request to update the timer (if not updated recently)"
+    // We'll just fetch regardless for "rented" items to be safe, but we won't toggle the UI loader.
+    // The previous render step ensures the user isn't staring at blank space.
+
+    // Check if we need a fresh fetch
+    const NOW_SEC = Math.floor(Date.now() / 1000);
+    const lastMetaUpdate = item._last_details_update || 0;
+    const isStale = (NOW_SEC - lastMetaUpdate) > 60; // 60 seconds cache
+
+    if (isStale || item.status === 'rented') {
+        console.log(`Smart Refresh triggered for ${item.nft_name}`);
+        fetch(`${BACKEND_URL}/api/nft_details?nft_address=${item.nft_address}`)
+            .then(r => r.json())
+            .then(details => {
+                if (details) {
+                    item._last_details_update = Math.floor(Date.now() / 1000);
+
+                    // Try to get end time from various possible formats
+                    const endTime = details.rent?.ends_at ||
+                        details.rent_ends_at ||
+                        details.rent_end ||
+                        details.status_details?.end_time;
+                    if (endTime) item.rent_end = endTime;
+
+                    if (details.status) item.status = details.status;
+                }
+                updateProductViewStatus(item, notifyBtn, countdownCont);
+            }).catch(e => {
+                console.error("Details fetch error:", e);
+                // No need to re-render error, existing cache is better than nothing
+            });
+    }
 }
 
 function updateProductViewStatus(item, notifyBtn, countdownCont) {
@@ -1870,7 +1894,8 @@ function updateProductViewStatus(item, notifyBtn, countdownCont) {
             fetch(`${BACKEND_URL}/api/check_notification_status?user_id=${userId}&nft_address=${item.nft_address}`)
                 .then(r => r.json())
                 .then(d => {
-                    // Only update if not currently being toggled by user
+                    // Only update if not currently being toggled by user AND not just clicked
+                    // We check if button is disabled (pointer-events = none) which implies operation in progress
                     if (notifyBtn.style.pointerEvents !== 'none') {
                         if (d.subscribed) notifyBtn.classList.add('active');
                         else notifyBtn.classList.remove('active');
@@ -2982,26 +3007,40 @@ function renderPremiumCountdown(item, container) {
         const options = { month: 'short', day: 'numeric', year: 'numeric' };
         const dateStr = targetDate.toLocaleDateString('en-US', options);
 
+        // New Fragment-like Design
+        // Layout: [Ends in] [4 days] : [23] : [59] : [29] [Date]
+
         container.innerHTML = `
             <div class="premium-timer-layout">
-                <div class="premium-timer-label">${t('ends_in') || "Ends in"}</div>
+                <span class="ends-in-label">${t('ends_in') || "Ends in"}</span>
                 <div class="premium-timer-pills">
-                    <div class="timer-pill">
-                        <span class="timer-val">${d}</span>
-                        <span class="timer-unit">${t('days_short')}</span>
+                    
+                    <div class="timer-box days-box">
+                        <span class="t-val">${d}</span>
+                        <span class="t-unit">${t('days_short') || "d"}</span>
                     </div>
-                    <div class="timer-pill">
-                        <span class="timer-val">${pad(h)}</span>
-                        <span class="timer-unit">h</span>
+
+                    <div class="timer-sep">:</div>
+
+                    <div class="timer-box">
+                        <span class="t-val">${pad(h)}</span>
+                        <!-- <span class="t-unit">h</span> -->
                     </div>
-                    <div class="timer-pill">
-                        <span class="timer-val">${pad(m)}</span>
-                        <span class="timer-unit">m</span>
+
+                    <div class="timer-sep">:</div>
+
+                    <div class="timer-box">
+                        <span class="t-val">${pad(m)}</span>
+                        <!-- <span class="t-unit">m</span> -->
                     </div>
-                    <div class="timer-pill">
-                        <span class="timer-val">${pad(s)}</span>
-                        <span class="timer-unit">s</span>
+
+                    <div class="timer-sep">:</div>
+
+                    <div class="timer-box">
+                        <span class="t-val">${pad(s)}</span>
+                        <!-- <span class="t-unit">s</span> -->
                     </div>
+
                 </div>
                 <div class="premium-timer-date">${dateStr}</div>
             </div>
