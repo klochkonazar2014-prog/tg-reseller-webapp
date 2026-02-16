@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://universal-england-sales-facing.trycloudflare.com";
+const BACKEND_URL = "https://findlaw-demonstrated-athletic-chi.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -1315,55 +1315,71 @@ function initFilterLists() {
 
 function addFilterItem(container, name, value, key, isSelected, imgUrl, collectionContext, fallbackImgUrl) {
     const div = document.createElement('div');
-    div.className = `filter-list-item ${isSelected ? 'selected' : ''}`;
 
-    const isAll = value === 'all';
+    // Check if we should use List Layout (For now, only Sort uses it based on user request)
+    const isListLayout = (key === 'sort');
 
-    let visualHTML = '';
-    if (isAll) {
-        visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: linear-gradient(135deg, #2a2a2a, #1a1a1a); border: 1px solid rgba(255,255,255,0.1); display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; overflow:hidden;">
+    if (isListLayout) {
+        div.className = `filter-list-row ${isSelected ? 'selected' : ''}`;
+
+        // Generate short icon text (first 3 chars)
+        const shortText = name.substring(0, 3).toUpperCase();
+
+        div.innerHTML = `
+            <div class="filter-left">
+                <div class="filter-icon-box">${shortText}</div>
+                <span class="filter-label">${name}</span>
+            </div>
+            <div class="filter-checkbox"></div>
+        `;
+    } else {
+        // --- STANDARD GRID LAYOUT ---
+        div.className = `filter-list-item ${isSelected ? 'selected' : ''}`;
+
+        const isAll = value === 'all';
+
+        let visualHTML = '';
+        if (isAll) {
+            visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: linear-gradient(135deg, #2a2a2a, #1a1a1a); border: 1px solid rgba(255,255,255,0.1); display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; overflow:hidden;">
             <div style="font-size:10px; font-weight:900; color:#fff; letter-spacing:1px; z-index:2; font-family: 'Outfit', sans-serif;">ВСЕ</div>
             <div style="width:16px; height:2px; background: #0088cc; margin-top:4px; border-radius:1px; z-index:2;"></div>
             <div style="position:absolute; top:0; left:0; width:100%; height:100%; background: url('https://telegifter.ru/wp-content/themes/gifts/assets/img/bg-logo-mini.webp'); opacity:0.1; background-size: 20px;"></div>
         </div>`;
-    } else if (key === 'symbol') {
-        const tgSymbol = getTelegifterUrl('symbol', name);
-        const iconSrc = tgSymbol || (VISUAL_MAP.symbol ? VISUAL_MAP.symbol[name] : null);
+        } else if (key === 'symbol') {
+            const tgSymbol = getTelegifterUrl('symbol', name);
+            const iconSrc = tgSymbol || (VISUAL_MAP.symbol ? VISUAL_MAP.symbol[name] : null);
 
-        // Robust rendering: Text underneath, Image on top. If Image fails, Text is visible.
-        visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: #000000; border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
+            // Robust rendering: Text underneath, Image on top. If Image fails, Text is visible.
+            visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: #000000; border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
             <span style="color:#8b9bb4; font-size:11px; font-weight:700; position:absolute; z-index:1;">${name.substring(0, 3).toUpperCase()}</span>
             ${iconSrc ? `<img src="${iconSrc}" style="filter: brightness(0) invert(1); width:28px; height:28px; object-fit:contain; z-index:2; opacity:0; transition:opacity 0.2s;" onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';" onerror="this.style.display='none'">` : ''}
         </div>`;
-    } else if (key === 'bg') {
-        const bgStyle = (VISUAL_MAP.bg && VISUAL_MAP.bg[name]) || '#333';
-        visualHTML = `<div class="filter-color-circle" style="background: ${bgStyle}; position:relative; overflow:hidden; width:52px; height:52px; border-radius:12px;">
+        } else if (key === 'bg') {
+            const bgStyle = (VISUAL_MAP.bg && VISUAL_MAP.bg[name]) || '#333';
+            visualHTML = `<div class="filter-color-circle" style="background: ${bgStyle}; position:relative; overflow:hidden; width:52px; height:52px; border-radius:12px;">
             <div style="position:absolute; top:0; left:0; width:100%; height:100%; background: url('https://telegifter.ru/wp-content/themes/gifts/assets/img/bg-logo-mini.webp'); opacity:0.3; background-size: 20px;"></div>
         </div>`;
-    } else {
-        // Model or NFT or fallback
-        const isNFT = key === 'nft';
-        const isModel = key === 'model';
-        const cleanName = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+        } else {
+            const cleanName = name.toLowerCase().replace(/[^a-z0-9]/g, '');
 
-        // Generate local path if it's NFT or Model
-        let possibleImg = imgUrl;
-        if (!possibleImg) {
-            if (isNFT) {
-                possibleImg = `file/gifts/${cleanName}/thumb.webp`;
-            } else if (isModel && collectionContext) {
-                const colSlug = collectionContext.toLowerCase().replace(/[^a-z0-9]/g, '');
-                const modelSlug = name.toLowerCase().replace(/[^a-z0-9]/g, '');
-                possibleImg = `file/gifts/${colSlug}/model.${modelSlug}.webp`;
+            // Generate local path if it's NFT or Model
+            let possibleImg = imgUrl;
+            if (!possibleImg) {
+                if (isNFT) {
+                    possibleImg = `file/gifts/${cleanName}/thumb.webp`;
+                } else if (isModel && collectionContext) {
+                    const colSlug = collectionContext.toLowerCase().replace(/[^a-z0-9]/g, '');
+                    const modelSlug = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+                    possibleImg = `file/gifts/${colSlug}/model.${modelSlug}.webp`;
+                }
             }
-        }
 
-        // Fallback to Fragment URL if no local path or specifically requested
-        if (!possibleImg) {
-            possibleImg = `https://nft.fragment.com/gift/${cleanName}-1.webp`;
-        }
+            // Fallback to Fragment URL if no local path or specifically requested
+            if (!possibleImg) {
+                possibleImg = `https://nft.fragment.com/gift/${cleanName}-1.webp`;
+            }
 
-        visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: rgba(255, 255, 255, 0.05); border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
+            visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: rgba(255, 255, 255, 0.05); border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
             <span class="filter-item-letter" style="color:#8b9bb4; font-size:11px; font-weight:700; position:absolute; z-index:1;">${name.substring(0, 3).toUpperCase()}</span>
             <img src="${possibleImg}" class="filter-img" style="width:100%; height:100%; object-fit:contain; z-index:2; opacity:0; transition:opacity 0.2s;" 
                 onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';"
@@ -1380,9 +1396,9 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
                     }
                 ">
         </div>`;
-    }
+        }
 
-    div.innerHTML = `
+        div.innerHTML = `
         <div class="filter-item-left" style="overflow: hidden;">
             ${visualHTML}
             <div style="display:flex; flex-direction:column; margin-left:14px; overflow: hidden;">
@@ -1393,6 +1409,7 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
             ${isSelected ? '<div style="width:10px; height:10px; background:#0088cc; border-radius:2px;"></div>' : ''}
         </div>
     `;
+    }
     div.onclick = (e) => {
         e.stopPropagation();
         ACTIVE_FILTERS[key] = value ? value.trim() : value;
