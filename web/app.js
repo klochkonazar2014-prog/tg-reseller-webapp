@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://save-vegetable-occasional-guidelines.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://tony-crucial-words-raymond.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -1288,6 +1288,35 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
 }
 
 function applyHeaderSearch() {
+    loadLiveItems(true);
+}
+
+
+
+function openAdvancedFilters() {
+    document.getElementById('mrkt-modal').classList.add('active');
+    document.getElementById('mrkt-modal-overlay').classList.add('active');
+}
+
+function closeMrktModal() {
+    document.getElementById('mrkt-modal').classList.remove('active');
+    document.getElementById('mrkt-modal-overlay').classList.remove('active');
+}
+
+function resetMrktModal() {
+    ACTIVE_FILTERS = { nft: 'all', model: 'all', bg: 'all', symbol: 'all', tags: 'all', sort: 'price_asc', price_from: null, price_to: null, gift_number: null, search: ACTIVE_FILTERS.search };
+    document.getElementById('filter-gift-number').value = "";
+    document.getElementById('filter-price-from').value = "";
+    document.getElementById('filter-price-to').value = "";
+    initFilterLists();
+    applyHeaderSearch();
+}
+
+function applyMrktModal() {
+    ACTIVE_FILTERS.gift_number = document.getElementById('filter-gift-number').value;
+    ACTIVE_FILTERS.price_from = document.getElementById('filter-price-from').value;
+    ACTIVE_FILTERS.price_to = document.getElementById('filter-price-to').value;
+    closeMrktModal();
     loadLiveItems(true);
 }
 
