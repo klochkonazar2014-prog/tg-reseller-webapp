@@ -7,17 +7,42 @@ function startCountdown(endTime, elements, isMini = false) {
         const diff = endTime - now;
 
         if (diff <= 0) {
-            targets.forEach(el => el.innerText = t('available_now') || 'Available');
+            targets.forEach(el => {
+                if (typeof t === 'function') {
+                    el.innerText = t('available_now') || 'Доступно';
+                } else {
+                    el.innerText = 'Доступно';
+                }
+            });
             return false;
         }
 
         const d = Math.floor(diff / 86400);
         const h = Math.floor((diff % 86400) / 3600);
         const m = Math.floor((diff % 3600) / 60);
+        const s = diff % 60;
 
-        const display = isMini
-            ? (d > 0 ? `${d}d ${h}h` : `${h}h ${m}m`)
-            : `${d > 0 ? d + 'd ' : ''}${h < 10 ? '0' + h : h}:${m < 10 ? '0' + m : m}:${Math.floor(diff % 60) < 10 ? '0' + Math.floor(diff % 60) : Math.floor(diff % 60)}`;
+        // Compact format: show only 2 units
+        let display;
+        if (isMini) {
+            // For mini timers on cards: "Xд Xч" or "Xч Xм"
+            if (d > 0) {
+                display = `${d}д ${h}ч`;
+            } else if (h > 0) {
+                display = `${h}ч ${m}м`;
+            } else {
+                display = `${m}м`;
+            }
+        } else {
+            // For large timers (product view): same compact logic
+            if (d > 0) {
+                display = `Освободится через ${d} дней ${h} часов`;
+            } else if (h > 0) {
+                display = `Освободится через ${h} часов ${m} минут`;
+            } else {
+                display = `Освободится через ${m} минут`;
+            }
+        }
 
         targets.forEach(el => el.innerText = display);
         return true;

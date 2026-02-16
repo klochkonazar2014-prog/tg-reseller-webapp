@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://determined-chevy-behalf-oscar.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://bronze-hall-meaningful-mls.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -657,28 +657,22 @@ function switchTab(index) {
 async function loadFriendsData() {
     const userId = tg.initDataUnsafe?.user?.id || 0;
     try {
-        const res = await fetch(`${BACKEND_URL}/api/referral/stats?user_id=${userId}`);
+        const res = await fetch(`${BACKEND_URL}/api/referral_stats?user_id=${userId}`);
         const data = await res.json();
 
         const balEl = document.getElementById('friends-balance-val');
-        if (balEl) balEl.innerText = (data.balance || 0).toFixed(4);
+        if (balEl) balEl.innerText = data.balance.toFixed(4);
 
         const listCont = document.getElementById('friends-list-items');
         if (!listCont) return;
 
-        // Fetch friends list
-        const resFriends = await fetch(`${BACKEND_URL}/api/referral/friends?user_id=${userId}`);
-        const dataFriends = await resFriends.json();
-        const friends = dataFriends.friends || [];
-
-        if (friends.length === 0) {
+        if (!data.referrals || data.referrals.length === 0) {
             document.getElementById('empty-friends-hint').style.display = 'block';
-            listCont.innerHTML = '';
             return;
         }
 
         document.getElementById('empty-friends-hint').style.display = 'none';
-        listCont.innerHTML = friends.map(f => {
+        listCont.innerHTML = data.referrals.map(f => {
             const name = f.username ? '@' + f.username : (f.full_name || ('ID: ' + f.user_id));
             return `
                 <div class="service-item" style="cursor: default;">
@@ -700,19 +694,13 @@ async function loadFriendsData() {
 }
 
 function showEarningsHelp() {
-    console.log("Showing earnings help...");
-    const el = document.getElementById('earnings-help-sheet');
-    if (!el) return;
-    el.style.display = 'flex';
-    setTimeout(() => el.classList.add('active'), 10);
-    if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+    const sheet = document.getElementById('earnings-help-sheet');
+    if (sheet) sheet.style.display = 'block';
 }
 
 function closeEarningsHelp() {
-    const el = document.getElementById('earnings-help-sheet');
-    if (!el) return;
-    el.classList.remove('active');
-    setTimeout(() => el.style.display = 'none', 300);
+    const sheet = document.getElementById('earnings-help-sheet');
+    if (sheet) sheet.style.display = 'none';
 }
 
 function shareReferralLink() {
@@ -730,10 +718,10 @@ function shareReferralLink() {
 async function handleReferralWithdraw() {
     const userId = tg.initDataUnsafe?.user?.id || 0;
     try {
-        const res = await fetch(`${BACKEND_URL}/api/referral/withdraw`, {
+        const res = await fetch(`${BACKEND_URL}/api/withdraw_referral`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_id: userId, amount: 0.1, wallet_address: 'TON_CONNECT_WALLET' }) // Placeholder logic for now
+            body: JSON.stringify({ user_id: userId })
         });
         const data = await res.json();
         if (data.success) {
@@ -1481,7 +1469,7 @@ function createItemCard(item) {
         if (item.rent_ends_at) {
             const miniTimer = document.createElement('div');
             miniTimer.className = 'card-mini-timer';
-            // User requested: "аккуратно дни и часы (или часы и минуты) И ВСЕ"
+            miniTimer.id = `card-timer-${item.id}`;
             card.appendChild(miniTimer);
             startCountdown(parseInt(item.rent_ends_at), miniTimer, true);
         }
@@ -1873,7 +1861,11 @@ async function openProductView(item) {
         if (rentBtnTextEl) rentBtnTextEl.textContent = t('rent_button', { amount: '' }).replace('{amount}', '').trim();
 
         rentBtn.onclick = async () => {
-            if (!tonConnectUI.connected) { await tonConnectUI.openModal(); return; }
+            // Critical: Open Ton Connect modal WITHIN the product view context
+            if (!tonConnectUI.connected) {
+                await tonConnectUI.openModal();
+                return;
+            }
 
             // ALERT: Check auto-relist for pre-orders
             if (item.status === 'rented' && !item.auto_relist) {
@@ -1937,14 +1929,13 @@ async function openProductView(item) {
                 }
             }
 
-            // 3. Countdown Logic (Minimal Text V3)
+            // 3. Countdown Logic (Blocky V2)
             const endTime = details.rent?.ends_at || details.rent_ends_at;
             if (endTime && (item.status === 'rented' || (myOrder && myOrder.status === 'active'))) {
                 const countdownCont = document.getElementById('view-countdown-container');
                 const timerEl = document.getElementById('view-countdown-timer');
                 if (countdownCont && timerEl) {
                     countdownCont.style.display = 'block';
-                    // Apply same minimal style as card if needed, but for now just start it
                     startCountdown(parseInt(endTime), timerEl);
                 }
             } else {
@@ -1987,11 +1978,6 @@ async function openProductView(item) {
                         };
                     }
                 });
-            }
-
-            // NEW: Ensure metadata (Model, Backdrop, Symbol) is rendered even for rented items
-            if (item.type === 'gift' && details.attributes) {
-                renderProperties(details.attributes);
             }
         }).catch(e => console.error(e));
     }

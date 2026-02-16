@@ -3540,26 +3540,10 @@ body.hide-filters .header-column {
 }
 
 /* TON CONNECT OVERRIDE */
-tc-root,
-#tc-root {
-    z-index: 10000000 !important;
+tc-root {
+    z-index: 999999 !important;
 }
 
 #product-view {
     z-index: 10000;
-}
-
-#friends-tab .btn-secondary {
-    background: #ffffff !important;
-    color: #000000 !important;
-}
-
-.bottom-sheet {
-    z-index: 20000;
-    display: none;
-    flex-direction: column;
-}
-
-.bottom-sheet.active {
-    display: flex !important;
 }
