@@ -6,9 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-// Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
-// This line is automatically updated by run.py
-const BACKEND_URL = "https://lead-suse-employers-include.trycloudflare.com";
+const BACKEND_URL = "https://ssl-distributed-vegetable-advertising.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -76,7 +74,6 @@ const TRANSLATIONS = {
         numbers: "Номера",
         rented_tab: "Арендовано",
         profile: "Профиль",
-        friends: "Друзья",
         search: "Поиск",
         no_items: "Ничего не найдено",
         reset_filters: "Попробуйте сбросить фильтры",
@@ -88,29 +85,54 @@ const TRANSLATIONS = {
         rent_days: "Аренда на {min}–{max} дн.",
         per_day: "В день",
         min_price: "Мин. цена",
-        you_will_send: "(Дополнительно вам потребуется отправить {amount} TON для обработки транзакции. Оставшаяся тонна будет вам возвращена. Что это значит?",
+        you_will_send: "Вы дополнительно отправите {amount} TON для обработки транзакции. Остаток TON будет возвращен вам.",
+        processing: "Подключение...",
+        success_tc: "Успешно! Теперь вернитесь на Fragment и нажмите Display in Telegram.",
+        tc_link_placeholder: "Вставьте tc:// ссылку с Fragment",
+        rarity: "Редкость",
+        model: "Модель",
+        symbol: "Символ",
+        backdrop: "Фон",
+        copy_success: "Скопировано",
+        lang_ru: "Русский",
+        lang_en: "English",
+        what_is_this: "Что это значит?",
+        settings_support: "Настройки и поддержка",
+        profile_settings: "Настройки и поддержка",
+        rental_history: "История аренды",
+        profile_history: "История аренды",
+        support_faq: "Поддержка и FAQ",
+        profile_support: "Поддержка и FAQ",
+        wallet_mgmt: "Управление кошельком",
+        profile_wallet: "Кошелек",
+        connect_wallet: "Подключить",
+        connect_wallet_full: "Подключить кошелек",
+        connected: "Подключено",
+        details: "Детали",
+        owner: "Владелец",
+        address: "Адрес",
+        auto_relist: "Авто-перевыставление",
+        auto_relist_desc: "Этот NFT будет автоматически доступен для аренды после окончания срока.",
+        rent_button: "Арендовать за {amount}",
+        rent_for: "Арендовать за",
+        preorder_for: "Забронировать за",
+        loading: "Загрузка...",
+        filters: "Фильтры",
+        gift_number: "Номер подарка",
+        sort_by: "Сортировка",
+        price: "Цена",
+        from: "От",
+        to: "До",
+        clear_all: "Очистить все",
+        show_results: "Показать результаты",
+        search_hint: "Поиск...",
+        history_empty: "История пуста",
+        invalid_tc_link: "Пожалуйста, вставьте корректную ссылку tc:// с Fragment",
+        status_pending: "Ожидает оплату",
+        status_rented: "Ожидает ссылку",
         just_now: "Только что",
         hours_ago: "ч. назад",
-        what_is_this_long: "(Дополнительно вам потребуется отправить 0.2 TON для обработки транзакции. Оставшаяся тонна будет вам возвращена. Что это значит?",
-        listing_warning_short: "Подарок, выставленный на аренду менее чем на 24 часа.",
-        listing_help_title: "Подарок, выставленный на аренду менее чем на 24 часа.",
-        listing_help_body: `
-            <div style="font-weight:700; color:#fff; margin-bottom:10px;">Почему это важно?</div>
-            <p style="margin-bottom:12px;">Этот подарок недавно был выставлен на аренду (менее 24 часов назад).</p>
-            <p style="margin-bottom:12px;">Fragment устанавливает ограничение на количество раз в день, когда подарок может быть привязан к аккаунту Telegram.</p>
-            <div style="font-weight:700; color:#fff; margin-bottom:10px;">Что это значит?</div>
-            <p style="margin-bottom:12px;">Если предыдущий владелец или арендатор недавно исчерпал этот лимит, вы не сможете сразу привязать подарок к своему аккаунту в Telegram. Возможно, вам придётся подождать день.</p>
-            <p style="font-weight:700; color:#ff9500;">Аренда на свой страх и риск!</p>
-        `,
-        fee_help_title: "Зачем нужны дополнительные 0,2 тонны?",
-        fee_help_body: `
-            <div style="font-weight:700; color:#fff; margin-bottom:10px;">Зачем нужны дополнительные 0,2 тонны?</div>
-            <p style="margin-bottom:12px;">Дополнительно 0,2 тонны отправляется для обработки транзакции по аренде в блокчейне.</p>
-            <p style="margin-bottom:12px;">Эти средства используются для оплаты сетевых сборов и выполнения смарт-контракта.</p>
-            <p style="margin-bottom:12px;">Фактические затраты обычно составляют всего несколько центов. Это можно увидеть в истории транзакций.</p>
-            <div style="font-weight:700; color:#fff; margin-bottom:10px;">Это нормально?</div>
-            <p style="margin-bottom:12px;">Это стандартная практика для транзакций в сети TON и не только. Невозвратная часть идет на оплату комиссий сети, а не на оплату услуг платформы.</p>
-        `,
+        what_is_this_long: "Вы отправляете небольшую сумму TON для покрытия комиссии сети и работы сервиса. Остаток будет возвращен вам автоматически.",
         wallet_mgmt: "Управление кошельком",
         copy_address: "Копировать адрес",
         disconnect_wallet: "Отключить кошелек",
@@ -144,58 +166,7 @@ const TRANSLATIONS = {
         ends_in: "Освободится через",
         days_label: "Дни",
         day_label: "День",
-        days_2_4: "Дня",
-        rent_for: "Арендовать за",
-        preorder_for: "Предзаказ за",
-        rented: "Арендовано",
-        status_pending: "Ожидание",
-        status_rented: "Арендовано",
-        profile_wallet: "Кошелек",
-        profile_settings: "Настройки",
-        profile_history: "История аренды",
-        profile_support: "Поддержка",
-        language_selector: "Язык",
-        listed_less_than_24h: "Этот подарок был выставлен на аренду менее 24 часов назад.",
-        what_does_it_mean: "Что это значит?",
-        listing_help_title: "Ограничение Fragment",
-        listing_help_body: "Fragment.com позволяет передавать подарки не ранее чем через 24 часа после их получения/выставления. Если вы арендуете этот товар сейчас, он будет отправлен вам сразу после истечения этого срока.",
-        auto_relist: "Авто-перевыставление",
-        auto_relist_desc: "Этот NFT будет автоматически перевыставлен после окончания срока аренды.",
-        what_is_this: "Что это значит?",
-        what_is_this_long: "Дополнительно вам потребуется отправить 0.2 TON для обработки транзакции. Оставшаяся часть будет вам возвращена.",
-        nft: "NFT",
-        model: "Модель",
-        backdrop: "Фон",
-        symbol: "Символ",
-        price: "Цена",
-        min_price: "Мин. цена",
-        per_day: "В день",
-        sort_by: "Сортировать по",
-        from: "От",
-        to: "До",
-        clear_all: "Очистить все",
-        show_results: "Показать результаты",
-        gift_number: "Номер подарка",
-        filters: "Фильтры",
-        owner: "Владелец",
-        address: "Адрес NFT",
-        details: "Подробности",
-        rental_history: "История аренды",
-        support_faq: "Поддержка и FAQ",
-        settings_support: "Настройки и поддержка",
-        connect_wallet: "Подключить",
-        connect_wallet_full: "Подключить кошелек",
-        days_short: "дн",
-        referral_program: "Реферальная программа",
-        referrals_count: "Рефералы",
-        referral_balance: "Баланс",
-        referral_link: "Ваша ссылка",
-        withdraw_funds: "Вывести средства",
-        share: "Поделиться",
-        min_withdraw_error: "Минимальная сумма для вывода: 0.1 TON",
-        withdraw_success: "Запрос на вывод отправлен! Средства поступят на ваш кошелек в ближайшее время.",
-        notification_enabled: "Уведомление включено!",
-        notification_disabled: "Уведомление выключено!"
+        days_2_4: "Дня"
     },
     en: {
         gifts: "Gifts",
@@ -203,7 +174,6 @@ const TRANSLATIONS = {
         numbers: "Numbers",
         rented_tab: "Rented",
         profile: "Profile",
-        friends: "Friends",
         search: "Search",
         no_items: "Nothing found",
         reset_filters: "Try resetting filters",
@@ -228,12 +198,6 @@ const TRANSLATIONS = {
         lang_en: "English",
         what_is_this: "What does this mean?",
         settings_support: "Settings & Support",
-        disconnect_wallet: "Disconnect wallet",
-        share: "Share",
-        address_copied: "Address copied",
-        support: "Support",
-        how_it_works: "How it works",
-        days_short: "d",
         rental_history: "Rental History",
         support_faq: "Support & FAQ",
         wallet_mgmt: "Wallet Management",
@@ -257,7 +221,6 @@ const TRANSLATIONS = {
         show_results: "Show Results",
         search_hint: "Search...",
         history_empty: "History is empty",
-        rented: "Rented",
         invalid_tc_link: "Please paste a valid tc:// link from Fragment",
         status_pending: "Pending payment",
         status_rented: "Awaiting link",
@@ -291,18 +254,7 @@ const TRANSLATIONS = {
         ends_in: "Ends in",
         days_label: "Days",
         day_label: "Day",
-        days_2_4: "Days",
-        referral_program: "Referral Program",
-        referrals_count: "Referrals",
-        referral_balance: "Balance",
-        referral_link: "Your Link",
-        withdraw_funds: "Withdraw Funds",
-        share: "Share",
-        min_withdraw_error: "Minimum withdrawal amount: 0.1 TON",
-        withdraw_success: "Withdrawal request submitted! Funds will arrive at your wallet shortly.",
-        notification_enabled: "Notification enabled!",
-        notification_disabled: "Notification disabled!"
-
+        days_2_4: "Days"
     }
 };
 
@@ -323,8 +275,8 @@ const copyToClipboard = (text) => {
         }).catch(err => console.error('Copy failed', err));
     }
 };
-const renderTonAmount = (val) => `<span class="tm-amount-container" style="display:inline-flex; align-items:center; white-space:nowrap;"><span class="tm-amount">${val}</span><img src="data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M14.1839 17.7069C13.6405 18.6507 13.3688 19.1226 13.0591 19.348C12.4278 19.8074 11.5723 19.8074 10.941 19.348C10.6312 19.1226 10.3595 18.6507 9.81613 17.7069L5.52066 10.2464C4.76864 8.94024 4.39263 8.28717 4.33762 7.75894C4.2255 6.68236 4.81894 5.65591 5.80788 5.21589C6.29309 5 7.04667 5 8.55383 5H15.4462C16.9534 5 17.7069 5 18.1922 5.21589C19.1811 5.65591 19.7745 6.68236 19.6624 7.75894C19.6074 8.28717 19.2314 8.94024 18.4794 10.2464L14.1839 17.7069ZM11.1 16.3412L6.56139 8.48002C6.31995 8.06185 6.19924 7.85276 6.18146 7.68365C6.14523 7.33896 6.33507 7.01015 6.65169 6.86919C6.80703 6.80002 7.04847 6.80002 7.53133 6.80002H7.53134L11.1 6.80002V16.3412ZM12.9 16.3412L17.4387 8.48002C17.6801 8.06185 17.8008 7.85276 17.8186 7.68365C17.8548 7.33896 17.665 7.01015 17.3484 6.86919C17.193 6.80002 16.9516 6.80002 16.4687 6.80002H12.9V16.3412Z' fill='%230098EA'/%3E%3C/svg%3E" class="ton-icon-inline" alt="TON"></span>`;
-const renderTonAmountNoIcon = (val) => `<span class="tm-amount" style="font-size:inherit;">${val}</span>`;
+const renderTonAmount = (val) => `<span class="icon-before icon-ton tm-amount">${val}</span>`;
+const renderTonAmountNoIcon = (val) => `<span class="tm-amount icon-ton" style="font-size:inherit;">${val}</span>`;
 
 function truncateMiddle(str, maxLength = 9) {
     if (!str || str.length <= maxLength) return str;
@@ -426,8 +378,6 @@ const SLUG_MAPPING = {
     'khabibspapakha': 'khabibspapakha'
 };
 
-const TG_LOGO_SVG = `<svg id="Livello_1" data-name="Livello 1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 240 240"><defs><linearGradient id="linear-gradient" x1="120" y1="240" x2="120" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#1d93d2"/><stop offset="1" stop-color="#38b0e3"/></linearGradient></defs><title>Telegram_logo</title><circle cx="120" cy="120" r="120" fill="url(#linear-gradient)"/><path d="M81.229,128.772l14.237,39.406s1.78,3.687,3.686,3.687,30.255-29.492,30.255-29.492l31.525-60.89L81.737,118.6Z" fill="#c8daea"/><path d="M100.106,138.878l-2.733,29.046s-1.144,8.9,7.754,0,17.415-15.763,17.415-15.763" fill="#a9c6d8"/><path d="M81.486,130.178,52.2,120.636s-3.5-1.42-2.373-4.64c.232-.664.7-1.229,2.1-2.2,6.489-4.523,120.106-45.36,120.106-45.36s3.208-1.081,5.1-.362a2.766,2.766,0,0,1,1.885,2.055,9.357,9.357,0,0,1,.254,2.585c-.009.752-.1,1.449-.169,2.542-.692,11.165-214,94.493-21.4,94.493s-1.239,4.876-5.678,5.043A8.13,8.13,0,0,1,146.1,172.5c-8.711-7.493-38.819-27.727-45.472-32.177a1.27,1.27,0,0,1-.546-.9c-.093-.469.417-1.05.417-1.05s52.426-46.6,53.821-51.492c.108-.379-.3-.566-.848-.4-3.482,1.281-63.844,39.4-70.506,43.607A3.21,3.21,0,0,1,81.486,130.178Z" fill="#fff"/></svg>`;
-
 function getTelegifterUrl(type, name, collection, slugIndex = 0) {
     if (!name || name === 'Unknown' || name === 'Default' || name === 'Gift' || name === 'Gift #?') return null;
 
@@ -497,12 +447,12 @@ function updateUILanguage() {
         'view-label-lang': t('language_selector'),
         'blue-wallet-text': t('connect_wallet'),
         'header-wallet-connect-text': t('connect_wallet'),
-        'octo-label-filters': t('filters'),
-        'octo-label-gift-number': t('gift_number'),
-        'octo-label-sort': t('sort_by'),
-        'octo-label-price': t('price'),
-        'octo-btn-reset': t('clear_all'),
-        'octo-btn-apply': t('show_results'),
+        'mrkt-label-filters': t('filters'),
+        'mrkt-label-gift-number': t('gift_number'),
+        'mrkt-label-sort': t('sort_by'),
+        'mrkt-label-price': t('price'),
+        'mrkt-btn-reset': t('clear_all'),
+        'mrkt-btn-apply': t('show_results'),
         'fee-notice-text': t('what_is_this_long'),
         'fee-what-mean': t('what_is_this'),
         'details-tab': t('details'),
@@ -516,25 +466,13 @@ function updateUILanguage() {
         'filter-search-nft': t('search_hint'),
         'filter-search-model': t('search_hint'),
         'filter-search-bg': t('search_hint'),
-        'filter-search-symbol': t('search_hint'),
-        'view-auto-relist-title': t('auto_relist'),
-        'view-auto-relist-desc': t('auto_relist_desc'),
-        'chip-label-nft': t('nft'),
-        'chip-label-model': t('model'),
-        'chip-label-bg': t('backdrop'),
-        'chip-label-symbol': t('symbol'),
-        'profile-label-referrals': t('referral_program'),
-        'ref-label-count': t('referrals_count'),
-        'ref-label-balance': t('referral_balance'),
-        'ref-label-link': t('referral_link'),
-        'ref-withdraw-btn': t('withdraw_funds'),
-        'ref-share-btn': t('share')
+        'filter-search-symbol': t('search_hint')
     };
     for (const [id, val] of Object.entries(map)) {
         const el = document.getElementById(id);
         if (el) {
             if (el.tagName === 'INPUT') el.placeholder = val;
-            else el.innerHTML = val; // Switching to innerHTML for potential <b> tags in translations
+            else el.innerText = val;
         }
     }
 }
@@ -652,7 +590,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 function switchTab(index) {
-    // Indices: 0 = Gifts, 1 = Usernames, 2 = Numbers, 3 = Friends, 4 = Profile
+    // Indices: 0 = Gifts, 1 = Usernames, 2 = Numbers, 3 = Profile
     const navItems = document.querySelectorAll('.nav-item');
     navItems.forEach((nav, i) => {
         nav.classList.toggle('active', i === index);
@@ -671,7 +609,6 @@ function switchTab(index) {
         }
 
         document.getElementById('market-container').style.display = 'block';
-        document.getElementById('friends-container').style.display = 'none';
         document.getElementById('profile-container').style.display = 'none';
         document.getElementById('mode-toggle-container').style.display = 'block';
 
@@ -683,35 +620,10 @@ function switchTab(index) {
             headerTitle.innerText = baseTitle + (CURRENT_STATUS === 'rented' ? t('rent_title_suffix') : '');
         }
 
-        const bNav = document.querySelector('.bottom-nav');
-        if (bNav) {
-            bNav.classList.remove('profile-mode');
-            bNav.classList.remove('friends-mode');
-        }
-
-    } else if (index === 3) { // Friends tab
-        document.getElementById('market-container').style.display = 'none';
-        document.getElementById('friends-container').style.display = 'block';
-        document.getElementById('profile-container').style.display = 'none';
-        document.getElementById('mode-toggle-container').style.display = 'none';
-
-        const headerTitle = document.querySelector('.header h1') || document.querySelector('.logo-text');
-        if (headerTitle) headerTitle.innerText = t('friends');
-
-        loadFriendsList();
-
-        const bNav = document.querySelector('.bottom-nav');
-        if (bNav) {
-            bNav.classList.remove('profile-mode');
-            bNav.classList.add('friends-mode');
-        }
-
-        if (window.Telegram && window.Telegram.WebApp) {
-            tg.HapticFeedback.impactOccurred('medium');
-        }
+        // FIX: Removed - was hiding nav
+        // document.body.classList.remove('profile-active');
     } else { // Profile tab
         document.getElementById('market-container').style.display = 'none';
-        document.getElementById('friends-container').style.display = 'none';
         document.getElementById('profile-container').style.display = 'block';
         document.getElementById('mode-toggle-container').style.display = 'none';
 
@@ -721,18 +633,22 @@ function switchTab(index) {
             tg.HapticFeedback.impactOccurred('medium');
         }
 
+        // FIX: Nav should always be visible
+        // document.body.classList.add('profile-active');
         const bNav = document.querySelector('.bottom-nav');
-        if (bNav) {
-            bNav.classList.add('profile-mode');
-            bNav.classList.remove('friends-mode');
-        }
+        if (bNav) bNav.classList.add('profile-mode');
     }
 
-    // Filter visibility logic
-    if (index === 1 || index === 2) {
+    // NEW: Filter visibility logic
+    if (index === 1 || index === 2) { // Usernames or Numbers
         document.body.classList.add('hide-filters');
     } else {
         document.body.classList.remove('hide-filters');
+    }
+
+    if (index !== 3) {
+        const bNav = document.querySelector('.bottom-nav');
+        if (bNav) bNav.classList.remove('profile-mode');
     }
 }
 
@@ -745,42 +661,20 @@ function loadUserOrders() {
 
 
 // --- Help Modal Logic ---
-function showHelp(type) {
+function showHelp(amount) {
     const title = document.getElementById('help-title');
     const body = document.getElementById('help-body');
 
-    if (type === 'fee') {
-        title.innerText = t('fee_help_title') || "0.2 TON Fee";
-        body.innerHTML = `
-            <div class="help-sheet-warning">
-                ${t('fee_help_body')}
-            </div>
-        `;
-    } else if (type === 'listing') {
-        title.innerText = t('listing_help_title') || "24h Listing Rule";
-        body.innerHTML = `
-            <div class="help-sheet-warning">
-                ${t('listing_help_body')}
-            </div>
-        `;
-    }
+    title.innerText = t('what_is_this');
+    body.innerHTML = `
+        <div style="font-weight:700; color:#fff; margin-bottom:10px;">${t('you_will_send', { amount: amount })}</div>
+    `;
 
-    const modal = document.getElementById('help-modal');
-    if (modal) {
-        modal.classList.add('active');
-        // Visual feedback
-        if (typeof tg !== 'undefined' && tg.HapticFeedback) {
-            tg.HapticFeedback.impactOccurred('medium');
-        }
-    }
+    document.getElementById('help-modal-overlay').classList.add('active');
+    document.getElementById('help-modal').classList.add('active');
 }
 
-function closeHelp() {
-    const modal = document.getElementById('help-modal');
-    if (modal) modal.classList.remove('active');
-}
-
-function closeOctoModal() {
+function closeHelpModal() {
     document.getElementById('help-modal-overlay').classList.remove('active');
     document.getElementById('help-modal').classList.remove('active');
 }
@@ -943,7 +837,7 @@ async function loadLiveItems(reset = true) {
         });
 
         let response;
-        let retries = 5;
+        let retries = 3;
         while (retries > 0) {
             try {
                 response = await fetch(`${BACKEND_URL}/api/items?${params.toString()}`);
@@ -952,13 +846,11 @@ async function loadLiveItems(reset = true) {
                 console.error(`Fetch attempt failed (${retries} retries left):`, err);
             }
             retries--;
-            if (retries > 0) await new Promise(r => setTimeout(r, 2000));
+            if (retries > 0) await new Promise(r => setTimeout(r, 1000));
         }
 
         if (!response || !response.ok) {
-            const status = response ? response.status : 'Network Error';
-            const statusText = response ? response.statusText : '';
-            throw new Error(`Server Error: ${status} ${statusText}`);
+            throw new Error(`Server status: ${response ? response.status : 'Network Error'}`);
         }
 
         const data = await response.json();
@@ -988,30 +880,7 @@ async function loadLiveItems(reset = true) {
                         <div style="color: #8b9bb4; margin-top: 8px;">${t('reset_filters')}</div>
                     </div>`;
             } else {
-                // Track media loading to hide spinner only when first items are ready
-                let mediaPromises = [];
-                if (reset && processed.length > 0) {
-                    processed.slice(0, 4).forEach(item => {
-                        const src = item._realImage;
-                        if (src) {
-                            mediaPromises.push(new Promise((resolve) => {
-                                const img = new Image();
-                                img.onload = resolve;
-                                img.onerror = resolve;
-                                img.src = src;
-                            }));
-                        }
-                    });
-                }
-
                 renderItemsBatch(processed);
-
-                if (mediaPromises.length > 0) {
-                    await Promise.race([
-                        Promise.all(mediaPromises),
-                        new Promise(r => setTimeout(r, 2000))
-                    ]);
-                }
             }
 
             if (reset) initFilterLists();
@@ -1022,26 +891,35 @@ async function loadLiveItems(reset = true) {
         hideLoading();
     } catch (e) {
         console.error("Load Error details:", e);
+        if (reset && document.getElementById('top-loader')) document.getElementById('top-loader').innerText = "Ошибка соединения с сервером. Показываем демо-данные.";
 
+        // --- 🧪 DEV/DEMO FALLBACK: Inject mock data if backend is dead ---
         if (reset) {
-            const errorMsg = e.message || "Unknown Error";
-            document.getElementById('items-view').innerHTML = `
-                <div class="error-msg" style="padding: 100px 20px; text-align:center;">
-                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#FF3B30" stroke-width="1.5" style="margin-bottom: 20px;">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="12" y1="8" x2="12" y2="12"></line>
-                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                    </svg>
-                    <div style="font-size: 18px; font-weight: 700; color: #fff;">Ошибка загрузки</div>
-                    <div style="color: #8b9bb4; margin-top: 8px; font-size: 14px; word-break: break-all;">${errorMsg}</div>
-                    <button onclick="loadLiveItems(true)" style="margin-top: 24px; background: var(--accent-blue); border:none; border-radius:12px; padding: 12px 24px; color:#fff; font-weight:700; cursor:pointer;">
-                        Попробовать снова
-                    </button>
-                    <div style="margin-top: 20px; font-size: 12px; color: #555;">Path: ${BACKEND_URL}/api/items</div>
-                </div>`;
-
-            // Still show demo data in console/dev context but not over error for user clarity
-            console.log("Check server logs. Demo items would be here if we weren't showing the error.");
+            console.log("Backend unreachable. Injecting demo cards for UI testing.");
+            const demoItems = [
+                {
+                    id: 9993, type: 'gift', nft_name: 'Premium Gift #001',
+                    price_per_day: '5.00', min_duration: 86400, max_duration: 86400,
+                    image: 'https://nft.fragment.com/gift/voodoodoll-1.webp',
+                    _realImage: 'https://nft.fragment.com/gift/voodoodoll-1.webp',
+                    _collection: { name: 'Gifts' }
+                },
+                {
+                    id: 9991, type: 'gift', nft_name: 'Mighty Arm #2006',
+                    price_per_day: '1.25', min_duration: 86400, max_duration: 86400,
+                    image: 'https://nft.fragment.com/gift/mightyarm-2006.webp',
+                    _realImage: 'https://nft.fragment.com/gift/mightyarm-2006.webp',
+                    _collection: { name: 'Gifts' }
+                },
+                {
+                    id: 9992, type: 'gift', nft_name: 'Plush Pepe #302',
+                    price_per_day: '0.50', min_duration: 86400, max_duration: 604800,
+                    image: 'https://nft.fragment.com/gift/plushpepe-302.webp',
+                    _realImage: 'https://nft.fragment.com/gift/plushpepe-302.webp',
+                    _collection: { name: 'Gifts' }
+                }
+            ];
+            renderItemsBatch(demoItems);
         }
 
         if (document.getElementById('top-loader')) document.getElementById('top-loader').style.display = 'none';
@@ -1052,6 +930,8 @@ async function loadLiveItems(reset = true) {
         IS_LOADING = false;
     }
 }
+
+
 
 function selectNftChip(addr, btn) {
     ACTIVE_FILTERS.nft = addr;
@@ -1138,7 +1018,6 @@ function initTonConnect() {
 // --- Accordions logic ---
 function toggleAccordion(id, btn) {
     const content = document.getElementById(id);
-    if (!content) return;
     const isActive = content.classList.contains('active');
 
     // Close others
@@ -1156,9 +1035,7 @@ function filterList(key) {
 }
 
 function toggleGenericModal(key) {
-    openOctoModal(); // Ensure we open the correct modal
-
-    // Auto-expand the requested section
+    openAdvancedFilters();
     const accMap = {
         'nft': 'nft-acc',
         'model': 'model-acc',
@@ -1180,36 +1057,31 @@ function toggleGenericModal(key) {
 
 function initFilterLists() {
     const sortCont = document.getElementById('sort-list-container');
-    if (sortCont) {
-        const sorts = [
-            { id: 'price_asc', n: t('sort_price_asc') },
-            { id: 'price_desc', n: t('sort_price_desc') },
-            { id: 'num_asc', n: t('sort_num_asc') },
-            { id: 'num_desc', n: t('sort_num_desc') },
-            { id: 'model_rare', n: t('sort_model_rare') },
-            { id: 'bg_rare', n: t('sort_bg_rare') },
-            { id: 'symbol_rare', n: t('sort_symbol_rare') }
-        ];
-        sortCont.innerHTML = '';
-        sorts.forEach(s => addFilterItem(sortCont, s.n, s.id, 'sort', ACTIVE_FILTERS.sort === s.id));
-    }
+    const sorts = [
+        { id: 'price_asc', n: t('sort_price_asc') },
+        { id: 'price_desc', n: t('sort_price_desc') },
+        { id: 'num_asc', n: t('sort_num_asc') },
+        { id: 'num_desc', n: t('sort_num_desc') },
+        { id: 'model_rare', n: t('sort_model_rare') },
+        { id: 'bg_rare', n: t('sort_bg_rare') },
+        { id: 'symbol_rare', n: t('sort_symbol_rare') }
+    ];
+    sortCont.innerHTML = '';
+    sorts.forEach(s => addFilterItem(sortCont, s.n, s.id, 'sort', ACTIVE_FILTERS.sort === s.id));
 
     const nftCont = document.getElementById('nft-list-container');
-    if (nftCont) {
-        const nftSearchInp = document.getElementById('filter-search-nft');
-        const nftSearch = nftSearchInp ? nftSearchInp.value.toLowerCase() : '';
-        nftCont.innerHTML = '';
+    const nftSearch = document.getElementById('filter-search-nft').value.toLowerCase();
+    nftCont.innerHTML = '';
 
-        if (!nftSearch || t('all').toLowerCase().includes(nftSearch)) {
-            addFilterItem(nftCont, t('all'), "all", 'nft', ACTIVE_FILTERS.nft === 'all');
-        }
-
-        (window.STATIC_COLLECTIONS || []).forEach(col => {
-            if (col.name.toLowerCase().includes(nftSearch)) {
-                addFilterItem(nftCont, col.name, col.name, 'nft', ACTIVE_FILTERS.nft === col.name, col.image);
-            }
-        });
+    if (!nftSearch || t('all').toLowerCase().includes(nftSearch)) {
+        addFilterItem(nftCont, t('all'), "all", 'nft', ACTIVE_FILTERS.nft === 'all');
     }
+
+    (window.STATIC_COLLECTIONS || []).forEach(col => {
+        if (col.name.toLowerCase().includes(nftSearch)) {
+            addFilterItem(nftCont, col.name, col.name, 'nft', ACTIVE_FILTERS.nft === col.name, col.image);
+        }
+    });
 
     const maps = [
         { id: 'model-list-container', key: 'model', search: 'filter-search-model', label: t('model').toLowerCase() },
@@ -1315,71 +1187,55 @@ function initFilterLists() {
 
 function addFilterItem(container, name, value, key, isSelected, imgUrl, collectionContext, fallbackImgUrl) {
     const div = document.createElement('div');
+    div.className = `filter-list-item ${isSelected ? 'selected' : ''}`;
 
-    // Check if we should use List Layout (For now, only Sort uses it based on user request)
-    const isListLayout = (key === 'sort');
+    const isAll = value === 'all';
 
-    if (isListLayout) {
-        div.className = `filter-list-row ${isSelected ? 'selected' : ''}`;
-
-        // Generate short icon text (first 3 chars)
-        const shortText = name.substring(0, 3).toUpperCase();
-
-        div.innerHTML = `
-            <div class="filter-left">
-                <div class="filter-icon-box">${shortText}</div>
-                <span class="filter-label">${name}</span>
-            </div>
-            <div class="filter-checkbox"></div>
-        `;
-    } else {
-        // --- STANDARD GRID LAYOUT ---
-        div.className = `filter-list-item ${isSelected ? 'selected' : ''}`;
-
-        const isAll = value === 'all';
-
-        let visualHTML = '';
-        if (isAll) {
-            visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: linear-gradient(135deg, #2a2a2a, #1a1a1a); border: 1px solid rgba(255,255,255,0.1); display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; overflow:hidden;">
+    let visualHTML = '';
+    if (isAll) {
+        visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: linear-gradient(135deg, #2a2a2a, #1a1a1a); border: 1px solid rgba(255,255,255,0.1); display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; overflow:hidden;">
             <div style="font-size:10px; font-weight:900; color:#fff; letter-spacing:1px; z-index:2; font-family: 'Outfit', sans-serif;">ВСЕ</div>
             <div style="width:16px; height:2px; background: #0088cc; margin-top:4px; border-radius:1px; z-index:2;"></div>
             <div style="position:absolute; top:0; left:0; width:100%; height:100%; background: url('https://telegifter.ru/wp-content/themes/gifts/assets/img/bg-logo-mini.webp'); opacity:0.1; background-size: 20px;"></div>
         </div>`;
-        } else if (key === 'symbol') {
-            const tgSymbol = getTelegifterUrl('symbol', name);
-            const iconSrc = tgSymbol || (VISUAL_MAP.symbol ? VISUAL_MAP.symbol[name] : null);
+    } else if (key === 'symbol') {
+        const tgSymbol = getTelegifterUrl('symbol', name);
+        const iconSrc = tgSymbol || (VISUAL_MAP.symbol ? VISUAL_MAP.symbol[name] : null);
 
-            // Robust rendering: Text underneath, Image on top. If Image fails, Text is visible.
-            visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: #000000; border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
+        // Robust rendering: Text underneath, Image on top. If Image fails, Text is visible.
+        visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: #000000; border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
             <span style="color:#8b9bb4; font-size:11px; font-weight:700; position:absolute; z-index:1;">${name.substring(0, 3).toUpperCase()}</span>
             ${iconSrc ? `<img src="${iconSrc}" style="filter: brightness(0) invert(1); width:28px; height:28px; object-fit:contain; z-index:2; opacity:0; transition:opacity 0.2s;" onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';" onerror="this.style.display='none'">` : ''}
         </div>`;
-        } else if (key === 'bg') {
-            const bgStyle = (VISUAL_MAP.bg && VISUAL_MAP.bg[name]) || '#333';
-            visualHTML = `<div class="filter-color-circle" style="background: ${bgStyle}; position:relative; overflow:hidden; width:52px; height:52px; border-radius:12px;">
+    } else if (key === 'bg') {
+        const bgStyle = (VISUAL_MAP.bg && VISUAL_MAP.bg[name]) || '#333';
+        visualHTML = `<div class="filter-color-circle" style="background: ${bgStyle}; position:relative; overflow:hidden; width:52px; height:52px; border-radius:12px;">
             <div style="position:absolute; top:0; left:0; width:100%; height:100%; background: url('https://telegifter.ru/wp-content/themes/gifts/assets/img/bg-logo-mini.webp'); opacity:0.3; background-size: 20px;"></div>
         </div>`;
-        } else {
-            const cleanName = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+    } else {
+        // Model or NFT or fallback
+        const isNFT = key === 'nft';
+        const isModel = key === 'model';
+        const cleanName = name.toLowerCase().replace(/[^a-z0-9]/g, '');
 
-            // Generate local path if it's NFT or Model
-            let possibleImg = imgUrl;
-            if (!possibleImg) {
-                if (isNFT) {
-                    possibleImg = `file/gifts/${cleanName}/thumb.webp`;
-                } else if (isModel && collectionContext) {
-                    const colSlug = collectionContext.toLowerCase().replace(/[^a-z0-9]/g, '');
-                    const modelSlug = name.toLowerCase().replace(/[^a-z0-9]/g, '');
-                    possibleImg = `file/gifts/${colSlug}/model.${modelSlug}.webp`;
-                }
+        // Generate local path if it's NFT or Model
+        let possibleImg = imgUrl;
+        if (!possibleImg) {
+            if (isNFT) {
+                possibleImg = `file/gifts/${cleanName}/thumb.webp`;
+            } else if (isModel && collectionContext) {
+                const colSlug = collectionContext.toLowerCase().replace(/[^a-z0-9]/g, '');
+                const modelSlug = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+                possibleImg = `file/gifts/${colSlug}/model.${modelSlug}.webp`;
             }
+        }
 
-            // Fallback to Fragment URL if no local path or specifically requested
-            if (!possibleImg) {
-                possibleImg = `https://nft.fragment.com/gift/${cleanName}-1.webp`;
-            }
+        // Fallback to Fragment URL if no local path or specifically requested
+        if (!possibleImg) {
+            possibleImg = `https://nft.fragment.com/gift/${cleanName}-1.webp`;
+        }
 
-            visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: rgba(255, 255, 255, 0.05); border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
+        visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: rgba(255, 255, 255, 0.05); border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
             <span class="filter-item-letter" style="color:#8b9bb4; font-size:11px; font-weight:700; position:absolute; z-index:1;">${name.substring(0, 3).toUpperCase()}</span>
             <img src="${possibleImg}" class="filter-img" style="width:100%; height:100%; object-fit:contain; z-index:2; opacity:0; transition:opacity 0.2s;" 
                 onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';"
@@ -1396,9 +1252,9 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
                     }
                 ">
         </div>`;
-        }
+    }
 
-        div.innerHTML = `
+    div.innerHTML = `
         <div class="filter-item-left" style="overflow: hidden;">
             ${visualHTML}
             <div style="display:flex; flex-direction:column; margin-left:14px; overflow: hidden;">
@@ -1409,7 +1265,6 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
             ${isSelected ? '<div style="width:10px; height:10px; background:#0088cc; border-radius:2px;"></div>' : ''}
         </div>
     `;
-    }
     div.onclick = (e) => {
         e.stopPropagation();
         ACTIVE_FILTERS[key] = value ? value.trim() : value;
@@ -1480,7 +1335,6 @@ function createItemCard(item) {
         <div class="card-glow"></div>
         <div class="card-image-wrapper">
              ${mediaHTML}
-             ${item.status === 'rented' ? renderCardTimer(item) : ''}
         </div>
         <div class="card-content">
             ${showTitleBelow ? `<div class="card-title">${badgeText}</div>` : ''}
@@ -1506,114 +1360,29 @@ function createItemCard(item) {
     return card;
 }
 
-function renderCardTimer(item) {
-    if (!item.rent_ends_at) return '';
-    const diff = (item.rent_ends_at * 1000) - Date.now();
-    if (diff <= 0) return '';
-
-    const d = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-
-    let text = "";
-    if (d > 0) text = `${d}d ${h}h`;
-    else if (h > 0) text = `${h}h ${m}m`;
-    else text = `${m}m`;
-
-    return `
-        <div class="card-top-timer card-timer" data-ends="${item.rent_ends_at}">
-            <span class="mt-pill-new">${text}</span>
-        </div>
-    `;
+function openAdvancedFilters() {
+    document.getElementById('mrkt-modal').classList.add('active');
+    document.getElementById('mrkt-modal-overlay').classList.add('active');
 }
-
-async function handleNotifyClick() {
-    if (!CURRENT_PAYMENT_ITEM) return;
-    const userId = tg.initDataUnsafe?.user?.id || 0;
-    if (!userId) { tg.showAlert("Please open the app via Telegram"); return; }
-
-    try {
-        const res = await fetch(`${BACKEND_URL}/api/toggle_notification`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                user_id: userId,
-                nft_address: CURRENT_PAYMENT_ITEM.nft_address
-            })
-        });
-        const data = await res.json();
-        if (data.status === 'ok') {
-            const btn = document.getElementById('notify-btn');
-            if (data.action === 'added') {
-                tg.showAlert("уведомление о окончании аренды включены");
-                if (btn) btn.classList.add('active');
-            } else {
-                if (btn) btn.classList.remove('active');
-            }
-            tg.HapticFeedback.notificationOccurred('success');
-        }
-    } catch (e) {
-        console.error("Notify Error:", e);
-    }
+function closeMrktModal() {
+    document.getElementById('mrkt-modal').classList.remove('active');
+    document.getElementById('mrkt-modal-overlay').classList.remove('active');
 }
-
-function updateAllCardTimers() {
-    const timers = document.querySelectorAll('.card-timer');
-    const now = Date.now();
-    timers.forEach(tEl => {
-        const ends = parseInt(tEl.dataset.ends) * 1000;
-        const diff = ends - now;
-        if (diff <= 0) {
-            tEl.style.display = 'none';
-            return;
-        }
-        const d = Math.floor(diff / (1000 * 60 * 60 * 24));
-        const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-
-        let text = "";
-        if (d > 0) text = `${d}d ${h}h`;
-        else if (h > 0) text = `${h}h ${m}m`;
-        else text = `${m}m`;
-
-        const pill = tEl.querySelector('.mt-pill');
-        if (pill) pill.textContent = text;
-    });
-}
-
-function openOctoModal() {
-    const modal = document.getElementById('octo-modal');
-    const overlay = document.getElementById('octo-modal-overlay');
-    if (modal) modal.classList.add('active');
-    if (overlay) overlay.classList.add('active');
-}
-function closeOctoModal() {
-    const modal = document.getElementById('octo-modal');
-    const overlay = document.getElementById('octo-modal-overlay');
-    if (modal) modal.classList.remove('active');
-    if (overlay) overlay.classList.remove('active');
-}
-function resetOctoModal() {
+function resetMrktModal() {
     ACTIVE_FILTERS = { nft: 'all', model: 'all', bg: 'all', symbol: 'all', tags: 'all', sort: 'price_asc', price_from: null, price_to: null, gift_number: null, search: ACTIVE_FILTERS.search };
-    const idInp = document.getElementById('filter-gift-number');
-    const fromInp = document.getElementById('filter-price-from');
-    const toInp = document.getElementById('filter-price-to');
-    if (idInp) idInp.value = "";
-    if (fromInp) fromInp.value = "";
-    if (toInp) toInp.value = "";
+    document.getElementById('filter-gift-number').value = "";
+    document.getElementById('filter-price-from').value = "";
+    document.getElementById('filter-price-to').value = "";
     initFilterLists();
     applyHeaderSearch();
 }
-function applyOctoModal() {
+function applyMrktModal() {
     // Collect from inputs
-    const idInp = document.getElementById('filter-gift-number');
-    const fromInp = document.getElementById('filter-price-from');
-    const toInp = document.getElementById('filter-price-to');
-    if (idInp) ACTIVE_FILTERS.gift_number = idInp.value;
-    if (fromInp) ACTIVE_FILTERS.price_from = fromInp.value;
-    if (toInp) ACTIVE_FILTERS.price_to = toInp.value;
+    ACTIVE_FILTERS.gift_number = document.getElementById('filter-gift-number').value;
+    ACTIVE_FILTERS.price_from = document.getElementById('filter-price-from').value;
+    ACTIVE_FILTERS.price_to = document.getElementById('filter-price-to').value;
 
-    closeOctoModal();
+    closeMrktModal();
     loadLiveItems(true); // Trigger server-side refresh
 }
 
@@ -1701,14 +1470,14 @@ function renderMediaHTML(it, isModal = false) {
         if (isNum) {
             inner = `
                 <div class="card-placeholder" style="background:${isModal ? 'transparent' : '#1c1c1e'}; height:100%; width:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:${isModal ? '20px' : '8px'};">
-                    <img src="telegram_logo.svg" class="${isModal ? '' : 'telegram-center-icon'}" style="${isModal ? 'width:80px; height:80px; opacity:0.9; filter: drop-shadow(0 0 20px rgba(0,136,204,0.4));' : 'flex-shrink:0;'}">
+                    <img src="${tIcon}" class="${isModal ? '' : 'telegram-center-icon'}" style="${isModal ? 'width:80px; height:80px; opacity:0.9; filter: drop-shadow(0 0 20px rgba(0,136,204,0.4));' : 'flex-shrink:0;'}">
                     <div style="${isModal ? 'background:#0088cc; font-size:24px; color:#fff; padding:10px 24px; border-radius:14px; font-weight:800; box-shadow:0 8px 24px rgba(0,136,204,0.5); font-family:monospace; letter-spacing:1px;' : 'font-size:' + fontSize + '; font-weight:700; color:#fff; width:100%; text-align:center; padding:0 4px; box-sizing:border-box; flex-shrink:0;'}">${rawName}</div>
                 </div>`;
         } else {
             const displayName = truncateMiddle(rawName, isModal ? 20 : 15);
             inner = `
                 <div class="card-placeholder" style="background:${isModal ? 'transparent' : '#1c1c1e'}; height:100%; width:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:${isModal ? '10px' : '4px'};">
-                     <div style="font-size:${isModal ? '120px' : '50px'}; color:#0088cc; font-weight:${isModal ? '900' : '800'}; opacity:${isModal ? '0.9' : '0.8'}; line-height:1; flex-shrink:0; ${isModal ? 'filter: drop_shadow(0 0 30px rgba(0,136,204,0.3));' : ''}">@</div>
+                     <div style="font-size:${isModal ? '120px' : '50px'}; color:#0088cc; font-weight:${isModal ? '900' : '800'}; opacity:${isModal ? '0.9' : '0.8'}; line-height:1; flex-shrink:0; ${isModal ? 'filter: drop-shadow(0 0 30px rgba(0,136,204,0.3));' : ''}">@</div>
                      <div style="${isModal ? 'background:#0088cc; font-size:24px; color:#fff; padding:10px 24px; border-radius:14px; font-weight:800; box-shadow:0 8px 24px rgba(0,136,204,0.5);' : 'font-size:' + fontSize + '; font-weight:700; color:#fff; width:100%; text-align:center; padding:0 4px; box-sizing:border-box; flex-shrink:0;'}">${displayName}</div>
                 </div>`;
         }
@@ -1737,14 +1506,13 @@ function renderMediaHTML(it, isModal = false) {
 function observeNewCards() {
     // Lottie disabled in feed to prevent lag on mobile
 }
-async function openProductView(item, myPrice) {
+async function openProductView(item) {
     if (!item) return;
     CURRENT_PAYMENT_ITEM = item;
     const pv = document.getElementById('product-view');
     if (pv) {
         pv.classList.add('active');
         document.body.style.overflow = 'hidden';
-        pv.scrollTop = 0;
     }
 
     const mediaCont = document.getElementById('view-media-container');
@@ -1753,43 +1521,227 @@ async function openProductView(item, myPrice) {
         mediaCont.innerHTML = renderMediaHTML(item, true);
     }
 
+    // NEW: Release Date Badge in Product View - NOW WITH LIVE COUNTDOWN
+    const releaseBadge = document.getElementById('view-release-badge');
+    if (releaseBadge) {
+        if (item.status === 'rented' && item.rent_ends_at) {
+            // Create a unique timer element ID
+            const timerId = 'release-timer-' + item.id;
+            releaseBadge.innerHTML = `<div id="${timerId}" style="margin-bottom:12px;"></div>`;
+            releaseBadge.style.display = 'block';
+
+            // Start the countdown timer
+            const timerEl = document.getElementById(timerId);
+            if (timerEl) {
+                startCountdown(parseInt(item.rent_ends_at), timerEl);
+            }
+        } else {
+            releaseBadge.style.display = 'none';
+        }
+    }
+
+    const lottieCont = document.getElementById('view-lottie');
+    if (lottieCont) {
+        lottieCont.innerHTML = '';
+        const fUrls = generateFragmentUrls(item.nft_name);
+        if (fUrls.lottie && item.type === 'gift') {
+            const anim = lottie.loadAnimation({
+                container: lottieCont,
+                renderer: 'svg',
+                loop: true,
+                autoplay: true,
+                path: fUrls.lottie
+            });
+            lottieCont.anim = anim;
+            anim.addEventListener('DOMLoaded', () => {
+                if (mediaCont) mediaCont.style.display = 'none';
+            });
+        }
+    }
+
+    const colName = (item._collection && item._collection.name) ? item._collection.name : "Gifts";
+    const viewTitle = document.getElementById('view-title');
+    if (viewTitle) {
+        viewTitle.innerText = item.nft_name;
+    }
+
+    // NEW: Status Pills
+    // NEW: Status Overlay (replaces badge row)
     const statusOverlay = document.getElementById('view-media-status-overlay');
+    if (statusOverlay) {
+        statusOverlay.style.display = 'none';
+        statusOverlay.innerHTML = '';
+
+        let statusText = '';
+        let statusClass = '';
+
+        if (item.status === 'rented') {
+            statusText = t('rented');
+            statusClass = 'rented';
+        } else if (item.status === 'pending') {
+            statusText = t('pending');
+            statusClass = 'pending';
+        }
+
+        if (statusText) {
+            statusOverlay.innerHTML = `<div class="status-overlay-badge ${statusClass}">${statusText}</div>`;
+            statusOverlay.style.display = 'block';
+        }
+    }
+    const viewCopyBtn = document.getElementById('view-copy-btn-main');
+    if (viewCopyBtn) {
+        viewCopyBtn.onclick = () => copyNftTitle(item.nft_name);
+    }
+
+    const notifyBtn = document.getElementById('notify-btn');
+    if (notifyBtn) {
+        notifyBtn.style.display = (item.status === 'rented') ? 'block' : 'none';
+    }
+    const colEl = document.getElementById('view-collection');
+    if (colEl) {
+        colEl.innerText = `${colName} >`;
+        colEl.style.display = (item.type === 'gift') ? 'block' : 'none';
+        colEl.onclick = () => {
+            ACTIVE_FILTERS.nft = colName;
+            closeProductView();
+            loadLiveItems(true);
+        };
+    }
+
+    const ownerEl = document.getElementById('view-owner');
+    if (ownerEl) {
+        ownerEl.parentElement.style.display = 'none';
+    }
+
+    // Hide Details/Properties for Numbers & Usernames
+    const detailsTab = document.getElementById('details-tab');
+    const propertiesCont = document.getElementById('view-properties');
+    const isGift = (item.type && item.type.toLowerCase() === 'gift');
+    if (detailsTab) detailsTab.style.display = isGift ? 'block' : 'none';
+    if (propertiesCont) propertiesCont.style.display = isGift ? 'block' : 'none';
+
+    // Translation setup
+    const setChip = (id, key) => {
+        const el = document.getElementById(id);
+        if (el) el.innerText = t(key);
+    };
+    setChip('view-label-price', 'price_per_day');
+    setChip('view-label-period', 'period');
+    setChip('view-label-discount', 'discount');
+    setChip('view-auto-relist-title', 'auto_relist');
+    setChip('view-auto-relist-desc', 'auto_relist_desc');
+    setChip('fee-what-mean', 'what_is_this');
+    setChip('view-countdown-label', 'ends_in');
+
+    // Reset banners & countdown
+    const banner = document.getElementById('view-status-banner');
+    if (banner) { banner.style.display = 'none'; banner.className = 'status-banner'; }
+    const countdownCont = document.getElementById('view-countdown-container');
+    if (countdownCont) countdownCont.style.display = 'none';
+
+    // Hide Address
+    const addrDom = document.getElementById('view-address');
+    if (addrDom) addrDom.style.display = 'none';
+
+    // Pricing & Duration
+    let rawP = parseFloat(item.price_per_day) || 0;
+    const dailyPrice = rawP.toFixed(2);
+    document.getElementById('view-daily-price').innerHTML = renderTonAmount(dailyPrice);
+    if (GLOBAL_TON_PRICE) {
+        document.getElementById('view-daily-price-usd').innerText = `~$${(rawP * GLOBAL_TON_PRICE).toFixed(2)}`;
+    }
+
+    const minDays = Math.floor((item.min_duration || 86400) / 86400);
+    const maxDays = Math.floor((item.max_duration || 2592000) / 86400);
+    const rangeEl = document.getElementById('view-duration-range');
+    if (rangeEl) rangeEl.textContent = `${minDays} — ${maxDays}`;
+    document.getElementById('view-discount').innerText = "0.1%";
+    document.getElementById('rent-duration-input').value = minDays;
+
+    // Attributes
+    const propCont = document.getElementById('view-properties');
+    if (propCont && item.type === 'gift') {
+        propCont.innerHTML = '';
+        // Attributes like Model/Backdrop/Symbol will be added via fetch later, or we can add static ones if available
+        const nftNumMatch = item.nft_name.match(/#(\d+)/);
+        const nftNum = nftNumMatch ? nftNumMatch[1] : '1';
+        const giftBaseName = item.nft_name.replace(/#\d+/, '').trim();
+        const giftSlug = giftBaseName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join('');
+        const tgNftLink = `https://t.me/nft/${giftSlug}-${nftNum}`;
+
+        const createPropRow = (label, value, statKey) => {
+            const displayValue = (!value || value === 'Unknown' || value === 'Gift') ? '—' : value;
+            const row = document.createElement('div');
+            row.className = 'property-item';
+            row.innerHTML = `
+                <div class="prop-left"><div class="prop-name">${label}</div></div>
+                <div class="prop-right"><span style="color:var(--accent-blue); font-weight:600;">${displayValue}</span></div>`;
+            return row;
+        };
+
+        const tgRow = document.createElement('div');
+        tgRow.className = 'property-item';
+        // Added .clickable-prop class from previous tasks
+        tgRow.innerHTML = `<div class="prop-left"><div class="prop-name">Telegram</div></div><div class="prop-right"><span style="color:var(--accent-blue); font-weight:600;">${giftBaseName} #${nftNum}</span></div>`;
+        tgRow.onclick = () => tg.openTelegramLink(tgNftLink);
+        propCont.appendChild(tgRow);
+
+        // Helper for clickable properties
+        const appendClickableProp = (label, val, key) => {
+            if (!val) return;
+            const r = createPropRow(label, val, key);
+            r.classList.add('clickable-prop'); // Ensure visual feedback
+            // Add arrow
+            r.querySelector('.prop-right').innerHTML += `<span class="arrow-v" style="font-size:12px; margin-left:8px;">›</span>`;
+
+            r.onclick = () => {
+                // FAILSAFE: Ensure we set the Collection filter too, otherwise Model list is disabled
+                if (key === 'model' || key === 'bg' || key === 'symbol') {
+                    ACTIVE_FILTERS.nft = colName;
+                }
+                ACTIVE_FILTERS[key] = val;
+                closeProductView();
+                loadLiveItems(true);
+            };
+            propCont.appendChild(r);
+        };
+
+        if (item._modelName) appendClickableProp(t('model'), item._modelName, 'model');
+        if (item._symbol) appendClickableProp(t('symbol'), item._symbol, 'symbol');
+        if (item._backdrop) appendClickableProp(t('backdrop'), item._backdrop, 'bg');
+
+        // Auto-relist status
+        const reRow = createPropRow(t('auto_relist_label'), item.auto_relist ? t('yes') : t('no'));
+        if (!item.auto_relist) reRow.querySelector('.prop-right span').style.color = '#ff3b30';
+        propCont.appendChild(reRow);
+    }
+
+    // Rent Button
     const rentBtn = document.getElementById('main-rent-action-btn');
     const stepper = document.querySelector('.rent-period-stepper');
     const feeNotice = document.querySelector('.fee-notice-box');
-    const warningBox = document.getElementById('listing-warning-box');
-    const notifyBtn = document.getElementById('notify-btn');
-    const countdownCont = document.getElementById('product-countdown-container');
-    const propertiesCont = document.getElementById('view-properties');
-
-    // 1. Reset State
-    if (warningBox) warningBox.style.display = 'none';
-    if (statusOverlay) { statusOverlay.style.display = 'none'; statusOverlay.innerHTML = ''; }
-    if (countdownCont) countdownCont.style.display = 'none';
-    if (stepper) stepper.style.display = 'flex';
-    if (feeNotice) feeNotice.style.display = 'block';
-
-    const viewTitle = document.getElementById('view-title');
-    if (viewTitle) viewTitle.innerText = item.nft_name;
-
-    const viewCopyBtn = document.getElementById('view-copy-btn-main');
-    if (viewCopyBtn) viewCopyBtn.onclick = () => copyNftTitle(item.nft_name);
-
-    // 2. Initial Pricing & Rent Button
-    let rawP = parseFloat(myPrice) || parseFloat(item.price_per_day) || 0;
-    item.price_per_day = rawP; // Sync for logic
-    updateTotalPrice();
 
     if (rentBtn) {
         rentBtn.style.display = 'flex';
+        if (stepper) stepper.style.display = 'flex';
+        if (feeNotice) feeNotice.style.display = 'block';
+
+        updateTotalPrice();
+        const rentBtnTextEl = rentBtn.querySelector('#rent-btn-text');
+        if (rentBtnTextEl) rentBtnTextEl.textContent = t('rent_button', { amount: '' }).replace('{amount}', '').trim();
+
         rentBtn.onclick = async () => {
             if (!tonConnectUI.connected) { await tonConnectUI.openModal(); return; }
+
+            // ALERT: Check auto-relist for pre-orders
             if (item.status === 'rented' && !item.auto_relist) {
-                if (!confirm(t('preorder_warning_no_relist') || "Этот NFT не будет перевыставлен автоматически. Продолжить?")) return;
+                const confirmed = confirm(t('preorder_warning_no_relist'));
+                if (!confirmed) return;
             }
+
             const days = parseInt(document.getElementById('rent-duration-input').value) || 1;
             const originalHTML = rentBtn.innerHTML;
-            rentBtn.innerHTML = t('loading') || "Loading...";
+            rentBtn.innerHTML = t('loading');
             rentBtn.disabled = true;
             try {
                 const userId = tg.initDataUnsafe?.user?.id || 0;
@@ -1814,56 +1766,27 @@ async function openProductView(item, myPrice) {
         };
     }
 
-    // 3. Lottie Animation
-    const lottieCont = document.getElementById('view-lottie');
-    if (lottieCont) {
-        lottieCont.innerHTML = '';
-        const fUrls = generateFragmentUrls(item.nft_name);
-        if (fUrls.lottie && item.type === 'gift') {
-            const anim = lottie.loadAnimation({
-                container: lottieCont,
-                renderer: 'svg',
-                loop: true,
-                autoplay: true,
-                path: fUrls.lottie
-            });
-            lottieCont.anim = anim;
-            anim.addEventListener('DOMLoaded', () => {
-                if (mediaCont) mediaCont.style.display = 'none';
-            });
-        }
-    }
+    const warningBox = document.getElementById('listing-warning-box');
+    if (warningBox) warningBox.style.display = 'none';
 
-    // 4. Async Enrichment
-    if (item.nft_address) {
+    if (item && item.nft_address) {
         const userId = tg.initDataUnsafe?.user?.id || 0;
+
+        // Parallel fetch for details and user order status
         Promise.all([
             fetch(`${BACKEND_URL}/api/nft_details?nft_address=${item.nft_address}`).then(r => r.json()),
-            fetch(`${BACKEND_URL}/api/my_orders?user_id=${userId}`).then(r => r.json()),
-            fetch(`${BACKEND_URL}/api/check_notification_status?user_id=${userId}&nft_address=${item.nft_address}`).then(r => r.json())
-        ]).then(([details, myOrders, notifyStatus]) => {
+            fetch(`${BACKEND_URL}/api/my_orders?user_id=${userId}`).then(r => r.json())
+        ]).then(([details, myOrders]) => {
             const myOrder = myOrders.find(o => o.nft_address === item.nft_address && (o.status === 'rented' || o.status === 'active' || o.status === 'paid'));
 
-            // Notify Bell
-            if (notifyBtn) {
-                notifyBtn.style.display = (item.status === 'rented') ? 'block' : 'none';
-                if (notifyStatus.subscribed) notifyBtn.classList.add('active');
-                else notifyBtn.classList.remove('active');
-            }
+            // 1. Status Banner Logic
+            // 1. Status Banner Logic - REMOVED PER USER REQUEST
+            // The banner is now handled by the image overlay only.
+            const banner = document.getElementById('view-status-banner');
+            if (banner) banner.style.display = 'none';
 
-            // Status Overlay Enhancement
-            if (statusOverlay) {
-                let sText = '', sClass = '';
-                if (item.status === 'rented') { sText = t('rented'); sClass = 'rented'; }
-                else if (item.status === 'pending') { sText = t('pending'); sClass = 'pending'; }
-                if (sText) {
-                    statusOverlay.innerHTML = `<div class="status-overlay-badge ${sClass}">${sText}</div>`;
-                    statusOverlay.style.display = 'block';
-                }
-            }
-
-            // Own Order Overwrite
-            if (myOrder && (myOrder.status === 'rented' || myOrder.status === 'active') && !myOrder.tc_link) {
+            // 2. Button Logic for Own Order
+            if (myOrder && myOrder.status === 'rented' && !myOrder.tc_link) {
                 if (rentBtn) {
                     rentBtn.innerHTML = t('connect_to_fragment');
                     if (stepper) stepper.style.display = 'none';
@@ -1872,55 +1795,65 @@ async function openProductView(item, myPrice) {
                 }
             }
 
-            // Countdown Setup
+            // 3. Countdown Logic (Blocky V2)
             const endTime = details.rent?.ends_at || details.rent_ends_at;
             if (endTime && (item.status === 'rented' || (myOrder && myOrder.status === 'active'))) {
-                if (countdownCont) {
-                    countdownCont.style.display = 'flex';
-                    item.rent_end = parseInt(endTime);
-                    renderPremiumCountdown(item, countdownCont);
+                const countdownCont = document.getElementById('view-countdown-container');
+                const timerEl = document.getElementById('view-countdown-timer');
+                if (countdownCont && timerEl) {
+                    countdownCont.style.display = 'block';
+                    startCountdown(parseInt(endTime), timerEl);
+                }
+            } else {
+                const countdownCont = document.getElementById('view-countdown-container');
+                if (countdownCont) countdownCont.style.display = 'none';
+            }
+
+            // 4. Existing warning logic and attributes
+            if (details.rent && details.rent.listed_at) {
+                const diffHrs = (Date.now() - (details.rent.listed_at * 1000)) / (1000 * 60 * 60);
+                if (diffHrs < 24) {
+                    if (warningBox) warningBox.style.display = 'block';
+                    const wt = document.getElementById('view-listed-time');
+                    if (wt) wt.innerText = diffHrs < 1 ? t('just_now') : `${Math.round(diffHrs)} ${t('hours_ago')}`;
                 }
             }
-
-            // Attributes / Properties
-            if (details.attributes && propertiesCont) {
-                propertiesCont.innerHTML = '';
+            if (details.attributes) {
                 details.attributes.forEach(attr => {
                     const trait = attr.trait_type.toLowerCase();
-                    const val = attr.value;
-                    const r = document.createElement('div');
-                    r.className = 'property-item clickable-prop';
-                    r.innerHTML = `
-                        <div class="prop-left"><div class="prop-name">${t(trait) || trait}</div></div>
-                        <div class="prop-right">
-                            <span style="color:var(--accent-blue); font-weight:600;">${val}</span>
-                            <span class="arrow-v" style="font-size:12px; margin-left:8px;">›</span>
-                        </div>`;
-                    r.onclick = () => {
-                        let fk = trait;
-                        if (fk === 'backdrop' || fk === 'background') fk = 'bg';
-                        if (ACTIVE_FILTERS.hasOwnProperty(fk)) {
-                            ACTIVE_FILTERS[fk] = val;
-                            closeProductView();
-                            loadLiveItems(true);
-                        }
-                    };
-                    propertiesCont.appendChild(r);
+                    const row = Array.from(document.querySelectorAll('.property-item')).find(r => r.querySelector('.prop-name')?.textContent === t(trait));
+                    if (row) {
+                        const valSpan = row.querySelector('.prop-right span');
+                        if (valSpan) valSpan.textContent = attr.value;
+
+                        // NEW: Make attribute clickable to filter
+                        row.classList.add('clickable-prop');
+                        row.onclick = () => {
+                            let filterKey = trait;
+                            if (filterKey === 'backdrop' || filterKey === 'background' || filterKey === 'фон') {
+                                filterKey = 'bg';
+                            }
+                            if (ACTIVE_FILTERS.hasOwnProperty(filterKey)) {
+                                ACTIVE_FILTERS[filterKey] = attr.value;
+                                closeProductView();
+                                switchTab(0); // Go to Gifts
+                                initFilterLists();
+                                applyHeaderSearch();
+                                tg?.HapticFeedback?.impactOccurred('light');
+                            }
+                        };
+                    }
                 });
             }
-        }).catch(err => console.error("Async Enrichment Error:", err));
+        }).catch(e => console.error(e));
     }
 
-    const colEl = document.getElementById('view-collection');
-    if (colEl) {
-        const colName = (item._collection && item._collection.name) ? item._collection.name : "Gifts";
-        colEl.innerText = `${colName} >`;
-        colEl.style.display = (item.type === 'gift') ? 'block' : 'none';
-        colEl.onclick = () => {
-            ACTIVE_FILTERS.nft = colName;
-            closeProductView();
-            loadLiveItems(true);
-        };
+    // Reset scroll at the very end
+    if (pv) {
+        requestAnimationFrame(() => {
+            pv.scrollTop = 0;
+            pv.scrollTo({ top: 0, behavior: 'instant' });
+        });
     }
 }
 
@@ -1970,10 +1903,6 @@ function updateTotalPrice() {
     const priceSpan = document.getElementById('rent-btn-price');
     if (priceSpan) {
         priceSpan.innerText = total !== "0.00" ? total : dp.toFixed(2);
-        // Force update if still 0.00 but we have a daily price
-        if (priceSpan.innerText === "0.00" && dp > 0) {
-            priceSpan.innerText = (dp * dur).toFixed(2);
-        }
     }
 
     // Update USD price
@@ -1986,16 +1915,12 @@ function updateTotalPrice() {
     // Обновить текст кнопки с учетом языка и статуса (Аренда vs Предзаказ)
     const rentBtn = document.getElementById('main-rent-action-btn');
     if (rentBtn) {
-        const isRented = CURRENT_PAYMENT_ITEM && CURRENT_PAYMENT_ITEM.status === 'rented';
-        const baseText = isRented ? t('preorder_for') : t('rent_for');
-
-        // Use a consistent structure to prevent "dancing" elements
-        rentBtn.innerHTML = `
-            <span style="display:inline-flex; align-items:center; gap:8px;">
-                ${baseText}
-                <span id="rent-btn-price" class="icon-ton" style="display:inline-flex; align-items:center;">${total}</span>
-            </span>
-        `;
+        // Попробуем найти текстовый узел или элемент с текстом
+        const textNode = Array.from(rentBtn.childNodes).find(n => n.nodeType === Node.TEXT_NODE && n.textContent.trim().length > 0);
+        if (textNode) {
+            const isRented = CURRENT_PAYMENT_ITEM && CURRENT_PAYMENT_ITEM.status === 'rented';
+            textNode.textContent = ' ' + (isRented ? t('preorder_for') : t('rent_for')) + ' ';
+        }
     }
 }
 
@@ -2015,13 +1940,7 @@ function handleShareClick() {
     if (!CURRENT_PAYMENT_ITEM) return;
     const cleanName = CURRENT_PAYMENT_ITEM.nft_name.replace('@', '');
     if (tg && tg.switchInlineQuery) {
-        // According to TG API, this will close the mini-app and open inline mode
-        // The user specifically asked to "prevent Mini App from closing before inline mode"
-        // In TMA, switchInlineQuery ALWAYS switches focus. 
-        // We can however try to COPY the link first or use share dialog.
-        // But for "inline mode", it must switch. 
-        // Maybe they meant the "share" button in general?
-        tg.switchInlineQuery(cleanName);
+        tg.switchInlineQuery(cleanName, ['users', 'groups', 'channels']);
     } else {
         const botUser = "OctoRent_bot";
         const shareLink = `https://t.me/${botUser}?start=nft_${CURRENT_PAYMENT_ITEM.nft_address}`;
@@ -2193,21 +2112,21 @@ function startCountdown(endTime, targetEl) {
         const pad = (n) => n.toString().padStart(2, '0');
 
         targetEl.innerHTML = `
-            <div class="countdown-market-container">
-                <span class="countdown-market-label">${t('ends_in')}</span>
+            <div class="market-timer-row">
+                <span class="mt-label">${t('ends_in')}</span>
                 
-                <div class="countdown-market-pill">${d} days</div>
-                <span class="countdown-market-sep">:</span>
+                <div class="mt-pill mt-wide">${d} ${t('days')}</div>
+                <span class="mt-sep">:</span>
                 
-                <div class="countdown-market-pill">${pad(h)}</div>
-                <span class="countdown-market-sep">:</span>
+                <div class="mt-pill">${pad(h)}</div>
+                <span class="mt-sep">:</span>
                 
-                <div class="countdown-market-pill">${pad(m)}</div>
-                <span class="countdown-market-sep">:</span>
+                <div class="mt-pill">${pad(m)}</div>
+                <span class="mt-sep">:</span>
                 
-                <div class="countdown-market-pill">${pad(s)}</div>
+                <div class="mt-pill">${pad(s)}</div>
                 
-                <span class="countdown-market-date">${dateStr}</span>
+                <span class="mt-date">${dateStr}</span>
             </div>
         `;
     };
@@ -2471,14 +2390,10 @@ document.addEventListener('DOMContentLoaded', () => {
     setChip('profile-label-settings', 'profile_settings');
     setChip('profile-label-history', 'profile_history');
     setChip('profile-label-support', 'profile_support');
-    setChip('profile-label-referrals', 'referral_program');
 
     // Initialize TON Price
     fetchTonPrice();
     setInterval(fetchTonPrice, 60000); // Update every minute
-
-    // Update card timers every minute
-    setInterval(updateAllCardTimers, 60000);
 });
 
 async function fetchTonPrice() {
@@ -2491,352 +2406,5 @@ async function fetchTonPrice() {
         }
     } catch (e) {
         console.error("Failed to fetch TON price:", e);
-    }
-}
-// --- COUNTDOWN LOGIC ---
-let countdownInterval = null;
-
-function startCountdown(endTime, element) {
-    if (countdownInterval) clearInterval(countdownInterval);
-
-    function update() {
-        const now = Date.now();
-        const diff = (endTime * 1000) - now;
-
-        if (diff <= 0) {
-            element.innerHTML = "Expired";
-            if (countdownInterval) clearInterval(countdownInterval);
-            return;
-        }
-
-        const d = Math.floor(diff / (1000 * 60 * 60 * 24));
-        const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        const s = Math.floor((diff % (1000 * 60)) / 1000);
-
-        // Format: [4 days] : [07] : [22] : [45] Month DD, YYYY
-        // We use a flexible layout
-        const dateStr = new Date(endTime * 1000).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-
-        element.innerHTML = `
-            <div class="cd-segment cd-days">${d} ${t('days')}</div>
-            <div class="cd-sep">:</div>
-            <div class="cd-segment">${String(h).padStart(2, '0')}</div>
-            <div class="cd-sep">:</div>
-            <div class="cd-segment">${String(m).padStart(2, '0')}</div>
-            <div class="cd-sep">:</div>
-            <div class="cd-segment">${String(s).padStart(2, '0')}</div>
-            <div class="cd-date">${dateStr}</div>
-        `;
-    }
-
-    update();
-    countdownInterval = setInterval(update, 1000);
-}
-
-// REFERRAL LOGIC
-function toggleReferrals() {
-    const content = document.getElementById('referrals-content');
-    const isHidden = content.style.display === 'none';
-
-    content.style.display = isHidden ? 'block' : 'none';
-
-    if (isHidden) {
-        loadReferralStats();
-    }
-}
-
-async function loadReferralStats() {
-    const userId = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user.id : 0;
-    const refLinkInput = document.getElementById('ref-link-input');
-    const refCount = document.getElementById('ref-count');
-    const refBalance = document.getElementById('ref-balance');
-    const withdrawBtn = document.getElementById('ref-withdraw-btn');
-
-    try {
-        const resp = await fetch(`${BACKEND_URL}/api/referral/stats?user_id=${userId}`);
-        const stats = await resp.json();
-
-        if (stats) {
-            refCount.innerText = stats.referrals_count || 0;
-            refBalance.innerText = `${(stats.balance || 0).toFixed(4)} TON`;
-
-            if (stats.balance >= 0.1) {
-                withdrawBtn.style.display = 'block';
-            } else {
-                withdrawBtn.style.display = 'none';
-            }
-        }
-    } catch (e) {
-        console.error("Load Referral Stats Error:", e);
-    }
-
-    // Generate link
-    const botUser = "OctoRent_bot";
-    refLinkInput.value = `https://t.me/${botUser}?start=ref_${userId}`;
-}
-
-function copyReferralLink() {
-    const link = document.getElementById('ref-link-input').value;
-    copyToClipboard(link);
-    showToast(t('copy_success'));
-}
-
-async function handleReferralWithdraw() {
-    const userId = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user.id : 0;
-    const withdrawBtn = document.getElementById('ref-withdraw-btn');
-
-    try {
-        const resp = await fetch(`${BACKEND_URL}/api/referral/stats?user_id=${userId}`);
-        const stats = await resp.json();
-
-        if (stats.balance < 0.1) {
-            tg.showAlert(t('min_withdraw_error'));
-            return;
-        }
-
-        const res = await fetch(`${BACKEND_URL}/api/referral/withdraw`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_id: userId, amount: stats.balance })
-        });
-        const data = await res.json();
-
-        if (data.status === 'ok') {
-            tg.showAlert(t('withdraw_success'));
-            loadReferralStats();
-        } else {
-            tg.showAlert(data.error || "Error");
-        }
-    } catch (e) {
-        console.error("Withdraw Error:", e);
-        tg.showAlert("Error processing withdrawal");
-    }
-}
-async function loadFriendsList() {
-    const userId = tg.initDataUnsafe.user?.id;
-    if (!userId) return;
-
-    try {
-        const res = await fetch(`${BACKEND_URL}/api/referral/friends?user_id=${userId}`);
-        const data = await res.json();
-        const statsRes = await fetch(`${BACKEND_URL}/api/referral/stats?user_id=${userId}`);
-        const stats = await statsRes.json();
-
-        // Update balance
-        const balanceVal = document.getElementById('friends-balance-val');
-        if (balanceVal) {
-            const b = stats.balance || 0;
-            // Round down to 3 decimal places (in our side)
-            const rounded = Math.floor(b * 1000) / 1000;
-            balanceVal.innerText = rounded === 0 ? "0" : rounded.toString();
-        }
-
-        const container = document.getElementById('friends-list-items');
-        if (!container) return;
-
-        if (!data.friends || data.friends.length === 0) {
-            document.getElementById('empty-friends-hint').style.display = 'block';
-            return;
-        }
-
-        document.getElementById('empty-friends-hint').style.display = 'none';
-
-        // Render friends
-        container.innerHTML = data.friends.map(f => {
-            const name = f.full_name || f.username || `User ${f.user_id}`;
-            const sub = f.username ? `@${f.username}` : `ID: ${f.user_id}`;
-            const nameForAvatar = name || (f.username ? `@${f.username}` : `U${f.user_id}`);
-            const initialsAvatar = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(nameForAvatar)}&backgroundColor=0088cc&fontSize=42&bold=true`;
-            const realAvatar = `${BACKEND_URL}/api/user-avatar?user_id=${f.user_id}`;
-
-            return `
-                <div class="friend-item" style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); padding: 12px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 10px;">
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <img src="${realAvatar}" onerror="this.src='${initialsAvatar}'" 
-                            style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover;">
-                        <div>
-                            <div style="font-weight: 700; font-size: 15px;">${name}</div>
-                            <div style="font-size: 12px; color: #8b9bb4;">${sub}</div>
-                        </div>
-                    </div>
-                    <div style="text-align: right;">
-                        <div style="font-weight: 800; font-size: 14px; color: #0088cc;">+${(Math.floor(f.profit * 1000) / 1000).toString()} TON</div>
-                        <div style="font-size: 11px; color: #8b9bb4; opacity: 0.6;">прибыль</div>
-                    </div>
-                </div>
-            `;
-        }).join('');
-
-    } catch (e) {
-        console.error("Load Friends Error:", e);
-    }
-}
-
-function showEarningsHelp() {
-    const sheet = document.getElementById('earnings-help-sheet');
-    if (sheet) {
-        sheet.classList.add('active');
-        document.body.style.overflow = 'hidden'; // Prevent background scrolling
-    }
-    if (window.Telegram && window.Telegram.WebApp) {
-        tg.HapticFeedback.impactOccurred('light');
-    }
-}
-
-function closeEarningsHelp() {
-    const sheet = document.getElementById('earnings-help-sheet');
-    if (sheet) {
-        sheet.classList.remove('active');
-        const content = sheet.querySelector('.bottom-sheet-content');
-        if (content) content.style.transform = '';
-        document.body.style.overflow = '';
-    }
-}
-
-function shareReferralLink() {
-    if (window.Telegram && window.Telegram.WebApp) {
-        const userId = tg.initDataUnsafe.user?.id;
-        // The user wants inline mode like "share gift"
-        tg.switchInlineQuery(`ref_${userId}`, ["users", "groups", "channels"]);
-        tg.HapticFeedback.impactOccurred('medium');
-    }
-}
-
-// Swipe-to-close for bottom sheet
-document.addEventListener('DOMContentLoaded', () => {
-    const sheet = document.getElementById('earnings-help-sheet');
-    if (!sheet) return;
-
-    const content = sheet.querySelector('.bottom-sheet-content');
-    const backdrop = sheet.querySelector('.bottom-sheet-backdrop');
-    if (!content) return;
-
-    let startY = 0;
-    let currentY = 0;
-    let isDragging = false;
-
-    const onStart = (e) => {
-        startY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
-        isDragging = true;
-        content.classList.add('dragging');
-    };
-
-    const onMove = (e) => {
-        if (!isDragging) return;
-        currentY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
-        const diff = currentY - startY;
-        if (diff > 0) {
-            content.style.transform = `translateY(${diff}px)`;
-            // Fade out backdrop slightly
-            const opacity = 1 - (diff / 400);
-            if (backdrop) backdrop.style.opacity = Math.max(0, opacity).toString();
-        }
-    };
-
-    const onEnd = () => {
-        if (!isDragging) return;
-        isDragging = false;
-        content.classList.remove('dragging');
-        const diff = currentY - startY;
-
-        if (diff > 120) {
-            closeEarningsHelp();
-        } else {
-            content.style.transform = '';
-            if (backdrop) backdrop.style.opacity = '';
-        }
-    };
-
-    content.addEventListener('touchstart', onStart, { passive: true });
-    content.addEventListener('touchmove', onMove, { passive: true });
-    content.addEventListener('touchend', onEnd);
-
-    // For desktop testing
-    content.addEventListener('mousedown', onStart);
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onEnd);
-});
-
-function renderPremiumCountdown(item, container) {
-    if (!item.rent_end) return;
-
-    if (container._timer) clearInterval(container._timer);
-
-    const update = () => {
-        const now = Math.floor(Date.now() / 1000);
-        const diff = item.rent_end - now;
-
-        if (diff <= 0) {
-            container.innerHTML = `<span style="color: #FF3B30; font-weight:800; font-size:14px;">EXPIRED</span>`;
-            clearInterval(container._timer);
-            return;
-        }
-
-        const d = Math.floor(diff / 86400);
-        const h = Math.floor((diff % 86400) / 3600);
-        const m = Math.floor((diff % 3600) / 60);
-        const s = diff % 60;
-
-        const pad = (n) => n.toString().padStart(2, '0');
-
-        container.innerHTML = `
-            <div class="countdown-market-label">${t('available_from') || "Available in"}:</div>
-            <div class="countdown-market-pill">${d}d</div>
-            <div class="countdown-market-sep">:</div>
-            <div class="countdown-market-pill">${pad(h)}</div>
-            <div class="countdown-market-sep">:</div>
-            <div class="countdown-market-pill">${pad(m)}</div>
-            <div class="countdown-market-sep">:</div>
-            <div class="countdown-market-pill">${pad(s)}</div>
-        `;
-    };
-
-    update();
-    container._timer = setInterval(update, 1000);
-}
-
-function handleNotifyClick() {
-    if (!CURRENT_PAYMENT_ITEM || CURRENT_PAYMENT_ITEM.status !== 'rented') return;
-
-    const btn = document.getElementById('notify-btn');
-    if (!btn) return;
-
-    const userId = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user.id : 0;
-    const addr = CURRENT_PAYMENT_ITEM.nft_address;
-    const isSubscribed = btn.classList.contains('active');
-
-    // Haptic feedback
-    if (typeof tg !== 'undefined' && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
-
-    fetch(`${BACKEND_URL}/api/toggle_notification`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            user_id: userId,
-            nft_address: addr,
-            subscribe: !isSubscribed
-        })
-    }).then(r => r.json()).then(d => {
-        if (d.success) {
-            if (!isSubscribed) {
-                btn.classList.add('active');
-                showToast(t('notification_enabled') || "Notification enabled!");
-            } else {
-                btn.classList.remove('active');
-                showToast(t('notification_disabled') || "Notification disabled!");
-            }
-        }
-    }).catch(e => {
-        console.error("Notify toggle error:", e);
-        showToast("Error toggling notification");
-    });
-}
-
-function showToast(msg) {
-    if (typeof tg !== 'undefined' && tg.showAlert) {
-        tg.showAlert(msg);
-    } else {
-        alert(msg);
     }
 }
