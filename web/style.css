@@ -998,6 +998,109 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+/* MODALS */
+.mrkt-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.mrkt-modal-title {
+    font-size: 24px;
+    font-weight: 900;
+    margin: 0;
+    font-family: 'Outfit', sans-serif;
+}
+
+.mrkt-modal-close {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 24px;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.mrkt-modal-close:hover {
+    opacity: 1;
+}
+
+/* FRIENDS TAB */
+.friends-balance-card {
+    background: linear-gradient(135deg, #0098EA 0%, #0077CC 100%);
+    padding: 24px;
+    border-radius: 20px;
+    text-align: center;
+    margin: 16px;
+    box-shadow: 0 8px 16px rgba(0, 136, 204, 0.3);
+}
+
+.withdraw-btn-white {
+    margin-top: 20px;
+    background: #fff;
+    color: #0088cc;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 800;
+    width: 100%;
+    cursor: pointer;
+}
+
+/* TIMERS */
+.catalog-timer-container {
+    background: rgba(28, 28, 30, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 12px 16px;
+    margin: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+.timer-block {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-weight: 900;
+    font-size: 18px;
+    font-family: 'Outfit', sans-serif;
+}
+
+.timer-sep {
+    font-weight: 700;
+    opacity: 0.5;
+}
+
+.card-mini-timer {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    padding: 4px 8px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 800;
+    color: #fff;
+    z-index: 5;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.filter-item-letter {
+    color: #8b9bb4;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    opacity: 0.8;
+}
+
 .filter-img {
     width: 32px;
     height: 32px;
@@ -3353,96 +3456,94 @@ body.hide-filters .header-column {
     letter-spacing: 0.5px;
 }
 
-   / *   - - -   P R E M I U M   F I L T E R   L I S T   L A Y O U T   - - -   * /     . f i l t e r - l i s t - r o w    {
-                 d i s p l a y :    f l e x ;
-                 a l i g n - i t e m s :    c e n t e r ;
-                 j u s t i f y - c o n t e n t :    s p a c e - b e t w e e n ;
-                 p a d d i n g :    1 2 p x ;
-                 b a c k g r o u n d :    t r a n s p a r e n t ;
-                 b o r d e r - b o t t o m :    1 p x   s o l i d   r g b a ( 2 5 5 ,    2 5 5 ,    2 5 5 ,    0 . 0 5 ) ;
-                 c u r s o r :    p o i n t e r ;
-                 t r a n s i t i o n :    b a c k g r o u n d   0 . 2 s ;
-                 w i d t h :    1 0 0 % ;
-         
+/* --- PREMIUM FILTER LIST LAYOUT --- */
+.filter-list-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px;
+    background: transparent;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+    transition: background 0.2s;
+    width: 100%;
 }
 
-         . f i l t e r - l i s t - r o w : l a s t - c h i l d    {
-                 b o r d e r - b o t t o m :    n o n e ;
-         
+.filter-list-row:last-child {
+    border-bottom: none;
 }
 
-         . f i l t e r - l i s t - r o w : a c t i v e    {
-                 b a c k g r o u n d :    r g b a ( 2 5 5 ,    2 5 5 ,    2 5 5 ,    0 . 0 5 ) ;
-         
+.filter-list-row:active {
+    background: rgba(255, 255, 255, 0.05);
 }
 
-         . f i l t e r - l e f t    {
-                 d i s p l a y :    f l e x ;
-                 a l i g n - i t e m s :    c e n t e r ;
-                 g a p :    1 6 p x ;
-           
+.filter-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
 }
 
-         . f i l t e r - i c o n - b o x    {
-                 w i d t h :    4 4 p x ;
-                 h e i g h t :    4 4 p x ;
-                 b a c k g r o u n d :    r g b a ( 2 5 5 ,    2 5 5 ,    2 5 5 ,    0 . 0 5 ) ;
-                 b o r d e r :    1 p x   s o l i d   r g b a ( 2 5 5 ,    2 5 5 ,    2 5 5 ,    0 . 1 ) ;
-                 b o r d e r - r a d i u s :    1 2 p x ;
-                 d i s p l a y :    f l e x ;
-                 a l i g n - i t e m s :    c e n t e r ;
-                 j u s t i f y - c o n t e n t :    c e n t e r ;
-                 f o n t - w e i g h t :    8 0 0 ;
-                 f o n t - s i z e :    1 1 p x ;
-                 c o l o r :    # 8 b 9 b b 4 ;
-                 t e x t - t r a n s f o r m :    u p p e r c a s e ;
-                 f l e x - s h r i n k :    0 ;
-         
+.filter-icon-box {
+    width: 44px;
+    height: 44px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 11px;
+    color: #8b9bb4;
+    text-transform: uppercase;
+    flex-shrink: 0;
 }
 
-         . f i l t e r - l a b e l    {
-                 f o n t - s i z e :    1 5 p x ;
-                 f o n t - w e i g h t :    6 0 0 ;
-                 c o l o r :    # f f f ;
-                 f o n t - f a m i l y :    ' O u t f i t '  ,    s a n s - s e r i f ;
-         
+.filter-label {
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+    font-family: 'Outfit', sans-serif;
 }
 
-         . f i l t e r - c h e c k b o x    {
-                 w i d t h :    2 4 p x ;
-                 h e i g h t :    2 4 p x ;
-                 b o r d e r :    2 p x   s o l i d   r g b a ( 2 5 5 ,    2 5 5 ,    2 5 5 ,    0 . 2 ) ;
-                 b o r d e r - r a d i u s :    6 p x ;
-                 p o s i t i o n :    r e l a t i v e ;
-                 t r a n s i t i o n :    a l l   0 . 2 s ;
-                 f l e x - s h r i n k :    0 ;
-         
+.filter-checkbox {
+    width: 24px;
+    height: 24px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    position: relative;
+    transition: all 0.2s;
+    flex-shrink: 0;
 }
 
-         . f i l t e r - l i s t - r o w . s e l e c t e d   . f i l t e r - c h e c k b o x    {
-                 b a c k g r o u n d :    v a r ( - - a c c e n t - b l u e ) ;
-                 b o r d e r - c o l o r :    v a r ( - - a c c e n t - b l u e ) ;
-         
+.filter-list-row.selected .filter-checkbox {
+    background: var(--accent-blue);
+    border-color: var(--accent-blue);
 }
 
-         . f i l t e r - l i s t - r o w . s e l e c t e d   . f i l t e r - c h e c k b o x : : a f t e r    {
-                 c o n t e n t :    ' '  ;
-                 p o s i t i o n :    a b s o l u t e ;
-                 t o p :    5 0 % ;
-                 l e f t :    5 0 % ;
-                 t r a n s f o r m :    t r a n s l a t e ( - 5 0 % ,    - 6 0 % )   r o t a t e ( 4 5 d e g ) ;
-                 w i d t h :    5 p x ;
-                 h e i g h t :    1 0 p x ;
-                 b o r d e r :    s o l i d   w h i t e ;
-                 b o r d e r - w i d t h :    0   2 p x   2 p x   0 ;
-         
+.filter-list-row.selected .filter-checkbox::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -60%) rotate(45deg);
+    width: 5px;
+    height: 100px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
 }
 
-         . f i l t e r - l i s t - r o w . s e l e c t e d   . f i l t e r - i c o n - b o x    {
-                 b o r d e r - c o l o r :    v a r ( - - a c c e n t - b l u e ) ;
-                 c o l o r :    # f f f ;
-                 b a c k g r o u n d :    r g b a ( 0 ,    1 3 6 ,    2 0 4 ,    0 . 1 ) ;
-         
+.filter-list-row.selected .filter-icon-box {
+    border-color: var(--accent-blue);
+    color: #fff;
+    background: rgba(0, 136, 204, 0.1);
 }
 
-     
+/* TON CONNECT OVERRIDE */
+tc-root {
+    z-index: 999999 !important;
+}
+
+#product-view {
+    z-index: 10000;
+}

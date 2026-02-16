@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://vocal-demographic-nasa-pro.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://transportation-batteries-tampa-magical.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -590,11 +590,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 function switchTab(index) {
-    // Indices: 0 = Gifts, 1 = Usernames, 2 = Numbers, 3 = Profile
+    // Indices: 0 = Gifts, 1 = Usernames, 2 = Numbers, 3 = Friends, 4 = Profile
     const navItems = document.querySelectorAll('.nav-item');
     navItems.forEach((nav, i) => {
         nav.classList.toggle('active', i === index);
     });
+
+    // Reset all major containers
+    document.getElementById('market-container').style.display = 'none';
+    document.getElementById('profile-container').style.display = 'none';
+    document.getElementById('friends-container').style.display = 'none';
+    document.getElementById('mode-toggle-container').style.display = 'none';
 
     if (index < 3) { // Market tabs
         let newType = CURRENT_TYPE;
@@ -609,7 +615,6 @@ function switchTab(index) {
         }
 
         document.getElementById('market-container').style.display = 'block';
-        document.getElementById('profile-container').style.display = 'none';
         document.getElementById('mode-toggle-container').style.display = 'block';
 
         const headerTitle = document.querySelector('.header h1') || document.querySelector('.logo-text');
@@ -619,42 +624,115 @@ function switchTab(index) {
             if (index === 2) baseTitle = t('numbers');
             headerTitle.innerText = baseTitle + (CURRENT_STATUS === 'rented' ? t('rent_title_suffix') : '');
         }
-
-        // FIX: Removed - was hiding nav
-        // document.body.classList.remove('profile-active');
-    } else { // Profile tab
-        document.getElementById('market-container').style.display = 'none';
+    } else if (index === 3) { // Friends tab (NEW RESTORATION)
+        document.getElementById('friends-container').style.display = 'block';
+        const headerTitle = document.querySelector('.header h1') || document.querySelector('.logo-text');
+        if (headerTitle) headerTitle.innerText = t('friends') || 'Друзья';
+        loadFriendsData();
+    } else if (index === 4) { // Profile tab
         document.getElementById('profile-container').style.display = 'block';
-        document.getElementById('mode-toggle-container').style.display = 'none';
-
         const headerTitle = document.querySelector('.header h1') || document.querySelector('.logo-text');
         if (headerTitle) headerTitle.innerText = t('profile');
         if (window.Telegram && window.Telegram.WebApp) {
             tg.HapticFeedback.impactOccurred('medium');
         }
-
-        // FIX: Nav should always be visible
-        // document.body.classList.add('profile-active');
-        const bNav = document.querySelector('.bottom-nav');
-        if (bNav) bNav.classList.add('profile-mode');
     }
 
-    // NEW: Filter visibility logic
-    if (index === 1 || index === 2) { // Usernames or Numbers
+    // Nav mode (profile vs other)
+    const bNav = document.querySelector('.bottom-nav');
+    if (bNav) {
+        if (index === 4) bNav.classList.add('profile-mode');
+        else bNav.classList.remove('profile-mode');
+    }
+
+    // Filter visibility logic
+    if (index === 1 || index === 2 || index === 3) { // Usernames, Numbers, or Friends
         document.body.classList.add('hide-filters');
     } else {
         document.body.classList.remove('hide-filters');
     }
+}
 
-    if (index !== 3) {
-        const bNav = document.querySelector('.bottom-nav');
-        if (bNav) bNav.classList.remove('profile-mode');
+// --- Friends Logic ---
+async function loadFriendsData() {
+    const userId = tg.initDataUnsafe?.user?.id || 0;
+    try {
+        const res = await fetch(`${BACKEND_URL}/api/referral_stats?user_id=${userId}`);
+        const data = await res.json();
+
+        const balEl = document.getElementById('friends-balance-val');
+        if (balEl) balEl.innerText = data.balance.toFixed(4);
+
+        const listCont = document.getElementById('friends-list-items');
+        if (!listCont) return;
+
+        if (!data.referrals || data.referrals.length === 0) {
+            document.getElementById('empty-friends-hint').style.display = 'block';
+            return;
+        }
+
+        document.getElementById('empty-friends-hint').style.display = 'none';
+        listCont.innerHTML = data.referrals.map(f => {
+            const name = f.username ? '@' + f.username : (f.full_name || ('ID: ' + f.user_id));
+            return `
+                <div class="service-item" style="cursor: default;">
+                    <div class="service-icon" style="background: rgba(0, 136, 204, 0.1); width: 44px; height: 44px; font-size: 20px;">👤</div>
+                    <div style="flex: 1; margin-left: 12px;">
+                        <div style="font-weight: 700; font-size: 15px;">${name}</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-weight: 800; font-size: 14px; color: #0088cc;">+${f.profit.toFixed(4)} TON</div>
+                        <div style="font-size: 11px; color: #8b9bb4; opacity: 0.6;">прибыль</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+    } catch (e) {
+        console.error("Load Friends Error:", e);
     }
 }
 
-// Obsolete loadUserOrders removed as tab is gone.
-function loadUserOrders() {
-    // No-op 
+function showEarningsHelp() {
+    const sheet = document.getElementById('earnings-help-sheet');
+    if (sheet) sheet.style.display = 'block';
+}
+
+function closeEarningsHelp() {
+    const sheet = document.getElementById('earnings-help-sheet');
+    if (sheet) sheet.style.display = 'none';
+}
+
+function shareReferralLink() {
+    const userId = tg.initDataUnsafe?.user?.id || 0;
+    const botUser = "OctoRent_bot";
+    const refLink = `https://t.me/${botUser}?start=ref_${userId}`;
+    if (tg && tg.switchInlineQuery) {
+        tg.switchInlineQuery("ref");
+    } else {
+        copyToClipboard(refLink);
+        showToast("Реферальная ссылка скопирована");
+    }
+}
+
+async function handleReferralWithdraw() {
+    const userId = tg.initDataUnsafe?.user?.id || 0;
+    try {
+        const res = await fetch(`${BACKEND_URL}/api/withdraw_referral`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: userId })
+        });
+        const data = await res.json();
+        if (data.success) {
+            showToast("Вывод успешно запрошен!");
+            loadFriendsData();
+        } else {
+            showToast("Ошибка: " + (data.error || "недостаточно средств"));
+        }
+    } catch (e) {
+        showToast("Ошибка соединения");
+    }
 }
 
 // --- Modal Logic ---
@@ -1203,9 +1281,9 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
         const iconSrc = tgSymbol || (VISUAL_MAP.symbol ? VISUAL_MAP.symbol[name] : null);
 
         // Robust rendering: Text underneath, Image on top. If Image fails, Text is visible.
-        visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: #000000; border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
-            <span style="color:#8b9bb4; font-size:11px; font-weight:700; position:absolute; z-index:1;">${name.substring(0, 3).toUpperCase()}</span>
-            ${iconSrc ? `<img src="${iconSrc}" style="filter: brightness(0) invert(1); width:28px; height:28px; object-fit:contain; z-index:2; opacity:0; transition:opacity 0.2s;" onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';" onerror="this.style.display='none'">` : ''}
+        visualHTML = `<div style="width:40px; height:40px; border-radius:8px; background: rgba(255, 255, 255, 0.03); border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
+            <span class="filter-item-letter">${name.substring(0, 3).toUpperCase()}</span>
+            ${iconSrc ? `<img src="${iconSrc}" class="filter-img" style="width:100%; height:100%; object-fit:contain; z-index:2; opacity:0; transition:opacity 0.2s;" onload="this.style.opacity='1'; if(this.previousElementSibling) this.previousElementSibling.style.display='none';" onerror="this.style.display = 'none'; if (this.previousElementSibling) this.previousElementSibling.style.opacity = '1';">` : ''}
         </div>`;
     } else if (key === 'bg') {
         const bgStyle = (VISUAL_MAP.bg && VISUAL_MAP.bg[name]) || '#333';
@@ -1248,7 +1326,7 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
                         this.src = nextUrl;
                     } else {
                         this.style.display = 'none';
-                        this.previousElementSibling.style.display = 'block';
+                        if (this.previousElementSibling) this.previousElementSibling.style.opacity = '1';
                     }
                 ">
         </div>`;
@@ -1379,6 +1457,29 @@ function createItemCard(item) {
             </div>
         </div>
     `;
+
+    // IMAGE OVERLAY (Rented/Pending)
+    const overlay = document.createElement('div');
+    overlay.className = 'card-overlay';
+    if (item.status === 'rented') {
+        overlay.classList.add('rented');
+        overlay.innerHTML = `<span>${t('rented')}</span>`;
+
+        // NEW: Mini Timer for Card
+        if (item.rent_ends_at) {
+            const miniTimer = document.createElement('div');
+            miniTimer.className = 'card-mini-timer';
+            miniTimer.id = `card-timer-${item.id}`;
+            card.appendChild(miniTimer);
+            startCountdown(parseInt(item.rent_ends_at), miniTimer, true);
+        }
+    } else if (item.status === 'pending') {
+        overlay.classList.add('pending');
+        overlay.innerHTML = `<span>${t('pending')}</span>`;
+    }
+    if (item.status === 'rented' || item.status === 'pending') {
+        card.querySelector('.card-image-wrapper').appendChild(overlay);
+    }
 
     // Click on entire card
     card.onclick = (e) => {
