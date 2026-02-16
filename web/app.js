@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://coordination-dip-entire-treated.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://determined-chevy-behalf-oscar.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -657,22 +657,28 @@ function switchTab(index) {
 async function loadFriendsData() {
     const userId = tg.initDataUnsafe?.user?.id || 0;
     try {
-        const res = await fetch(`${BACKEND_URL}/api/referral_stats?user_id=${userId}`);
+        const res = await fetch(`${BACKEND_URL}/api/referral/stats?user_id=${userId}`);
         const data = await res.json();
 
         const balEl = document.getElementById('friends-balance-val');
-        if (balEl) balEl.innerText = data.balance.toFixed(4);
+        if (balEl) balEl.innerText = (data.balance || 0).toFixed(4);
 
         const listCont = document.getElementById('friends-list-items');
         if (!listCont) return;
 
-        if (!data.referrals || data.referrals.length === 0) {
+        // Fetch friends list
+        const resFriends = await fetch(`${BACKEND_URL}/api/referral/friends?user_id=${userId}`);
+        const dataFriends = await resFriends.json();
+        const friends = dataFriends.friends || [];
+
+        if (friends.length === 0) {
             document.getElementById('empty-friends-hint').style.display = 'block';
+            listCont.innerHTML = '';
             return;
         }
 
         document.getElementById('empty-friends-hint').style.display = 'none';
-        listCont.innerHTML = data.referrals.map(f => {
+        listCont.innerHTML = friends.map(f => {
             const name = f.username ? '@' + f.username : (f.full_name || ('ID: ' + f.user_id));
             return `
                 <div class="service-item" style="cursor: default;">
@@ -724,10 +730,10 @@ function shareReferralLink() {
 async function handleReferralWithdraw() {
     const userId = tg.initDataUnsafe?.user?.id || 0;
     try {
-        const res = await fetch(`${BACKEND_URL}/api/withdraw_referral`, {
+        const res = await fetch(`${BACKEND_URL}/api/referral/withdraw`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_id: userId })
+            body: JSON.stringify({ user_id: userId, amount: 0.1, wallet_address: 'TON_CONNECT_WALLET' }) // Placeholder logic for now
         });
         const data = await res.json();
         if (data.success) {
