@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://proper-simple-licence-prepare.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://coordination-dip-entire-treated.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -694,13 +694,19 @@ async function loadFriendsData() {
 }
 
 function showEarningsHelp() {
-    const sheet = document.getElementById('earnings-help-sheet');
-    if (sheet) sheet.style.display = 'block';
+    console.log("Showing earnings help...");
+    const el = document.getElementById('earnings-help-sheet');
+    if (!el) return;
+    el.style.display = 'flex';
+    setTimeout(() => el.classList.add('active'), 10);
+    if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
 }
 
 function closeEarningsHelp() {
-    const sheet = document.getElementById('earnings-help-sheet');
-    if (sheet) sheet.style.display = 'none';
+    const el = document.getElementById('earnings-help-sheet');
+    if (!el) return;
+    el.classList.remove('active');
+    setTimeout(() => el.style.display = 'none', 300);
 }
 
 function shareReferralLink() {
@@ -1469,7 +1475,7 @@ function createItemCard(item) {
         if (item.rent_ends_at) {
             const miniTimer = document.createElement('div');
             miniTimer.className = 'card-mini-timer';
-            miniTimer.id = `card-timer-${item.id}`;
+            // User requested: "аккуратно дни и часы (или часы и минуты) И ВСЕ"
             card.appendChild(miniTimer);
             startCountdown(parseInt(item.rent_ends_at), miniTimer, true);
         }
@@ -1925,13 +1931,14 @@ async function openProductView(item) {
                 }
             }
 
-            // 3. Countdown Logic (Blocky V2)
+            // 3. Countdown Logic (Minimal Text V3)
             const endTime = details.rent?.ends_at || details.rent_ends_at;
             if (endTime && (item.status === 'rented' || (myOrder && myOrder.status === 'active'))) {
                 const countdownCont = document.getElementById('view-countdown-container');
                 const timerEl = document.getElementById('view-countdown-timer');
                 if (countdownCont && timerEl) {
                     countdownCont.style.display = 'block';
+                    // Apply same minimal style as card if needed, but for now just start it
                     startCountdown(parseInt(endTime), timerEl);
                 }
             } else {
@@ -1974,6 +1981,11 @@ async function openProductView(item) {
                         };
                     }
                 });
+            }
+
+            // NEW: Ensure metadata (Model, Backdrop, Symbol) is rendered even for rented items
+            if (item.type === 'gift' && details.attributes) {
+                renderProperties(details.attributes);
             }
         }).catch(e => console.error(e));
     }

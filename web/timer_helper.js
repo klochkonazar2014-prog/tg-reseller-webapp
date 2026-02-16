@@ -14,11 +14,10 @@ function startCountdown(endTime, elements, isMini = false) {
         const d = Math.floor(diff / 86400);
         const h = Math.floor((diff % 86400) / 3600);
         const m = Math.floor((diff % 3600) / 60);
-        const s = diff % 60;
 
         const display = isMini
-            ? `${d > 0 ? d + 'd ' : ''}${h}h ${m}m`
-            : `${d > 0 ? d + 'd ' : ''}${h}:${m < 10 ? '0' + m : m}:${s < 10 ? '0' + s : s}`;
+            ? (d > 0 ? `${d}d ${h}h` : `${h}h ${m}m`)
+            : `${d > 0 ? d + 'd ' : ''}${h < 10 ? '0' + h : h}:${m < 10 ? '0' + m : m}:${Math.floor(diff % 60) < 10 ? '0' + Math.floor(diff % 60) : Math.floor(diff % 60)}`;
 
         targets.forEach(el => el.innerText = display);
         return true;
