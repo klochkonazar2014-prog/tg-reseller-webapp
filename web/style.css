@@ -1725,93 +1725,53 @@ tc-root {
 
 /* .card.rented::before removed via user request */
 
-/* PREMIUM TIMER - FRAGMENT STYLE */
-.premium-timer-layout {
+/* Blocky Countdown */
+.countdown-container-v2 {
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: 8px;
+    margin-top: 15px;
+}
+
+.countdown-label-v2 {
+    color: #8b9bb4;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.countdown-blocks-v2 {
+    display: flex;
+    align-items: center;
     gap: 12px;
-    width: 100%;
-    padding: 16px;
-    background: transparent;
 }
 
-.premium-timer-layout .ends-in-label {
-    color: #8b9bb4;
-    font-size: 14px;
-    font-weight: 500;
-    margin-right: 4px;
-}
-
-.premium-timer-pills {
+.countdown-block-item {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
 }
 
-.timer-box {
-    background: #2c2c2e;
+.countdown-box {
+    background: #1c1c1e;
+    border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: 8px;
-    padding: 4px 8px;
-    min-width: 40px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-}
-
-.timer-box .t-val {
-    color: #fff;
-    font-size: 16px;
-    font-weight: 700;
-    line-height: 1.2;
-}
-
-.timer-box .t-unit {
+    padding: 6px 10px;
+    min-width: 34px;
+    text-align: center;
+    color: white;
+    font-weight: 800;
     font-size: 14px;
-    font-weight: 500;
-    margin-left: 4px;
 }
 
-/* Specific style for "4 days" block which is wider */
-.timer-box.days-box {
-    flex-direction: row;
-    align-items: baseline;
-    padding: 6px 12px;
-}
-
-.timer-sep {
+.countdown-unit {
     color: #8b9bb4;
-    font-weight: 700;
-    font-size: 16px;
-    margin-top: -2px;
-    /* Visual alignment */
+    font-size: 12px;
+    font-weight: 600;
 }
 
-.premium-timer-date {
-    color: #8b9bb4;
-    font-size: 14px;
-    font-weight: 500;
-    margin-left: 8px;
-}
-
-
-/* Notify Bell Refinement */
-.notify-btn {
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.notify-btn svg {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    stroke: currentColor;
-    fill: none;
-}
-
-.notify-btn.active svg {
-    color: #0088cc !important;
-    fill: #0088cc !important;
-    stroke: #0088cc !important;
-    filter: drop-shadow(0 0 8px rgba(0, 136, 204, 0.4));
+.countdown-sep {
+    color: #3a3a3c;
+    font-weight: 800;
 }
 
 /* Filter Visibility Logic */
@@ -3346,26 +3306,8 @@ body.hide-filters .header-column {
     white-space: nowrap;
 }
 
-.notify-btn {
-    position: relative !important;
-    z-index: 9999 !important;
-    pointer-events: auto !important;
-    cursor: pointer !important;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 44px;
-    height: 44px;
-    flex-shrink: 0;
+#notify-btn {
     transition: all 0.3s ease;
-}
-
-.notify-btn:active {
-    transform: scale(0.9);
-    background: rgba(255, 255, 255, 0.1);
 }
 
 #notify-btn.active {

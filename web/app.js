@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 // Use relative path for same-origin to avoid CORS and multi-origin issues in TMA
 // This line is automatically updated by run.py
-const BACKEND_URL = "https://nor-privilege-lowest-burlington.trycloudflare.com";
+const BACKEND_URL = "https://candle-actress-phys-tender.trycloudflare.com";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -195,9 +195,7 @@ const TRANSLATIONS = {
         min_withdraw_error: "Минимальная сумма для вывода: 0.1 TON",
         withdraw_success: "Запрос на вывод отправлен! Средства поступят на ваш кошелек в ближайшее время.",
         notification_enabled: "Уведомление включено!",
-        notification_disabled: "Уведомление выключено!",
-        notification_enabled_full: "Уведомление включено. Мы сообщим, когда NFT станет доступен или потребует подключения.",
-        notification_disabled_full: "Уведомление выключено"
+        notification_disabled: "Уведомление выключено!"
     },
     en: {
         gifts: "Gifts",
@@ -303,9 +301,8 @@ const TRANSLATIONS = {
         min_withdraw_error: "Minimum withdrawal amount: 0.1 TON",
         withdraw_success: "Withdrawal request submitted! Funds will arrive at your wallet shortly.",
         notification_enabled: "Notification enabled!",
-        notification_disabled: "Notification disabled!",
-        notification_enabled_full: "Notification enabled. We will notify you when the NFT becomes available or requires connection.",
-        notification_disabled_full: "Notification disabled"
+        notification_disabled: "Notification disabled!"
+
     }
 };
 
@@ -904,8 +901,6 @@ async function loadLiveItems(reset = true) {
     if (IS_LOADING) return;
     if (!HAS_MORE && !reset) return;
 
-    IS_LOADING = true; // Move to top to prevent race conditions
-
     const hideLoading = () => {
         const screen = document.getElementById('loading-screen');
         if (screen) {
@@ -927,7 +922,7 @@ async function loadLiveItems(reset = true) {
         if (scrollLoader) scrollLoader.style.display = 'block';
     }
 
-    // IS_LOADING = true; // Moved to top
+    IS_LOADING = true;
 
     try {
         const params = new URLSearchParams({
@@ -971,36 +966,16 @@ async function loadLiveItems(reset = true) {
         if (data && data.items) {
             const items = data.items;
             if (items.length < BATCH_SIZE) HAS_MORE = false;
-
-            // Fix duplicates: use a Set to track seen addresses
-            const seen = new Set();
-            const container = document.getElementById('items-view');
-            if (reset) {
-                container.innerHTML = '';
-                GLOBAL_OFFSET = 0;
-            } else {
-                // If appending, track existing ones
-                container.querySelectorAll('.card').forEach(c => {
-                    const addr = c.getAttribute('data-addr');
-                    if (addr) seen.add(addr);
-                });
-            }
+            GLOBAL_OFFSET += items.length;
 
             const processed = items
-                .filter(item => {
-                    if (item.type !== CURRENT_TYPE) return false;
-                    if (seen.has(item.nft_address)) return false;
-                    seen.add(item.nft_address);
-                    return true;
-                })
+                .filter(item => item.type === CURRENT_TYPE) // Strict client-side type check
                 .map(item => {
                     const match = item.nft_name.match(/#(\d+)/);
                     item._nftNum = match ? parseInt(match[1]) : 0;
                     item._realImage = item.image || item.image_url;
                     return item;
                 });
-
-            GLOBAL_OFFSET += processed.length;
 
             if (reset && items.length === 0) {
                 document.getElementById('items-view').innerHTML = `
@@ -1541,66 +1516,28 @@ async function handleNotifyClick() {
     const userId = tg.initDataUnsafe?.user?.id || 0;
     if (!userId) { tg.showAlert("Please open the app via Telegram"); return; }
 
-    const btn = document.getElementById('notify-btn');
-    if (!btn) return;
-
-    // Disable temporarily to prevent double clicks
-    btn.style.pointerEvents = 'none';
-    const isCurrentlyActive = btn.classList.contains('active');
-    console.log('[NOTIFY CLICK] Current state:', isCurrentlyActive ? 'ACTIVE' : 'INACTIVE');
-
     try {
-        console.log('[NOTIFY CLICK] Sending request for:', CURRENT_PAYMENT_ITEM.nft_address);
         const res = await fetch(`${BACKEND_URL}/api/toggle_notification`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 user_id: userId,
-                nft_address: CURRENT_PAYMENT_ITEM.nft_address,
-                subscribe: !isCurrentlyActive
+                nft_address: CURRENT_PAYMENT_ITEM.nft_address
             })
         });
         const data = await res.json();
         if (data.status === 'ok') {
-            const finalSubscribed = data.action === 'added';
-
-            // Set final state directly based on server response
-            console.log('[NOTIFY CLICK] Server action:', data.action);
-
-            if (finalSubscribed) {
-                btn.classList.add('active');
-                // FORCE VISUAL UPDATE for debugging/fix
-                const svg = btn.querySelector('svg');
-                if (svg) {
-                    svg.style.fill = '#0088cc';
-                    svg.style.stroke = '#0088cc';
-                    svg.style.color = '#0088cc';
-                }
-                tg.showAlert(t('notification_enabled_full') || "Notification enabled");
+            const btn = document.getElementById('notify-btn');
+            if (data.action === 'added') {
+                tg.showAlert("уведомление о окончании аренды включены");
+                if (btn) btn.classList.add('active');
             } else {
-                btn.classList.remove('active');
-                // FORCE VISUAL RESET
-                const svg = btn.querySelector('svg');
-                if (svg) {
-                    svg.style.fill = 'none';
-                    svg.style.stroke = 'currentColor';
-                    svg.style.color = 'inherit';
-                }
-                tg.showAlert(t('notification_disabled_full') || "Notification disabled");
+                if (btn) btn.classList.remove('active');
             }
             tg.HapticFeedback.notificationOccurred('success');
         }
     } catch (e) {
         console.error("Notify Error:", e);
-    } finally {
-        // Re-enable interactions after a short delay to prevent spam
-        setTimeout(() => {
-            btn.style.pointerEvents = 'auto';
-            // Ensure visual state matches class
-            if (btn.classList.contains('active')) {
-                // Keep active
-            }
-        }, 300);
     }
 }
 
@@ -1791,7 +1728,7 @@ async function openProductView(item, myPrice) {
     if (pv) {
         pv.classList.add('active');
         document.body.style.overflow = 'hidden';
-        pv.scrollTop = 0; // Reset scroll immediately
+        pv.scrollTop = 0;
     }
 
     const mediaCont = document.getElementById('view-media-container');
@@ -1805,296 +1742,38 @@ async function openProductView(item, myPrice) {
     const stepper = document.querySelector('.rent-period-stepper');
     const feeNotice = document.querySelector('.fee-notice-box');
     const warningBox = document.getElementById('listing-warning-box');
+    const notifyBtn = document.getElementById('notify-btn');
+    const countdownCont = document.getElementById('product-countdown-container');
+    const propertiesCont = document.getElementById('view-properties');
 
-    // 1. Reset/Default State
+    // 1. Reset State
     if (warningBox) warningBox.style.display = 'none';
     if (statusOverlay) { statusOverlay.style.display = 'none'; statusOverlay.innerHTML = ''; }
+    if (countdownCont) countdownCont.style.display = 'none';
+    if (stepper) stepper.style.display = 'flex';
+    if (feeNotice) feeNotice.style.display = 'block';
 
-    // 24h Warning Logic
-    if (item.type === 'gift' && item.listed_at && warningBox) {
-        const listedAt = parseInt(item.listed_at);
-        const now = Math.floor(Date.now() / 1000);
-        const diffHours = (now - listedAt) / 3600;
-
-        if (diffHours < 24) {
-            warningBox.style.display = 'block';
-            let timeText = "";
-            const diffSec = now - listedAt;
-            if (diffSec < 60) timeText = t('just_now');
-            else if (diffSec < 3600) timeText = `${Math.floor(diffSec / 60)}m ago`;
-            else timeText = `${Math.floor(diffHours)}h ${Math.floor((diffSec % 3600) / 60)}m ago`;
-
-            warningBox.innerHTML = `
-                <div class="listing-warning-title">${t('listed_less_than_24h')}</div>
-                <div class="listing-warning-text">
-                    Listed at: ${timeText} 
-                    <a href="#" class="listing-warning-link" onclick="event.preventDefault(); showHelp('listing')">${t('what_does_it_mean')}</a>
-                </div>
-            `;
-        }
-    }
-
-    // 2. Lottie Animation
-    const lottieCont = document.getElementById('view-lottie');
-    if (lottieCont) {
-        lottieCont.innerHTML = '';
-        const fUrls = generateFragmentUrls(item.nft_name);
-        if (fUrls.lottie && item.type === 'gift') {
-            const anim = lottie.loadAnimation({
-                container: lottieCont,
-                renderer: 'svg',
-                loop: true,
-                autoplay: true,
-                path: fUrls.lottie
-            });
-            lottieCont.anim = anim;
-            anim.addEventListener('DOMLoaded', () => {
-                if (mediaCont) mediaCont.style.display = 'none';
-            });
-        }
-    }
-
-    const colName = (item._collection && item._collection.name) ? item._collection.name : "Gifts";
     const viewTitle = document.getElementById('view-title');
     if (viewTitle) viewTitle.innerText = item.nft_name;
 
     const viewCopyBtn = document.getElementById('view-copy-btn-main');
     if (viewCopyBtn) viewCopyBtn.onclick = () => copyNftTitle(item.nft_name);
 
-    const notifyBtn = document.getElementById('notify-btn');
-    const countdownCont = document.getElementById('product-countdown-container');
+    // 2. Initial Pricing & Rent Button
+    let rawP = parseFloat(myPrice) || parseFloat(item.price_per_day) || 0;
+    item.price_per_day = rawP; // Sync for logic
+    updateTotalPrice();
 
-    // 1. Render immediately with cached data so user sees something
-    updateProductViewStatus(item, notifyBtn, countdownCont);
-
-    // 2. Smart Refresh: Fetch fresh details if not updated recently (or always for safety if rented)
-    // The user requested: "as soon as someone enters... make a request to update the timer (if not updated recently)"
-    // We'll just fetch regardless for "rented" items to be safe, but we won't toggle the UI loader.
-    // The previous render step ensures the user isn't staring at blank space.
-
-    // Check if we need a fresh fetch
-    const NOW_SEC = Math.floor(Date.now() / 1000);
-    const lastMetaUpdate = item._last_details_update || 0;
-    const isStale = (NOW_SEC - lastMetaUpdate) > 60; // 60 seconds cache
-
-    if (isStale || item.status === 'rented') {
-        console.log(`Smart Refresh triggered for ${item.nft_name}`);
-        fetch(`${BACKEND_URL}/api/nft_details?nft_address=${item.nft_address}`)
-            .then(r => r.json())
-            .then(details => {
-                if (details) {
-                    item._last_details_update = Math.floor(Date.now() / 1000);
-
-                    // Try to get end time from various possible formats
-                    const endTime = details.rent?.ends_at ||
-                        details.rent_ends_at ||
-                        details.rent_end ||
-                        details.status_details?.end_time;
-                    if (endTime) item.rent_end = endTime;
-
-                    if (details.status) item.status = details.status;
-                }
-                updateProductViewStatus(item, notifyBtn, countdownCont);
-            }).catch(e => {
-                console.error("Details fetch error:", e);
-                // No need to re-render error, existing cache is better than nothing
-            });
-    }
-}
-
-function updateProductViewStatus(item, notifyBtn, countdownCont) {
-    const colName = (item._collection && item._collection.name) ? item._collection.name : "Gifts";
-
-    if (notifyBtn) {
-        notifyBtn.style.display = (item.status === 'rented') ? 'block' : 'none';
-        notifyBtn.classList.remove('active');
-        if (item.status === 'rented') {
-            const userId = tg.initDataUnsafe?.user?.id || 0;
-            fetch(`${BACKEND_URL}/api/check_notification_status?user_id=${userId}&nft_address=${item.nft_address}`)
-                .then(r => r.json())
-                .then(d => {
-                    // Only update if not currently being toggled by user AND not just clicked
-                    // We check if button is disabled (pointer-events = none) which implies operation in progress
-                    if (notifyBtn.style.pointerEvents !== 'none') {
-                        if (d.subscribed) notifyBtn.classList.add('active');
-                        else notifyBtn.classList.remove('active');
-                    }
-                });
-
-            console.log('Timer debug:', { rent_end: item.rent_end, countdownCont: !!countdownCont, status: item.status });
-
-            if (countdownCont) {
-                if (item.rent_end && item.rent_end > 0) {
-                    countdownCont.style.display = 'block';
-                    countdownCont.style.visibility = 'visible';
-                    renderPremiumCountdown(item, countdownCont);
-                } else {
-                    console.warn('No rent_end for rented item:', item.nft_address);
-                    countdownCont.style.display = 'none';
-                }
-            } else {
-                console.warn('No countdownCont element found');
-            }
-        } else {
-            if (countdownCont) countdownCont.style.display = 'none';
-        }
-    }
-
-    const colEl = document.getElementById('view-collection');
-    if (colEl) {
-        colEl.innerText = `${colName} >`;
-        colEl.style.display = (item.type === 'gift') ? 'block' : 'none';
-        colEl.onclick = () => {
-            ACTIVE_FILTERS.nft = colName;
-            closeProductView();
-            loadLiveItems(true);
-        };
-    }
-
-    const ownerEl = document.getElementById('view-owner');
-    if (ownerEl) ownerEl.parentElement.style.display = 'none';
-
-    // 3. Details/Properties Visibility
-    const detailsTab = document.getElementById('details-tab');
-    const propertiesTabs = document.getElementById('view-properties-tabs');
-    const propertiesCont = document.getElementById('view-properties');
-    const isGift = (item.type && item.type.toLowerCase() === 'gift');
-
-    if (detailsTab) detailsTab.style.display = isGift ? 'block' : 'none';
-    if (propertiesTabs) propertiesTabs.style.display = isGift ? 'flex' : 'none';
-    if (propertiesCont) propertiesCont.style.display = isGift ? 'block' : 'none';
-
-    // 4. Translation & Pricing
-    const setChip = (id, key) => {
-        const el = document.getElementById(id);
-        if (el) el.innerText = t(key);
-    };
-    setChip('view-label-price', 'price_per_day');
-    setChip('view-label-period', 'period');
-    setChip('view-label-discount', 'discount');
-    setChip('view-auto-relist-title', 'auto_relist');
-    setChip('view-auto-relist-desc', 'auto_relist_desc');
-    setChip('fee-what-mean', 'what_is_this');
-    setChip('view-countdown-label', 'ends_in');
-
-    const banner = document.getElementById('view-status-banner');
-    if (banner) { banner.style.display = 'none'; banner.className = 'status-banner'; }
-    const oldCountdownCont = document.getElementById('view-countdown-container');
-    if (oldCountdownCont) oldCountdownCont.style.display = 'none';
-    const addrDom = document.getElementById('view-address');
-    if (addrDom) addrDom.style.display = 'none';
-
-    let rawP = parseFloat(item.price_per_day) || 0;
-    const dailyPrice = rawP.toFixed(2);
-    const dailyPriceEl = document.getElementById('view-daily-price');
-    if (dailyPriceEl) dailyPriceEl.innerHTML = renderTonAmount(dailyPrice);
-
-    if (GLOBAL_TON_PRICE) {
-        const usdEl = document.getElementById('view-daily-price-usd');
-        if (usdEl) usdEl.innerText = `~$${(rawP * GLOBAL_TON_PRICE).toFixed(2)}`;
-    }
-
-    const minDays = Math.floor((item.min_duration || 86400) / 86400);
-    const maxDays = Math.floor((item.max_duration || 2592000) / 86400);
-    const rangeEl = document.getElementById('view-duration-range');
-    if (rangeEl) rangeEl.textContent = `${minDays} — ${maxDays}`;
-    const discEl = document.getElementById('view-discount');
-    if (discEl) discEl.innerText = "0.1%";
-    const durInp = document.getElementById('rent-duration-input');
-    if (durInp) durInp.value = minDays;
-
-    // 5. Attributes (Gift Specific)
-    if (propertiesCont && item.type === 'gift') {
-        propertiesCont.innerHTML = '';
-        const nftNumMatch = item.nft_name.match(/#(\d+)/);
-        const nftNum = nftNumMatch ? nftNumMatch[1] : '1';
-        const giftBaseName = item.nft_name.replace(/#\d+/, '').trim();
-        const giftSlug = giftBaseName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join('');
-        const tgNftLink = `https://t.me/nft/${giftSlug}-${nftNum}`;
-
-        const createPropRow = (label, value) => {
-            const displayValue = (!value || value === 'Unknown' || value === 'Gift') ? '—' : value;
-            const row = document.createElement('div');
-            row.className = 'property-item';
-            row.innerHTML = `
-                <div class="prop-left"><div class="prop-name">${label}</div></div>
-                <div class="prop-right"><span style="color:var(--accent-blue); font-weight:600;">${displayValue}</span></div>`;
-            return row;
-        };
-
-        const tgRow = createPropRow("Telegram", `${giftBaseName} #${nftNum}`);
-        tgRow.onclick = () => tg.openTelegramLink(tgNftLink);
-        propertiesCont.appendChild(tgRow);
-
-        const appendClickable = (label, val, key) => {
-            if (!val) return;
-            const r = createPropRow(label, val);
-            r.classList.add('clickable-prop');
-            r.querySelector('.prop-right').innerHTML += `<span class="arrow-v" style="font-size:12px; margin-left:8px;">›</span>`;
-            r.onclick = () => {
-                if (key === 'model' || key === 'bg' || key === 'symbol') ACTIVE_FILTERS.nft = colName;
-                ACTIVE_FILTERS[key] = val;
-                closeProductView();
-                switchTab(0);
-                loadLiveItems(true);
-            };
-            propertiesCont.appendChild(r);
-        };
-
-        if (item._modelName) appendClickable(t('model'), item._modelName, 'model');
-        else appendClickable(t('model'), "—", 'model');
-
-        if (item._symbol !== undefined && item._symbol !== null) appendClickable(t('symbol'), item._symbol, 'symbol');
-        else appendClickable(t('symbol'), "—", 'symbol');
-
-        if (item._backdrop) appendClickable(t('backdrop'), item._backdrop, 'bg');
-        else appendClickable(t('backdrop'), "—", 'bg');
-
-        const reRow = createPropRow(t('auto_relist_label'), item.auto_relist ? t('yes') : t('no'));
-        if (!item.auto_relist) reRow.querySelector('.prop-right span').style.color = '#ff3b30';
-        propertiesCont.appendChild(reRow);
-    }
-
-    // 24h Warning Logic
-    const listedTime = item.listed_at ? new Date(item.listed_at).getTime() : 0;
-    const now = Date.now();
-    const diffHours = (now - listedTime) / (1000 * 60 * 60);
-
-    const rentBtn = document.getElementById('main-rent-action-btn'); // Re-declare for scope
-    const stepper = document.querySelector('.rent-period-stepper'); // Re-declare for scope
-    const feeNotice = document.querySelector('.fee-notice-box'); // Re-declare for scope
-    const warningBox = document.getElementById('listing-warning-box'); // Re-declare for scope
-
-    if (item.type === 'gift' && diffHours < 24 && listedTime > 0) {
-        if (warningBox) {
-            warningBox.style.display = 'block';
-            const warningTitle = warningBox.querySelector('div:first-child');
-            const warningDesc = warningBox.querySelector('div:last-child');
-            if (warningTitle) warningTitle.innerText = t('listed_less_than_24h');
-            if (warningDesc) warningDesc.innerHTML = `${t('listed_at')}: ${new Date(item.listed_at).toLocaleString()} <a href="javascript:void(0)" onclick="showHelp('listing')" style="color: #FF9500; text-decoration: underline;">${t('what_does_it_mean')}</a>`;
-        }
-    } else {
-        if (warningBox) warningBox.style.display = 'none';
-    }
-
-    // 6. Rent Button & Async Calls
     if (rentBtn) {
         rentBtn.style.display = 'flex';
-        if (stepper) stepper.style.display = 'flex';
-        if (feeNotice) feeNotice.style.display = 'block';
-        CURRENT_PAYMENT_ITEM.price_per_day = rawP; // Use rawP calculated within this function
-        updateTotalPrice();
-        const rentBtnTextEl = rentBtn.querySelector('#rent-btn-text');
-        if (rentBtnTextEl) rentBtnTextEl.textContent = t('rent_button', { amount: '' }).replace('{amount}', '').trim();
-
         rentBtn.onclick = async () => {
             if (!tonConnectUI.connected) { await tonConnectUI.openModal(); return; }
             if (item.status === 'rented' && !item.auto_relist) {
-                if (!confirm(t('preorder_warning_no_relist'))) return;
+                if (!confirm(t('preorder_warning_no_relist') || "Этот NFT не будет перевыставлен автоматически. Продолжить?")) return;
             }
             const days = parseInt(document.getElementById('rent-duration-input').value) || 1;
             const originalHTML = rentBtn.innerHTML;
-            rentBtn.innerHTML = t('loading');
+            rentBtn.innerHTML = t('loading') || "Loading...";
             rentBtn.disabled = true;
             try {
                 const userId = tg.initDataUnsafe?.user?.id || 0;
@@ -2119,28 +1798,56 @@ function updateProductViewStatus(item, notifyBtn, countdownCont) {
         };
     }
 
+    // 3. Lottie Animation
+    const lottieCont = document.getElementById('view-lottie');
+    if (lottieCont) {
+        lottieCont.innerHTML = '';
+        const fUrls = generateFragmentUrls(item.nft_name);
+        if (fUrls.lottie && item.type === 'gift') {
+            const anim = lottie.loadAnimation({
+                container: lottieCont,
+                renderer: 'svg',
+                loop: true,
+                autoplay: true,
+                path: fUrls.lottie
+            });
+            lottieCont.anim = anim;
+            anim.addEventListener('DOMLoaded', () => {
+                if (mediaCont) mediaCont.style.display = 'none';
+            });
+        }
+    }
+
+    // 4. Async Enrichment
     if (item.nft_address) {
         const userId = tg.initDataUnsafe?.user?.id || 0;
-        const statusOverlay = document.getElementById('view-media-status-overlay'); // Re-declare for scope
         Promise.all([
             fetch(`${BACKEND_URL}/api/nft_details?nft_address=${item.nft_address}`).then(r => r.json()),
-            fetch(`${BACKEND_URL}/api/my_orders?user_id=${userId}`).then(r => r.json())
-        ]).then(([details, myOrders]) => {
+            fetch(`${BACKEND_URL}/api/my_orders?user_id=${userId}`).then(r => r.json()),
+            fetch(`${BACKEND_URL}/api/check_notification_status?user_id=${userId}&nft_address=${item.nft_address}`).then(r => r.json())
+        ]).then(([details, myOrders, notifyStatus]) => {
             const myOrder = myOrders.find(o => o.nft_address === item.nft_address && (o.status === 'rented' || o.status === 'active' || o.status === 'paid'));
 
-            // Status Overlay
+            // Notify Bell
+            if (notifyBtn) {
+                notifyBtn.style.display = (item.status === 'rented') ? 'block' : 'none';
+                if (notifyStatus.subscribed) notifyBtn.classList.add('active');
+                else notifyBtn.classList.remove('active');
+            }
+
+            // Status Overlay Enhancement
             if (statusOverlay) {
-                let statusText = '', statusClass = '';
-                if (item.status === 'rented') { statusText = t('rented'); statusClass = 'rented'; }
-                else if (item.status === 'pending') { statusText = t('pending'); statusClass = 'pending'; }
-                if (statusText) {
-                    statusOverlay.innerHTML = `<div class="status-overlay-badge ${statusClass}">${statusText}</div>`;
+                let sText = '', sClass = '';
+                if (item.status === 'rented') { sText = t('rented'); sClass = 'rented'; }
+                else if (item.status === 'pending') { sText = t('pending'); sClass = 'pending'; }
+                if (sText) {
+                    statusOverlay.innerHTML = `<div class="status-overlay-badge ${sClass}">${sText}</div>`;
                     statusOverlay.style.display = 'block';
                 }
             }
 
-            // Own Order Button
-            if (myOrder && myOrder.status === 'rented' && !myOrder.tc_link) {
+            // Own Order Overwrite
+            if (myOrder && (myOrder.status === 'rented' || myOrder.status === 'active') && !myOrder.tc_link) {
                 if (rentBtn) {
                     rentBtn.innerHTML = t('connect_to_fragment');
                     if (stepper) stepper.style.display = 'none';
@@ -2149,20 +1856,56 @@ function updateProductViewStatus(item, notifyBtn, countdownCont) {
                 }
             }
 
-            // Countdown
+            // Countdown Setup
             const endTime = details.rent?.ends_at || details.rent_ends_at;
             if (endTime && (item.status === 'rented' || (myOrder && myOrder.status === 'active'))) {
-                const timerEl = document.getElementById('view-countdown-timer');
-                if (countdownCont && timerEl) {
-                    countdownCont.style.display = 'block';
-                    startCountdown(parseInt(endTime), timerEl);
+                if (countdownCont) {
+                    countdownCont.style.display = 'flex';
+                    item.rent_end = parseInt(endTime);
+                    renderPremiumCountdown(item, countdownCont);
                 }
             }
-        }).catch(e => console.error(e));
+
+            // Attributes / Properties
+            if (details.attributes && propertiesCont) {
+                propertiesCont.innerHTML = '';
+                details.attributes.forEach(attr => {
+                    const trait = attr.trait_type.toLowerCase();
+                    const val = attr.value;
+                    const r = document.createElement('div');
+                    r.className = 'property-item clickable-prop';
+                    r.innerHTML = `
+                        <div class="prop-left"><div class="prop-name">${t(trait) || trait}</div></div>
+                        <div class="prop-right">
+                            <span style="color:var(--accent-blue); font-weight:600;">${val}</span>
+                            <span class="arrow-v" style="font-size:12px; margin-left:8px;">›</span>
+                        </div>`;
+                    r.onclick = () => {
+                        let fk = trait;
+                        if (fk === 'backdrop' || fk === 'background') fk = 'bg';
+                        if (ACTIVE_FILTERS.hasOwnProperty(fk)) {
+                            ACTIVE_FILTERS[fk] = val;
+                            closeProductView();
+                            loadLiveItems(true);
+                        }
+                    };
+                    propertiesCont.appendChild(r);
+                });
+            }
+        }).catch(err => console.error("Async Enrichment Error:", err));
     }
 
-    const pv = document.getElementById('product-view');
-    if (pv) pv.scrollTop = 0;
+    const colEl = document.getElementById('view-collection');
+    if (colEl) {
+        const colName = (item._collection && item._collection.name) ? item._collection.name : "Gifts";
+        colEl.innerText = `${colName} >`;
+        colEl.style.display = (item.type === 'gift') ? 'block' : 'none';
+        colEl.onclick = () => {
+            ACTIVE_FILTERS.nft = colName;
+            closeProductView();
+            loadLiveItems(true);
+        };
+    }
 }
 
 function adjustDuration(delta) {
@@ -3005,51 +2748,31 @@ function renderPremiumCountdown(item, container) {
     if (container._timer) clearInterval(container._timer);
 
     const update = () => {
-        const now = Math.floor(Date.now() / 1000); // Current time in seconds
+        const now = Math.floor(Date.now() / 1000);
         const diff = item.rent_end - now;
 
         if (diff <= 0) {
-            container.innerHTML = `<div class="premium-timer-ended">Rental Ended</div>`;
+            container.innerHTML = `<span style="color: #FF3B30; font-weight:800; font-size:14px;">EXPIRED</span>`;
             clearInterval(container._timer);
             return;
         }
 
-        const days = Math.floor(diff / 86400);
-        const hours = Math.floor((diff % 86400) / 3600);
-        const minutes = Math.floor((diff % 3600) / 60);
-        const seconds = diff % 60;
+        const d = Math.floor(diff / 86400);
+        const h = Math.floor((diff % 86400) / 3600);
+        const m = Math.floor((diff % 3600) / 60);
+        const s = diff % 60;
 
-        // New Fragment-style Layout
+        const pad = (n) => n.toString().padStart(2, '0');
+
         container.innerHTML = `
-            <div class="premium-timer-layout">
-                 <div class="timer-label-row">
-                    <span>Available in</span>
-                </div>
-                <div class="timer-digits-row">
-                    <div class="timer-box">
-                        <span class="t-val">${days}</span>
-                        <span class="t-label">d</span>
-                    </div>
-                    <div class="timer-sep">:</div>
-                    <div class="timer-box">
-                        <span class="t-val">${hours.toString().padStart(2, '0')}</span>
-                        <span class="t-label">h</span>
-                    </div>
-                    <div class="timer-sep">:</div>
-                    <div class="timer-box">
-                        <span class="t-val">${minutes.toString().padStart(2, '0')}</span>
-                        <span class="t-label">m</span>
-                    </div>
-                    <div class="timer-sep">:</div>
-                    <div class="timer-box">
-                        <span class="t-val">${seconds.toString().padStart(2, '0')}</span>
-                        <span class="t-label">s</span>
-                    </div>
-                </div>
-                 <div class="timer-date-row">
-                    ${new Date(item.rent_end * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                </div>
-            </div>
+            <div class="countdown-market-label">${t('available_from') || "Available in"}:</div>
+            <div class="countdown-market-pill">${d}d</div>
+            <div class="countdown-market-sep">:</div>
+            <div class="countdown-market-pill">${pad(h)}</div>
+            <div class="countdown-market-sep">:</div>
+            <div class="countdown-market-pill">${pad(m)}</div>
+            <div class="countdown-market-sep">:</div>
+            <div class="countdown-market-pill">${pad(s)}</div>
         `;
     };
 
@@ -3057,42 +2780,42 @@ function renderPremiumCountdown(item, container) {
     container._timer = setInterval(update, 1000);
 }
 
+function handleNotifyClick() {
+    if (!CURRENT_PAYMENT_ITEM || CURRENT_PAYMENT_ITEM.status !== 'rented') return;
 
+    const btn = document.getElementById('notify-btn');
+    if (!btn) return;
 
-function renderCardTimer(item) {
-    if (!item.rent_end) return "";
-    const id = `card-timer-${item.nft_address.slice(-6)}`;
+    const userId = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user.id : 0;
+    const addr = CURRENT_PAYMENT_ITEM.nft_address;
+    const isSubscribed = btn.classList.contains('active');
 
-    // Auto-update logic
-    setTimeout(() => {
-        const el = document.getElementById(id);
-        if (!el) return;
+    // Haptic feedback
+    if (typeof tg !== 'undefined' && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
 
-        const update = () => {
-            const now = Math.floor(Date.now() / 1000);
-            const diff = item.rent_end - now;
-            if (diff <= 0) {
-                el.innerText = "EXPIRED";
-                el.style.color = "#FF3B30";
-                return;
+    fetch(`${BACKEND_URL}/api/toggle_notification`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            user_id: userId,
+            nft_address: addr,
+            subscribe: !isSubscribed
+        })
+    }).then(r => r.json()).then(d => {
+        if (d.success) {
+            if (!isSubscribed) {
+                btn.classList.add('active');
+                showToast(t('notification_enabled') || "Notification enabled!");
+            } else {
+                btn.classList.remove('active');
+                showToast(t('notification_disabled') || "Notification disabled!");
             }
-            const d = Math.floor(diff / 86400);
-            const h = Math.floor((diff % 86400) / 3600);
-            const m = Math.floor((diff % 3600) / 60);
-            const s = diff % 60;
-            const pad = (n) => n.toString().padStart(2, '0');
-            el.innerText = `${d}d ${pad(h)}:${pad(m)}:${pad(s)}`;
-        };
-        update();
-        if (el._timer) clearInterval(el._timer);
-        el._timer = setInterval(update, 1000);
-    }, 50);
-
-    return `<div id="${id}" class="card-days-badge-bottom">...</div>`;
+        }
+    }).catch(e => {
+        console.error("Notify toggle error:", e);
+        showToast("Error toggling notification");
+    });
 }
-
-// function handleNotifyClick() removed as it was a duplicate and unified above.
-
 
 function showToast(msg) {
     if (typeof tg !== 'undefined' && tg.showAlert) {
