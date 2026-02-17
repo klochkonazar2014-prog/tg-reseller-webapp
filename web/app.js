@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://hygiene-guest-start-quotations.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://anaheim-done-hartford-looksmart.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -754,11 +754,12 @@ async function shareReferralLink() {
     }
 
     // Fallback to old shareURL
-    const botUser = "Arendabrot_bot";
+    const botUser = "OctoRent_bot";
     const refLink = `https://t.me/${botUser}/app?startapp=${userId}`;
-    const shareText = "🎁 Твой подарок уже ждёт тебя в OctoRent!\n\nЗабирай его прямо сейчас - и получай призы на свой аккаунт ✨";
+    const shareText = "🎁 Твой подарок уже ждёт тебя в OctoRent!\n\nЗабирай его прямо сейчас — и получай призы на свой аккаунт ✨";
 
     if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.shareURL) {
+        console.log("Using shareURL fallback");
         window.Telegram.WebApp.shareURL(refLink, shareText);
     } else {
         copyToClipboard(refLink);
@@ -2148,9 +2149,13 @@ async function handleShareClick() {
         tg.switchInlineQuery(cleanName, ['users', 'groups', 'channels']);
     } else {
         const botUser = "OctoRent_bot";
-        const shareLink = `https://t.me/${botUser}?start=nft_${item.nft_address}`;
-        copyToClipboard(shareLink);
-        showToast(CURRENT_LANG === 'ru' ? "Ссылка скопирована" : "Link copied");
+        const shareText = `💎 Посмотри на этот NFT в OctoRent!\n\n${item.title}\n\nЗабирай его по ссылке: https://t.me/${botUser}/app?startapp=nft_${item.nft_address}`;
+        if (tg.shareURL) {
+            tg.shareURL(`https://t.me/${botUser}/app?startapp=nft_${item.nft_address}`, shareText);
+        } else {
+            copyToClipboard(`https://t.me/${botUser}/app?startapp=nft_${item.nft_address}`);
+            showToast(t('link_copied'));
+        }
     }
 }
 
