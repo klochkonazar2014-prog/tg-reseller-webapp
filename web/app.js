@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://wearing-gore-eyes-identifying.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://warming-packets-sticks-mobility.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -736,7 +736,7 @@ function shareReferralLink() {
     const userId = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user?.id) || 0;
     const botUser = "Arendabrot_bot";
     const refLink = `https://t.me/${botUser}/app?startapp=${userId}`;
-    const shareText = "🎁 Твой подарок уже ждёт тебя в OctoRent! Забирай его прямо сейчас! ✨";
+    const shareText = "🎁 Твой подарок уже ждёт тебя в OctoRent!\n\nЗабирай его прямо сейчас - и получай призы на свой аккаунт ✨";
 
     if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.shareURL) {
         window.Telegram.WebApp.shareURL(refLink, shareText);
@@ -766,7 +766,7 @@ async function handleReferralWithdraw() {
             showToast("Вывод успешно запрошен!");
             loadFriendsData();
         } else {
-            showToast("Ошибка: " + (data.error || "недостаточно средств"));
+            showToast("Минимальный баланс на вывод 0.1 TON");
         }
     } catch (e) {
         showToast("Ошибка соединения");
@@ -1201,7 +1201,7 @@ function initFilterLists() {
     }
 
     (window.STATIC_COLLECTIONS || []).forEach(col => {
-        if (col.name.toLowerCase().includes(nftSearch)) {
+        if (col.name && col.name.trim() !== "" && col.name.toLowerCase().includes(nftSearch)) {
             addFilterItem(nftCont, col.name, col.name, 'nft', ACTIVE_FILTERS.nft === col.name, col.image);
         }
     });
@@ -1294,7 +1294,7 @@ function initFilterLists() {
         }
 
         items.forEach(item => {
-            if (item.name.toLowerCase().includes(sVal)) {
+            if (item.name && item.name.trim() !== "" && item.name.toLowerCase().includes(sVal)) {
                 // Try clean visual
                 let visual = null;
                 if (m.key === 'symbol') visual = getTelegifterUrl('symbol', item.name);
@@ -1325,10 +1325,10 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
         const tgSymbol = getTelegifterUrl('symbol', name);
         const iconSrc = tgSymbol || (VISUAL_MAP.symbol ? VISUAL_MAP.symbol[name] : null);
 
-        // Robust rendering: Text underneath, Image on top. If Image fails, Text is visible.
-        visualHTML = `<div style="width:40px; height:40px; border-radius:8px; background: rgba(255, 255, 255, 0.03); border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
-            <span class="filter-item-letter">${name.substring(0, 3).toUpperCase()}</span>
-            ${iconSrc ? `<img src="${iconSrc}" class="filter-img" style="width:100%; height:100%; object-fit:contain; z-index:2; opacity:0; transition:opacity 0.2s;" onload="this.style.opacity='1'; if(this.previousElementSibling) this.previousElementSibling.style.display='none';" onerror="this.style.display = 'none'; if (this.previousElementSibling) this.previousElementSibling.style.opacity = '1';">` : ''}
+        // Black background for symbols, white icon (via CSS filter)
+        visualHTML = `<div style="width:40px; height:40px; border-radius:8px; background: #000; border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
+            <span class="filter-item-letter" style="color: #fff;">${name.substring(0, 3).toUpperCase()}</span>
+            ${iconSrc ? `<img src="${iconSrc}" class="filter-img symbol-invert" style="width:100%; height:100%; object-fit:contain; z-index:2; opacity:0; transition:opacity 0.2s;" onload="this.style.opacity='1'; if(this.previousElementSibling) this.previousElementSibling.style.display='none';" onerror="this.style.display = 'none'; if (this.previousElementSibling) this.previousElementSibling.style.opacity = '1';">` : ''}
         </div>`;
     } else if (key === 'bg') {
         const bgStyle = (VISUAL_MAP.bg && VISUAL_MAP.bg[name]) || '#333';
@@ -1427,6 +1427,7 @@ function closeMrktModal() {
 }
 
 function resetMrktModal() {
+    // Correcting sort to price_asc as default
     ACTIVE_FILTERS = { nft: 'all', model: 'all', bg: 'all', symbol: 'all', tags: 'all', sort: 'price_asc', price_from: null, price_to: null, gift_number: null, search: ACTIVE_FILTERS.search };
     document.getElementById('filter-gift-number').value = "";
     document.getElementById('filter-price-from').value = "";
@@ -1535,31 +1536,7 @@ function createItemCard(item) {
     return card;
 }
 
-function openAdvancedFilters() {
-    document.getElementById('mrkt-modal').classList.add('active');
-    document.getElementById('mrkt-modal-overlay').classList.add('active');
-}
-function closeMrktModal() {
-    document.getElementById('mrkt-modal').classList.remove('active');
-    document.getElementById('mrkt-modal-overlay').classList.remove('active');
-}
-function resetMrktModal() {
-    ACTIVE_FILTERS = { nft: 'all', model: 'all', bg: 'all', symbol: 'all', tags: 'all', sort: 'price_asc', price_from: null, price_to: null, gift_number: null, search: ACTIVE_FILTERS.search };
-    document.getElementById('filter-gift-number').value = "";
-    document.getElementById('filter-price-from').value = "";
-    document.getElementById('filter-price-to').value = "";
-    initFilterLists();
-    applyHeaderSearch();
-}
-function applyMrktModal() {
-    // Collect from inputs
-    ACTIVE_FILTERS.gift_number = document.getElementById('filter-gift-number').value;
-    ACTIVE_FILTERS.price_from = document.getElementById('filter-price-from').value;
-    ACTIVE_FILTERS.price_to = document.getElementById('filter-price-to').value;
-
-    closeMrktModal();
-    loadLiveItems(true); // Trigger server-side refresh
-}
+// Duplicate modal functions removed
 
 function debounce(func, wait) {
     let timeout;
@@ -1844,13 +1821,13 @@ async function openProductView(item) {
         const giftSlug = giftBaseName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join('');
         const tgNftLink = `https://t.me/nft/${giftSlug}-${nftNum}`;
 
-        const createPropRow = (label, value, statKey) => {
-            const displayValue = (!value || value === 'Unknown' || value === 'Gift') ? '—' : value;
+        const createPropRow = (label, value) => {
+            if (!value || value === 'Unknown' || value === 'Gift' || value === 'None') return null;
             const row = document.createElement('div');
             row.className = 'property-item';
             row.innerHTML = `
                 <div class="prop-left"><div class="prop-name">${label}</div></div>
-                <div class="prop-right"><span style="color:var(--accent-blue); font-weight:600;">${displayValue}</span></div>`;
+                <div class="prop-right"><span style="color:var(--accent-blue); font-weight:600;">${value}</span></div>`;
             return row;
         };
 
@@ -1863,8 +1840,9 @@ async function openProductView(item) {
 
         // Helper for clickable properties
         const appendClickableProp = (label, val, key) => {
-            if (!val) return;
-            const r = createPropRow(label, val, key);
+            if (!val || val === 'Unknown' || val === 'Gift' || val === 'None') return;
+            const r = createPropRow(label, val);
+            if (!r) return;
             r.classList.add('clickable-prop'); // Ensure visual feedback
             // Add arrow
             r.querySelector('.prop-right').innerHTML += `<span class="arrow-v" style="font-size:12px; margin-left:8px;">›</span>`;

@@ -3414,7 +3414,7 @@ body.hide-filters .header-column {
 
 /* --- Round 8: Gray Pricing Style Timer Box --- */
 .market-timer-box-premium {
-    width: 100%;
+    width: 100% !important;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
