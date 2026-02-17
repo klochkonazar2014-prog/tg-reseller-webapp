@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://sides-destiny-sagem-durable.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://arrangement-technology-transformation-cure.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -754,15 +754,24 @@ async function shareReferralLink() {
     try {
         // Check if the new method is available (v7.8+)
         if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.sendPreparedInlineMessage) {
-            const res = await fetch(`${BACKEND_URL}/api/referral/prepare_share`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user_id: userId })
-            });
-            const data = await res.json();
-            if (data.status === 'ok' && data.id) {
-                window.Telegram.WebApp.sendPreparedInlineMessage(data.id);
-                return;
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+                const res = await fetch(`${BACKEND_URL}/api/referral/prepare_share`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId }),
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+                const data = await res.json();
+                if (data.status === 'ok' && data.id) {
+                    window.Telegram.WebApp.sendPreparedInlineMessage(data.id);
+                    return;
+                }
+            } catch (e) {
+                console.error("Prepare share error/timeout:", e);
             }
         }
 
@@ -2219,6 +2228,10 @@ async function handleShareClick() {
         // Premium share window via Prepared Inline Message
         if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.sendPreparedInlineMessage) {
             try {
+                // Short timeout for preparation to avoid hanging
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 3000);
+
                 const res = await fetch(`${BACKEND_URL}/api/referral/prepare_share`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -2226,15 +2239,18 @@ async function handleShareClick() {
                         user_id: userId,
                         type: item.type,
                         name: item.nft_name
-                    })
+                    }),
+                    signal: controller.signal
                 });
+                clearTimeout(timeoutId);
                 const data = await res.json();
                 if (data.status === 'ok' && data.id) {
                     window.Telegram.WebApp.sendPreparedInlineMessage(data.id);
                     return;
                 }
             } catch (e) {
-                console.error("Premium Share Error:", e);
+                console.error("Premium Share Error or Timeout:", e);
+                // Fall through to fallback
             }
         }
 
