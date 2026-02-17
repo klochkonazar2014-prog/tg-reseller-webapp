@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://aircraft-dynamic-format-explore.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://kilometers-remains-pending-dirt.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -741,13 +741,18 @@ async function shareReferralLink() {
     if (IS_SHARING_REF) return;
     IS_SHARING_REF = true;
 
-    const isSupported = !!window.Telegram?.WebApp?.sendPreparedInlineMessage;
-    const sdkVersion = window.Telegram?.WebApp?.version || "unknown";
-    const userId = (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) || 0;
+    const method = window.Telegram?.WebApp?.sendPreparedInlineMessage || tg?.sendPreparedInlineMessage;
+    const isSupported = !!method;
+    const sdkVersion = window.Telegram?.WebApp?.version || tg?.version || "unknown";
+    const userId = (window.Telegram?.WebApp?.initDataUnsafe?.user?.id || tg?.initDataUnsafe?.user?.id) || 0;
 
-    // EXHAUSTIVE DEBUG ALERT
     if (window.Telegram?.WebApp?.showAlert) {
         window.Telegram.WebApp.showAlert(`DEBUG: Start Share\nUID: ${userId}\nSupp: ${isSupported}\nVer: ${sdkVersion}\nUrl: ${BACKEND_URL.substring(0, 20)}...`);
+    }
+
+    if (!isSupported && window.Telegram?.WebApp?.showAlert) {
+        console.warn("Stage 1 not supported by client, skipping...");
+        // window.Telegram.WebApp.showAlert("Stage 1 (Premium) не поддерживается вашим клиентом. Используем обычный режим.");
     }
 
     const btn = document.querySelector('.btn-invite-white');
@@ -2247,20 +2252,21 @@ async function handleShareClick() {
     IS_SHARE_OPENING = true;
 
     try {
-        if (!CURRENT_PAYMENT_ITEM) return;
-
         const item = CURRENT_PAYMENT_ITEM;
+        const userId = (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) || 0;
         const botUser = "OctoRent_bot";
         const shareLink = `https://t.me/${botUser}/app?startapp=nft_${item.nft_address}`;
         const shareText = `💎 Посмотри на этот NFT в OctoRent!\n\n${item.title}`;
-        const isSupported = !!window.Telegram?.WebApp?.sendPreparedInlineMessage;
+
+        const method = window.Telegram?.WebApp?.sendPreparedInlineMessage || tg?.sendPreparedInlineMessage;
+        const isSupported = !!method;
 
         if (window.Telegram?.WebApp?.showAlert) {
             window.Telegram.WebApp.showAlert(`DEBUG PRODUCT: UID=${userId}, Supp=${isSupported}`);
         }
 
         // Stage 1: Premium Prepared Message
-        if (window.Telegram?.WebApp?.sendPreparedInlineMessage) {
+        if (isSupported) {
             console.log("Attempting Stage 1: Prepared Message...");
             try {
                 const controller = new AbortController();
