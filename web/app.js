@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://woods-attacks-poem-trains.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://housewares-grid-blah-expect.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -744,10 +744,11 @@ async function shareReferralLink() {
     const method = window.Telegram?.WebApp?.sendPreparedInlineMessage || tg?.sendPreparedInlineMessage;
     const isSupported = !!method;
     const sdkVersion = window.Telegram?.WebApp?.version || tg?.version || "unknown";
+    const platform = window.Telegram?.WebApp?.platform || tg?.platform || "unknown";
     const userId = (window.Telegram?.WebApp?.initDataUnsafe?.user?.id || tg?.initDataUnsafe?.user?.id) || 0;
 
     if (window.Telegram?.WebApp?.showAlert) {
-        window.Telegram.WebApp.showAlert(`DEBUG: Start Share\nUID: ${userId}\nSupp: ${isSupported}\nVer: ${sdkVersion}\nUrl: ${BACKEND_URL.substring(0, 20)}...`);
+        window.Telegram.WebApp.showAlert(`DEBUG: Start Share\nUID: ${userId}\nSupp: ${isSupported}\nVer: ${sdkVersion}\nPlat: ${platform}\nUrl: ${BACKEND_URL.substring(0, 20)}...`);
     }
 
     if (!isSupported && window.Telegram?.WebApp?.showAlert) {
