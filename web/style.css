@@ -3182,11 +3182,13 @@ body.hide-filters .header-column {
 } */
 
 /* NEW: Make nav compact in profile */
-#profile-container:not([style*="display: none"])~.bottom-nav {
+#profile-container:not([style*="display: none"])~.bottom-nav,
+#friends-container:not([style*="display: none"])~.bottom-nav {
     height: calc(75px + var(--safe-area-bottom)) !important;
 }
 
-#profile-container:not([style*="display: none"])~.bottom-nav .mode-toggle-container {
+#profile-container:not([style*="display: none"])~.bottom-nav .mode-toggle-container,
+#friends-container:not([style*="display: none"])~.bottom-nav .mode-toggle-container {
     display: none !important;
 }
 

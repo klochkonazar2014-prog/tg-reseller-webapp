@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://socks-society-bought-seventh.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://tracks-stocks-howto-funky.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -21,6 +21,7 @@ let CURRENT_STATUS = 'available'; // available, rented
 let GLOBAL_TON_PRICE = 0;
 let FRIENDLY_ADDR_CACHE = {};
 let COUNTDOWN_INTERVALS = {};
+let SEEN_ITEM_IDS = new Set(); // DUPLICATE PROTECTION
 
 /**
  * Converts Raw address (0:hex) to User-Friendly Non-bounceable (UQ...)
@@ -694,6 +695,7 @@ async function loadFriendsData() {
 }
 
 function showEarningsHelp() {
+    console.log("Earnings help clicked");
     const sheet = document.getElementById('earnings-help-sheet');
     if (sheet) sheet.style.display = 'block';
 }
@@ -704,6 +706,7 @@ function closeEarningsHelp() {
 }
 
 function shareReferralLink() {
+    console.log("Invite button clicked");
     const userId = tg.initDataUnsafe?.user?.id || 0;
     const botUser = "OctoRent_bot";
     const refLink = `https://t.me/${botUser}?start=ref_${userId}`;
@@ -720,10 +723,12 @@ function shareReferralLink() {
 
 // Alias for filter modal
 function openOctoModal() {
-    openMrktModal();
+    console.log("Opening filter modal...");
+    openAdvancedFilters();
 }
 
 async function handleReferralWithdraw() {
+    console.log("Withdraw button clicked");
     const userId = tg.initDataUnsafe?.user?.id || 0;
     try {
         const res = await fetch(`${BACKEND_URL}/api/withdraw_referral`, {
@@ -895,6 +900,7 @@ async function loadLiveItems(reset = true) {
     if (reset) {
         GLOBAL_OFFSET = 0;
         HAS_MORE = true;
+        SEEN_ITEM_IDS.clear(); // Reset duplicates tracker
         document.getElementById('items-view').innerHTML = '';
         if (topLoader) topLoader.style.display = 'block';
         window.scrollTo({ top: 0, behavior: 'instant' });
@@ -942,9 +948,14 @@ async function loadLiveItems(reset = true) {
         const data = await response.json();
 
         if (data && data.items) {
-            const items = data.items;
-            if (items.length < BATCH_SIZE) HAS_MORE = false;
-            GLOBAL_OFFSET += items.length;
+            const items = data.items.filter(item => {
+                if (SEEN_ITEM_IDS.has(item.id)) return false;
+                SEEN_ITEM_IDS.add(item.id);
+                return true;
+            });
+
+            if (data.items.length < BATCH_SIZE) HAS_MORE = false;
+            GLOBAL_OFFSET += data.items.length;
 
             const processed = items
                 .filter(item => item.type === CURRENT_TYPE) // Strict client-side type check
