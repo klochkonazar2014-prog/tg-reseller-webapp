@@ -1,12 +1,14 @@
 // Consts
 let tg = null;
+let IS_SHARING_REF = false; // Prevent double clicks on referral share
+
 const MY_MARKUP = 0.20;
 const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/web/tonconnect-manifest.json";
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://anaheim-done-hartford-looksmart.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://sides-destiny-sagem-durable.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -292,13 +294,17 @@ function showToast(msg) {
         container.style.cssText = 'position:fixed; bottom:100px; left:50%; transform:translateX(-50%); z-index:10000; pointer-events:none; display:flex; flex-direction:column; align-items:center; gap:8px;';
         document.body.appendChild(container);
     }
+
+    // Remove existing toasts to prevent stacking
+    container.innerHTML = '';
+
     const toast = document.createElement('div');
     toast.className = 'toast-notification active'; // CSS handles transition
     toast.innerText = msg;
     container.appendChild(toast);
     setTimeout(() => {
         toast.classList.remove('active');
-        setTimeout(() => toast.remove(), 300);
+        setTimeout(() => { if (toast.parentNode === container) toast.remove(); }, 300);
     }, 3000);
 }
 const renderTonAmount = (val) => `<span class="icon-before icon-ton tm-amount">${val}</span>`;
@@ -732,12 +738,22 @@ function closeEarningsHelp() {
 }
 
 async function shareReferralLink() {
+    if (IS_SHARING_REF) return;
+    IS_SHARING_REF = true;
+
+    const btn = document.querySelector('.btn-invite-white');
+    const originalText = btn ? btn.innerText : null;
+    if (btn) {
+        btn.style.opacity = '0.7';
+        btn.innerText = '...';
+    }
+
     console.log("Invite button clicked");
     const userId = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user?.id) || 0;
 
-    // Check if the new method is available (v7.8+)
-    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.sendPreparedInlineMessage) {
-        try {
+    try {
+        // Check if the new method is available (v7.8+)
+        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.sendPreparedInlineMessage) {
             const res = await fetch(`${BACKEND_URL}/api/referral/prepare_share`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -748,22 +764,31 @@ async function shareReferralLink() {
                 window.Telegram.WebApp.sendPreparedInlineMessage(data.id);
                 return;
             }
-        } catch (e) {
-            console.error("Prepare share error:", e);
         }
-    }
 
-    // Fallback to old shareURL
-    const botUser = "OctoRent_bot";
-    const refLink = `https://t.me/${botUser}/app?startapp=${userId}`;
-    const shareText = "🎁 Твой подарок уже ждёт тебя в OctoRent!\n\nЗабирай его прямо сейчас — и получай призы на свой аккаунт ✨";
+        // Fallback to old shareURL
+        const botUser = "OctoRent_bot";
+        const refLink = `https://t.me/${botUser}/app?startapp=${userId}`;
+        const shareText = "🎁 Твой подарок уже ждёт тебя в OctoRent!\n\nЗабирай его прямо сейчас — и получай призы на свой аккаунт ✨";
 
-    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.shareURL) {
-        console.log("Using shareURL fallback");
-        window.Telegram.WebApp.shareURL(refLink, shareText);
-    } else {
-        copyToClipboard(refLink);
-        showToast("Реферальная ссылка скопирована!");
+        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.shareURL) {
+            console.log("Using shareURL fallback");
+            window.Telegram.WebApp.shareURL(refLink, shareText);
+        } else {
+            copyToClipboard(refLink);
+            showToast("Реферальная ссылка скопирована!");
+        }
+    } catch (e) {
+        console.error("Share error:", e);
+        showToast("Ошибка при попытке поделиться");
+    } finally {
+        setTimeout(() => {
+            IS_SHARING_REF = false;
+            if (btn && originalText) {
+                btn.style.opacity = '1';
+                btn.innerText = originalText;
+            }
+        }, 1000); // 1s debounce
     }
 }
 
@@ -773,7 +798,19 @@ function openOctoModal() {
     openAdvancedFilters();
 }
 
+let IS_WITHDRAWING = false;
 async function handleReferralWithdraw() {
+    if (IS_WITHDRAWING) return;
+    IS_WITHDRAWING = true;
+
+    const btn = document.querySelector('.withdraw-btn-white');
+    const originalText = btn ? btn.innerText : null;
+    if (btn) {
+        btn.disabled = true;
+        btn.style.opacity = '0.7';
+        btn.innerText = t('processing');
+    }
+
     console.log("Withdraw button clicked");
     const userId = tg.initDataUnsafe?.user?.id || 0;
     try {
@@ -791,6 +828,15 @@ async function handleReferralWithdraw() {
         }
     } catch (e) {
         showToast("Ошибка соединения");
+    } finally {
+        setTimeout(() => {
+            IS_WITHDRAWING = false;
+            if (btn && originalText) {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                btn.innerText = originalText;
+            }
+        }, 1500); // 1.5s debounce
     }
 }
 
@@ -807,13 +853,13 @@ function showHelp(amount) {
         <div style="font-weight:700; color:#fff; margin-bottom:10px;">${t('you_will_send', { amount: amount })}</div>
     `;
 
-    document.getElementById('help-modal-overlay').classList.add('active');
-    document.getElementById('help-modal').classList.add('active');
+    const modal = document.getElementById('help-modal');
+    if (modal) modal.classList.add('active');
 }
 
-function closeHelpModal() {
-    document.getElementById('help-modal-overlay').classList.remove('active');
-    document.getElementById('help-modal').classList.remove('active');
+function closeHelp() {
+    const modal = document.getElementById('help-modal');
+    if (modal) modal.classList.remove('active');
 }
 
 function closeTcModal() {
@@ -991,7 +1037,15 @@ async function loadLiveItems(reset = true) {
             throw new Error(`Server status: ${response ? response.status : 'Network Error'}`);
         }
 
-        const data = await response.json();
+        let data;
+        try {
+            data = await response.json();
+        } catch (je) {
+            console.error("JSON Parse Error:", je, "Response was:", response);
+            throw new Error("Invalid server response (JSON parse failed)");
+        }
+
+        console.log(`Loaded ${data.items ? data.items.length : 0} items from server.`);
 
         if (data && data.items) {
             const items = data.items.filter(item => {
@@ -1001,7 +1055,10 @@ async function loadLiveItems(reset = true) {
                 return true;
             });
 
-            if (data.items.length < BATCH_SIZE) HAS_MORE = false;
+            if (data.items.length < BATCH_SIZE) {
+                console.log("No more items to load (reached end of collection).");
+                HAS_MORE = false;
+            }
             GLOBAL_OFFSET += data.items.length;
 
             const processed = items
@@ -1014,6 +1071,7 @@ async function loadLiveItems(reset = true) {
                 });
 
             if (reset && items.length === 0) {
+                console.warn("No items found for current filters.");
                 document.getElementById('items-view').innerHTML = `
                     <div class="error-msg" style="padding-top: 100px; text-align:center;">
                         <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: #333; margin-bottom: 20px;">
@@ -1028,14 +1086,19 @@ async function loadLiveItems(reset = true) {
             }
 
             if (reset) initFilterLists();
+        } else {
+            console.error("Server returned OK status but missing items field:", data);
         }
 
         if (document.getElementById('top-loader')) document.getElementById('top-loader').style.display = 'none';
         if (document.getElementById('scroll-loader')) document.getElementById('scroll-loader').style.display = 'none';
         hideLoading();
     } catch (e) {
-        console.error("Load Error details:", e);
-        if (reset && document.getElementById('top-loader')) document.getElementById('top-loader').innerText = "Ошибка соединения с сервером. Показываем демо-данные.";
+        console.error("CRITICAL Load Error:", e);
+        if (reset && document.getElementById('top-loader')) {
+            document.getElementById('top-loader').innerText = "Ошибка соединения с сервером. Показываем демо-данные.";
+            setTimeout(() => { if (document.getElementById('top-loader')) document.getElementById('top-loader').style.display = 'none'; }, 2000);
+        }
 
         // --- 🧪 DEV/DEMO FALLBACK: Inject mock data if backend is dead ---
         if (reset) {
@@ -1072,6 +1135,7 @@ async function loadLiveItems(reset = true) {
         hideLoading();
     } finally {
         IS_LOADING = false;
+        console.log("loadLiveItems finished. IS_LOADING reset to false.");
     }
 }
 
@@ -1438,30 +1502,56 @@ function applyHeaderSearch() {
 
 
 function openAdvancedFilters() {
-    document.getElementById('mrkt-modal').classList.add('active');
-    document.getElementById('mrkt-modal-overlay').classList.add('active');
+    const modal = document.getElementById('octo-modal');
+    const overlay = document.getElementById('octo-modal-overlay');
+    if (modal) modal.classList.add('active');
+    if (overlay) overlay.classList.add('active');
 }
 
-function closeMrktModal() {
-    document.getElementById('mrkt-modal').classList.remove('active');
-    document.getElementById('mrkt-modal-overlay').classList.remove('active');
+function closeOctoModal() {
+    const modal = document.getElementById('octo-modal');
+    const overlay = document.getElementById('octo-modal-overlay');
+    if (modal) modal.classList.remove('active');
+    if (overlay) overlay.classList.remove('active');
 }
 
-function resetMrktModal() {
-    // Correcting sort to price_asc as default
-    ACTIVE_FILTERS = { nft: 'all', model: 'all', bg: 'all', symbol: 'all', tags: 'all', sort: 'price_asc', price_from: null, price_to: null, gift_number: null, search: ACTIVE_FILTERS.search };
-    document.getElementById('filter-gift-number').value = "";
-    document.getElementById('filter-price-from').value = "";
-    document.getElementById('filter-price-to').value = "";
+function resetOctoModal() {
+    ACTIVE_FILTERS = {
+        nft: 'all',
+        model: 'all',
+        bg: 'all',
+        symbol: 'all',
+        tags: 'all',
+        sort: 'price_asc',
+        price_from: null,
+        price_to: null,
+        gift_number: null,
+        search: ACTIVE_FILTERS.search || ""
+    };
+
+    // Reset specific inputs in octo-modal
+    const gNum = document.getElementById('filter-gift-number');
+    const pFrom = document.getElementById('filter-price-from');
+    const pTo = document.getElementById('filter-price-to');
+
+    if (gNum) gNum.value = "";
+    if (pFrom) pFrom.value = "";
+    if (pTo) pTo.value = "";
+
     initFilterLists();
     applyHeaderSearch();
 }
 
-function applyMrktModal() {
-    ACTIVE_FILTERS.gift_number = document.getElementById('filter-gift-number').value;
-    ACTIVE_FILTERS.price_from = document.getElementById('filter-price-from').value;
-    ACTIVE_FILTERS.price_to = document.getElementById('filter-price-to').value;
-    closeMrktModal();
+function applyOctoModal() {
+    const gNum = document.getElementById('filter-gift-number');
+    const pFrom = document.getElementById('filter-price-from');
+    const pTo = document.getElementById('filter-price-to');
+
+    ACTIVE_FILTERS.gift_number = gNum ? gNum.value : "";
+    ACTIVE_FILTERS.price_from = pFrom ? pFrom.value : "";
+    ACTIVE_FILTERS.price_to = pTo ? pTo.value : "";
+
+    closeOctoModal();
     loadLiveItems(true);
 }
 
@@ -2115,47 +2205,55 @@ function closeProductView() {
     }
 }
 
+let IS_SHARE_OPENING = false;
 async function handleShareClick() {
-    if (!CURRENT_PAYMENT_ITEM) return;
+    if (IS_SHARE_OPENING) return;
+    IS_SHARE_OPENING = true;
 
-    const item = CURRENT_PAYMENT_ITEM;
-    const userId = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user?.id) || 0;
+    try {
+        if (!CURRENT_PAYMENT_ITEM) return;
 
-    // Premium share window via Prepared Inline Message
-    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.sendPreparedInlineMessage) {
-        try {
-            const res = await fetch(`${BACKEND_URL}/api/referral/prepare_share`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    user_id: userId,
-                    type: item.type,
-                    name: item.nft_name
-                })
-            });
-            const data = await res.json();
-            if (data.status === 'ok' && data.id) {
-                window.Telegram.WebApp.sendPreparedInlineMessage(data.id);
-                return;
+        const item = CURRENT_PAYMENT_ITEM;
+        const userId = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user?.id) || 0;
+
+        // Premium share window via Prepared Inline Message
+        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.sendPreparedInlineMessage) {
+            try {
+                const res = await fetch(`${BACKEND_URL}/api/referral/prepare_share`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: userId,
+                        type: item.type,
+                        name: item.nft_name
+                    })
+                });
+                const data = await res.json();
+                if (data.status === 'ok' && data.id) {
+                    window.Telegram.WebApp.sendPreparedInlineMessage(data.id);
+                    return;
+                }
+            } catch (e) {
+                console.error("Premium Share Error:", e);
             }
-        } catch (e) {
-            console.error("Premium Share Error:", e);
         }
-    }
 
-    // Fallback to switchInlineQuery
-    const cleanName = item.nft_name.replace('@', '');
-    if (tg && tg.switchInlineQuery) {
-        tg.switchInlineQuery(cleanName, ['users', 'groups', 'channels']);
-    } else {
-        const botUser = "OctoRent_bot";
-        const shareText = `💎 Посмотри на этот NFT в OctoRent!\n\n${item.title}\n\nЗабирай его по ссылке: https://t.me/${botUser}/app?startapp=nft_${item.nft_address}`;
-        if (tg.shareURL) {
-            tg.shareURL(`https://t.me/${botUser}/app?startapp=nft_${item.nft_address}`, shareText);
+        // Fallback to switchInlineQuery
+        const cleanName = item.nft_name.replace('@', '');
+        if (tg && tg.switchInlineQuery) {
+            tg.switchInlineQuery(cleanName, ['users', 'groups', 'channels']);
         } else {
-            copyToClipboard(`https://t.me/${botUser}/app?startapp=nft_${item.nft_address}`);
-            showToast(t('link_copied'));
+            const botUser = "OctoRent_bot";
+            const shareText = `💎 Посмотри на этот NFT в OctoRent!\n\n${item.title}\n\nЗабирай его по ссылке: https://t.me/${botUser}/app?startapp=nft_${item.nft_address}`;
+            if (tg.shareURL) {
+                tg.shareURL(`https://t.me/${botUser}/app?startapp=nft_${item.nft_address}`, shareText);
+            } else {
+                copyToClipboard(`https://t.me/${botUser}/app?startapp=nft_${item.nft_address}`);
+                showToast(t('link_copied'));
+            }
         }
+    } finally {
+        setTimeout(() => { IS_SHARE_OPENING = false; }, 1000);
     }
 }
 
@@ -2559,21 +2657,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
 });
 
-// Global exposed functions for inline HTML events (Friends tab)
+// Global exposed functions for inline HTML events
 window.shareReferralLink = shareReferralLink;
 window.handleReferralWithdraw = handleReferralWithdraw;
 window.showEarningsHelp = showEarningsHelp;
 window.closeEarningsHelp = closeEarningsHelp;
 window.openOctoModal = openOctoModal;
 window.toggleGenericModal = toggleGenericModal;
-window.applyMrktModal = applyMrktModal;
-window.resetMrktModal = resetMrktModal;
-window.closeMrktModal = closeMrktModal;
+window.applyOctoModal = applyOctoModal;
+window.resetOctoModal = resetOctoModal;
+window.closeOctoModal = closeOctoModal;
 window.showToast = showToast;
 window.copyToClipboard = copyToClipboard;
-window.showEarningsHelp = showEarningsHelp;
-window.closeEarningsHelp = closeEarningsHelp;
-window.shareReferralLink = shareReferralLink;
 
 async function fetchTonPrice() {
     try {
