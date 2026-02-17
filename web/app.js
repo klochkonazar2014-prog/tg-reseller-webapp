@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://warming-packets-sticks-mobility.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://heating-asthma-lawyer-geographic.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -731,9 +731,29 @@ function closeEarningsHelp() {
     if (sheet) sheet.classList.remove('active');
 }
 
-function shareReferralLink() {
+async function shareReferralLink() {
     console.log("Invite button clicked");
     const userId = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user?.id) || 0;
+
+    // Check if the new method is available (v7.8+)
+    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.sendPreparedInlineMessage) {
+        try {
+            const res = await fetch(`${BACKEND_URL}/api/referral/prepare_share`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: userId })
+            });
+            const data = await res.json();
+            if (data.status === 'ok' && data.id) {
+                window.Telegram.WebApp.sendPreparedInlineMessage(data.id);
+                return;
+            }
+        } catch (e) {
+            console.error("Prepare share error:", e);
+        }
+    }
+
+    // Fallback to old shareURL
     const botUser = "Arendabrot_bot";
     const refLink = `https://t.me/${botUser}/app?startapp=${userId}`;
     const shareText = "🎁 Твой подарок уже ждёт тебя в OctoRent!\n\nЗабирай его прямо сейчас - и получай призы на свой аккаунт ✨";
@@ -1919,6 +1939,43 @@ async function openProductView(item) {
             } finally {
                 rentBtn.innerHTML = originalHTML;
                 rentBtn.disabled = false;
+            }
+        };
+    }
+
+    const shareItemBtn = document.getElementById('view-share-btn');
+    if (shareItemBtn) {
+        shareItemBtn.onclick = async () => {
+            const userId = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user?.id) || 0;
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.sendPreparedInlineMessage) {
+                try {
+                    const res = await fetch(`${BACKEND_URL}/api/referral/prepare_share`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            user_id: userId,
+                            type: item.type,
+                            name: item.nft_name
+                        })
+                    });
+                    const data = await res.json();
+                    if (data.status === 'ok' && data.id) {
+                        window.Telegram.WebApp.sendPreparedInlineMessage(data.id);
+                        return;
+                    }
+                } catch (e) {
+                    console.error("Share item prepare error:", e);
+                }
+            }
+            // Fallback
+            const botUser = "Arendabrot_bot";
+            const refLink = `https://t.me/${botUser}/app?startapp=${userId}`;
+            const shareText = "🎁 Твой подарок уже ждёт тебя в OctoRent!\n\nЗабирай его прямо сейчас - и получай призы на свой аккаунт ✨";
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.shareURL) {
+                window.Telegram.WebApp.shareURL(refLink, shareText);
+            } else {
+                copyToClipboard(refLink);
+                showToast("Реферальная ссылка скопирована!");
             }
         };
     }

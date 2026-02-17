@@ -168,7 +168,7 @@ body {
     border-radius: 12px;
     color: #fff;
     height: 48px;
-    padding-left: 48px !important;
+    padding-left: 52px !important;
     /* Left-aligned text starts after icon */
     padding-right: 16px;
     font-size: 16px;
@@ -3412,6 +3412,10 @@ body.hide-filters .header-column {
     white-space: nowrap;
 }
 
+.countdown-market-container {
+    padding: 0 !important;
+}
+
 /* --- Round 8: Gray Pricing Style Timer Box --- */
 .market-timer-box-premium {
     width: 100% !important;
@@ -3651,4 +3655,7 @@ tc-root>div {
 
 #product-view {
     z-index: 10000;
+}
+.symbol-invert {
+    filter: brightness(0) invert(1) contrast(100%);
 }
