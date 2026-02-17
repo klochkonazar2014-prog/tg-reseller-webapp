@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://scope-included-cooking-keyword.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://promotions-cincinnati-decisions-indie.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -2003,30 +2003,23 @@ async function openProductView(item) {
                     if (wt) wt.innerText = diffHrs < 1 ? t('just_now') : `${Math.round(diffHrs)} ${t('hours_ago')}`;
                 }
             }
-            if (details.attributes) {
+            if (details.attributes && propCont) {
                 details.attributes.forEach(attr => {
                     const trait = attr.trait_type.toLowerCase();
-                    const row = Array.from(document.querySelectorAll('.property-item')).find(r => r.querySelector('.prop-name')?.textContent === t(trait));
-                    if (row) {
+                    const label = t(trait) || attr.trait_type;
+                    let row = Array.from(propCont.querySelectorAll('.property-item')).find(r => r.querySelector('.prop-name')?.textContent === label);
+
+                    if (!row) {
+                        // Create row if missing (e.g. Symbol was not in initial item)
+                        let key = trait;
+                        if (key === 'backdrop' || key === 'background' || key === 'фон') key = 'bg';
+                        if (key === 'symbol' || key === 'символ') key = 'symbol';
+                        if (key === 'model' || key === 'модель') key = 'model';
+
+                        appendClickableProp(label, attr.value, key);
+                    } else {
                         const valSpan = row.querySelector('.prop-right span');
                         if (valSpan) valSpan.textContent = attr.value;
-
-                        // NEW: Make attribute clickable to filter
-                        row.classList.add('clickable-prop');
-                        row.onclick = () => {
-                            let filterKey = trait;
-                            if (filterKey === 'backdrop' || filterKey === 'background' || filterKey === 'фон') {
-                                filterKey = 'bg';
-                            }
-                            if (ACTIVE_FILTERS.hasOwnProperty(filterKey)) {
-                                ACTIVE_FILTERS[filterKey] = attr.value;
-                                closeProductView();
-                                switchTab(0); // Go to Gifts
-                                initFilterLists();
-                                applyHeaderSearch();
-                                tg?.HapticFeedback?.impactOccurred('light');
-                            }
-                        };
                     }
                 });
             }
