@@ -3412,6 +3412,66 @@ body.hide-filters .header-column {
     white-space: nowrap;
 }
 
+/* --- Round 5: Market App Pill Style Timer Fix --- */
+.market-timer-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+}
+
+.mt-label {
+    color: #8b9bb4;
+    font-size: 13px;
+    font-weight: 700;
+    margin-right: 4px;
+}
+
+.mt-pill {
+    background: #1c1c1e;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 4px 10px;
+    border-radius: 8px;
+    color: #fff;
+    font-weight: 800;
+    font-size: 14px;
+    min-width: 34px;
+    text-align: center;
+}
+
+.mt-pill.mt-wide {
+    min-width: 70px;
+}
+
+.mt-sep {
+    color: #3b3b3e;
+    font-weight: 900;
+}
+
+.mt-date {
+    color: #8b9bb4;
+    font-size: 13px;
+    margin-left: auto;
+}
+
+/* --- Round 5: Filter Modal Buttons Alignment --- */
+.mrkt-footer {
+    padding: 16px 24px;
+    display: flex;
+    gap: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    background: #09090b;
+}
+
+.mrkt-footer button {
+    flex: 1;
+    height: 52px;
+    border-radius: 14px;
+    font-weight: 800;
+    font-size: 15px;
+}
+
 #notify-btn {
     transition: all 0.3s ease;
 }

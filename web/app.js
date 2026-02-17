@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://tracks-stocks-howto-funky.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://others-plenty-hub-warm.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -482,6 +482,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     try {
         if (window.Telegram && window.Telegram.WebApp) {
             tg = window.Telegram.WebApp;
+            tg.ready();
             tg.expand();
             tg.MainButton.hide();
         }
@@ -731,10 +732,10 @@ async function handleReferralWithdraw() {
     console.log("Withdraw button clicked");
     const userId = tg.initDataUnsafe?.user?.id || 0;
     try {
-        const res = await fetch(`${BACKEND_URL}/api/withdraw_referral`, {
+        const res = await fetch(`${BACKEND_URL}/api/referral/withdraw`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_id: userId })
+            body: JSON.stringify({ user_id: userId, amount: 0.1, wallet_address: "manual" })
         });
         const data = await res.json();
         if (data.success) {
@@ -949,8 +950,9 @@ async function loadLiveItems(reset = true) {
 
         if (data && data.items) {
             const items = data.items.filter(item => {
-                if (SEEN_ITEM_IDS.has(item.id)) return false;
-                SEEN_ITEM_IDS.add(item.id);
+                const uid = item.nft_address || item.id;
+                if (SEEN_ITEM_IDS.has(uid)) return false;
+                SEEN_ITEM_IDS.add(uid);
                 return true;
             });
 
@@ -2499,6 +2501,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize TON Price
     fetchTonPrice();
     setInterval(fetchTonPrice, 60000); // Update every minute
+
+    // Global exposed functions for inline HTML events (Friends tab)
+    window.shareReferralLink = shareReferralLink;
+    window.handleReferralWithdraw = handleReferralWithdraw;
+    window.showEarningsHelp = showEarningsHelp;
+    window.closeEarningsHelp = closeEarningsHelp;
+    window.openOctoModal = openOctoModal;
+    window.toggleGenericModal = toggleGenericModal;
+    window.applyMrktModal = applyMrktModal;
+    window.resetMrktModal = resetMrktModal;
+    window.closeMrktModal = closeMrktModal;
 });
 
 async function fetchTonPrice() {
