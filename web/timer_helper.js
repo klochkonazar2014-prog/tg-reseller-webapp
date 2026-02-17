@@ -25,22 +25,22 @@ function startCountdown(endTime, elements, isMini = false) {
         // Compact format: show only 2 units
         let display;
         if (isMini) {
-            // For mini timers on cards: "Xд Xч" or "Xч Xм"
+            // For mini timers on cards: JUST "55d 3h" - NO extra text
+            if (d > 0) {
+                display = `${d}d ${h}h`;
+            } else if (h > 0) {
+                display = `${h}h ${m}m`;
+            } else {
+                display = `${m}m`;
+            }
+        } else {
+            // For product view timer: ONE LINE format
             if (d > 0) {
                 display = `${d}д ${h}ч`;
             } else if (h > 0) {
                 display = `${h}ч ${m}м`;
             } else {
                 display = `${m}м`;
-            }
-        } else {
-            // For large timers (product view): same compact logic
-            if (d > 0) {
-                display = `Освободится через ${d} дней ${h} часов`;
-            } else if (h > 0) {
-                display = `Освободится через ${h} часов ${m} минут`;
-            } else {
-                display = `Освободится через ${m} минут`;
             }
         }
 

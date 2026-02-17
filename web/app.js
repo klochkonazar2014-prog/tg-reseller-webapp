@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://hub-saved-pottery-theme.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://dir-efforts-wise-gulf.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -707,9 +707,12 @@ function shareReferralLink() {
     const userId = tg.initDataUnsafe?.user?.id || 0;
     const botUser = "OctoRent_bot";
     const refLink = `https://t.me/${botUser}?start=ref_${userId}`;
-    if (tg && tg.switchInlineQuery) {
-        tg.switchInlineQuery("ref");
+
+    // Use shareURL to send message directly from mini app (like Rocket Case example)
+    if (tg && tg.shareURL) {
+        tg.shareURL(refLink, "🎁 Присоединяйся к OctoRent и получай бонусы!");
     } else {
+        // Fallback to clipboard
         copyToClipboard(refLink);
         showToast("Реферальная ссылка скопирована");
     }
@@ -1657,7 +1660,7 @@ async function openProductView(item) {
         if (item.status === 'rented' && item.rent_ends_at) {
             // Create a unique timer element ID
             const timerId = 'release-timer-' + item.id;
-            releaseBadge.innerHTML = `<div id="${timerId}" style="margin-bottom:12px;"></div>`;
+            releaseBadge.innerHTML = `<div id="${timerId}" style="display:inline-block; font-size:16px; font-weight:700; color:#fff; margin-bottom:12px;"></div>`;
             releaseBadge.style.display = 'block';
 
             // Start the countdown timer

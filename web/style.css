@@ -3541,7 +3541,12 @@ body.hide-filters .header-column {
 
 /* TON CONNECT OVERRIDE */
 tc-root {
-    z-index: 999999 !important;
+    z-index: 99999999 !important;
+    position: fixed !important;
+}
+
+tc-root>div {
+    z-index: 99999999 !important;
 }
 
 #product-view {
