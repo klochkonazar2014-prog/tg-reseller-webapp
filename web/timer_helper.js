@@ -30,12 +30,14 @@ function startCountdown(endTime, elements, isMini = false) {
             else display = `${m}m`;
             targets.forEach(el => el.innerText = display);
         } else {
-            // For product view timer: Simplified Horizontal Box
+            // For product view timer: Premium Full-width Box
             const html = `
-                <div class="market-timer-box">
-                    <span class="mt-box-label">Ends in</span>
-                    <span class="mt-box-val">${d}d : ${pad(h)} : ${pad(m)} : ${pad(s)}</span>
-                    <span class="mt-box-date">${dateStr}</span>
+                <div class="market-timer-box-premium">
+                    <div class="mt-premium-top">
+                        <span class="mt-premium-label">Ends in</span>
+                        <span class="mt-premium-date">${dateStr}</span>
+                    </div>
+                    <div class="mt-premium-val">${d}d : ${pad(h)} : ${pad(m)} : ${pad(s)}</div>
                 </div>
             `;
             targets.forEach(el => el.innerHTML = html);
