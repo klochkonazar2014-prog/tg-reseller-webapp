@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://dynamic-enterprises-magazine-regions.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://adventure-chosen-has-podcast.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -723,27 +723,26 @@ async function loadFriendsData() {
 function showEarningsHelp() {
     console.log("Earnings help clicked");
     const sheet = document.getElementById('earnings-help-sheet');
-    if (sheet) sheet.style.display = 'block';
+    if (sheet) sheet.classList.add('active');
 }
 
 function closeEarningsHelp() {
     const sheet = document.getElementById('earnings-help-sheet');
-    if (sheet) sheet.style.display = 'none';
+    if (sheet) sheet.classList.remove('active');
 }
 
 function shareReferralLink() {
     console.log("Invite button clicked");
-    const userId = tg.initDataUnsafe?.user?.id || 0;
-    const botUser = "OctoRent_bot";
-    const refLink = `https://t.me/${botUser}?start=ref_${userId}`;
+    const userId = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user?.id) || 0;
+    const botUser = "Arendabrot_bot";
+    const refLink = `https://t.me/${botUser}/app?startapp=${userId}`;
+    const shareText = "🎁 Твой подарок уже ждёт тебя в OctoRent! Забирай его прямо сейчас! ✨";
 
-    // Use shareURL to send message directly from mini app (like Rocket Case example)
-    if (tg && tg.shareURL) {
-        tg.shareURL(refLink, "🎁 Присоединяйся к OctoRent и получай бонусы!");
+    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.shareURL) {
+        window.Telegram.WebApp.shareURL(refLink, shareText);
     } else {
-        // Fallback to clipboard
         copyToClipboard(refLink);
-        showToast("Реферальная ссылка скопирована");
+        showToast("Реферальная ссылка скопирована!");
     }
 }
 
@@ -2541,6 +2540,9 @@ window.resetMrktModal = resetMrktModal;
 window.closeMrktModal = closeMrktModal;
 window.showToast = showToast;
 window.copyToClipboard = copyToClipboard;
+window.showEarningsHelp = showEarningsHelp;
+window.closeEarningsHelp = closeEarningsHelp;
+window.shareReferralLink = shareReferralLink;
 
 async function fetchTonPrice() {
     try {

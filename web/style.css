@@ -3420,9 +3420,9 @@ body.hide-filters .header-column {
     flex-direction: column;
     background: rgba(255, 255, 255, 0.08);
     /* Matches pricing card background */
-    padding: 20px;
+    padding: 24px;
     border-radius: 24px;
-    gap: 10px;
+    gap: 12px;
     margin-top: 12px;
     border: 1px solid rgba(255, 255, 255, 0.03);
 }
@@ -3431,15 +3431,20 @@ body.hide-filters .header-column {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    width: 100%;
+    margin-bottom: 4px;
 }
 
 .mt-premium-label {
     color: #8794a1;
     /* Same as pricing labels */
     font-size: 11px;
-    font-weight: 600;
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    white-space: nowrap;
+    padding-right: 8px;
+    /* Extra safe space */
 }
 
 .mt-premium-date {
@@ -3450,9 +3455,8 @@ body.hide-filters .header-column {
 
 .mt-premium-val {
     color: #fff;
-    font-weight: 800;
-    font-size: 20px;
-    /* Adjusted to be slightly larger but consistent */
+    font-weight: 900;
+    font-size: 24px;
     font-family: 'Outfit', sans-serif;
     letter-spacing: 0.5px;
 }
@@ -3476,19 +3480,34 @@ body.hide-filters .header-column {
     transform: translateY(0);
 }
 
-/* --- Round 6: Filter Modal Buttons Fix --- */
+/* --- Filter & Market Footer Buttons Alignment (Round 9) --- */
+.octo-footer,
+.mrkt-footer {
+    display: flex !important;
+    gap: 12px !important;
+    padding: 16px 20px !important;
+    background: #0f151c !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
+    position: sticky !important;
+    bottom: 0 !important;
+    z-index: 100 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.octo-footer button,
 .mrkt-footer button {
-    flex: 1;
-    height: 52px;
-    border-radius: 14px;
-    font-weight: 800;
-    font-size: 14px;
-    /* Reduced for better fit */
-    white-space: nowrap;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0 8px;
+    flex: 1 !important;
+    height: 52px !important;
+    border-radius: 14px !important;
+    font-weight: 800 !important;
+    font-size: 14px !important;
+    white-space: nowrap !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 8px !important;
+    margin: 0 !important;
 }
 
 #notify-btn {

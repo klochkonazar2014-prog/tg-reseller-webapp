@@ -34,7 +34,7 @@ function startCountdown(endTime, elements, isMini = false) {
             const html = `
                 <div class="market-timer-box-premium">
                     <div class="mt-premium-top">
-                        <span class="mt-premium-label">${typeof t === 'function' ? t('ends_in') : 'Ends in'}</span>
+                        <span class="mt-premium-label">${typeof t === 'function' ? t('ends_in') : 'Ends in'}&nbsp;</span>
                         <span class="mt-premium-date">${dateStr}</span>
                     </div>
                     <div class="mt-premium-val">${d}d : ${pad(h)} : ${pad(m)} : ${pad(s)}</div>
