@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://heating-asthma-lawyer-geographic.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://scope-included-cooking-keyword.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -1880,7 +1880,15 @@ async function openProductView(item) {
         };
 
         if (item._modelName) appendClickableProp(t('model'), item._modelName, 'model');
-        if (item._symbol) appendClickableProp(t('symbol'), item._symbol, 'symbol');
+
+        // Restore missing symbol logic
+        let sym = item._symbol;
+        if (!sym && item.attributes) {
+            const sAttr = item.attributes.find(a => a.trait_type.toLowerCase() === 'symbol' || a.trait_type.toLowerCase() === 'символ');
+            if (sAttr) sym = sAttr.value;
+        }
+        if (sym) appendClickableProp(t('symbol'), sym, 'symbol');
+
         if (item._backdrop) appendClickableProp(t('backdrop'), item._backdrop, 'bg');
 
         // Auto-relist status
@@ -1939,43 +1947,6 @@ async function openProductView(item) {
             } finally {
                 rentBtn.innerHTML = originalHTML;
                 rentBtn.disabled = false;
-            }
-        };
-    }
-
-    const shareItemBtn = document.getElementById('view-share-btn');
-    if (shareItemBtn) {
-        shareItemBtn.onclick = async () => {
-            const userId = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user?.id) || 0;
-            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.sendPreparedInlineMessage) {
-                try {
-                    const res = await fetch(`${BACKEND_URL}/api/referral/prepare_share`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            user_id: userId,
-                            type: item.type,
-                            name: item.nft_name
-                        })
-                    });
-                    const data = await res.json();
-                    if (data.status === 'ok' && data.id) {
-                        window.Telegram.WebApp.sendPreparedInlineMessage(data.id);
-                        return;
-                    }
-                } catch (e) {
-                    console.error("Share item prepare error:", e);
-                }
-            }
-            // Fallback
-            const botUser = "Arendabrot_bot";
-            const refLink = `https://t.me/${botUser}/app?startapp=${userId}`;
-            const shareText = "🎁 Твой подарок уже ждёт тебя в OctoRent!\n\nЗабирай его прямо сейчас - и получай призы на свой аккаунт ✨";
-            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.shareURL) {
-                window.Telegram.WebApp.shareURL(refLink, shareText);
-            } else {
-                copyToClipboard(refLink);
-                showToast("Реферальная ссылка скопирована!");
             }
         };
     }
@@ -2150,14 +2121,41 @@ function closeProductView() {
     }
 }
 
-function handleShareClick() {
+async function handleShareClick() {
     if (!CURRENT_PAYMENT_ITEM) return;
-    const cleanName = CURRENT_PAYMENT_ITEM.nft_name.replace('@', '');
+
+    const item = CURRENT_PAYMENT_ITEM;
+    const userId = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user?.id) || 0;
+
+    // Premium share window via Prepared Inline Message
+    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.sendPreparedInlineMessage) {
+        try {
+            const res = await fetch(`${BACKEND_URL}/api/referral/prepare_share`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_id: userId,
+                    type: item.type,
+                    name: item.nft_name
+                })
+            });
+            const data = await res.json();
+            if (data.status === 'ok' && data.id) {
+                window.Telegram.WebApp.sendPreparedInlineMessage(data.id);
+                return;
+            }
+        } catch (e) {
+            console.error("Premium Share Error:", e);
+        }
+    }
+
+    // Fallback to switchInlineQuery
+    const cleanName = item.nft_name.replace('@', '');
     if (tg && tg.switchInlineQuery) {
         tg.switchInlineQuery(cleanName, ['users', 'groups', 'channels']);
     } else {
         const botUser = "OctoRent_bot";
-        const shareLink = `https://t.me/${botUser}?start=nft_${CURRENT_PAYMENT_ITEM.nft_address}`;
+        const shareLink = `https://t.me/${botUser}?start=nft_${item.nft_address}`;
         copyToClipboard(shareLink);
         showToast(CURRENT_LANG === 'ru' ? "Ссылка скопирована" : "Link copied");
     }
