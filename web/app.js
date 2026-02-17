@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://signal-emacs-eval-publicly.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://catalogue-delivery-particles-brothers.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -763,9 +763,10 @@ async function shareReferralLink() {
     try {
         // Stage 1: Premium Prepared Message (v7.8+)
         if (window.Telegram?.WebApp?.sendPreparedInlineMessage) {
+            console.log("Attempting Stage 1: Prepared Message...");
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 2000); // Shorter 2s timeout
+                const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
 
                 const res = await fetch(`${BACKEND_URL}/api/referral/prepare_share`, {
                     method: 'POST',
@@ -775,12 +776,17 @@ async function shareReferralLink() {
                 });
                 clearTimeout(timeoutId);
                 const data = await res.json();
+
                 if (data.status === 'ok' && data.id) {
+                    console.log("Stage 1 Success: ID", data.id);
                     window.Telegram.WebApp.sendPreparedInlineMessage(data.id);
                     return;
+                } else {
+                    console.warn("Stage 1 Backend Error:", data.error || "No ID returned");
+                    if (data.error === "Missing user_id") showToast("Ошибка: Telegram не передал ваш ID");
                 }
             } catch (e) {
-                console.warn("Stage 1 (Prepared Message) failed or timed out, trying Stage 2...");
+                console.warn("Stage 1 (Prepared Message) failed or timed out:", e.name === 'AbortError' ? "Timeout" : e);
             }
         }
 
@@ -2244,9 +2250,10 @@ async function handleShareClick() {
 
         // Stage 1: Premium Prepared Message
         if (window.Telegram?.WebApp?.sendPreparedInlineMessage) {
+            console.log("Attempting Stage 1: Prepared Message...");
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 2000);
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
 
                 const res = await fetch(`${BACKEND_URL}/api/referral/prepare_share`, {
                     method: 'POST',
@@ -2261,11 +2268,15 @@ async function handleShareClick() {
                 clearTimeout(timeoutId);
                 const data = await res.json();
                 if (data.status === 'ok' && data.id) {
+                    console.log("Stage 1 Success: ID", data.id);
                     window.Telegram.WebApp.sendPreparedInlineMessage(data.id);
                     return;
+                } else {
+                    console.warn("Stage 1 Backend Error:", data.error);
+                    if (data.error === "Missing user_id") showToast("Ошибка: Telegram не передал ваш ID");
                 }
             } catch (e) {
-                console.warn("Product share stage 1 failed, trying fallback...");
+                console.warn("Product share stage 1 failed or timed out:", e.name === 'AbortError' ? "Timeout" : e);
             }
         }
 
