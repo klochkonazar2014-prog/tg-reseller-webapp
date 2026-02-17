@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://awarded-developers-passage-spoken.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://aircraft-dynamic-format-explore.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -741,12 +741,14 @@ async function shareReferralLink() {
     if (IS_SHARING_REF) return;
     IS_SHARING_REF = true;
 
-    // Diagnostic log
-    console.log("SDK Support:", {
-        sendPreparedInlineMessage: !!(window.Telegram?.WebApp?.sendPreparedInlineMessage),
-        shareURL: !!(window.Telegram?.WebApp?.shareURL),
-        switchInlineQuery: !!(window.Telegram?.WebApp?.switchInlineQuery)
-    });
+    const isSupported = !!window.Telegram?.WebApp?.sendPreparedInlineMessage;
+    const sdkVersion = window.Telegram?.WebApp?.version || "unknown";
+    const userId = (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) || 0;
+
+    // EXHAUSTIVE DEBUG ALERT
+    if (window.Telegram?.WebApp?.showAlert) {
+        window.Telegram.WebApp.showAlert(`DEBUG: Start Share\nUID: ${userId}\nSupp: ${isSupported}\nVer: ${sdkVersion}\nUrl: ${BACKEND_URL.substring(0, 20)}...`);
+    }
 
     const btn = document.querySelector('.btn-invite-white');
     const originalText = btn ? btn.innerText : null;
@@ -755,18 +757,18 @@ async function shareReferralLink() {
         btn.innerText = '...';
     }
 
-    const userId = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user?.id) || 0;
     const botUser = "OctoRent_bot";
     const refLink = `https://t.me/${botUser}/app?startapp=${userId}`;
     const shareText = "🎁 Твой подарок уже ждёт тебя в OctoRent!\n\nЗабирай его прямо сейчас — и получай призы на свой аккаунт ✨";
 
     try {
-        // Stage 1: Premium Prepared Message (v7.8+)
-        if (window.Telegram?.WebApp?.sendPreparedInlineMessage) {
+        if (isSupported) {
             console.log("Attempting Stage 1: Prepared Message...");
             try {
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
+
+                console.log("Fetching prepare_share with UID:", userId);
 
                 const res = await fetch(`${BACKEND_URL}/api/referral/prepare_share`, {
                     method: 'POST',
@@ -2248,10 +2250,14 @@ async function handleShareClick() {
         if (!CURRENT_PAYMENT_ITEM) return;
 
         const item = CURRENT_PAYMENT_ITEM;
-        const userId = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user?.id) || 0;
         const botUser = "OctoRent_bot";
         const shareLink = `https://t.me/${botUser}/app?startapp=nft_${item.nft_address}`;
         const shareText = `💎 Посмотри на этот NFT в OctoRent!\n\n${item.title}`;
+        const isSupported = !!window.Telegram?.WebApp?.sendPreparedInlineMessage;
+
+        if (window.Telegram?.WebApp?.showAlert) {
+            window.Telegram.WebApp.showAlert(`DEBUG PRODUCT: UID=${userId}, Supp=${isSupported}`);
+        }
 
         // Stage 1: Premium Prepared Message
         if (window.Telegram?.WebApp?.sendPreparedInlineMessage) {
