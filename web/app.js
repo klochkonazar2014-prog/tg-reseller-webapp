@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://relying-cycle-used-bath.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://awarded-developers-passage-spoken.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -783,10 +783,15 @@ async function shareReferralLink() {
                     return;
                 } else {
                     console.warn("Stage 1 Backend Error:", data.error || "No ID returned");
-                    showToast(`Ошибка API: ${data.error || 'Неизвестная ошибка'}`);
+                    if (window.Telegram?.WebApp?.showAlert) {
+                        window.Telegram.WebApp.showAlert(`Ошибка подготовки: ${data.error || 'Нет ID'}`);
+                    }
                 }
             } catch (e) {
                 console.warn("Stage 1 (Prepared Message) failed or timed out:", e.name === 'AbortError' ? "Timeout" : e);
+                if (window.Telegram?.WebApp?.showAlert && e.name !== 'AbortError') {
+                    window.Telegram.WebApp.showAlert(`Ошибка сети: ${e.message}`);
+                }
             }
         }
 
@@ -2273,10 +2278,15 @@ async function handleShareClick() {
                     return;
                 } else {
                     console.warn("Stage 1 Backend Error:", data.error);
-                    showToast(`Ошибка API: ${data.error || 'Неизвестная ошибка'}`);
+                    if (window.Telegram?.WebApp?.showAlert) {
+                        window.Telegram.WebApp.showAlert(`Ошибка подготовки: ${data.error || 'Нет ID'}`);
+                    }
                 }
             } catch (e) {
                 console.warn("Product share stage 1 failed or timed out:", e.name === 'AbortError' ? "Timeout" : e);
+                if (window.Telegram?.WebApp?.showAlert && e.name !== 'AbortError') {
+                    window.Telegram.WebApp.showAlert(`Ошибка сети: ${e.message}`);
+                }
             }
         }
 
