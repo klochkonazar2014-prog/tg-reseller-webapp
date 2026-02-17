@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://arrangement-technology-transformation-cure.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://signal-emacs-eval-publicly.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -741,6 +741,13 @@ async function shareReferralLink() {
     if (IS_SHARING_REF) return;
     IS_SHARING_REF = true;
 
+    // Diagnostic log
+    console.log("SDK Support:", {
+        sendPreparedInlineMessage: !!(window.Telegram?.WebApp?.sendPreparedInlineMessage),
+        shareURL: !!(window.Telegram?.WebApp?.shareURL),
+        switchInlineQuery: !!(window.Telegram?.WebApp?.switchInlineQuery)
+    });
+
     const btn = document.querySelector('.btn-invite-white');
     const originalText = btn ? btn.innerText : null;
     if (btn) {
@@ -748,15 +755,17 @@ async function shareReferralLink() {
         btn.innerText = '...';
     }
 
-    console.log("Invite button clicked");
     const userId = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user?.id) || 0;
+    const botUser = "OctoRent_bot";
+    const refLink = `https://t.me/${botUser}/app?startapp=${userId}`;
+    const shareText = "🎁 Твой подарок уже ждёт тебя в OctoRent!\n\nЗабирай его прямо сейчас — и получай призы на свой аккаунт ✨";
 
     try {
-        // Check if the new method is available (v7.8+)
-        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.sendPreparedInlineMessage) {
+        // Stage 1: Premium Prepared Message (v7.8+)
+        if (window.Telegram?.WebApp?.sendPreparedInlineMessage) {
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 3000);
+                const timeoutId = setTimeout(() => controller.abort(), 2000); // Shorter 2s timeout
 
                 const res = await fetch(`${BACKEND_URL}/api/referral/prepare_share`, {
                     method: 'POST',
@@ -771,24 +780,29 @@ async function shareReferralLink() {
                     return;
                 }
             } catch (e) {
-                console.error("Prepare share error/timeout:", e);
+                console.warn("Stage 1 (Prepared Message) failed or timed out, trying Stage 2...");
             }
         }
 
-        // Fallback to old shareURL
-        const botUser = "OctoRent_bot";
-        const refLink = `https://t.me/${botUser}/app?startapp=${userId}`;
-        const shareText = "🎁 Твой подарок уже ждёт тебя в OctoRent!\n\nЗабирай его прямо сейчас — и получай призы на свой аккаунт ✨";
-
-        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.shareURL) {
-            console.log("Using shareURL fallback");
+        // Stage 2: shareURL (Direct chat picker)
+        if (window.Telegram?.WebApp?.shareURL) {
+            console.log("Using Stage 2: shareURL");
             window.Telegram.WebApp.shareURL(refLink, shareText);
-        } else {
-            copyToClipboard(refLink);
-            showToast("Реферальная ссылка скопирована!");
+            return;
         }
+
+        // Stage 3: switchInlineQuery (Manual chat selection)
+        if (window.Telegram?.WebApp?.switchInlineQuery) {
+            console.log("Using Stage 3: switchInlineQuery");
+            window.Telegram.WebApp.switchInlineQuery(userId.toString(), ['users', 'groups', 'channels']);
+            return;
+        }
+
+        // Stage 4: Clipboard (Last resort)
+        copyToClipboard(refLink);
+        showToast("Реферальная ссылка скопирована!");
     } catch (e) {
-        console.error("Share error:", e);
+        console.error("All sharing stages failed:", e);
         showToast("Ошибка при попытке поделиться");
     } finally {
         setTimeout(() => {
@@ -797,7 +811,7 @@ async function shareReferralLink() {
                 btn.style.opacity = '1';
                 btn.innerText = originalText;
             }
-        }, 1000); // 1s debounce
+        }, 1000);
     }
 }
 
@@ -2224,13 +2238,15 @@ async function handleShareClick() {
 
         const item = CURRENT_PAYMENT_ITEM;
         const userId = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user?.id) || 0;
+        const botUser = "OctoRent_bot";
+        const shareLink = `https://t.me/${botUser}/app?startapp=nft_${item.nft_address}`;
+        const shareText = `💎 Посмотри на этот NFT в OctoRent!\n\n${item.title}`;
 
-        // Premium share window via Prepared Inline Message
-        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.sendPreparedInlineMessage) {
+        // Stage 1: Premium Prepared Message
+        if (window.Telegram?.WebApp?.sendPreparedInlineMessage) {
             try {
-                // Short timeout for preparation to avoid hanging
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 3000);
+                const timeoutId = setTimeout(() => controller.abort(), 2000);
 
                 const res = await fetch(`${BACKEND_URL}/api/referral/prepare_share`, {
                     method: 'POST',
@@ -2249,25 +2265,26 @@ async function handleShareClick() {
                     return;
                 }
             } catch (e) {
-                console.error("Premium Share Error or Timeout:", e);
-                // Fall through to fallback
+                console.warn("Product share stage 1 failed, trying fallback...");
             }
         }
 
-        // Fallback to switchInlineQuery
-        const cleanName = item.nft_name.replace('@', '');
-        if (tg && tg.switchInlineQuery) {
-            tg.switchInlineQuery(cleanName, ['users', 'groups', 'channels']);
-        } else {
-            const botUser = "OctoRent_bot";
-            const shareText = `💎 Посмотри на этот NFT в OctoRent!\n\n${item.title}\n\nЗабирай его по ссылке: https://t.me/${botUser}/app?startapp=nft_${item.nft_address}`;
-            if (tg.shareURL) {
-                tg.shareURL(`https://t.me/${botUser}/app?startapp=nft_${item.nft_address}`, shareText);
-            } else {
-                copyToClipboard(`https://t.me/${botUser}/app?startapp=nft_${item.nft_address}`);
-                showToast(t('link_copied'));
-            }
+        // Stage 2: shareURL
+        if (window.Telegram?.WebApp?.shareURL) {
+            window.Telegram.WebApp.shareURL(shareLink, shareText);
+            return;
         }
+
+        // Stage 3: switchInlineQuery
+        const cleanName = item.nft_name.replace('@', '');
+        if (window.Telegram?.WebApp?.switchInlineQuery) {
+            window.Telegram.WebApp.switchInlineQuery(cleanName, ['users', 'groups', 'channels']);
+            return;
+        }
+
+        // Stage 4: Clipboard
+        copyToClipboard(shareLink);
+        showToast(t('link_copied'));
     } finally {
         setTimeout(() => { IS_SHARE_OPENING = false; }, 1000);
     }
