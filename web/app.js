@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://aberdeen-newspaper-lessons-behaviour.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://dynamic-enterprises-magazine-regions.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -274,8 +274,33 @@ const copyToClipboard = (text) => {
                 window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
             }
         }).catch(err => console.error('Copy failed', err));
+    } else {
+        const el = document.createElement('textarea');
+        el.value = text;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
     }
 };
+
+function showToast(msg) {
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.style.cssText = 'position:fixed; bottom:100px; left:50%; transform:translateX(-50%); z-index:10000; pointer-events:none; display:flex; flex-direction:column; align-items:center; gap:8px;';
+        document.body.appendChild(container);
+    }
+    const toast = document.createElement('div');
+    toast.className = 'toast-notification active'; // CSS handles transition
+    toast.innerText = msg;
+    container.appendChild(toast);
+    setTimeout(() => {
+        toast.classList.remove('active');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
 const renderTonAmount = (val) => `<span class="icon-before icon-ton tm-amount">${val}</span>`;
 const renderTonAmountNoIcon = (val) => `<span class="tm-amount icon-ton" style="font-size:inherit;">${val}</span>`;
 
@@ -659,7 +684,7 @@ function switchTab(index) {
 async function loadFriendsData() {
     const userId = tg.initDataUnsafe?.user?.id || 0;
     try {
-        const res = await fetch(`${BACKEND_URL}/api/referral_stats?user_id=${userId}`);
+        const res = await fetch(`${BACKEND_URL}/api/referral/stats?user_id=${userId}`);
         const data = await res.json();
 
         const balEl = document.getElementById('friends-balance-val');
@@ -2514,6 +2539,8 @@ window.toggleGenericModal = toggleGenericModal;
 window.applyMrktModal = applyMrktModal;
 window.resetMrktModal = resetMrktModal;
 window.closeMrktModal = closeMrktModal;
+window.showToast = showToast;
+window.copyToClipboard = copyToClipboard;
 
 async function fetchTonPrice() {
     try {
