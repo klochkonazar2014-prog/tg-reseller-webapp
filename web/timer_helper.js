@@ -30,18 +30,12 @@ function startCountdown(endTime, elements, isMini = false) {
             else display = `${m}m`;
             targets.forEach(el => el.innerText = display);
         } else {
-            // For product view timer: Market App Pill Style
+            // For product view timer: Simplified Horizontal Box
             const html = `
-                <div class="market-timer-row">
-                    <span class="mt-label">Ends in</span>
-                    <div class="mt-pill mt-wide">${d} days</div>
-                    <span class="mt-sep">:</span>
-                    <div class="mt-pill">${pad(h)}</div>
-                    <span class="mt-sep">:</span>
-                    <div class="mt-pill">${pad(m)}</div>
-                    <span class="mt-sep">:</span>
-                    <div class="mt-pill">${pad(s)}</div>
-                    <span class="mt-date">${dateStr}</span>
+                <div class="market-timer-box">
+                    <span class="mt-box-label">Ends in</span>
+                    <span class="mt-box-val">${d}d : ${pad(h)} : ${pad(m)} : ${pad(s)}</span>
+                    <span class="mt-box-date">${dateStr}</span>
                 </div>
             `;
             targets.forEach(el => el.innerHTML = html);

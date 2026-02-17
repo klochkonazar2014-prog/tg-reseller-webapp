@@ -3412,64 +3412,51 @@ body.hide-filters .header-column {
     white-space: nowrap;
 }
 
-/* --- Round 5: Market App Pill Style Timer Fix --- */
-.market-timer-row {
-    display: flex;
+/* --- Round 6: Simplified Horizontal Timer Box --- */
+.market-timer-box {
+    display: inline-flex;
     align-items: center;
-    gap: 6px;
-    flex-wrap: wrap;
-    margin-top: 4px;
+    background: #1c1c1e;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 10px 16px;
+    border-radius: 14px;
+    gap: 12px;
+    margin-top: 8px;
 }
 
-.mt-label {
+.mt-box-label {
     color: #8b9bb4;
     font-size: 13px;
     font-weight: 700;
-    margin-right: 4px;
 }
 
-.mt-pill {
-    background: #1c1c1e;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    padding: 4px 10px;
-    border-radius: 8px;
+.mt-box-val {
     color: #fff;
-    font-weight: 800;
-    font-size: 14px;
-    min-width: 34px;
-    text-align: center;
-}
-
-.mt-pill.mt-wide {
-    min-width: 70px;
-}
-
-.mt-sep {
-    color: #3b3b3e;
     font-weight: 900;
+    font-size: 16px;
+    font-family: 'Outfit', sans-serif;
 }
 
-.mt-date {
+.mt-box-date {
     color: #8b9bb4;
-    font-size: 13px;
-    margin-left: auto;
+    font-size: 12px;
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    padding-left: 12px;
 }
 
-/* --- Round 5: Filter Modal Buttons Alignment --- */
-.mrkt-footer {
-    padding: 16px 24px;
-    display: flex;
-    gap: 12px;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
-    background: #09090b;
-}
-
+/* --- Round 6: Filter Modal Buttons Fix --- */
 .mrkt-footer button {
     flex: 1;
     height: 52px;
     border-radius: 14px;
     font-weight: 800;
-    font-size: 15px;
+    font-size: 14px;
+    /* Reduced for better fit */
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 8px;
 }
 
 #notify-btn {

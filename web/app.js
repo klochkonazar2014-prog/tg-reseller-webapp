@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://others-plenty-hub-warm.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://hold-mat-swap-during.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -2502,17 +2502,18 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchTonPrice();
     setInterval(fetchTonPrice, 60000); // Update every minute
 
-    // Global exposed functions for inline HTML events (Friends tab)
-    window.shareReferralLink = shareReferralLink;
-    window.handleReferralWithdraw = handleReferralWithdraw;
-    window.showEarningsHelp = showEarningsHelp;
-    window.closeEarningsHelp = closeEarningsHelp;
-    window.openOctoModal = openOctoModal;
-    window.toggleGenericModal = toggleGenericModal;
-    window.applyMrktModal = applyMrktModal;
-    window.resetMrktModal = resetMrktModal;
-    window.closeMrktModal = closeMrktModal;
 });
+
+// Global exposed functions for inline HTML events (Friends tab)
+window.shareReferralLink = shareReferralLink;
+window.handleReferralWithdraw = handleReferralWithdraw;
+window.showEarningsHelp = showEarningsHelp;
+window.closeEarningsHelp = closeEarningsHelp;
+window.openOctoModal = openOctoModal;
+window.toggleGenericModal = toggleGenericModal;
+window.applyMrktModal = applyMrktModal;
+window.resetMrktModal = resetMrktModal;
+window.closeMrktModal = closeMrktModal;
 
 async function fetchTonPrice() {
     try {
