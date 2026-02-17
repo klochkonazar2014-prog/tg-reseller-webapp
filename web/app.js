@@ -6,7 +6,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://dir-efforts-wise-gulf.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://socks-society-bought-seventh.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -716,6 +716,11 @@ function shareReferralLink() {
         copyToClipboard(refLink);
         showToast("Реферальная ссылка скопирована");
     }
+}
+
+// Alias for filter modal
+function openOctoModal() {
+    openMrktModal();
 }
 
 async function handleReferralWithdraw() {
@@ -2223,55 +2228,7 @@ async function loadHistoryContent() {
     }
 }
 
-function startCountdown(endTime, targetEl) {
-    if (typeof endTime !== 'number') return;
-    const intervalKey = targetEl.id || 'global-timer';
-    if (COUNTDOWN_INTERVALS[intervalKey]) clearInterval(COUNTDOWN_INTERVALS[intervalKey]);
-
-    const endDate = new Date(endTime * 1000);
-    const dateStr = endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-
-    // Market App Style: Ends in [0 days] : [14] : [37] : [02] Feb 8, 2026
-    const update = () => {
-        const now = Math.floor(Date.now() / 1000);
-        const diff = endTime - now;
-
-        if (diff <= 0) {
-            targetEl.innerHTML = `<span style="color:#FF3B30; font-weight:800;">EXPIRED</span>`;
-            clearInterval(COUNTDOWN_INTERVALS[intervalKey]);
-            return;
-        }
-
-        const d = Math.floor(diff / 86400);
-        const h = Math.floor((diff % 86400) / 3600);
-        const m = Math.floor((diff % 3600) / 60);
-        const s = diff % 60;
-        const pad = (n) => n.toString().padStart(2, '0');
-
-        targetEl.innerHTML = `
-            <div class="market-timer-row">
-                <span class="mt-label">${t('ends_in')}</span>
-                
-                <div class="mt-pill mt-wide">${d} ${t('days')}</div>
-                <span class="mt-sep">:</span>
-                
-                <div class="mt-pill">${pad(h)}</div>
-                <span class="mt-sep">:</span>
-                
-                <div class="mt-pill">${pad(m)}</div>
-                <span class="mt-sep">:</span>
-                
-                <div class="mt-pill">${pad(s)}</div>
-                
-                <span class="mt-date">${dateStr}</span>
-            </div>
-        `;
-    };
-
-    update();
-    COUNTDOWN_INTERVALS[intervalKey] = setInterval(update, 1000);
-
-}
+// Countdown function moved to timer_helper.js with simple text format
 
 function copyWallet() {
     if (tonConnectUI && tonConnectUI.account && tonConnectUI.account.address) {
