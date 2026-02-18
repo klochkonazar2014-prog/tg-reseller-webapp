@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://funk-newton-knock-viewer.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://members-numbers-pasta-counts.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -571,10 +571,11 @@ document.addEventListener("DOMContentLoaded", async () => {
                                 metadata: typeof details.metadata === 'string' ? details.metadata : JSON.stringify(details.metadata || {})
                             };
 
-                            // Helper mapping for attributes
-                            if (m.attributes) {
-                                m.attributes.forEach(a => {
-                                    const t = a.trait_type.toLowerCase();
+                            // Helper mapping for attributes (handles different API structures)
+                            const attrs = details.attributes || (details.metadata ? details.metadata.attributes : null) || m.attributes;
+                            if (attrs && Array.isArray(attrs)) {
+                                attrs.forEach(a => {
+                                    const t = a.trait_type ? a.trait_type.toLowerCase() : '';
                                     if (t === 'model') fakeItem._modelName = a.value;
                                     if (t === 'backdrop' || t === 'background') fakeItem._backdrop = a.value;
                                     if (t === 'symbol') fakeItem._symbol = a.value;
