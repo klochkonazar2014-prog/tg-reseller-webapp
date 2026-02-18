@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://memorial-immigrants-challenge-june.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://obituaries-spectrum-shadow-obtained.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -563,7 +563,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                             // Robust type detection
                             let detectedType = details.type || 'gift';
-                            if (itemName.includes('#') || itemName.toLowerCase().includes('gift')) {
+                            const lowerName = itemName.toLowerCase();
+                            if (itemName.includes('#') || lowerName.includes('gift') || lowerName.includes('коробка')) {
                                 detectedType = 'gift';
                             } else if (itemName.startsWith('@') && !itemName.includes(' ')) {
                                 detectedType = 'username';
@@ -2044,7 +2045,7 @@ async function openProductView(item) {
 
         // Auto-relist status - ONLY FOR GIFTS
         if (item.type === 'gift') {
-            const isYes = Boolean(item.auto_relist);
+            const isYes = item.auto_relist !== undefined ? Boolean(parseInt(item.auto_relist)) : true;
             const reRow = createPropRow(t('auto_relist_label'), isYes ? t('yes') : t('no'));
             if (reRow) {
                 if (!isYes) reRow.querySelector('.prop-right span').style.color = '#ff3b30';
