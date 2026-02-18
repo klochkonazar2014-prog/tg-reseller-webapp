@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://atmospheric-aerospace-exercises-financial.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://suffered-half-gap-quite.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -2253,8 +2253,11 @@ async function handleShareClick() {
         }
 
         const item = CURRENT_PAYMENT_ITEM;
-        // Use nft_name (correct field) not item.title which doesn't exist
-        const itemName = item.nft_name || item.title || "NFT";
+        // Construct full item name with number if it's a gift
+        let itemName = item.nft_name || item.title || "NFT";
+        if (item.type === 'gift' && item.nft_id && !itemName.includes('#')) {
+            itemName += ` #${item.nft_id}`;
+        }
         const userId = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user?.id) || 0;
         const botUser = "OctoRent_bot";
         const shareLink = `https://t.me/${botUser}/app?startapp=nft_${item.nft_address || item.id}`;
