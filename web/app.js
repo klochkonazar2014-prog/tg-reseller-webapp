@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://discuss-experiencing-cycles-reasonable.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://commodity-moderator-scuba-utils.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -2231,17 +2231,26 @@ function closeProductView() {
 
 let IS_SHARE_OPENING = false;
 async function handleShareClick() {
-    if (IS_SHARE_OPENING) return;
+    console.log("Share button clicked!");
+    if (IS_SHARE_OPENING) {
+        console.warn("Share already opening, skipping...");
+        return;
+    }
     IS_SHARE_OPENING = true;
 
     try {
-        if (!CURRENT_PAYMENT_ITEM) return;
+        if (!CURRENT_PAYMENT_ITEM) {
+            console.error("No current payment item for sharing!");
+            return;
+        }
 
         const item = CURRENT_PAYMENT_ITEM;
         const userId = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user?.id) || 0;
         const botUser = "OctoRent_bot";
         const shareLink = `https://t.me/${botUser}/app?startapp=nft_${item.nft_address}`;
         const shareText = `💎 Посмотри на этот NFT в OctoRent!\n\n${item.title}`;
+
+        console.log("Preparing share for item:", item.title, "User:", userId);
 
         // Stage 1: Premium Prepared Message
         if (window.Telegram?.WebApp?.sendPreparedInlineMessage) {
@@ -2262,33 +2271,42 @@ async function handleShareClick() {
                 });
                 clearTimeout(timeoutId);
                 const data = await res.json();
+                console.log("Prepare share response:", data);
                 if (data.status === 'ok' && data.id) {
                     window.Telegram.WebApp.sendPreparedInlineMessage(data.id);
                     return;
                 }
             } catch (e) {
-                console.warn("Product share stage 1 failed, trying fallback...");
+                console.warn("Product share stage 1 failed, trying fallback...", e);
             }
         }
 
         // Stage 2: shareURL
         if (window.Telegram?.WebApp?.shareURL) {
+            console.log("Using shareURL fallback");
             window.Telegram.WebApp.shareURL(shareLink, shareText);
             return;
         }
 
         // Stage 3: switchInlineQuery
         if (window.Telegram?.WebApp?.switchInlineQuery) {
+            console.log("Using switchInlineQuery fallback");
             const cleanTitle = item.title.replace('@', '');
             window.Telegram.WebApp.switchInlineQuery(cleanTitle, ['users', 'groups', 'channels']);
             return;
         }
 
         // Stage 4: Clipboard
+        console.log("Using clipboard fallback");
         copyToClipboard(shareLink);
         showToast(t('link_copied'));
+    } catch (err) {
+        console.error("Critical error in handleShareClick:", err);
     } finally {
-        setTimeout(() => { IS_SHARE_OPENING = false; }, 1000);
+        setTimeout(() => {
+            console.log("Resetting IS_SHARE_OPENING");
+            IS_SHARE_OPENING = false;
+        }, 1000);
     }
 }
 
