@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://thus-formation-scenarios-paid.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://pose-paint-paintball-separately.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -761,7 +761,7 @@ async function shareReferralLink() {
     const shareText = "🎁 Твой подарок уже ждёт тебя в OctoRent!\n\nЗабирай его прямо сейчас — и получай призы на свой аккаунт ✨";
 
     try {
-        // Stage 1: Premium Prepared Message (v7.8+)
+        // Stage 1: Premium Prepared Message (v7.8+) - "RocketCase Style"
         if (window.Telegram?.WebApp?.sendPreparedInlineMessage) {
             try {
                 const controller = new AbortController();
@@ -784,26 +784,21 @@ async function shareReferralLink() {
             }
         }
 
-        // Stage 2: shareURL — opens native Telegram share dialog
-        if (window.Telegram?.WebApp?.shareURL) {
-            window.Telegram.WebApp.shareURL(refLink, shareText);
+        // Stage 2: switchInlineQuery — "Inline Mode Style" (User specifically requested this style)
+        if (window.Telegram?.WebApp?.switchInlineQuery) {
+            console.log("Using Stage 2: switchInlineQuery (Inline Mode Style)");
+            // 'ref' triggers the custom referral result in bot.py
+            window.Telegram.WebApp.switchInlineQuery('ref', ['users', 'groups', 'channels']);
             return;
         }
 
-        // Stage 3: openTelegramLink (share dialog via t.me/share/url)
-        if (window.Telegram?.WebApp?.openTelegramLink) {
-            const encodedUrl = encodeURIComponent(refLink);
-            const encodedText = encodeURIComponent(shareText);
-            window.Telegram.WebApp.openTelegramLink(`https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`);
-            return;
-        }
-
-        // Stage 4: Clipboard (Last resort)
+        // Stage 3: Clipboard (Last resort)
         copyToClipboard(refLink);
         showToast("Реферальная ссылка скопирована!");
     } catch (e) {
         console.error("All sharing stages failed:", e);
         showToast("Ошибка при попытке поделиться");
+
 
     } finally {
         setTimeout(() => {
