@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://members-numbers-pasta-counts.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://memorial-immigrants-challenge-june.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -559,13 +559,25 @@ document.addEventListener("DOMContentLoaded", async () => {
                             const addr = details.address || details.nft_address;
 
                             // ENRICHMENT: Map fields from our enhanced API
+                            const itemName = details.name || details.nft_name || '';
+
+                            // Robust type detection
+                            let detectedType = details.type || 'gift';
+                            if (itemName.includes('#') || itemName.toLowerCase().includes('gift')) {
+                                detectedType = 'gift';
+                            } else if (itemName.startsWith('@') && !itemName.includes(' ')) {
+                                detectedType = 'username';
+                            } else if (itemName.startsWith('+')) {
+                                detectedType = 'number';
+                            }
+
                             const fakeItem = {
                                 nft_address: addr,
-                                nft_name: details.name || details.nft_name,
+                                nft_name: itemName,
                                 price_per_day: details.price_per_day || 0,
                                 status: details.status || 'available',
-                                type: details.type || 'gift',
-                                auto_relist: details.auto_relist || 0,
+                                type: detectedType,
+                                auto_relist: details.auto_relist !== undefined ? details.auto_relist : 1, // Default 1 for gifts
                                 min_duration: details.min_duration || 86400,
                                 max_duration: details.max_duration || 2592000,
                                 metadata: typeof details.metadata === 'string' ? details.metadata : JSON.stringify(details.metadata || {})
@@ -573,7 +585,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                             // Helper mapping for attributes (handles different API structures)
                             const attrs = details.attributes || (details.metadata ? details.metadata.attributes : null) || m.attributes;
-                            if (attrs && Array.isArray(attrs)) {
+                            if (attrs && Array.isArray(attrs) && fakeItem.type === 'gift') {
                                 attrs.forEach(a => {
                                     const t = a.trait_type ? a.trait_type.toLowerCase() : '';
                                     if (t === 'model') fakeItem._modelName = a.value;
@@ -2030,10 +2042,16 @@ async function openProductView(item) {
 
         if (item._backdrop) appendClickableProp(t('backdrop'), item._backdrop, 'bg');
 
-        // Auto-relist status
-        const reRow = createPropRow(t('auto_relist_label'), item.auto_relist ? t('yes') : t('no'));
-        if (!item.auto_relist) reRow.querySelector('.prop-right span').style.color = '#ff3b30';
-        propCont.appendChild(reRow);
+        // Auto-relist status - ONLY FOR GIFTS
+        if (item.type === 'gift') {
+            const isYes = Boolean(item.auto_relist);
+            const reRow = createPropRow(t('auto_relist_label'), isYes ? t('yes') : t('no'));
+            if (reRow) {
+                if (!isYes) reRow.querySelector('.prop-right span').style.color = '#ff3b30';
+                else reRow.querySelector('.prop-right span').style.color = 'var(--accent-blue)';
+                propCont.appendChild(reRow);
+            }
+        }
     }
 
     // Rent Button
