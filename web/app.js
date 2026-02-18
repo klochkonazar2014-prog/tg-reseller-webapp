@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://transform-cloudy-effects-invention.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://turned-immunology-dress-hundreds.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -2271,13 +2271,9 @@ async function handleShareClick() {
             window.Telegram?.sendPreparedInlineMessage ||
             (window.parent?.Telegram?.WebApp?.sendPreparedInlineMessage);
 
-        const sdkVersion = window.Telegram?.WebApp?.version || "6.0";
-        const isVerOk = parseFloat(sdkVersion) >= 7.8;
-        const isSupported = !!method || isVerOk;
-
-        if (window.Telegram?.WebApp?.showAlert) {
-            window.Telegram.WebApp.showAlert(`DEBUG PRODUCT:\nUID: ${userId}\nSupp: ${!!method}\nVer/OK: ${sdkVersion}/${isVerOk}`);
-        }
+        const platform = window.Telegram?.WebApp?.platform || "unknown";
+        const isDesktop = platform === 'tdesktop' || platform === 'web' || platform === 'unknown';
+        const isSupported = !!method && !isDesktop;
 
         // Stage 1: Premium Prepared Message
         if (isSupported) {
