@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://turned-immunology-dress-hundreds.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://dinner-teddy-almost-chairman.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -741,22 +741,12 @@ async function shareReferralLink() {
     if (IS_SHARING_REF) return;
     IS_SHARING_REF = true;
 
-    // DEEP SCAN for the method
-    const method = window.Telegram?.WebApp?.sendPreparedInlineMessage ||
-        window.Telegram?.sendPreparedInlineMessage ||
-        (window.parent?.Telegram?.WebApp?.sendPreparedInlineMessage);
-
-    const sdkVersion = window.Telegram?.WebApp?.version || tg?.version || "6.0";
-    // Check if version is sufficient (>= 7.8)
-    const isVerOk = parseFloat(sdkVersion) >= 7.8;
-    const isSupported = !!method || isVerOk;
-
-    const platform = window.Telegram?.WebApp?.platform || tg?.platform || "unknown";
-    const userId = (window.Telegram?.WebApp?.initDataUnsafe?.user?.id || tg?.initDataUnsafe?.user?.id) || 0;
-
-    if (window.Telegram?.WebApp?.showAlert) {
-        window.Telegram.WebApp.showAlert(`RETRY DEBUG:\nUID: ${userId}\nSupp: ${!!method}\nVer: ${sdkVersion} (OK? ${isVerOk})\nPlat: ${platform}`);
-    }
+    // Diagnostic log
+    console.log("SDK Support:", {
+        sendPreparedInlineMessage: !!(window.Telegram?.WebApp?.sendPreparedInlineMessage),
+        shareURL: !!(window.Telegram?.WebApp?.shareURL),
+        switchInlineQuery: !!(window.Telegram?.WebApp?.switchInlineQuery)
+    });
 
     const btn = document.querySelector('.btn-invite-white');
     const originalText = btn ? btn.innerText : null;
@@ -765,18 +755,17 @@ async function shareReferralLink() {
         btn.innerText = '...';
     }
 
+    const userId = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user?.id) || 0;
     const botUser = "OctoRent_bot";
     const refLink = `https://t.me/${botUser}/app?startapp=${userId}`;
     const shareText = "🎁 Твой подарок уже ждёт тебя в OctoRent!\n\nЗабирай его прямо сейчас — и получай призы на свой аккаунт ✨";
 
     try {
-        if (isSupported) {
-            console.log("Attempting Stage 1: Prepared Message...");
+        // Stage 1: Premium Prepared Message (v7.8+)
+        if (window.Telegram?.WebApp?.sendPreparedInlineMessage) {
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
-
-                console.log("Fetching prepare_share with UID:", userId);
+                const timeoutId = setTimeout(() => controller.abort(), 2000); // Shorter 2s timeout
 
                 const res = await fetch(`${BACKEND_URL}/api/referral/prepare_share`, {
                     method: 'POST',
@@ -786,28 +775,12 @@ async function shareReferralLink() {
                 });
                 clearTimeout(timeoutId);
                 const data = await res.json();
-
                 if (data.status === 'ok' && data.id) {
-                    console.log("Stage 1 Success: ID", data.id);
-                    if (method) {
-                        method(data.id);
-                    } else if (window.Telegram?.WebApp?.sendPreparedInlineMessage) {
-                        window.Telegram.WebApp.sendPreparedInlineMessage(data.id);
-                    }
+                    window.Telegram.WebApp.sendPreparedInlineMessage(data.id);
                     return;
-                } else {
-                    console.warn("Stage 1 Backend Error:", data.error || "No ID returned");
-                    // On error, fall through to next stages
-                    if (window.Telegram?.WebApp?.showAlert) {
-                        // Only alert if debugging
-                        // window.Telegram.WebApp.showAlert(`Ошибка этапа 1: ${data.error}`);
-                    }
                 }
             } catch (e) {
-                console.warn("Stage 1 (Prepared Message) failed or timed out:", e.name === 'AbortError' ? "Timeout" : e);
-                if (window.Telegram?.WebApp?.showAlert && e.name !== 'AbortError') {
-                    window.Telegram.WebApp.showAlert(`Ошибка сети: ${e.message}`);
-                }
+                console.warn("Stage 1 (Prepared Message) failed or timed out, trying Stage 2...");
             }
         }
 
@@ -2261,26 +2234,19 @@ async function handleShareClick() {
     IS_SHARE_OPENING = true;
 
     try {
+        if (!CURRENT_PAYMENT_ITEM) return;
+
         const item = CURRENT_PAYMENT_ITEM;
-        const userId = (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) || 0;
+        const userId = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user?.id) || 0;
         const botUser = "OctoRent_bot";
         const shareLink = `https://t.me/${botUser}/app?startapp=nft_${item.nft_address}`;
         const shareText = `💎 Посмотри на этот NFT в OctoRent!\n\n${item.title}`;
 
-        const method = window.Telegram?.WebApp?.sendPreparedInlineMessage ||
-            window.Telegram?.sendPreparedInlineMessage ||
-            (window.parent?.Telegram?.WebApp?.sendPreparedInlineMessage);
-
-        const platform = window.Telegram?.WebApp?.platform || "unknown";
-        const isDesktop = platform === 'tdesktop' || platform === 'web' || platform === 'unknown';
-        const isSupported = !!method && !isDesktop;
-
         // Stage 1: Premium Prepared Message
-        if (isSupported) {
-            console.log("Attempting Stage 1: Prepared Message...");
+        if (window.Telegram?.WebApp?.sendPreparedInlineMessage) {
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                const timeoutId = setTimeout(() => controller.abort(), 2000);
 
                 const res = await fetch(`${BACKEND_URL}/api/referral/prepare_share`, {
                     method: 'POST',
@@ -2295,21 +2261,11 @@ async function handleShareClick() {
                 clearTimeout(timeoutId);
                 const data = await res.json();
                 if (data.status === 'ok' && data.id) {
-                    console.log("Stage 1 Success: ID", data.id);
-                    if (method) {
-                        method(data.id);
-                    } else if (window.Telegram?.WebApp?.sendPreparedInlineMessage) {
-                        window.Telegram.WebApp.sendPreparedInlineMessage(data.id);
-                    }
+                    window.Telegram.WebApp.sendPreparedInlineMessage(data.id);
                     return;
-                } else {
-                    console.warn("Stage 1 Backend Error:", data.error);
                 }
             } catch (e) {
-                console.warn("Product share stage 1 failed or timed out:", e.name === 'AbortError' ? "Timeout" : e);
-                if (window.Telegram?.WebApp?.showAlert && e.name !== 'AbortError') {
-                    window.Telegram.WebApp.showAlert(`Ошибка сети: ${e.message}`);
-                }
+                console.warn("Product share stage 1 failed, trying fallback...");
             }
         }
 
