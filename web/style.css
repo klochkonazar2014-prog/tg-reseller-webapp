@@ -199,64 +199,48 @@ body {
 
 .chips-row {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     overflow-x: auto;
     overflow-y: hidden;
-    padding: 10px 16px 15px 16px;
+    padding: 10px 16px 20px 16px;
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-x;
-    /* Allow horizontal scroll */
     margin: 0 -16px;
     width: 100vw;
-    position: relative;
-    z-index: 10;
-}
-
-.chips-row::-webkit-scrollbar {
-    display: none;
 }
 
 .chip-btn {
-    background: #1c1c1e;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
     color: #fff;
-    padding: 8px 16px;
-    border-radius: 14px;
+    padding: 10px 18px;
+    border-radius: 20px;
     font-size: 14px;
-    font-weight: 600;
+    font-weight: 700;
     white-space: nowrap;
     cursor: pointer;
     display: flex;
     align-items: center;
     gap: 10px;
-    transition: all 0.2s;
-}
-
-.chip-img {
-    width: 24px;
-    height: 24px;
-    border-radius: 6px;
-    object-fit: cover;
-    background: #333;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 .chip-btn.active {
-    background: var(--accent-blue);
-    border-color: var(--accent-blue);
+    background: linear-gradient(135deg, #0088cc 0%, #005588 100%);
+    border-color: #00aaff;
+    box-shadow: 0 6px 20px rgba(0, 136, 204, 0.4);
 }
 
 .chip-btn.icon-only {
-    padding: 10px;
-    border-radius: 12px;
-    width: 44px;
-    height: 44px;
+    padding: 0;
+    width: 48px;
+    height: 48px;
     justify-content: center;
     flex-shrink: 0;
-}
-
-.chip-btn:active {
-    transform: scale(0.95);
 }
 
 /* --- GRID & CARDS --- */
@@ -846,12 +830,35 @@ body {
     display: flex;
     flex-direction: column;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
-    overflow: hidden;
-    /* Main panel NEVER scrolls */
 }
 
 .filter-panel.active {
     transform: translateY(0);
+}
+
+.product-view-header {
+    background: rgba(15, 21, 28, 0.98) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    position: sticky;
+    top: 0;
+    z-index: 1001;
+}
+
+.notify-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    color: #8b9bb4;
+    transition: all 0.3s ease;
+}
+
+.notify-btn.active {
+    color: #0088cc;
+    background: rgba(0, 136, 204, 0.1);
 }
 
 .octo-modal-header {
@@ -871,7 +878,6 @@ body {
 .filter-content {
     flex: 1;
     overflow-y: auto;
-    /* Restored main scroll */
     overflow-x: hidden;
     padding-bottom: 60px;
     -webkit-overflow-scrolling: touch;
@@ -948,54 +954,77 @@ body {
 
 .accordion-content.active {
     max-height: 250px;
-    /* Reduced to show following buttons */
     padding-bottom: 10px;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-/* Internal scrollbar for accordion */
-.accordion-content::-webkit-scrollbar {
-    width: 3px;
+#nft-list-container,
+#model-list-container,
+#bg-list-container,
+#symbol-list-container {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+    padding: 10px 20px !important;
 }
 
-.accordion-content::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
+#sort-list-container {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    padding: 0 4px !important;
 }
 
 .filter-list-item {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 8px 12px !important;
-    margin: 4px 8px !important;
-    border-radius: 14px !important;
-    transition: all 0.2s;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    padding: 16px 12px !important;
+    margin: 0 !important;
+    border-radius: 18px !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    position: relative;
+    height: 100%;
 }
 
 .filter-list-item:active {
-    transform: scale(0.98);
-    background: rgba(255, 255, 255, 0.05);
+    transform: scale(0.96);
+    background: rgba(255, 255, 255, 0.06);
 }
 
 .filter-list-item.selected {
-    background: rgba(0, 136, 204, 0.1);
+    background: rgba(0, 136, 204, 0.12) !important;
+    border-color: rgba(0, 136, 204, 0.4) !important;
 }
 
 .filter-item-left {
     display: flex;
-    align-items: center;
-    gap: 14px;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 12px !important;
+    width: 100%;
 }
 
-.filter-color-circle {
-    width: 32px !important;
-    height: 32px !important;
-    border-radius: 8px !important;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+.filter-item-name {
+    color: white;
+    font-weight: 700;
+    font-size: 13px !important;
+    line-height: 1.2;
+    text-align: center;
+    width: 100%;
+}
+
+.checkbox-box {
+    position: absolute;
+    top: 10px;
+    right: 10px;
 }
 
 /* MODALS */
@@ -1618,12 +1647,8 @@ body {
     margin-bottom: 5px;
 }
 
-.filter-search-input:focus {
-    border-color: #0088cc;
-    background: rgba(255, 255, 255, 0.03);
-}
-
-.filter-img {
+/* Filter visual helpers restored */
+.filter-img-standalone {
     width: 32px;
     height: 32px;
     border-radius: 8px;
@@ -1631,17 +1656,11 @@ body {
     background: rgba(255, 255, 255, 0.05);
 }
 
-.filter-color-circle {
-    width: 32px !important !important;
-    height: 32px !important !important;
+.filter-color-circle-legacy {
+    width: 32px !important;
+    height: 32px !important;
     border-radius: 8px !important;
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
-}
-
-.filter-list-item {
-    padding: 8px 12px !important;
-    margin: 4px 8px !important;
-    border-radius: 14px !important;
 }
 
 /* Header TonConnect Overrides */
@@ -2604,6 +2623,38 @@ body.hide-filters .header-column {
     flex-direction: column;
     align-items: center;
     min-width: 45px;
+}
+
+.countdown-market-container {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 24px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100% !important;
+    margin: 0 0 16px 0 !important;
+    box-sizing: border-box;
+}
+
+.timer-market-label {
+    font-size: 11px;
+    color: #8794a1;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+}
+
+.timer-market-value {
+    font-size: 32px;
+    font-weight: 900;
+    color: #fff;
+    display: flex;
+    gap: 8px;
+    font-family: 'Outfit', sans-serif;
 }
 
 .timer-box .t-num {
@@ -3656,6 +3707,7 @@ tc-root>div {
 #product-view {
     z-index: 10000;
 }
+
 .symbol-invert {
     filter: brightness(0) invert(1) contrast(100%);
 }
