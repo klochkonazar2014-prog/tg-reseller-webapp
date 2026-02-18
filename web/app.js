@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://filed-guarantee-thats-contacting.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://mouth-tracked-manufacturers-saying.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -2298,9 +2298,9 @@ async function handleShareClick() {
 
         // Stage 2: switchInlineQuery (works in older Telegram versions)
         if (window.Telegram?.WebApp?.switchInlineQuery) {
-            console.log("Using switchInlineQuery fallback");
-            const cleanName = itemName.replace('@', '').split('#')[0].trim();
-            window.Telegram.WebApp.switchInlineQuery(cleanName, ['users', 'groups', 'channels']);
+            console.log("Using switchInlineQuery fallback with:", itemName);
+            // DO NOT strip numbers or @, we need exact match for bot search
+            window.Telegram.WebApp.switchInlineQuery(itemName, ['users', 'groups', 'channels']);
             return;
         }
 
