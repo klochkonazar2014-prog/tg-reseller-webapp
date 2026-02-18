@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://kennedy-directly-brochures-biographies.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://thus-formation-scenarios-paid.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -765,7 +765,7 @@ async function shareReferralLink() {
         if (window.Telegram?.WebApp?.sendPreparedInlineMessage) {
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
 
                 const res = await fetch(`${BACKEND_URL}/api/referral/prepare_share`, {
                     method: 'POST',
@@ -775,32 +775,23 @@ async function shareReferralLink() {
                 });
                 clearTimeout(timeoutId);
                 const data = await res.json();
-                console.log("[share] prepare_share response:", data);
                 if (data.status === 'ok' && data.id) {
                     window.Telegram.WebApp.sendPreparedInlineMessage(data.id);
                     return;
-                } else {
-                    // Show the actual error from backend for debugging
-                    tg.showAlert(`[DEBUG] Backend error: ${data.error || JSON.stringify(data)}`);
                 }
             } catch (e) {
                 console.warn("Stage 1 failed:", e.message);
-                tg.showAlert(`[DEBUG] Stage 1 exception: ${e.message}`);
             }
-        } else {
-            tg.showAlert("[DEBUG] sendPreparedInlineMessage not available on this device");
         }
 
-        // Stage 2: shareURL (Direct chat picker)
+        // Stage 2: shareURL — opens native Telegram share dialog
         if (window.Telegram?.WebApp?.shareURL) {
-            console.log("Using Stage 2: shareURL");
             window.Telegram.WebApp.shareURL(refLink, shareText);
             return;
         }
 
         // Stage 3: openTelegramLink (share dialog via t.me/share/url)
         if (window.Telegram?.WebApp?.openTelegramLink) {
-            console.log("Using Stage 3: openTelegramLink share");
             const encodedUrl = encodeURIComponent(refLink);
             const encodedText = encodeURIComponent(shareText);
             window.Telegram.WebApp.openTelegramLink(`https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`);
@@ -813,6 +804,7 @@ async function shareReferralLink() {
     } catch (e) {
         console.error("All sharing stages failed:", e);
         showToast("Ошибка при попытке поделиться");
+
     } finally {
         setTimeout(() => {
             IS_SHARING_REF = false;
