@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://clinical-used-floor-six.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://funk-newton-knock-viewer.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -554,17 +554,33 @@ document.addEventListener("DOMContentLoaded", async () => {
                 fetch(`${BACKEND_URL}/api/nft_details?nft_address=${deepNftAddr}`)
                     .then(r => r.json())
                     .then(details => {
-                        if (details && details.address) {
-                            // Normalize details to match our item structure
+                        if (details && (details.address || details.nft_address)) {
                             const m = details.metadata || {};
+                            const addr = details.address || details.nft_address;
+
+                            // ENRICHMENT: Map fields from our enhanced API
                             const fakeItem = {
-                                nft_address: details.address,
-                                nft_name: details.name,
-                                price_per_day: 0, // Will be updated by status check or remains 0
-                                status: 'available',
-                                type: 'gift',
-                                metadata: JSON.stringify(m)
+                                nft_address: addr,
+                                nft_name: details.name || details.nft_name,
+                                price_per_day: details.price_per_day || 0,
+                                status: details.status || 'available',
+                                type: details.type || 'gift',
+                                auto_relist: details.auto_relist || 0,
+                                min_duration: details.min_duration || 86400,
+                                max_duration: details.max_duration || 2592000,
+                                metadata: typeof details.metadata === 'string' ? details.metadata : JSON.stringify(details.metadata || {})
                             };
+
+                            // Helper mapping for attributes
+                            if (m.attributes) {
+                                m.attributes.forEach(a => {
+                                    const t = a.trait_type.toLowerCase();
+                                    if (t === 'model') fakeItem._modelName = a.value;
+                                    if (t === 'backdrop' || t === 'background') fakeItem._backdrop = a.value;
+                                    if (t === 'symbol') fakeItem._symbol = a.value;
+                                });
+                            }
+
                             openProductView(fakeItem);
                         }
                     }).catch(e => console.error("Deep link fetch error:", e));
@@ -2277,7 +2293,8 @@ async function handleShareClick() {
                         user_id: userId,
                         type: item.type || 'gift',
                         name: itemName,
-                        nft_address: item.nft_address || ''
+                        nft_address: item.nft_address || '',
+                        rent_ends_at: item.rent_ends_at || null // NEW: pass exploration
                     }),
                     signal: controller.signal
                 });
