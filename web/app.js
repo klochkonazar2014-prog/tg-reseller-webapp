@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://dennis-pregnancy-basement-remix.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://yourself-love-boating-symposium.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -2248,31 +2248,33 @@ async function handleShareClick() {
     try {
         if (!CURRENT_PAYMENT_ITEM) {
             console.error("No current payment item for sharing!");
+            showToast("Ошибка: товар не выбран");
             return;
         }
 
         const item = CURRENT_PAYMENT_ITEM;
+        // Use nft_name (correct field) not item.title which doesn't exist
+        const itemName = item.nft_name || item.title || "NFT";
         const userId = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user?.id) || 0;
         const botUser = "OctoRent_bot";
-        const shareLink = `https://t.me/${botUser}/app?startapp=nft_${item.nft_address}`;
-        const shareText = `💎 Посмотри на этот NFT в OctoRent!\n\n${item.title}`;
+        const shareLink = `https://t.me/${botUser}/app?startapp=nft_${item.nft_address || item.id}`;
 
-        console.log("Preparing share for item:", item.title, "User:", userId);
+        console.log("Preparing share for item:", itemName, "type:", item.type, "User:", userId);
 
-        // Stage 1: Premium Prepared Message
+        // Stage 1: Premium Prepared Message (requires Telegram 7.8+)
         if (window.Telegram?.WebApp?.sendPreparedInlineMessage) {
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 3000);
+                const timeoutId = setTimeout(() => controller.abort(), 4000);
 
                 const res = await fetch(`${BACKEND_URL}/api/referral/prepare_share`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         user_id: userId,
-                        type: item.type,
-                        name: item.title,
-                        nft_address: item.nft_address
+                        type: item.type || 'gift',
+                        name: itemName,
+                        nft_address: item.nft_address || ''
                     }),
                     signal: controller.signal
                 });
@@ -2280,26 +2282,29 @@ async function handleShareClick() {
                 const data = await res.json();
                 console.log("Prepare share response:", data);
                 if (data.status === 'ok' && data.id) {
+                    console.log("Sending prepared inline message with id:", data.id);
                     window.Telegram.WebApp.sendPreparedInlineMessage(data.id);
                     return;
+                } else {
+                    console.warn("prepare_share returned error:", data);
                 }
             } catch (e) {
-                console.warn("Product share stage 1 failed, trying fallback...", e);
+                console.warn("Product share stage 1 failed:", e.message);
             }
         }
 
-        // Stage 2: shareURL
-        if (window.Telegram?.WebApp?.shareURL) {
-            console.log("Using shareURL fallback");
-            window.Telegram.WebApp.shareURL(shareLink, shareText);
+        // Stage 2: switchInlineQuery (works in older Telegram versions)
+        if (window.Telegram?.WebApp?.switchInlineQuery) {
+            console.log("Using switchInlineQuery fallback");
+            const cleanName = itemName.replace('@', '').split('#')[0].trim();
+            window.Telegram.WebApp.switchInlineQuery(cleanName, ['users', 'groups', 'channels']);
             return;
         }
 
-        // Stage 3: switchInlineQuery
-        if (window.Telegram?.WebApp?.switchInlineQuery) {
-            console.log("Using switchInlineQuery fallback");
-            const cleanTitle = item.title.replace('@', '');
-            window.Telegram.WebApp.switchInlineQuery(cleanTitle, ['users', 'groups', 'channels']);
+        // Stage 3: shareURL
+        if (window.Telegram?.WebApp?.shareURL) {
+            console.log("Using shareURL fallback");
+            window.Telegram.WebApp.shareURL(shareLink, `💎 ${itemName} — аренда в OctoRent`);
             return;
         }
 
