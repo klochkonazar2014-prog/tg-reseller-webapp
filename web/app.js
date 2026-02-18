@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://mixed-centres-pencil-edwards.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://transform-cloudy-effects-invention.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -789,12 +789,18 @@ async function shareReferralLink() {
 
                 if (data.status === 'ok' && data.id) {
                     console.log("Stage 1 Success: ID", data.id);
-                    window.Telegram.WebApp.sendPreparedInlineMessage(data.id);
+                    if (method) {
+                        method(data.id);
+                    } else if (window.Telegram?.WebApp?.sendPreparedInlineMessage) {
+                        window.Telegram.WebApp.sendPreparedInlineMessage(data.id);
+                    }
                     return;
                 } else {
                     console.warn("Stage 1 Backend Error:", data.error || "No ID returned");
+                    // On error, fall through to next stages
                     if (window.Telegram?.WebApp?.showAlert) {
-                        window.Telegram.WebApp.showAlert(`Ошибка подготовки: ${data.error || 'Нет ID'}`);
+                        // Only alert if debugging
+                        // window.Telegram.WebApp.showAlert(`Ошибка этапа 1: ${data.error}`);
                     }
                 }
             } catch (e) {
@@ -2294,13 +2300,14 @@ async function handleShareClick() {
                 const data = await res.json();
                 if (data.status === 'ok' && data.id) {
                     console.log("Stage 1 Success: ID", data.id);
-                    window.Telegram.WebApp.sendPreparedInlineMessage(data.id);
+                    if (method) {
+                        method(data.id);
+                    } else if (window.Telegram?.WebApp?.sendPreparedInlineMessage) {
+                        window.Telegram.WebApp.sendPreparedInlineMessage(data.id);
+                    }
                     return;
                 } else {
                     console.warn("Stage 1 Backend Error:", data.error);
-                    if (window.Telegram?.WebApp?.showAlert) {
-                        window.Telegram.WebApp.showAlert(`Ошибка подготовки: ${data.error || 'Нет ID'}`);
-                    }
                 }
             } catch (e) {
                 console.warn("Product share stage 1 failed or timed out:", e.name === 'AbortError' ? "Timeout" : e);
