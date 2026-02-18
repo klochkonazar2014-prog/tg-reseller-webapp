@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://europe-boutique-accent-yield.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://url-catalogue-tin-catalyst.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -2242,7 +2242,7 @@ async function handleShareClick() {
         if (window.Telegram?.WebApp?.sendPreparedInlineMessage) {
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 2000);
+                const timeoutId = setTimeout(() => controller.abort(), 3000);
 
                 const res = await fetch(`${BACKEND_URL}/api/referral/prepare_share`, {
                     method: 'POST',
@@ -2250,7 +2250,8 @@ async function handleShareClick() {
                     body: JSON.stringify({
                         user_id: userId,
                         type: item.type,
-                        name: item.nft_name
+                        name: item.title,
+                        nft_address: item.nft_address
                     }),
                     signal: controller.signal
                 });
@@ -2272,9 +2273,9 @@ async function handleShareClick() {
         }
 
         // Stage 3: switchInlineQuery
-        const cleanName = item.nft_name.replace('@', '');
         if (window.Telegram?.WebApp?.switchInlineQuery) {
-            window.Telegram.WebApp.switchInlineQuery(cleanName, ['users', 'groups', 'channels']);
+            const cleanTitle = item.title.replace('@', '');
+            window.Telegram.WebApp.switchInlineQuery(cleanTitle, ['users', 'groups', 'channels']);
             return;
         }
 
