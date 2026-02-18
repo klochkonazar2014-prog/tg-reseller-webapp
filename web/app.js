@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://commodity-moderator-scuba-utils.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://focal-accounting-clearly-waters.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -741,6 +741,7 @@ async function shareReferralLink() {
     if (IS_SHARING_REF) return;
     IS_SHARING_REF = true;
 
+    console.log("shareReferralLink called!");
     // Diagnostic log
     console.log("SDK Support:", {
         sendPreparedInlineMessage: !!(window.Telegram?.WebApp?.sendPreparedInlineMessage),
@@ -761,45 +762,51 @@ async function shareReferralLink() {
     const shareText = "🎁 Твой подарок уже ждёт тебя в OctoRent!\n\nЗабирай его прямо сейчас — и получай призы на свой аккаунт ✨";
 
     try {
-        // Stage 1: Premium Prepared Message (v7.8+) - "RocketCase Style"
+        // Stage 1: Premium Prepared Message (v7.8+)
         if (window.Telegram?.WebApp?.sendPreparedInlineMessage) {
             try {
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 5000);
 
+                console.log("Calling prepare_share with type=referral, user_id:", userId);
                 const res = await fetch(`${BACKEND_URL}/api/referral/prepare_share`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userId }),
+                    body: JSON.stringify({
+                        user_id: userId,
+                        type: 'referral'  // IMPORTANT: tell backend this is a referral share
+                    }),
                     signal: controller.signal
                 });
                 clearTimeout(timeoutId);
                 const data = await res.json();
+                console.log("prepare_share response:", data);
                 if (data.status === 'ok' && data.id) {
+                    console.log("Sending prepared inline message with id:", data.id);
                     window.Telegram.WebApp.sendPreparedInlineMessage(data.id);
                     return;
+                } else {
+                    console.warn("prepare_share returned error:", data);
                 }
             } catch (e) {
                 console.warn("Stage 1 failed:", e.message);
             }
         }
 
-        // Stage 2: switchInlineQuery — "Inline Mode Style" (User specifically requested this style)
+        // Stage 2: switchInlineQuery
         if (window.Telegram?.WebApp?.switchInlineQuery) {
-            console.log("Using Stage 2: switchInlineQuery (Inline Mode Style)");
-            // 'ref' triggers the custom referral result in bot.py
+            console.log("Using Stage 2: switchInlineQuery");
             window.Telegram.WebApp.switchInlineQuery('ref', ['users', 'groups', 'channels']);
             return;
         }
 
         // Stage 3: Clipboard (Last resort)
+        console.log("Using Stage 3: clipboard fallback");
         copyToClipboard(refLink);
         showToast("Реферальная ссылка скопирована!");
     } catch (e) {
         console.error("All sharing stages failed:", e);
         showToast("Ошибка при попытке поделиться");
-
-
     } finally {
         setTimeout(() => {
             IS_SHARING_REF = false;
