@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://licenses-resistance-beverage-glad.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://gold-ceiling-acceptable-surprise.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -585,6 +585,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                             }
 
                             const fakeItem = {
+                                id: details.id || Date.now(),
                                 nft_address: addr,
                                 nft_name: itemName,
                                 price_per_day: details.price_per_day || 0,
@@ -593,6 +594,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                                 auto_relist: details.auto_relist !== undefined ? details.auto_relist : 1, // Default 1 for gifts
                                 min_duration: details.min_duration || 86400,
                                 max_duration: details.max_duration || 2592000,
+                                rent_ends_at: details.rent_ends_at,
                                 metadata: typeof details.metadata === 'string' ? details.metadata : JSON.stringify(details.metadata || {})
                             };
 
@@ -605,6 +607,17 @@ document.addEventListener("DOMContentLoaded", async () => {
                                     if (t === 'backdrop' || t === 'background') fakeItem._backdrop = a.value;
                                     if (t === 'symbol') fakeItem._symbol = a.value;
                                 });
+                            }
+
+                            // 🚀 SYNC APP STATE: Switch to correct tab
+                            CURRENT_TYPE = fakeItem.type;
+                            CURRENT_STATUS = fakeItem.status;
+                            updateUILanguage(); // Refresh tab labels class
+
+                            // Map type to tab index
+                            const tabMap = { 'gift': 0, 'username': 1, 'number': 2, 'friends': 3, 'profile': 4 };
+                            if (tabMap[CURRENT_TYPE] !== undefined) {
+                                switchTab(tabMap[CURRENT_TYPE]);
                             }
 
                             openProductView(fakeItem);
