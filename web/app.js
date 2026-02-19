@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://believe-looksmart-config-fragrance.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://aircraft-cars-accessible-bugs.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -609,7 +609,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                                 });
                             }
 
-                            // 🚀 SYNC APP STATE: Switch to correct tab
+                            // 🚀 SYNC APP STATE: Switch to correct tab & status
                             CURRENT_TYPE = fakeItem.type;
                             CURRENT_STATUS = fakeItem.status;
                             updateUILanguage(); // Refresh tab labels class
@@ -618,6 +618,12 @@ document.addEventListener("DOMContentLoaded", async () => {
                             const tabMap = { 'gift': 0, 'username': 1, 'number': 2, 'friends': 3, 'profile': 4 };
                             if (tabMap[CURRENT_TYPE] !== undefined) {
                                 switchTab(tabMap[CURRENT_TYPE]);
+                            }
+
+                            // Update Catalog Mode Toggle button visually
+                            const modeBtnText = document.getElementById('mode-toggle-text');
+                            if (modeBtnText) {
+                                modeBtnText.innerText = CURRENT_STATUS === 'rented' ? (CURRENT_LANG === 'ru' ? 'Весь каталог' : 'All Catalog') : (CURRENT_LANG === 'ru' ? 'Каталог арендованных подарков' : 'Rented Items Catalog');
                             }
 
                             openProductView(fakeItem);
