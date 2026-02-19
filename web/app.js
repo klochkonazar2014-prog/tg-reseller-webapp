@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://research-expenses-occurring-purple.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://licenses-resistance-beverage-glad.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -543,11 +543,22 @@ document.addEventListener("DOMContentLoaded", async () => {
             const startParam = tg.initDataUnsafe.start_param;
             if (startParam.startsWith('nft_')) {
                 deepNftAddr = startParam.replace('nft_', '');
-                console.log("Deep link NFT detected:", deepNftAddr);
+                console.log("Deep link NFT detected in start_param:", deepNftAddr);
             }
         }
+
         if (deepNftAddr) {
-            const match = ALL_MARKET_ITEMS.find(it => it.nft_address === deepNftAddr);
+            console.log("Checking deep link for:", deepNftAddr);
+            // 🚀 ROBUST MATCHING: Use normalized address comparison
+            const findMatch = (addr) => {
+                const target = addr.toLowerCase();
+                return ALL_MARKET_ITEMS.find(it => {
+                    const itAddr = (it.nft_address || '').toLowerCase();
+                    return itAddr === target || itAddr.replace(/-/g, '+').replace(/_/g, '/') === target.replace(/-/g, '+').replace(/_/g, '/');
+                });
+            };
+
+            const match = findMatch(deepNftAddr);
             if (match) {
                 openProductView(match);
             } else {
@@ -1050,6 +1061,7 @@ async function loadLiveItems(reset = true) {
         GLOBAL_OFFSET = 0;
         HAS_MORE = true;
         SEEN_ITEM_IDS.clear(); // Reset duplicates tracker
+        ALL_MARKET_ITEMS = []; // 🚀 Clear global items list on reset
         document.getElementById('items-view').innerHTML = '';
         if (topLoader) topLoader.style.display = 'block';
         window.scrollTo({ top: 0, behavior: 'instant' });
@@ -1117,6 +1129,9 @@ async function loadLiveItems(reset = true) {
                 HAS_MORE = false;
             }
             GLOBAL_OFFSET += data.items.length;
+
+            // 🚀 POPULATE CACHE: Crucial for deep link matching!
+            ALL_MARKET_ITEMS = ALL_MARKET_ITEMS.concat(items);
 
             const processed = items
                 .filter(item => item.type === CURRENT_TYPE) // Strict client-side type check
