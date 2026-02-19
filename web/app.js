@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://aircraft-cars-accessible-bugs.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://lows-pretty-transit-whenever.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -588,6 +588,9 @@ document.addEventListener("DOMContentLoaded", async () => {
                                 id: details.id || Date.now(),
                                 nft_address: addr,
                                 nft_name: itemName,
+                                nft_image: details.image || (m.image),
+                                _realImage: details.image || (m.image), // 🚀 CRITICAL: used by openProductView
+                                _collection: details.collection_name || m.collection_name || '',
                                 price_per_day: details.price_per_day || 0,
                                 status: details.status || 'available',
                                 type: detectedType,
@@ -610,20 +613,29 @@ document.addEventListener("DOMContentLoaded", async () => {
                             }
 
                             // 🚀 SYNC APP STATE: Switch to correct tab & status
-                            CURRENT_TYPE = fakeItem.type;
-                            CURRENT_STATUS = fakeItem.status;
+                            const targetStatus = fakeItem.status || 'available';
+                            const targetType = fakeItem.type || 'gift';
+
+                            // 1. Switch Status (Available vs Rented)
+                            if (CURRENT_STATUS !== targetStatus) {
+                                CURRENT_STATUS = targetStatus;
+                                // Update Toggle button text
+                                const modeBtnText = document.getElementById('mode-toggle-text');
+                                if (modeBtnText) {
+                                    modeBtnText.innerText = CURRENT_STATUS === 'rented' ?
+                                        (CURRENT_LANG === 'ru' ? 'Весь каталог' : 'All Catalog') :
+                                        (CURRENT_LANG === 'ru' ? 'Каталог арендованных подарков' : 'Rented Items Catalog');
+                                }
+                            }
+
+                            // 2. Switch Type/Tab
+                            CURRENT_TYPE = targetType;
                             updateUILanguage(); // Refresh tab labels class
 
                             // Map type to tab index
                             const tabMap = { 'gift': 0, 'username': 1, 'number': 2, 'friends': 3, 'profile': 4 };
                             if (tabMap[CURRENT_TYPE] !== undefined) {
                                 switchTab(tabMap[CURRENT_TYPE]);
-                            }
-
-                            // Update Catalog Mode Toggle button visually
-                            const modeBtnText = document.getElementById('mode-toggle-text');
-                            if (modeBtnText) {
-                                modeBtnText.innerText = CURRENT_STATUS === 'rented' ? (CURRENT_LANG === 'ru' ? 'Весь каталог' : 'All Catalog') : (CURRENT_LANG === 'ru' ? 'Каталог арендованных подарков' : 'Rented Items Catalog');
                             }
 
                             openProductView(fakeItem);
