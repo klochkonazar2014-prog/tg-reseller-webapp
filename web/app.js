@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://menu-cleared-antarctica-vessel.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://johnston-bloggers-aid-discussed.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -548,32 +548,44 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
         if (deepNftAddr) {
-            console.log("Checking deep link for:", deepNftAddr);
-            // 🚀 ROBUST MATCHING: Use normalized address comparison
+            console.log("🚀 Deep link detected:", deepNftAddr);
+            showToast(CURRENT_LANG === 'ru' ? "Загрузка товара..." : "Loading item...");
+            const tabMap = { 'gift': 0, 'username': 1, 'number': 2 };
+
+            const performDeepLinkActions = (item) => {
+                if (!item) return;
+                console.log("✨ Opening deep link item:", item.nft_name);
+
+                // 1. Sync Tabs
+                const targetIdx = tabMap[item.type];
+                if (targetIdx !== undefined) {
+                    switchTab(targetIdx);
+                }
+
+                // 2. Open View with delay
+                setTimeout(() => openProductView(item), 500);
+            };
+
             const findMatch = (addr) => {
-                const target = addr.toLowerCase();
+                const target = String(addr).toLowerCase();
                 return ALL_MARKET_ITEMS.find(it => {
-                    const itAddr = (it.nft_address || '').toLowerCase();
+                    const itAddr = String(it.nft_address || '').toLowerCase();
                     return itAddr === target || itAddr.replace(/-/g, '+').replace(/_/g, '/') === target.replace(/-/g, '+').replace(/_/g, '/');
                 });
             };
 
             const match = findMatch(deepNftAddr);
             if (match) {
-                openProductView(match);
+                performDeepLinkActions(match);
             } else {
-                // If not in current catalog, try to fetch it specifically or alert
-                fetch(`${BACKEND_URL}/api/nft_details?nft_address=${deepNftAddr}`)
+                fetch(`${BACKEND_URL}/api/nft_details?nft_address=${encodeURIComponent(deepNftAddr)}`)
                     .then(r => r.json())
                     .then(details => {
                         if (details && (details.address || details.nft_address)) {
                             const m = details.metadata || {};
                             const addr = details.address || details.nft_address;
-
-                            // ENRICHMENT: Map fields from our enhanced API
                             const itemName = details.name || details.nft_name || '';
 
-                            // Robust type detection
                             let detectedType = details.type || 'gift';
                             const lowerName = itemName.toLowerCase();
                             if (itemName.includes('#') || lowerName.includes('gift') || lowerName.includes('коробка')) {
@@ -589,15 +601,16 @@ document.addEventListener("DOMContentLoaded", async () => {
                                 nft_address: addr,
                                 nft_name: itemName,
                                 nft_image: details.image || (m.image),
-                                _realImage: details.image || (m.image), // 🚀 CRITICAL: used by openProductView
+                                _realImage: details.image || (m.image),
                                 _collection: details.collection_name || m.collection_name || '',
                                 price_per_day: details.price_per_day || 0,
                                 status: details.status || 'available',
                                 type: detectedType,
-                                auto_relist: details.auto_relist !== undefined ? details.auto_relist : 1, // Default 1 for gifts
+                                auto_relist: details.auto_relist !== undefined ? details.auto_relist : 1,
                                 min_duration: details.min_duration || 86400,
                                 max_duration: details.max_duration || 2592000,
                                 rent_ends_at: details.rent_ends_at,
+                                attributes_lines: details.attributes_lines || m.attributes_lines || '',
                                 metadata: typeof details.metadata === 'string' ? details.metadata : JSON.stringify(details.metadata || {})
                             };
 
@@ -612,47 +625,23 @@ document.addEventListener("DOMContentLoaded", async () => {
                                 });
                             }
 
-                            // 🚀 SYNC APP STATE: Switch to correct tab & status
-                            const targetStatus = fakeItem.status || 'available';
-                            const targetType = fakeItem.type || 'gift';
-
-                            // 1. Switch Status (Available vs Rented)
-                            if (CURRENT_STATUS !== targetStatus) {
-                                CURRENT_STATUS = targetStatus;
-                                // Update Toggle button text
-                                const modeBtnText = document.getElementById('mode-toggle-text');
-                                if (modeBtnText) {
-                                    modeBtnText.innerText = CURRENT_STATUS === 'rented' ?
-                                        (CURRENT_LANG === 'ru' ? 'Весь каталог' : 'All Catalog') :
-                                        (CURRENT_LANG === 'ru' ? 'Каталог арендованных подарков' : 'Rented Items Catalog');
-                                }
-                            }
-
-                            // 2. Switch Type/Tab
-                            CURRENT_TYPE = targetType;
-                            updateUILanguage(); // Refresh tab labels class
-
-                            // Map type to tab index
-                            const tabMap = { 'gift': 0, 'username': 1, 'number': 2, 'friends': 3, 'profile': 4 };
-                            if (tabMap[CURRENT_TYPE] !== undefined) {
-                                switchTab(tabMap[CURRENT_TYPE]);
-                            }
-
-                            openProductView(fakeItem);
+                            performDeepLinkActions(fakeItem);
+                        } else {
+                            console.warn("Deep link item not found on server");
                         }
-                    }).catch(e => console.error("Deep link fetch error:", e));
+                    })
+                    .catch(err => console.error("Deep link fetch failed:", err));
             }
-
-            // FIX: Add click handler for product-view background
-            const productView = document.getElementById('product-view');
-            if (productView) {
-                productView.addEventListener('click', function (e) {
-                    // Close if clicking on product-view itself OR on elements with overflow-y-scroll
-                    if (e.target.id === 'product-view' || e.target.classList.contains('product-view')) {
-                        closeProductView();
-                    }
-                });
-            }
+        }
+        // FIX: Add click handler for product-view background
+        const productView = document.getElementById('product-view');
+        if (productView) {
+            productView.addEventListener('click', function (e) {
+                // Close if clicking on product-view itself OR on elements with overflow-y-scroll
+                if (e.target.id === 'product-view' || e.target.classList.contains('product-view')) {
+                    closeProductView();
+                }
+            });
         }
 
         document.getElementById('search-input').addEventListener('input', debounce((e) => {
@@ -672,7 +661,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             if (now - lastTouchEnd <= 300) {
                 // Check if target is scrollable or input
                 if (!e.target.closest('.chips-row') && !e.target.closest('input')) {
-                    // e.preventDefault(); // Removed to avoid blocking clicks
+                    // e.preventDefault();
                 }
             }
             lastTouchEnd = now;
@@ -692,7 +681,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             };
         });
 
-    } catch (e) { alert("Init Error: " + e.message); }
+    } catch (e) { console.error("Init Error: ", e); }
 });
 
 function switchTab(index) {
