@@ -3711,3 +3711,130 @@ tc-root>div {
 .symbol-invert {
     filter: brightness(0) invert(1) contrast(100%);
 }
+/* --- TC MODAL REDESIGN (Premium) --- */
+.tc-redesign-container {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.tc-step {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+.tc-step-number {
+    width: 32px;
+    height: 32px;
+    background: rgba(0, 136, 204, 0.1);
+    border: 1px solid rgba(0, 136, 204, 0.3);
+    color: var(--accent-blue);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 14px;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.tc-step-text {
+    font-size: 14px;
+    color: var(--text-primary);
+    line-height: 1.5;
+}
+
+.tc-step-text b {
+    color: #fff;
+    font-weight: 700;
+}
+
+.tc-input-wrapper {
+    position: relative;
+    margin-top: 8px;
+}
+
+.tc-input-premium {
+    width: 100% !important;
+    height: 60px !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 18px !important;
+    color: #fff !important;
+    padding: 0 20px 0 52px !important;
+    font-size: 16px !important;
+    transition: all 0.3s ease !important;
+    outline: none !important;
+}
+
+.tc-input-premium:focus {
+    border-color: var(--accent-blue) !important;
+    background: rgba(0, 136, 204, 0.08) !important;
+    box-shadow: 0 0 20px rgba(0, 136, 204, 0.2);
+}
+
+.tc-input-icon {
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--accent-blue);
+    width: 20px;
+    height: 20px;
+    opacity: 0.9;
+}
+
+.tc-btn-premium {
+    height: 58px;
+    background: linear-gradient(135deg, #0088cc 0%, #005588 100%) !important;
+    border: none !important;
+    border-radius: 18px !important;
+    color: #fff !important;
+    font-weight: 800 !important;
+    font-size: 16px !important;
+    letter-spacing: 0.5px !important;
+    box-shadow: 0 8px 25px rgba(0, 136, 204, 0.3) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 10px;
+}
+
+.tc-btn-premium:active {
+    transform: scale(0.97);
+    box-shadow: 0 4px 15px rgba(0, 136, 204, 0.2);
+}
+
+.tc-polling-premium {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.tc-polling-title {
+    font-size: 18px;
+    font-weight: 800;
+    color: #fff;
+    margin: 20px 0 10px;
+}
+
+.tc-polling-desc {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+

