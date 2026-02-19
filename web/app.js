@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://collectibles-deaf-anymore-discussing.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://memo-complications-dim-amp.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -2152,6 +2152,9 @@ async function openProductView(item) {
                 if (countdownCont) countdownCont.style.display = 'none';
             }
 
+            // 4. Check Notification Status
+            checkNotificationStatus(item.nft_address);
+
             // 4. Existing warning logic and attributes
             if (details.rent && details.rent.listed_at) {
                 const diffHrs = (Date.now() - (details.rent.listed_at * 1000)) / (1000 * 60 * 60);
@@ -2362,8 +2365,54 @@ async function handleShareClick() {
     }
 }
 
-function handleNotifyClick() {
-    showToast(CURRENT_LANG === 'ru' ? "Вы получите уведомление, когда NFT освободится" : "You will be notified when this NFT is available");
+async function handleNotifyClick() {
+    if (!CURRENT_PAYMENT_ITEM || !CURRENT_PAYMENT_ITEM.nft_address) return;
+
+    const userId = tg.initDataUnsafe?.user?.id || 0;
+    const btn = document.getElementById('notify-btn');
+    if (!btn) return;
+
+    try {
+        const resp = await fetch(`${BACKEND_URL}/api/toggle_notification`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                user_id: userId,
+                nft_address: CURRENT_PAYMENT_ITEM.nft_address
+            })
+        });
+        const d = await resp.json();
+
+        if (d.status === 'ok') {
+            const isActive = d.action === 'added';
+            btn.classList.toggle('active', isActive);
+
+            showToast(isActive ?
+                (CURRENT_LANG === 'ru' ? "Уведомление включено" : "Notification enabled") :
+                (CURRENT_LANG === 'ru' ? "Уведомление выключено" : "Notification disabled")
+            );
+
+            if (tg && tg.HapticFeedback) {
+                tg.HapticFeedback.notificationOccurred('success');
+            }
+        }
+    } catch (e) {
+        console.error("Notify toggle error:", e);
+    }
+}
+
+async function checkNotificationStatus(nftAddress) {
+    const btn = document.getElementById('notify-btn');
+    if (!btn) return;
+
+    const userId = tg.initDataUnsafe?.user?.id || 0;
+    try {
+        const r = await fetch(`${BACKEND_URL}/api/check_notification_status?user_id=${userId}&nft_address=${nftAddress}`);
+        const d = await r.json();
+        btn.classList.toggle('active', !!d.subscribed);
+    } catch (e) {
+        console.error("Notify status check error:", e);
+    }
 }
 
 function copyNftTitle(name) {
