@@ -850,15 +850,13 @@ body {
     justify-content: center;
     width: 44px;
     height: 44px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.05);
+    background: transparent;
     color: #8b9bb4;
     transition: all 0.3s ease;
 }
 
 .notify-btn.active {
-    color: #0088cc;
-    background: rgba(0, 136, 204, 0.1);
+    color: var(--accent-blue);
 }
 
 .octo-modal-header {
@@ -3567,24 +3565,26 @@ body.hide-filters .header-column {
 
 #notify-btn {
     transition: all 0.3s ease;
+    background: transparent !important;
 }
 
 #notify-btn.active {
-    color: #FF9500 !important;
-    animation: notify-pulse 2s infinite ease-in-out;
+    color: var(--accent-blue) !important;
+    animation: notify-pulse-blue 2s infinite ease-in-out;
 }
 
 #notify-btn.active svg {
-    filter: drop-shadow(0 0 8px rgba(255, 149, 0, 0.4));
+    filter: drop-shadow(0 0 8px rgba(0, 136, 204, 0.4));
 }
 
-@keyframes notify-pulse {
+@keyframes notify-pulse-blue {
     0% {
         transform: scale(1);
     }
 
     50% {
         transform: scale(1.1);
+        filter: drop-shadow(0 0 12px rgba(0, 136, 204, 0.6));
     }
 
     100% {

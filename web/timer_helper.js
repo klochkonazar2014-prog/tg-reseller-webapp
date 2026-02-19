@@ -32,12 +32,12 @@ function startCountdown(endTime, elements, isMini = false) {
         } else {
             // For product view timer: Pricing Card Style
             const html = `
-                <div class="market-timer-box-premium">
-                    <div class="mt-premium-top">
+                <div class="market-timer-box-premium" style="display: block !important; width: 100% !important;">
+                    <div class="mt-premium-top" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                         <span class="mt-premium-label">${typeof t === 'function' ? t('ends_in') : 'Ends in'}&nbsp;</span>
                         <span class="mt-premium-date">${dateStr}</span>
                     </div>
-                    <div class="mt-premium-val">${d}d : ${pad(h)} : ${pad(m)} : ${pad(s)}</div>
+                    <div class="mt-premium-val" style="display: block; width: 100%; text-align: left;">${d}d : ${pad(h)} : ${pad(m)} : ${pad(s)}</div>
                 </div>
             `;
             targets.forEach(el => el.innerHTML = html);
