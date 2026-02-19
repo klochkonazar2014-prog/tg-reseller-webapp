@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://whilst-passed-corresponding-optimal.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://feature-remainder-hitting-endangered.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -530,115 +530,88 @@ document.addEventListener("DOMContentLoaded", async () => {
         }, 5000);
 
         initTonConnect();
-        loadProfileData(); // Call after initTonConnect
+        loadProfileData();
         loadFilterData();
-        await loadLiveItems(true);
 
-        // --- Deep Link handling ---
+        // 🚀 NON-BLOCKING: Start loading but don't AWAIT here
+        const catalogPromise = loadLiveItems(true);
+
         const urlParams = new URLSearchParams(window.location.search);
         let deepNftAddr = urlParams.get('nft_address');
 
-        // Support tgWebAppStartParam (from Direct Link)
         if (!deepNftAddr && tg.initDataUnsafe && tg.initDataUnsafe.start_param) {
-            const startParam = tg.initDataUnsafe.start_param;
-            if (startParam.startsWith('nft_')) {
-                deepNftAddr = startParam.replace('nft_', '');
-                console.log("Deep link NFT detected in start_param:", deepNftAddr);
-            }
+            const sp = tg.initDataUnsafe.start_param;
+            if (sp.startsWith('nft_')) deepNftAddr = sp.replace('nft_', '');
         }
 
         if (deepNftAddr) {
-            console.log("🚀 Deep link detected:", deepNftAddr);
+            console.log("🚀 Deep link:", deepNftAddr);
             showToast(CURRENT_LANG === 'ru' ? "Загрузка товара..." : "Loading item...");
-            const tabMap = { 'gift': 0, 'username': 1, 'number': 2 };
+            const tMap = { 'gift': 0, 'username': 1, 'number': 2 };
 
-            const performDeepLinkActions = (item) => {
-                if (!item) {
-                    console.warn("performDeepLinkActions: item is null");
-                    return;
-                }
-                console.log("✨ Opening deep link item:", item.nft_name || item.title);
-
-                // 1. Sync Tabs
-                const targetIdx = tabMap[item.type];
-                if (targetIdx !== undefined) {
-                    switchTab(targetIdx);
-                }
-
-                // 2. Open View with delay
+            const openDeepItem = (it) => {
+                if (!it) return;
+                const idx = tMap[it.type];
+                if (idx !== undefined) switchTab(idx);
                 setTimeout(() => {
-                    console.log("Calling openProductView for:", item.nft_name || item.title);
-                    openProductView(item);
-                }, 500);
+                    openProductView(it);
+                    showToast(CURRENT_LANG === 'ru' ? "Готово!" : "Ready!");
+                }, 800);
             };
 
-            const findMatch = (addr) => {
-                const target = String(addr).toLowerCase();
-                return ALL_MARKET_ITEMS.find(it => {
-                    const itAddr = String(it.nft_address || '').toLowerCase();
-                    return itAddr === target || itAddr.replace(/-/g, '+').replace(/_/g, '/') === target.replace(/-/g, '+').replace(/_/g, '/');
-                });
-            };
-
-            const match = findMatch(deepNftAddr);
-            if (match) {
-                console.log("Match found in local cache:", match.nft_name);
-                showToast(CURRENT_LANG === 'ru' ? "Товар найден в кэше" : "Item found in cache");
-                performDeepLinkActions(match);
-            } else {
-                console.log("No local match, fetching from server:", deepNftAddr);
-                fetch(`${BACKEND_URL}/api/nft_details?nft_address=${encodeURIComponent(deepNftAddr)}`)
-                    .then(r => {
-                        if (!r.ok) throw new Error("HTTP " + r.status);
-                        return r.json();
-                    })
-                    .then(details => {
-                        console.log("Server response for deep link:", details);
-                        if (details && (details.address || details.nft_address || details.id)) {
-                            const m = details.metadata || {};
-                            const addr = details.address || details.nft_address;
-                            const itemName = details.name || details.nft_name || details.title || '';
-
-                            let detectedType = details.type || 'gift';
-                            const lowerName = itemName.toLowerCase();
-                            if (itemName.includes('#') || lowerName.includes('gift') || lowerName.includes('коробка')) {
-                                detectedType = 'gift';
-                            } else if (itemName.startsWith('@') && !itemName.includes(' ')) {
-                                detectedType = 'username';
-                            } else if (itemName.startsWith('+')) {
-                                detectedType = 'number';
-                            }
-
-                            const fakeItem = {
-                                id: details.id || Date.now(),
-                                nft_address: addr,
-                                nft_name: itemName,
-                                nft_image: details.image || (m.image),
-                                _realImage: details.image || (m.image),
-                                _collection: details.collection_name || m.collection_name || '',
-                                price_per_day: details.price_per_day || 0,
-                                status: details.status || 'available',
-                                type: detectedType,
-                                auto_relist: details.auto_relist !== undefined ? details.auto_relist : 1,
-                                min_duration: details.min_duration || 86400,
-                                max_duration: details.max_duration || 2592000,
-                                rent_ends_at: details.rent_ends_at,
-                                attributes_lines: details.attributes_lines || m.attributes_lines || '',
-                                metadata: typeof details.metadata === 'string' ? details.metadata : JSON.stringify(details.metadata || {})
-                            };
-
-                            performDeepLinkActions(fakeItem);
-                        } else {
-                            console.warn("Deep link item not found on server");
-                            showToast(CURRENT_LANG === 'ru' ? "Товар не найден" : "Item not found");
-                        }
-                    })
-                    .catch(err => {
-                        console.error("Deep link fetch failed:", err);
-                        showToast(CURRENT_LANG === 'ru' ? "Ошибка загрузки данных" : "Data load error");
+            (async () => {
+                try {
+                    // Quick check local cache (wait max 2s for catalog)
+                    await Promise.race([catalogPromise, new Promise(r => setTimeout(r, 2000))]);
+                    const cached = (ALL_MARKET_ITEMS || []).find(x => {
+                        const a = String(x.nft_address || '').toLowerCase();
+                        const t = deepNftAddr.toLowerCase();
+                        return a === t || a.replace(/-/g, '+').replace(/_/g, '/') === t.replace(/-/g, '+').replace(/_/g, '/');
                     });
-            }
+
+                    if (cached) {
+                        showToast(CURRENT_LANG === 'ru' ? "Найдено в кэше" : "Found in cache");
+                        openDeepItem(cached);
+                        return;
+                    }
+
+                    // Fetch from server with timeout
+                    const ctrl = new AbortController();
+                    const tid = setTimeout(() => ctrl.abort(), 10000);
+                    const r = await fetch(`${BACKEND_URL}/api/nft_details?nft_address=${encodeURIComponent(deepNftAddr)}`, { signal: ctrl.signal });
+                    clearTimeout(tid);
+
+                    if (!r.ok) throw new Error("HTTP " + r.status);
+                    const d = await r.json();
+                    if (d && (d.address || d.nft_address)) {
+                        const m = d.metadata || {};
+                        const iName = d.name || d.nft_name || d.title || '';
+                        let type = d.type || 'gift';
+                        if (iName.startsWith('@')) type = 'username';
+                        else if (iName.startsWith('+')) type = 'number';
+
+                        openDeepItem({
+                            id: d.id || Date.now(),
+                            nft_address: d.address || d.nft_address,
+                            nft_name: iName,
+                            nft_image: d.image || m.image,
+                            _realImage: d.image || m.image,
+                            price_per_day: d.price_per_day || 0,
+                            status: d.status || 'available',
+                            type: type,
+                            metadata: typeof d.metadata === 'string' ? d.metadata : JSON.stringify(d.metadata || {})
+                        });
+                    } else {
+                        showToast(CURRENT_LANG === 'ru' ? "Товар не найден" : "Item not found");
+                    }
+                } catch (e) {
+                    console.error("DL Error:", e);
+                    showToast(e.name === 'AbortError' ? "Таймаут сервера" : "Ошибка: " + e.message);
+                }
+            })();
         }
+
+        await catalogPromise; // Ensure catalog is fully loaded for normal browsing
         // FIX: Add click handler for product-view background
         const productView = document.getElementById('product-view');
         if (productView) {
