@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://accepts-selling-routers-steering.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://containing-viewpicture-deeper-budget.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -543,13 +543,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             const startParam = tg.initDataUnsafe.start_param;
             if (startParam.startsWith('nft_')) {
                 deepNftAddr = startParam.replace('nft_', '');
-            } else if (startParam.startsWith('ref_')) {
-                // Handle ref_USERID_NFTADDR format
-                const parts = startParam.split('_');
-                if (parts.length >= 3) {
-                    deepNftAddr = parts[2];
-                    console.log("Deep link NFT from ref param:", deepNftAddr);
-                }
+                console.log("Deep link NFT detected:", deepNftAddr);
             }
         }
         if (deepNftAddr) {
