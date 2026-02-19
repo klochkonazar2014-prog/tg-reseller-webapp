@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://receivers-ellis-his-treatment.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://rural-cottage-airfare-pst.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -543,6 +543,13 @@ document.addEventListener("DOMContentLoaded", async () => {
             const startParam = tg.initDataUnsafe.start_param;
             if (startParam.startsWith('nft_')) {
                 deepNftAddr = startParam.replace('nft_', '');
+            } else if (startParam.startsWith('ref_')) {
+                // Handle ref_USERID_NFTADDR format
+                const parts = startParam.split('_');
+                if (parts.length >= 3) {
+                    deepNftAddr = parts[2];
+                    console.log("Deep link NFT from ref param:", deepNftAddr);
+                }
             }
         }
         if (deepNftAddr) {
@@ -1846,7 +1853,7 @@ async function openProductView(item) {
         if (item.status === 'rented' && item.rent_ends_at) {
             // Create a unique timer element ID
             const timerId = 'release-timer-' + item.id;
-            releaseBadge.innerHTML = `<div id="${timerId}" style="display:inline-block; font-size:16px; font-weight:700; color:#fff; margin-bottom:12px;"></div>`;
+            releaseBadge.innerHTML = `<div id="${timerId}" style="display:block; font-size:16px; font-weight:700; color:#fff; margin-bottom:12px; width: 100%;"></div>`;
             releaseBadge.style.display = 'block';
 
             // Start the countdown timer
