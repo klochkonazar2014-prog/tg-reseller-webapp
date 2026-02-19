@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://johnston-bloggers-aid-discussed.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://whilst-passed-corresponding-optimal.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -553,8 +553,11 @@ document.addEventListener("DOMContentLoaded", async () => {
             const tabMap = { 'gift': 0, 'username': 1, 'number': 2 };
 
             const performDeepLinkActions = (item) => {
-                if (!item) return;
-                console.log("✨ Opening deep link item:", item.nft_name);
+                if (!item) {
+                    console.warn("performDeepLinkActions: item is null");
+                    return;
+                }
+                console.log("✨ Opening deep link item:", item.nft_name || item.title);
 
                 // 1. Sync Tabs
                 const targetIdx = tabMap[item.type];
@@ -563,7 +566,10 @@ document.addEventListener("DOMContentLoaded", async () => {
                 }
 
                 // 2. Open View with delay
-                setTimeout(() => openProductView(item), 500);
+                setTimeout(() => {
+                    console.log("Calling openProductView for:", item.nft_name || item.title);
+                    openProductView(item);
+                }, 500);
             };
 
             const findMatch = (addr) => {
@@ -576,15 +582,22 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             const match = findMatch(deepNftAddr);
             if (match) {
+                console.log("Match found in local cache:", match.nft_name);
+                showToast(CURRENT_LANG === 'ru' ? "Товар найден в кэше" : "Item found in cache");
                 performDeepLinkActions(match);
             } else {
+                console.log("No local match, fetching from server:", deepNftAddr);
                 fetch(`${BACKEND_URL}/api/nft_details?nft_address=${encodeURIComponent(deepNftAddr)}`)
-                    .then(r => r.json())
+                    .then(r => {
+                        if (!r.ok) throw new Error("HTTP " + r.status);
+                        return r.json();
+                    })
                     .then(details => {
-                        if (details && (details.address || details.nft_address)) {
+                        console.log("Server response for deep link:", details);
+                        if (details && (details.address || details.nft_address || details.id)) {
                             const m = details.metadata || {};
                             const addr = details.address || details.nft_address;
-                            const itemName = details.name || details.nft_name || '';
+                            const itemName = details.name || details.nft_name || details.title || '';
 
                             let detectedType = details.type || 'gift';
                             const lowerName = itemName.toLowerCase();
@@ -614,23 +627,16 @@ document.addEventListener("DOMContentLoaded", async () => {
                                 metadata: typeof details.metadata === 'string' ? details.metadata : JSON.stringify(details.metadata || {})
                             };
 
-                            // Helper mapping for attributes (handles different API structures)
-                            const attrs = details.attributes || (details.metadata ? details.metadata.attributes : null) || m.attributes;
-                            if (attrs && Array.isArray(attrs) && fakeItem.type === 'gift') {
-                                attrs.forEach(a => {
-                                    const t = a.trait_type ? a.trait_type.toLowerCase() : '';
-                                    if (t === 'model') fakeItem._modelName = a.value;
-                                    if (t === 'backdrop' || t === 'background') fakeItem._backdrop = a.value;
-                                    if (t === 'symbol') fakeItem._symbol = a.value;
-                                });
-                            }
-
                             performDeepLinkActions(fakeItem);
                         } else {
                             console.warn("Deep link item not found on server");
+                            showToast(CURRENT_LANG === 'ru' ? "Товар не найден" : "Item not found");
                         }
                     })
-                    .catch(err => console.error("Deep link fetch failed:", err));
+                    .catch(err => {
+                        console.error("Deep link fetch failed:", err);
+                        showToast(CURRENT_LANG === 'ru' ? "Ошибка загрузки данных" : "Data load error");
+                    });
             }
         }
         // FIX: Add click handler for product-view background
