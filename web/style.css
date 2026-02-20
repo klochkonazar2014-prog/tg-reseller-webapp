@@ -3711,6 +3711,7 @@ tc-root>div {
 .symbol-invert {
     filter: brightness(0) invert(1) contrast(100%);
 }
+
 /* --- TC MODAL REDESIGN (Premium) --- */
 .tc-redesign-container {
     padding: 24px;
@@ -3832,9 +3833,155 @@ tc-root>div {
         opacity: 0;
         transform: translateY(15px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
     }
 }
 
+/* --- TC TUTORIAL STYLES --- */
+.tutorial-container {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    animation: fadeInUp 0.4s ease-out;
+}
+
+.tutorial-image-wrapper {
+    width: 100%;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.03);
+    cursor: zoom-in;
+    transition: transform 0.3s ease;
+    aspect-ratio: 16/9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tutorial-image-wrapper:active {
+    transform: scale(0.98);
+}
+
+.tutorial-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.tutorial-desc {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    text-align: center;
+    min-height: 48px;
+}
+
+.tutorial-desc b {
+    color: #fff;
+    font-weight: 700;
+}
+
+/* Progress Button */
+.btn-progress {
+    position: relative;
+    overflow: hidden;
+    height: 58px;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 18px !important;
+    color: rgba(255, 255, 255, 0.3) !important;
+    font-weight: 800 !important;
+    font-size: 16px !important;
+    width: 100%;
+    cursor: not-allowed;
+    transition: all 0.3s ease;
+}
+
+.btn-progress .progress-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 0%;
+    background: #0088cc;
+    opacity: 0.3;
+    z-index: 0;
+    transition: width 0.1s linear;
+    /* Short transition to bridge intervals */
+}
+
+.btn-progress.active {
+    background: linear-gradient(135deg, #0088cc 0%, #005588 100%) !important;
+    color: #fff !important;
+    cursor: pointer;
+    border: none !important;
+    box-shadow: 0 8px 25px rgba(0, 136, 204, 0.3);
+}
+
+.btn-progress.active .progress-fill {
+    width: 100% !important;
+    opacity: 0;
+}
+
+.btn-progress span {
+    position: relative;
+    z-index: 1;
+}
+
+/* Lightbox */
+.tc-lightbox {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 100000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.tc-lightbox.active {
+    display: flex;
+    opacity: 1;
+}
+
+.tc-lightbox img {
+    max-width: 100%;
+    max-height: 80vh;
+    border-radius: 12px;
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
+    transform: scale(0.9);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.tc-lightbox.active img {
+    transform: scale(1);
+}
+
+.tc-lightbox-close {
+    position: absolute;
+    top: env(safe-area-inset-top, 20px);
+    right: 20px;
+    color: #fff;
+    font-size: 24px;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    cursor: pointer;
+}

@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://catherine-representations-meets-anybody.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://enhanced-anderson-drop-examination.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -169,7 +169,19 @@ const TRANSLATIONS = {
         ends_in: "Освободится через",
         days_label: "Дни",
         day_label: "День",
-        days_2_4: "Дня"
+        days_2_4: "Дня",
+
+        // --- TC Tutorial ---
+        tut_step_1: "Перейдите на сайт <a href='#' onclick='copyText(\"fragment.com\", event)' class='copy-link'>fragment.com</a>",
+        tut_step_2: "Нажмите на кнопку <b>Connect Ton</b>",
+        tut_step_3: "Нажмите на значок <b>копирования</b>, чтобы скопировать ссылку на подключение кошелька, где хранится актив.",
+        tut_input_desc: "<b>Введите ссылку</b>, чтобы мы могли подключить кошелек с активом.",
+        tut_step_4: "После подключения кошелька нажмите на <b>адрес кошелька</b>, далее кликните на кнопку <b>My Assets</b> и перейдите в тот раздел, в котором вы покупали актив (NFT, Номер, Юзернейм).",
+        tut_step_5: "Выберите, куда именно вы хотите, чтобы показывался арендованный актив, и нажмите кнопку <b>Save</b>.",
+        tut_step_6: "Поздравляем! Ваш актив теперь привязан к OctoRent. Приятного использования! ✨",
+        tut_next: "Далее",
+        tut_finish: "Удачного пользования!",
+        tut_connect: "Подключить актив"
     },
     en: {
         gifts: "Gifts",
@@ -257,7 +269,19 @@ const TRANSLATIONS = {
         ends_in: "Ends in",
         days_label: "Days",
         day_label: "Day",
-        days_2_4: "Days"
+        days_2_4: "Days",
+
+        // --- TC Tutorial ---
+        tut_step_1: "Go to <a href='#' onclick='copyText(\"fragment.com\", event)' class='copy-link'>fragment.com</a>",
+        tut_step_2: "Click <b>Connect Ton</b>",
+        tut_step_3: "Click the <b>copy icon</b> to copy the connection link for the wallet where the asset is stored.",
+        tut_input_desc: "<b>Enter the link</b> so we can connect the wallet with the asset.",
+        tut_step_4: "After connecting, click your <b>wallet address</b>, then <b>My Assets</b> and go to the category of your asset (NFT, Number, or Username).",
+        tut_step_5: "Choose where you want the asset to be displayed and click <b>Save</b>.",
+        tut_step_6: "Congratulations! Your asset is now linked to OctoRent. Enjoy! ✨",
+        tut_next: "Next",
+        tut_finish: "Happy using!",
+        tut_connect: "Connect Asset"
     }
 };
 
@@ -977,13 +1001,13 @@ async function submitTcLink() {
         console.log("Response data:", data);
 
         if (data.status === 'ok') {
-            if (window.Telegram && window.Telegram.WebApp) {
-                tg.showAlert("Успешно! Теперь вернитесь на Fragment и нажмите Display in Telegram.");
-            } else {
-                alert("Успешно! Теперь вернитесь на Fragment и нажмите Display in Telegram.");
-            }
+            console.log("SubmitTC Success. Switching to Phase 2 Tutorial.");
+            // Phase 2: Success onboarding
+            tutorialPhase = 2;
+            currentTutorialStep = 4;
+            renderTutorialStep();
+
             document.getElementById('tc-link-input').value = "";
-            closeTcModal();
             loadHistoryContent();
         } else {
             throw new Error(data.error || "Ошибка сервера");
@@ -2452,55 +2476,171 @@ function renderItemsBatch(items) {
     observeNewCards();
 }
 
+/* --- TC TUTORIAL LOGIC --- */
+let currentTutorialStep = 1;
+let tutorialPhase = 1; // 1: Education, 2: Finalization
+let progressTimer = null;
+
+const TUTORIAL_DATA = {
+    1: { img: 'pictures/tutorial/step1.png', key: 'tut_step_1' },
+    2: { img: 'pictures/tutorial/step2.png', key: 'tut_step_2' },
+    3: { img: 'pictures/tutorial/step3.png', key: 'tut_step_3' },
+    4: { img: 'pictures/tutorial/step4.png', key: 'tut_step_4' },
+    5: { img: 'pictures/tutorial/step5.png', key: 'tut_step_5' },
+    6: { img: 'pictures/tutorial/step6.png', key: 'tut_step_6' }
+};
+
+function copyText(text, event) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+    navigator.clipboard.writeText(text).then(() => {
+        // Show indicator in button span if exists
+        const btn = document.getElementById('tutorial-next-btn');
+        if (btn) {
+            const original = btn.querySelector('span').innerText;
+            btn.querySelector('span').innerText = t('copy_success');
+            setTimeout(() => {
+                btn.querySelector('span').innerText = original;
+            }, 1000);
+        } else {
+            tg.showAlert(t('copy_success'));
+        }
+    });
+}
+
 function openTcModal(orderId, isPolling = false) {
     document.getElementById('tc-current-order-id').value = orderId;
     document.getElementById('tc-modal-overlay').classList.add('active');
     document.getElementById('tc-modal').classList.add('active');
 
-    const body = document.getElementById('tc-modal-body');
-    if (!body) return;
-
     if (isPolling) {
-        body.innerHTML = `
-            <div class="tc-polling-premium">
-                <div class="premium-spinner" style="width: 60px; height: 60px; margin-bottom: 24px;"></div>
-                <div class="tc-polling-title">Ждем подтверждения...</div>
-                <div class="tc-polling-desc">
-                    Обычно это занимает 15-40 секунд.<br>
-                    Пожалуйста, не закрывайте это окно.
-                </div>
-            </div>
-        `;
+        renderPolling();
     } else {
-        body.innerHTML = `
-            <div class="tc-step" style="animation: fadeInUp 0.4s ease forwards; opacity:0;">
-                <div class="tc-step-number">1</div>
-                <div class="tc-step-text">Зайдите на <b>Fragment.com</b> в браузере вашего компьютера или телефона.</div>
-            </div>
-            <div class="tc-step" style="animation: fadeInUp 0.4s ease forwards 0.1s; opacity:0;">
-                <div class="tc-step-number">2</div>
-                <div class="tc-step-text">Нажмите <b>Connect TON</b> и перейдите в раздел управления кошельком.</div>
-            </div>
-            <div class="tc-step" style="animation: fadeInUp 0.4s ease forwards 0.2s; opacity:0;">
-                <div class="tc-step-number">3</div>
-                <div class="tc-step-text">Скопируйте <b>TON Connect Link</b> (кнопка рядом с QR-кодом).</div>
-            </div>
-            
-            <div class="tc-input-wrapper" style="animation: fadeInUp 0.4s ease forwards 0.3s; opacity:0;">
-                <div class="tc-input-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-                    </svg>
-                </div>
-                <input type="text" id="tc-link-input" class="tc-input-premium" placeholder="Вставьте tc:// ссылку...">
-            </div>
-
-            <button onclick="submitTcLink()" class="tc-btn-premium" style="animation: fadeInUp 0.4s ease forwards 0.4s; opacity:0;">
-                Подключить кошелек
-            </button>
-        `;
+        tutorialPhase = 1;
+        currentTutorialStep = 1;
+        renderTutorialStep();
     }
+}
+
+function renderPolling() {
+    const body = document.getElementById('tc-modal-body');
+    body.className = "tc-redesign-container";
+    body.innerHTML = `
+        <div class="tc-polling-premium">
+            <div class="premium-spinner" style="width: 60px; height: 60px; margin-bottom: 24px;"></div>
+            <div class="tc-polling-title">Ждем подтверждения...</div>
+            <div class="tc-polling-desc">
+                Обычно это занимает 15-40 секунд.<br>
+                Пожалуйста, не закрывайте это окно.
+            </div>
+        </div>
+    `;
+}
+
+function renderTutorialStep() {
+    const body = document.getElementById('tc-modal-body');
+    const data = TUTORIAL_DATA[currentTutorialStep];
+
+    body.className = ""; // Remove container to avoid double padding if needed
+    body.innerHTML = `
+        <div class="tutorial-container">
+            <div class="tutorial-image-wrapper" onclick="openLightbox('${data.img}')">
+                <img src="${data.img}" class="tutorial-image" alt="Step ${currentTutorialStep}">
+            </div>
+            <div class="tutorial-desc">${t(data.key)}</div>
+            <button id="tutorial-next-btn" class="btn-progress" disabled onclick="nextTutorialStep()">
+                <div class="progress-fill"></div>
+                <span>${currentTutorialStep === 6 ? t('tut_finish') : t('tut_next')}</span>
+            </button>
+        </div>
+    `;
+
+    startProgressTimer();
+}
+
+function startProgressTimer() {
+    if (progressTimer) clearInterval(progressTimer);
+    const btn = document.getElementById('tutorial-next-btn');
+    const fill = btn.querySelector('.progress-fill');
+
+    let width = 0;
+    btn.disabled = true;
+    btn.classList.remove('active');
+
+    progressTimer = setInterval(() => {
+        width += 1;
+        fill.style.width = width + '%';
+        if (width >= 100) {
+            clearInterval(progressTimer);
+            btn.disabled = false;
+            btn.classList.add('active');
+        }
+    }, 30); // 3000ms / 100 = 30ms
+}
+
+function nextTutorialStep() {
+    if (tutorialPhase === 1) {
+        if (currentTutorialStep < 3) {
+            currentTutorialStep++;
+            renderTutorialStep();
+        } else {
+            renderInputStep();
+        }
+    } else if (tutorialPhase === 2) {
+        if (currentTutorialStep < 6) {
+            currentTutorialStep++;
+            renderTutorialStep();
+        } else {
+            closeTcModal();
+        }
+    }
+}
+
+function renderInputStep() {
+    const body = document.getElementById('tc-modal-body');
+    body.className = "tc-redesign-container";
+    body.innerHTML = `
+        <div class="tc-step" style="animation: fadeInUp 0.4s ease-out; gap: 12px; align-items: center;">
+            <div class="tc-step-number" style="background: rgba(0, 136, 204, 0.2); border: 1px solid var(--accent-blue);">🔗</div>
+            <div class="tc-step-text" style="font-size: 15px;">${t('tut_input_desc')}</div>
+        </div>
+        
+        <div class="tc-input-wrapper" style="animation: fadeInUp 0.4s ease-out 0.1s; opacity:0; animation-fill-mode: forwards;">
+            <div class="tc-input-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                </svg>
+            </div>
+            <input type="text" id="tc-link-input" class="tc-input-premium" placeholder="tc://...">
+        </div>
+
+        <button onclick="submitTcLink()" class="tc-btn-premium" style="animation: fadeInUp 0.4s ease-out 0.2s; opacity:0; animation-fill-mode: forwards;">
+            ${t('tut_connect')}
+        </button>
+    `;
+}
+
+function openLightbox(src) {
+    const lb = document.getElementById('tc-lightbox');
+    const img = document.getElementById('lightbox-img');
+    img.src = src;
+    lb.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeLightbox() {
+    const lb = document.getElementById('tc-lightbox');
+    lb.classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+function closeTcModal() {
+    if (progressTimer) clearInterval(progressTimer);
+    document.getElementById('tc-modal-overlay').classList.remove('active');
+    document.getElementById('tc-modal').classList.remove('active');
 }
 const trigger = document.getElementById('loader-trigger');
 if (trigger) {
