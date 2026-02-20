@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://redeem-inside-intro-divided.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://reactions-instead-annotated-buildings.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -1565,6 +1565,14 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
         e.stopPropagation();
         ACTIVE_FILTERS[key] = value ? value.trim() : value;
 
+        // Sync inputs from modal if visible
+        const gNum = document.getElementById('filter-gift-number');
+        const pFrom = document.getElementById('filter-price-from');
+        const pTo = document.getElementById('filter-price-to');
+        if (gNum) ACTIVE_FILTERS.gift_number = gNum.value;
+        if (pFrom) ACTIVE_FILTERS.price_from = pFrom.value;
+        if (pTo) ACTIVE_FILTERS.price_to = pTo.value;
+
         if (key === 'nft') {
             ACTIVE_FILTERS.model = 'all';
             ACTIVE_FILTERS.bg = 'all';
@@ -1584,6 +1592,14 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
 function applyHeaderSearch() {
     loadLiveItems(true);
 }
+
+const handleHeaderSearch = debounce(() => {
+    const sInput = document.getElementById('search-input');
+    if (sInput) {
+        ACTIVE_FILTERS.search = sInput.value;
+        applyHeaderSearch();
+    }
+}, 400);
 
 
 

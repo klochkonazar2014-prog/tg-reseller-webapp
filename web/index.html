@@ -6,7 +6,7 @@
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>OctoRent</title>
-    <script src="https://telegram.org/js/telegram-web-app.js?v=1771583834"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js?v=1771585460"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;800;900&display=swap" rel="stylesheet">
     <script src="lottie.min.js"></script>
@@ -33,7 +33,7 @@
             return false;
         };
     </script>
-    <link rel="stylesheet" href="style.css?v=1771583834">
+    <link rel="stylesheet" href="style.css?v=1771585460">
     <style>
         /* CRITICAL OVERRIDES - DO NOT REMOVE */
         .main-rent-btn svg,
@@ -289,7 +289,8 @@
                     <circle cx="11" cy="11" r="8"></circle>
                     <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                 </svg>
-                <input type="text" id="search-input" class="search-bar" placeholder="Поиск по названию">
+                <input type="text" id="search-input" class="search-bar" placeholder="Поиск по названию"
+                    oninput="handleHeaderSearch()">
             </div>
 
 
@@ -752,7 +753,7 @@
     </div>
 
     <script src="timer_helper.js"></script>
-    <script src="app.js?v=1771583834"></script>
+    <script src="app.js?v=1771585460"></script>
 </body>
 
 </html>
