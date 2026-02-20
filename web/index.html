@@ -6,7 +6,7 @@
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>OctoRent</title>
-    <script src="https://telegram.org/js/telegram-web-app.js?v=1771623399"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js?v=1771624038"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;800;900&display=swap" rel="stylesheet">
     <script src="lottie.min.js"></script>
@@ -33,7 +33,7 @@
             return false;
         };
     </script>
-    <link rel="stylesheet" href="style.css?v=1771623399">
+    <link rel="stylesheet" href="style.css?v=1771624038">
     <style>
         /* CRITICAL OVERRIDES - DO NOT REMOVE */
         .main-rent-btn svg,
@@ -622,6 +622,21 @@
                     Fragment</div>
                 <div class="service-arrow">›</div>
             </div>
+            <div class="service-item" onclick="openRentalHistory()">
+                <div class="service-icon" style="background: rgba(0, 136, 204, 0.1);">📋</div>
+                <div id="profile-label-history" class="service-text" data-i18n="profile_history">История аренды</div>
+                <div class="service-arrow">›</div>
+            </div>
+            <div class="service-item" onclick="showHelp(0)">
+                <div class="service-icon" style="background: rgba(0, 136, 204, 0.1);">🆘</div>
+                <div id="profile-label-support" class="service-text" data-i18n="profile_support">Поддержка и FAQ</div>
+                <div class="service-arrow">›</div>
+            </div>
+            <div class="service-item" onclick="openLanguageDrawer()">
+                <div class="service-icon" style="background: rgba(0, 136, 204, 0.1);">🌐</div>
+                <div class="service-text" data-i18n="profile_lang">Language / Язык</div>
+                <div id="lang-label" class="service-arrow" style="font-size: 13px;">Русский ›</div>
+            </div>
         </div>
     </div>
 
@@ -739,7 +754,7 @@
     </div>
 
     <script src="timer_helper.js"></script>
-    <script src="app.js?v=1771623399"></script>
+    <script src="app.js?v=1771624038"></script>
 </body>
 
 </html>
