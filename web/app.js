@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://connecting-reporting-friday-serve.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://ing-strengths-salary-investment.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -1512,11 +1512,7 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
 
     let visualHTML = '';
     if (isAll) {
-        visualHTML = `<div class="filter-icon-box" style="background: linear-gradient(135deg, #2a2a2a, #1a1a1a); border: 1px solid rgba(255,255,255,0.1); display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; overflow:hidden;">
-            <div style="font-size:10px; font-weight:900; color:#fff; letter-spacing:1px; z-index:2; font-family: 'Outfit', sans-serif;">ВСЕ</div>
-            <div style="width:16px; height:2px; background: #0088cc; margin-top:4px; border-radius:1px; z-index:2;"></div>
-            <div style="position:absolute; top:0; left:0; width:100%; height:100%; background: url('https://telegifter.ru/wp-content/themes/gifts/assets/img/bg-logo-mini.webp'); opacity:0.1; background-size: 20px;"></div>
-        </div>`;
+        visualHTML = `<div class="filter-icon-box" style="background: rgba(255,255,255,0.05); color: #fff; font-size: 10px; font-weight: 900; letter-spacing: 0.5px;">BCE</div>`;
     } else if (key === 'symbol') {
         const tgSymbol = getTelegifterUrl('symbol', name);
         const iconSrc = tgSymbol || (VISUAL_MAP.symbol && VISUAL_MAP.symbol[name]);
@@ -1559,9 +1555,9 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
     }
 
     div.innerHTML = `
-        <div class="filter-left">
+        <div class="filter-left" style="flex: 1;">
             ${visualHTML}
-            <span class="filter-label">${name}</span>
+            <span class="filter-label" style="flex: 1; margin-left:14px;">${name}</span>
         </div>
         <div class="filter-checkbox"></div>
     `;

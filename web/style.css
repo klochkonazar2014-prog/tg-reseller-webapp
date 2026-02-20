@@ -3610,6 +3610,19 @@ body.hide-filters .header-column {
 }
 
 /* --- PREMIUM FILTER LIST LAYOUT --- */
+.accordion-content {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+}
+
+[id*="-list-container"] {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 0 !important;
+}
+
 .filter-list-row {
     display: flex;
     align-items: center;
