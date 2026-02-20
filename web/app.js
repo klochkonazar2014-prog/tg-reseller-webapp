@@ -9,7 +9,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://permit-difficulty-reveal-proposed.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://apps-atmosphere-theories-governmental.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -870,32 +870,40 @@ function switchTab(index) {
 async function loadFriendsData() {
     const userId = tg.initDataUnsafe?.user?.id || 0;
     try {
-        const res = await fetch(`${BACKEND_URL}/api/referral/stats?user_id=${userId}`);
-        const data = await res.json();
+        // Параллельно запрашиваем баланс и список друзей
+        const [statsRes, friendsRes] = await Promise.all([
+            fetch(`${BACKEND_URL}/api/referral/stats?user_id=${userId}`),
+            fetch(`${BACKEND_URL}/api/referral/friends?user_id=${userId}`)
+        ]);
+        const statsData = await statsRes.json();
+        const friendsData = await friendsRes.json();
 
         const balEl = document.getElementById('friends-balance-val');
-        if (balEl) balEl.innerText = data.balance.toFixed(4);
+        if (balEl) balEl.innerText = (statsData.balance || 0).toFixed(4);
 
         const listCont = document.getElementById('friends-list-items');
         if (!listCont) return;
 
-        if (!data.referrals || data.referrals.length === 0) {
+        const friends = friendsData.friends || [];
+
+        if (friends.length === 0) {
             document.getElementById('empty-friends-hint').style.display = 'block';
             return;
         }
 
         document.getElementById('empty-friends-hint').style.display = 'none';
-        listCont.innerHTML = data.referrals.map(f => {
+        listCont.innerHTML = friends.map(f => {
             const name = f.username ? '@' + f.username : (f.full_name || ('ID: ' + f.user_id));
+            const profit = f.profit || 0;
             return `
                 <div class="service-item" style="cursor: default;">
                     <div class="service-icon" style="background: rgba(0, 136, 204, 0.1); width: 44px; height: 44px; font-size: 20px;">👤</div>
                     <div style="flex: 1; margin-left: 12px;">
                         <div style="font-weight: 700; font-size: 15px;">${name}</div>
+                        ${profit === 0 ? `<div style="font-size: 11px; color: #8b9bb4;">Новый реферал</div>` : ''}
                     </div>
                     <div style="text-align: right;">
-                        <div style="font-weight: 800; font-size: 14px; color: #0088cc;">+${f.profit.toFixed(4)} TON</div>
-                        <div style="font-size: 11px; color: #8b9bb4; opacity: 0.6;">прибыль</div>
+                        ${profit > 0 ? `<div style="font-weight: 800; font-size: 14px; color: #0088cc;">+${profit.toFixed(4)} TON</div><div style="font-size: 11px; color: #8b9bb4; opacity: 0.6;">прибыль</div>` : `<div style="font-size: 12px; color: #8b9bb4;">0 аренд</div>`}
                     </div>
                 </div>
             `;
@@ -3284,8 +3292,8 @@ function applyTranslations() {
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
         const translation = t(key);
-        if(translation && translation !== key) {
-            if(el.tagName === 'INPUT' && el.hasAttribute('placeholder')) {
+        if (translation && translation !== key) {
+            if (el.tagName === 'INPUT' && el.hasAttribute('placeholder')) {
                 el.placeholder = translation;
             } else {
                 el.innerHTML = translation;
@@ -3295,7 +3303,7 @@ function applyTranslations() {
 
     // Special logic
     const modeBtn = document.getElementById('mode-toggle-btn');
-    if(modeBtn) {
+    if (modeBtn) {
         const isShopMode = !modeBtn.classList.contains('shop-mode');
         const modeText = document.getElementById('mode-toggle-text');
         if (modeText) {
