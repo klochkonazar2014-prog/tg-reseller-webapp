@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://sites-cakes-changing-hold.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://planner-talk-live-police.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -1639,6 +1639,23 @@ function applyMrktModal() {
     loadLiveItems(true);
 }
 
+function handleFilterImageError(img, name, collection, fallback, key) {
+    img.dataset.slugIndex = img.dataset.slugIndex ? parseInt(img.dataset.slugIndex) + 1 : 1;
+    const nextUrl = getTelegifterUrl(key, name, collection, parseInt(img.dataset.slugIndex));
+    if (nextUrl) {
+        img.src = nextUrl;
+    } else if (fallback && !isBadUrl(fallback)) {
+        img.src = fallback;
+        img.onerror = null;
+    } else {
+        img.style.display = 'none';
+        if (img.previousElementSibling && img.previousElementSibling.classList.contains('filter-item-letter')) {
+            img.previousElementSibling.style.opacity = '1';
+        }
+        img.onerror = null;
+    }
+}
+
 
 function createItemCard(item) {
     const card = document.createElement('div');
@@ -3066,11 +3083,15 @@ window.shareReferralLink = shareReferralLink;
 window.handleReferralWithdraw = handleReferralWithdraw;
 window.showEarningsHelp = showEarningsHelp;
 window.closeEarningsHelp = closeEarningsHelp;
-window.openOctoModal = openOctoModal;
+window.openOctoModal = openAdvancedFilters;
+window.openAdvancedFilters = openAdvancedFilters;
 window.toggleGenericModal = toggleGenericModal;
-window.applyOctoModal = applyOctoModal;
-window.resetOctoModal = resetOctoModal;
-window.closeOctoModal = closeOctoModal;
+window.applyMrktModal = applyMrktModal;
+window.applyOctoModal = applyMrktModal;
+window.resetMrktModal = resetMrktModal;
+window.resetOctoModal = resetMrktModal;
+window.closeMrktModal = closeMrktModal;
+window.closeOctoModal = closeMrktModal;
 window.showToast = showToast;
 window.copyToClipboard = copyToClipboard;
 window.handleShareClick = handleShareClick;
