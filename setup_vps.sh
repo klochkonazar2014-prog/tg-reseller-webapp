@@ -1,220 +1,151 @@
 #!/bin/bash
-# VPS Setup Script for OctoRent Bot
-# Tested on Ubuntu 22.04 LTS
+# OctoRent VPS Auto-Setup Script
+# Targeted for Ubuntu 24.04 (Noble Numbat) on GCP e2-micro
 
-set -e  # Exit on error
+set -e
 
-echo "========================================="
-echo "  OctoRent Bot - VPS Setup Script"
-echo "========================================="
-echo ""
+# --- Configuration ---
+PROJECT_NAME="octorent"
+INSTALL_DIR="/home/$PROJECT_NAME"
+LOG_DIR="/var/log/$PROJECT_NAME"
+PYTHON_VERSION="3.12"
+SWAP_SIZE="2G"
 
-# Colors for output
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+echo "===================================================="
+echo "🚀 Starting OctoRent VPS Setup (Ubuntu 24.04)"
+echo "===================================================="
 
-log() {
-    echo -e "${GREEN}[✓]${NC} $1"
-}
+# 1. Update and basic tools
+echo "📥 Updating system packages..."
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y python$PYTHON_VERSION python$PYTHON_VERSION-venv python3-pip nginx certbot python3-certbot-nginx git ufw curl htop
 
-warn() {
-    echo -e "${YELLOW}[!]${NC} $1"
-}
-
-# Check if running as root
-if [ "$EUID" -ne 0 ]; then 
-    warn "This script should be run as root (use sudo)"
-    exit 1
-fi
-
-# Update system
-log "Updating system packages..."
-apt-get update -qq
-apt-get upgrade -y -qq
-
-# Install Python 3.11+
-log "Installing Python 3.11..."
-apt-get install -y software-properties-common
-add-apt-repository -y ppa:deadsnakes/ppa
-apt-get update -qq
-apt-get install -y python3.11 python3.11-venv python3.11-dev python3-pip git nginx
-
-# Create bot user
-log "Creating bot user..."
-if ! id "octorent" &>/dev/null; then
-    useradd -m -s /bin/bash octorent
-    log "User 'octorent' created"
+# 2. Configure Swap (Critical for e2-micro)
+if [ ! -f /swapfile ]; then
+    echo "💾 Creating $SWAP_SIZE Swap file..."
+    sudo fallocate -l $SWAP_SIZE /swapfile
+    sudo chmod 600 /swapfile
+    sudo mkswap /swapfile
+    sudo swapon /swapfile
+    echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+    echo "✅ Swap configured."
 else
-    warn "User 'octorent' already exists"
+    echo "✅ Swap already exists."
 fi
 
-# Clone repository
-BOT_DIR="/home/octorent/bot"
-log "Setting up bot directory..."
-if [ ! -d "$BOT_DIR" ]; then
-    warn "Please clone your bot repository manually to $BOT_DIR"
-    warn "Example: git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git $BOT_DIR"
-    warn "Then run this script again"
-    exit 1
+# 3. Create octorent user
+if ! id -u $PROJECT_NAME >/dev/null 2>&1; then
+    echo "👤 Creating system user: $PROJECT_NAME..."
+    sudo useradd -m -s /bin/bash $PROJECT_NAME
+    sudo usermod -aG sudo $PROJECT_NAME
+else
+    echo "✅ User $PROJECT_NAME already exists."
 fi
 
-cd "$BOT_DIR"
+# 4. Directory and permissions
+echo "📁 Setting up directories..."
+sudo mkdir -p $INSTALL_DIR
+sudo mkdir -p $LOG_DIR
+sudo chown -R $PROJECT_NAME:$PROJECT_NAME $INSTALL_DIR
+sudo chown -R $PROJECT_NAME:$PROJECT_NAME $LOG_DIR
 
-# Create virtual environment
-log "Creating Python virtual environment..."
-python3.11 -m venv .venv
-source .venv/bin/activate
-
-# Install dependencies
-log "Installing Python dependencies..."
-pip install --upgrade pip
-pip install -r requirements.txt
-
-# Setup .env file
-if [ ! -f ".env" ]; then
-    warn "No .env file found. Please create one from .env.example"
-    warn "cp .env.example .env"
-    warn "Then edit .env with your tokens and configuration"
+# 5. Virtual Environment and Requirements
+echo "🐍 Setting up Python Virtual Environment..."
+sudo -u $PROJECT_NAME python$PYTHON_VERSION -m venv $INSTALL_DIR/.venv
+sudo -u $PROJECT_NAME $INSTALL_DIR/.venv/bin/pip install --upgrade pip
+if [ -f "$INSTALL_DIR/requirements.txt" ]; then
+    echo "📦 Installing requirements..."
+    sudo -u $PROJECT_NAME $INSTALL_DIR/.venv/bin/pip install -r $INSTALL_DIR/requirements.txt
 fi
 
-# Set permissions
-log "Setting file permissions..."
-chown -R octorent:octorent "$BOT_DIR"
-chmod +x "$BOT_DIR/run.py"
+# 5.1 Setup DuckDNS Auto-Update (Cron)
+echo "🦆 Setting up DuckDNS auto-update..."
+CRON_JOB="*/5 * * * * cd $INSTALL_DIR && $INSTALL_DIR/.venv/bin/python update_duckdns.py >> $LOG_DIR/duckdns.log 2>&1"
+(sudo -u $PROJECT_NAME crontab -l 2>/dev/null; echo "$CRON_JOB") | sudo -u $PROJECT_NAME crontab -
 
-# Create systemd services
-log "Creating systemd services..."
+# 6. Systemd Services
+echo "⚙️  Generating Systemd services..."
 
-# Bot service
-cat > /etc/systemd/system/octorent-bot.service << 'EOF'
+services=("bot" "server" "parser" "buyer")
+commands=("bot.py" "live_server.py" "parser.py" "auto_buyer.py")
+
+for i in "${!services[@]}"; do
+    cat <<EOF | sudo tee /etc/systemd/system/octorent-${services[$i]}.service
 [Unit]
-Description=OctoRent Telegram Bot
+Description=OctoRent ${services[$i]^}
 After=network.target
 
 [Service]
-Type=simple
-User=octorent
-WorkingDirectory=/home/octorent/bot
-Environment="PATH=/home/octorent/bot/.venv/bin"
-ExecStart=/home/octorent/bot/.venv/bin/python bot.py
+User=$PROJECT_NAME
+Group=$PROJECT_NAME
+WorkingDirectory=$INSTALL_DIR
+EnvironmentFile=$INSTALL_DIR/.env
+ExecStart=$INSTALL_DIR/.venv/bin/python ${commands[$i]}
 Restart=always
-RestartSec=10
+RestartSec=5
+StandardOutput=append:$LOG_DIR/${services[$i]}.log
+StandardError=append:$LOG_DIR/${services[$i]}.log
 
 [Install]
 WantedBy=multi-user.target
 EOF
+done
 
-# Live Server service
-cat > /etc/systemd/system/octorent-server.service << 'EOF'
-[Unit]
-Description=OctoRent API Server
-After=network.target
-
-[Service]
-Type=simple
-User=octorent
-WorkingDirectory=/home/octorent/bot
-Environment="PATH=/home/octorent/bot/.venv/bin"
-ExecStart=/home/octorent/bot/.venv/bin/python live_server.py
-Restart=always
-RestartSec=10
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-# Parser service
-cat > /etc/systemd/system/octorent-parser.service << 'EOF'
-[Unit]
-Description=OctoRent Market Parser
-After=network.target octorent-server.service
-
-[Service]
-Type=simple
-User=octorent
-WorkingDirectory=/home/octorent/bot
-Environment="PATH=/home/octorent/bot/.venv/bin"
-ExecStart=/home/octorent/bot/.venv/bin/python parser.py
-Restart=always
-RestartSec=10
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-# Auto-buyer service
-cat > /etc/systemd/system/octorent-buyer.service << 'EOF'
-[Unit]
-Description=OctoRent Auto Buyer
-After=network.target octorent-server.service
-
-[Service]
-Type=simple
-User=octorent
-WorkingDirectory=/home/octorent/bot
-Environment="PATH=/home/octorent/bot/.venv/bin"
-ExecStart=/home/octorent/bot/.venv/bin/python auto_buyer.py
-Restart=always
-RestartSec=10
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-# Reload systemd
-log "Reloading systemd daemon..."
-systemctl daemon-reload
-
-# Enable services
-log "Enabling services..."
-systemctl enable octorent-bot.service
-systemctl enable octorent-server.service
-systemctl enable octorent-parser.service
-systemctl enable octorent-buyer.service
-
-# Configure nginx (optional)
-log "Configuring nginx reverse proxy..."
-cat > /etc/nginx/sites-available/octorent << 'EOF'
+# 7. Nginx Configuration
+echo "🌐 Configuring Nginx..."
+cat <<EOF | sudo tee /etc/nginx/sites-available/$PROJECT_NAME
 server {
     listen 80;
-    server_name _;
+    server_name _; 
+
+    # Security Headers
+    add_header X-Frame-Options "SAMEORIGIN";
+    add_header X-XSS-Protection "1; mode=block";
+    add_header X-Content-Type-Options "nosniff";
+    server_tokens off;
 
     location / {
-        proxy_pass http://127.0.0.1:8001;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        root $INSTALL_DIR/web;
+        index index.html;
+        try_files \$uri \$uri/ /index.html;
     }
+
+    location /api {
+        proxy_pass http://127.0.0.1:8001; # live_server.py port (8001 as in file)
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        
+        # Security: Limit body size
+        client_max_body_size 10M;
+    }
+    
+    # Large headers for TON Connect
+    proxy_buffer_size 128k;
+    proxy_buffers 4 256k;
+    proxy_busy_buffers_size 256k;
 }
 EOF
 
-ln -sf /etc/nginx/sites-available/octorent /etc/nginx/sites-enabled/
-rm -f /etc/nginx/sites-enabled/default
-nginx -t && systemctl restart nginx
+sudo ln -sf /etc/nginx/sites-available/$PROJECT_NAME /etc/nginx/sites-enabled/
+sudo rm -f /etc/nginx/sites-enabled/default
+sudo nginx -t && sudo systemctl restart nginx
 
-echo ""
-echo "========================================="
-log "Setup complete!"
-echo "========================================="
-echo ""
+# 8. Firewall
+echo "🛡️  Configuring Firewall..."
+sudo ufw allow 22/tcp
+sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
+echo "y" | sudo ufw enable
+
+echo "===================================================="
+echo "✅ VPS SETUP COMPLETE!"
+echo "===================================================="
 echo "Next steps:"
-echo "1. Edit .env file: nano $BOT_DIR/.env"
-echo "2. Start services:"
-echo "   sudo systemctl start octorent-bot"
-echo "   sudo systemctl start octorent-server"
-echo "   sudo systemctl start octorent-parser"
-echo "   sudo systemctl start octorent-buyer"
-echo ""
-echo "3. Check status:"
-echo "   sudo systemctl status octorent-bot"
-echo ""
-echo "4. View logs:"
-echo "   sudo journalctl -u octorent-bot -f"
-echo ""
-echo "Your server IP: $(curl -s ifconfig.me)"
-echo "========================================="
+echo "1. Put your code into $INSTALL_DIR"
+echo "2. Create $INSTALL_DIR/.env file"
+echo "3. Run certbot: sudo certbot --nginx -d YOUR_DOMAIN"
+echo "4. Reload services: sudo systemctl daemon-reload"
+echo "5. Start all: sudo systemctl enable --now octorent-*"
+echo "===================================================="

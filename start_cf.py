@@ -2,6 +2,7 @@ import os
 import subprocess
 import requests
 import sys
+import re
 
 # Настройки
 PORT = 8001
@@ -25,34 +26,78 @@ def download_if_missing():
             log(f"Ошибка при скачивании: {e}")
             sys.exit(1)
 
+def update_configs(new_url):
+    """Автоматически обновляет .env и app.js при получении нового URL"""
+    try:
+        log(f"Обновление конфигураций новым URL: {new_url}")
+        
+        # 1. Обновление .env
+        env_path = ".env"
+        if os.path.exists(env_path):
+            with open(env_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # Заменяем WEB_APP_URL=... на новый
+            new_content = re.sub(r'WEB_APP_URL=https://[a-z0-9.-]+\.trycloudflare\.com', f'WEB_APP_URL={new_url}', content)
+            
+            with open(env_path, 'w', encoding='utf-8') as f:
+                f.write(new_content)
+            log("Файл .env успешно обновлен.")
+
+        # 2. Обновление web/app.js
+        app_js_path = os.path.join("web", "app.js")
+        if os.path.exists(app_js_path):
+            with open(app_js_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # Заменяем const BACKEND_URL = "..." на новый
+            new_content = re.sub(
+                r'const BACKEND_URL = "https://[a-z0-9.-]+\.trycloudflare\.com"', 
+                f'const BACKEND_URL = "{new_url}"', 
+                content
+            )
+            
+            with open(app_js_path, 'w', encoding='utf-8') as f:
+                f.write(new_content)
+            log("Файл web/app.js успешно обновлен.")
+            
+    except Exception as e:
+        log(f"Ошибка при обновлении конфигураций: {e}")
+
 def run_tunnel():
     log("Запуск Quick Tunnel (TryCloudflare)...")
     log("Ожидайте получения случайного домена...")
     print("-" * 50)
-    sys.stdout.flush()  # Force flush to ensure parent process sees output
+    sys.stdout.flush()
     
-    # Запуск Quick Tunnel (без имени, просто --url)
     cmd = [EXE_NAME, "tunnel", "--url", f"http://127.0.0.1:{PORT}"]
+    url_found = False
+    
     try:
-        # Используем Popen чтобы процесс работал в фоне
-        # stderr=subprocess.STDOUT чтобы весь вывод шел в stdout
         proc = subprocess.Popen(
             cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
-            bufsize=1  # Line buffered
+            bufsize=1
         )
         
-        # Читаем и выводим строки (родительский процесс их перехватит)
         for line in proc.stdout:
-            print(line.rstrip())  # Print without adding extra newline
-            sys.stdout.flush()  # Force flush each line
+            raw_line = line.rstrip()
+            print(raw_line)
+            sys.stdout.flush()
+            
+            # Ищем URL туннеля в выводе
+            if not url_found and "https://" in raw_line and ".trycloudflare.com" in raw_line:
+                match = re.search(r'https://[a-z0-9.-]+\.trycloudflare\.com', raw_line)
+                if match:
+                    new_url = match.group(0)
+                    url_found = True
+                    update_configs(new_url)
             
     except KeyboardInterrupt:
         log("Туннель остановлен пользователем.")
-        if proc:
-            proc.terminate()
+        if proc: proc.terminate()
     except Exception as e:
         log(f"Ошибка при работе туннеля: {e}")
 

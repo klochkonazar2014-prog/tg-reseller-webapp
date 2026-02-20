@@ -1,34 +1,31 @@
-import os
 import requests
-import sys
+import time
+import os
 from dotenv import load_dotenv
 
+# Загружаем переменные из .env
 load_dotenv()
 
-# DuckDNS Configuration
-DUCKDNS_DOMAIN = "octorent"  # Without .duckdns.org
-DUCKDNS_TOKEN = os.getenv("DUCKDNS_TOKEN", "66fe4488-685c-4e72-8c8f-6603c0a7bcee")
+DOMAIN = os.getenv("DUCKDNS_DOMAIN", "YOUR_SUBDOMAIN") # Только имя, без .duckdns.org
+TOKEN = os.getenv("DUCKDNS_TOKEN", "YOUR_TOKEN")
 
-def log(msg):
-    print(f"[DuckDNS] {msg}")
-    sys.stdout.flush()
-
-def update_ip():
-    """Update DuckDNS with current public IP"""
-    url = f"https://www.duckdns.org/update?domains={DUCKDNS_DOMAIN}&token={DUCKDNS_TOKEN}&ip="
-    
+def update_duck_dns():
+    print(f"🔄 Обновление DuckDNS для {DOMAIN}...")
+    url = f"https://www.duckdns.org/update?domains={DOMAIN}&token={TOKEN}&ip="
     try:
         response = requests.get(url, timeout=10)
-        if response.text.strip() == "OK":
-            log(f"✅ IP updated successfully for {DUCKDNS_DOMAIN}.duckdns.org")
-            return True
+        if response.text == "OK":
+            print(f"✅ Успешно! {DOMAIN}.duckdns.org теперь указывает на ваш текущий IP.")
         else:
-            log(f"❌ Failed to update IP: {response.text}")
-            return False
+            print(f"❌ Ошибка DuckDNS: {response.text}")
     except Exception as e:
-        log(f"❌ Error updating IP: {e}")
-        return False
+        print(f"❌ Ошибка сети при обновлении DuckDNS: {e}")
 
 if __name__ == "__main__":
-    log(f"Updating IP for {DUCKDNS_DOMAIN}.duckdns.org...")
-    update_ip()
+    # Запускаем один раз или в цикле
+    update_duck_dns()
+    
+    # Если хочешь, чтобы он работал постоянно в фоне на сервере:
+    # while True:
+    #     update_duck_dns()
+    #     time.sleep(300) # Каждые 5 минут

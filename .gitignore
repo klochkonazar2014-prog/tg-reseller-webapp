@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+.env
+
+# Logs
+*.log
+duckdns.log
+
+# Databases
+*.db
+*.db-shm
+*.db-wal
+
+# Local state
+background_state.json
+sync_state.json
+filters_cache.json
+resolved_images_cache.json
+
+# Temporary files
+*.tmp
+temp_*/
+
+# OS-specific
+.DS_Store
+Thumbs.db

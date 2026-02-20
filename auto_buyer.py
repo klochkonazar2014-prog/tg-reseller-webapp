@@ -7,6 +7,13 @@ import os
 import json
 import logging
 from dotenv import load_dotenv
+import sys
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+    except:
+        pass
+
 import database as db
 import aiohttp
 from tonutils.client import ToncenterV2Client

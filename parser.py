@@ -4,7 +4,16 @@ import json
 import logging
 import os
 import time
+import sys
 from dotenv import load_dotenv
+import traceback
+import sys
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+    except:
+        pass
+
 import database as db
 
 # Configuration
@@ -148,29 +157,38 @@ async def sync_token_page(session, item_type, cursor=None):
         metadatas = await asyncio.gather(*tasks)
         
         # Sync to DB
-        for it, meta in zip(batch, metadatas):
-            addr = it['nft_address']
-            name = it['nft_name']
-            
-            raw_ppd = float(it['price_per_day']) / 1e9
-            marked_ppd = calculate_markup(raw_ppd)
-            
-            min_d = it['min_duration']
-            max_d = it['max_duration']
-            
-            db_type = 'gift' if item_type == 'gifts' else 'number' if item_type == 'numbers' else 'username'
-            
-            await db.sync_item(
-                nft_address=addr,
-                item_type=db_type,
-                title=name,
-                original_price=raw_ppd, # Original from API
-                price_per_day=marked_ppd, # With Markup
-                min_duration=min_d,
-                max_duration=max_d,
-                metadata=meta,
-                auto_relist=it.get('auto_relist', 1)
-            )
+        try:
+            async with db.aiosqlite.connect(db.DB_PATH, timeout=60.0) as conn:
+                await conn.execute("PRAGMA journal_mode=WAL")
+                await conn.execute("PRAGMA synchronous=NORMAL")
+                
+                for it, meta in zip(batch, metadatas):
+                    addr = it['nft_address']
+                    name = it['nft_name']
+                    
+                    raw_ppd = float(it['price_per_day']) / 1e9
+                    marked_ppd = calculate_markup(raw_ppd)
+                    
+                    min_d = it['min_duration']
+                    max_d = it['max_duration']
+                    
+                    db_type = 'gift' if item_type == 'gifts' else 'number' if item_type == 'numbers' else 'username'
+                    
+                    await db.sync_item(
+                        nft_address=addr,
+                        item_type=db_type,
+                        title=name,
+                        original_price=raw_ppd, # Original from API
+                        price_per_day=marked_ppd, # With Markup
+                        min_duration=min_d,
+                        max_duration=max_d,
+                        metadata=meta,
+                        auto_relist=it.get('auto_relist', 1),
+                        conn=conn
+                    )
+                await conn.commit()
+        except Exception as e:
+            logging.error(f"Batch sync error: {e}")
         
         total_processed += len(batch)
         if i + batch_size < count:
@@ -348,61 +366,60 @@ async def update_filters_cache(session):
         traceback.print_exc()
 
 
+
 async def main_loop():
     await db.init_db()
+    
+    # 12 seconds interval for real-time checks
+    REALTIME_INTERVAL = 12 
+    
+    logging.info(f"--- STARTING REAL-TIME MONITOR (Interval: {REALTIME_INTERVAL}s) ---")
+    logging.info("Deep sync history is handled by force_sync.py manually.")
+    
     async with aiohttp.ClientSession() as session:
         while True:
             cycle_start_time = time.time()
-            # SQL format for CURRENT_TIMESTAMP comparison
             cycle_start_str = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(cycle_start_time))
             
             try:
-                # State for rotation
-                cursors = {
-                    "gifts": "START",
-                    "usernames": "START",
-                    "numbers": "START"
-                }
+                # 1. Real-time check for NEW items (Page 1 only)
+                # We do NOT use cursors here. We just check the "fresh" list.
                 
-                # Loop until all cursors are exhausted (None)
-                while any(c is not None for c in cursors.values()):
-                    # ... (sync loops)
-                    if cursors["gifts"] is not None:
-                        c_val = None if cursors["gifts"] == "START" else cursors["gifts"]
-                        next_c, count = await sync_token_page(session, "gifts", c_val)
-                        cursors["gifts"] = next_c
-                        if count > 0: await asyncio.sleep(1)
-                        
-                    if cursors["usernames"] is not None:
-                        c_val = None if cursors["usernames"] == "START" else cursors["usernames"]
-                        next_c, count = await sync_token_page(session, "usernames", c_val)
-                        cursors["usernames"] = next_c
-                        if count > 0: await asyncio.sleep(1)
+                # Gifts
+                await sync_token_page(session, "gifts", cursor=None)
+                await asyncio.sleep(0.5) 
+                
+                # Usernames
+                await sync_token_page(session, "usernames", cursor=None)
+                await asyncio.sleep(0.5)
 
-                    if cursors["numbers"] is not None:
-                        c_val = None if cursors["numbers"] == "START" else cursors["numbers"]
-                        next_c, count = await sync_token_page(session, "numbers", c_val)
-                        cursors["numbers"] = next_c
-                        if count > 0: await asyncio.sleep(1)
+                # Numbers
+                await sync_token_page(session, "numbers", cursor=None)
+                await asyncio.sleep(0.5)
                 
-                # After syncing available, sync our rented items
+                # 2. Sync OUR rented items (to update timers/status locally)
                 await sync_my_rented(session)
                 
-                # Discover others that became rented
+                # 3. Discover globally rented items (to mark them as rented in DB if we missed the transition)
+                # We only check recent history for this in the parser
                 await discover_rented_items(session, cycle_start_str)
                 
                 await update_filters_cache(session)
-                logging.info(f"Full Sync Cycle Complete. Took {time.time() - cycle_start_time:.2f}s")
+                
+                elapsed = time.time() - cycle_start_time
+                logging.info(f"Real-time check complete ({elapsed:.2f}s). Sleeping...")
                 
             except Exception as e:
-                logging.error(f"Loop error: {e}")
+                logging.error(f"Monitor error: {e}")
             
-            # Wait for next cycle
-            logging.info(f"Waiting {SYNC_INTERVAL}s before next cycle...")
-            await asyncio.sleep(SYNC_INTERVAL)
+            # Smart sleep to maintain interval
+            elapsed = time.time() - cycle_start_time
+            sleep_time = max(1.0, REALTIME_INTERVAL - elapsed)
+            await asyncio.sleep(sleep_time)
 
 if __name__ == "__main__":
     try:
         asyncio.run(main_loop())
     except KeyboardInterrupt:
         logging.info("Parser stopped.")
+

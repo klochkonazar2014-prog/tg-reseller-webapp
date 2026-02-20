@@ -9,8 +9,22 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://answers-sense-curves-handbook.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://octorent.duckdns.org"; // Production VPS URL
 console.log("Using backend:", BACKEND_URL);
+
+/**
+ * 🔒 Secure API fetch wrapper
+ * Automatically injects Telegram initData for authentication
+ */
+async function apiFetch(url, options = {}) {
+    if (url.startsWith(BACKEND_URL) || url.startsWith('/api') || !url.startsWith('http')) {
+        options.headers = options.headers || {};
+        if (window.Telegram?.WebApp?.initData) {
+            options.headers['X-TG-Data'] = window.Telegram.WebApp.initData;
+        }
+    }
+    return fetch(url, options);
+}
 
 let tonConnectUI;
 let ALL_MARKET_ITEMS = [];
@@ -724,7 +738,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                     // Fetch from server with timeout
                     const ctrl = new AbortController();
                     const tid = setTimeout(() => ctrl.abort(), 10000);
-                    const r = await fetch(`${BACKEND_URL}/api/nft_details?nft_address=${encodeURIComponent(deepNftAddr)}`, { signal: ctrl.signal });
+                    const r = await apiFetch(`${BACKEND_URL}/api/nft_details?nft_address=${encodeURIComponent(deepNftAddr)}`, { signal: ctrl.signal });
                     clearTimeout(tid);
 
                     if (!r.ok) throw new Error("HTTP " + r.status);
@@ -879,8 +893,8 @@ async function loadFriendsData() {
     try {
         // Параллельно запрашиваем баланс и список друзей
         const [statsRes, friendsRes] = await Promise.all([
-            fetch(`${BACKEND_URL}/api/referral/stats?user_id=${userId}`),
-            fetch(`${BACKEND_URL}/api/referral/friends?user_id=${userId}`)
+            apiFetch(`${BACKEND_URL}/api/referral/stats?user_id=${userId}`),
+            apiFetch(`${BACKEND_URL}/api/referral/friends?user_id=${userId}`)
         ]);
         const statsData = await statsRes.json();
         const friendsData = await friendsRes.json();
@@ -1016,7 +1030,7 @@ async function handleReferralWithdraw() {
     console.log("Withdraw button clicked");
     const userId = tg.initDataUnsafe?.user?.id || 0;
     try {
-        const res = await fetch(`${BACKEND_URL}/api/referral/withdraw`, {
+        const res = await apiFetch(`${BACKEND_URL}/api/referral/withdraw`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ user_id: userId, amount: 0.1, wallet_address: "manual" })
@@ -1235,7 +1249,7 @@ async function loadLiveItems(reset = true) {
         let retries = 3;
         while (retries > 0) {
             try {
-                response = await fetch(`${BACKEND_URL}/api/items?${params.toString()}`);
+                response = await apiFetch(`${BACKEND_URL}/api/items?${params.toString()}`);
                 if (response.ok) break;
             } catch (err) {
                 console.error(`Fetch attempt failed (${retries} retries left):`, err);
@@ -1365,7 +1379,7 @@ function selectNftChip(addr, btn) {
 async function loadFilterData() {
     try {
         console.log('[FILTERS] Loading from:', `${BACKEND_URL}/api/filters`);
-        const res = await fetch(`${BACKEND_URL}/api/filters`);
+        const res = await apiFetch(`${BACKEND_URL}/api/filters`);
         const data = await res.json();
         console.log('[FILTERS] Received keys:', Object.keys(data));
 
@@ -2295,12 +2309,12 @@ async function openProductView(item) {
             rentBtn.disabled = true;
             try {
                 const userId = tg.initDataUnsafe?.user?.id || 0;
-                const r = await fetch(`${BACKEND_URL}/api/prepare_rent?nft_address=${item.nft_address}&days=${days}&user_id=${userId}`);
+                const r = await apiFetch(`${BACKEND_URL}/api/prepare_rent?nft_address=${item.nft_address}&days=${days}&user_id=${userId}`);
                 const d = await r.json();
                 if (d.error) throw new Error(d.error);
                 const res = await tonConnectUI.sendTransaction({ validUntil: Math.floor(Date.now() / 1000) + 600, messages: d.messages });
                 if (res) {
-                    await fetch(`${BACKEND_URL}/api/mark_rented`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nft_address: item.nft_address, order_id: d.order_id }) });
+                    await apiFetch(`${BACKEND_URL}/api/mark_rented`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nft_address: item.nft_address, order_id: d.order_id }) });
                     closeProductView();
                     loadLiveItems(true);
                     openTcModal(d.order_id, true, true);
@@ -2324,8 +2338,8 @@ async function openProductView(item) {
 
         // Parallel fetch for details and user order status
         Promise.all([
-            fetch(`${BACKEND_URL}/api/nft_details?nft_address=${item.nft_address}`).then(r => r.json()),
-            fetch(`${BACKEND_URL}/api/my_orders?user_id=${userId}`).then(r => r.json())
+            apiFetch(`${BACKEND_URL}/api/nft_details?nft_address=${item.nft_address}`).then(r => r.json()),
+            apiFetch(`${BACKEND_URL}/api/my_orders?user_id=${userId}`).then(r => r.json())
         ]).then(([details, myOrders]) => {
             const myOrder = myOrders.find(o => o.nft_address === item.nft_address && (o.status === 'rented' || o.status === 'active' || o.status === 'paid'));
 
@@ -2519,7 +2533,7 @@ async function handleShareClick() {
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 4000);
 
-                const res = await fetch(`${BACKEND_URL}/api/referral/prepare_share`, {
+                const res = await apiFetch(`${BACKEND_URL}/api/referral/prepare_share`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -2583,7 +2597,7 @@ async function handleNotifyClick() {
     if (!btn) return;
 
     try {
-        const resp = await fetch(`${BACKEND_URL}/api/toggle_notification`, {
+        const resp = await apiFetch(`${BACKEND_URL}/api/toggle_notification`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -2617,7 +2631,7 @@ async function checkNotificationStatus(nftAddress) {
 
     const userId = tg.initDataUnsafe?.user?.id || 0;
     try {
-        const r = await fetch(`${BACKEND_URL}/api/check_notification_status?user_id=${userId}&nft_address=${nftAddress}`);
+        const r = await apiFetch(`${BACKEND_URL}/api/check_notification_status?user_id=${userId}&nft_address=${nftAddress}`);
         const d = await r.json();
         btn.classList.toggle('active', !!d.subscribed);
     } catch (e) {
@@ -2919,7 +2933,7 @@ async function loadHistoryContent() {
 
     try {
         const userId = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user.id : 0;
-        const resp = await fetch(`${BACKEND_URL}/api/my_orders?user_id=${userId}`);
+        const resp = await apiFetch(`${BACKEND_URL}/api/my_orders?user_id=${userId}`);
         const orders = await resp.json();
 
         if (!orders || orders.length === 0) {
@@ -3184,7 +3198,7 @@ function startPollingOrder(orderId) {
     ORDER_POLL_INTERVAL = setInterval(async () => {
         try {
             const userId = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user.id : 0;
-            const resp = await fetch(`${BACKEND_URL}/api/my_orders?user_id=${userId}`);
+            const resp = await apiFetch(`${BACKEND_URL}/api/my_orders?user_id=${userId}`);
             const orders = await resp.json();
 
             const myOrder = orders.find(o => o.id === orderId);

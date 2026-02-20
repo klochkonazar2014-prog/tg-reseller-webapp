@@ -1,4 +1,5 @@
 import asyncio
+import time
 import os
 import logging
 import json
@@ -7,12 +8,34 @@ from dotenv import load_dotenv
 
 from aiogram import Bot, Dispatcher, F, types
 from aiogram.filters import Command, CommandObject
-from aiogram.types import CallbackQuery, Message, InlineQuery, InlineQueryResultArticle, InputTextMessageContent, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
+from aiogram.types import (
+    CallbackQuery, Message, InlineQuery, 
+    InlineQueryResultArticle, InlineQueryResultPhoto, InlineQueryResultMpeg4Gif,
+    InputTextMessageContent, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo,
+    MenuButtonWebApp, ReplyKeyboardRemove
+)
 
 import database as db
 import keyboards as kb
 
+import sys
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+    except:
+        pass
+
 # Конфигурация
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.FileHandler("bot_debug.log", encoding='utf-8'),
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+logging.info("Bot starting...")
+
 load_dotenv()
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_ID = int(os.getenv("ADMIN_ID", 0))
@@ -23,7 +46,6 @@ MARKUP_PERCENT = 20
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
-logging.basicConfig(level=logging.INFO)
 
 # --- LIVE API HELPERS ---
 
@@ -37,20 +59,35 @@ async def get_session():
     return _session
 
 async def fetch_live_data(endpoint, params=None):
-    """Свежий запрос с защитой от банов"""
+    """Свежий запрос с защитой от банов и повторами при 503"""
     headers = {"Authorization": MARKETAPP_TOKEN}
     session = await get_session()
-    try:
-        async with session.get(f"https://api.marketapp.ws/v1{endpoint}", headers=headers, params=params, timeout=12) as response:
-            if response.status == 200:
-                return await response.json()
-            elif response.status == 429:
-                logging.warning("⚠️ MarketApp Rate Limit! Нужно подождать.")
-                return "rate_limit"
+    
+    retries = 3
+    delay = 1
+    
+    for attempt in range(retries):
+        try:
+            async with session.get(f"https://api.marketapp.ws/v1{endpoint}", headers=headers, params=params, timeout=12) as response:
+                if response.status == 200:
+                    return await response.json()
+                elif response.status == 429:
+                    logging.warning("⚠️ MarketApp Rate Limit! Нужно подождать.")
+                    return "rate_limit"
+                elif response.status == 503:
+                    logging.warning(f"⚠️ MarketApp 503 (Attempt {attempt+1}/{retries}). Retrying in {delay}s...")
+                    await asyncio.sleep(delay)
+                    delay *= 2
+                    continue
+                return None
+        except Exception as e:
+            logging.error(f"Live API Connection Error: {e}")
+            if attempt < retries - 1:
+                await asyncio.sleep(delay)
+                delay *= 2
+                continue
             return None
-    except Exception as e:
-        logging.error(f"Live API Connection Error: {e}")
-        return None
+    return None
 
 async def get_nft_full_details(nft_address, col_name):
     """Докачка метаданных (картинка, атрибуты), если их еще нет в кэше"""
@@ -90,59 +127,318 @@ async def get_nft_full_details(nft_address, col_name):
 
 @dp.message(Command("start"))
 async def start_cmd(message: Message, command: CommandObject):
+    user_id = message.from_user.id
+    username = message.from_user.username
+    full_name = message.from_user.full_name
+    
+    # Save user info
+    await db.add_user(user_id, username, full_name)
+    
     args = command.args
-    if args and args.startswith("nft_"):
-        nft_addr = args.replace("nft_", "")
-        item = await db.get_item_by_id_addr(nft_addr)
-        if item:
-            meta = json.loads(item['metadata'] or '{}')
-            text = (
-                f"🖼 <b>{item['title']}</b>\n\n"
-                f"📊 <b>Details:</b>\n{meta.get('attributes_lines', '├ <b>Status:</b> <code>Live</code>')}\n\n"
-                f"💰 <b>Per day:</b> <code>{item['price_per_day']} TON</code>\n\n"
-                f"Нажмите кнопку ниже, чтобы открыть этот товар в маркете!"
-            )
-            webapp_url = f"{WEB_APP_URL}?nft_address={nft_addr}"
-            kb_single = InlineKeyboardMarkup(inline_keyboard=[
-                [InlineKeyboardButton(text="💎 Открыть в маркете", web_app=WebAppInfo(url=webapp_url))]
-            ])
-            await message.answer_photo(photo=meta.get('image') or "https://ton.org/download/ton_symbol.png", caption=text, reply_markup=kb_single, parse_mode="HTML")
-            return
+    
+    # 🔗 DEEP LINK LOGIC (ref_ or nft_)
+    if args:
+        # 🔗 CLEAN LOGIC: Determine if it's a referral or an NFT link
+        referrer_id_str = None
+        nft_addr = None
+        
+        if args.startswith("ref_"):
+            parts = args.split("_")
+            if len(parts) >= 2:
+                referrer_id_str = parts[1]
+        elif args.startswith("nft_"):
+            nft_addr = args.replace("nft_", "")
+            # Check if it's a combined link (legacy support from my previous edit just in case)
+            if "_ref_" in nft_addr:
+                nft_addr, ref_part = nft_addr.split("_ref_")
+                referrer_id_str = ref_part
+            elif "_nft_" in args: # Support for ref_ID_nft_ADDR
+                parts = args.split("_")
+                referrer_id_str = parts[1]
+                nft_addr = parts[3]
 
-    await db.add_user(message.from_user.id)
+        # 1. Process Referral
+        if referrer_id_str:
+            try:
+                referrer_id = int(referrer_id_str)
+                if referrer_id != user_id:
+                    success = await db.create_referral(referrer_id, user_id)
+                    if success:
+                        await message.answer("🎉 <b>Вы присоединились по приглашению!</b>", parse_mode="HTML")
+                        try:
+                            await bot.send_message(
+                                referrer_id,
+                                f"🎁 <b>Новый реферал!</b>\n{message.from_user.full_name} заглянул в OctoRent.",
+                                parse_mode="HTML"
+                            )
+                        except: pass
+            except Exception as e:
+                logging.error(f"Referral processing error: {e}")
+
+        # 2. Process NFT (if present)
+        if nft_addr:
+            found_row = await db.get_item_by_id_addr(nft_addr)
+            if not found_row and nft_addr.isdigit():
+                found_row = await db.get_item_by_id(int(nft_addr))
+            
+            if found_row:
+                # 🚀 NUCLEAR SAFETY: Force conversion to dict
+                item_data = dict(found_row)
+                item_meta = {}
+                
+                try:
+                    meta_raw = item_data.get('metadata')
+                    if meta_raw:
+                        if isinstance(meta_raw, str):
+                            item_meta = json.loads(meta_raw)
+                        elif isinstance(meta_raw, dict):
+                            item_meta = meta_raw
+                except Exception as e:
+                    logging.warning(f"Metadata parsing failed: {e}")
+                
+                # Safe access for all fields
+                img_url = item_meta.get('image')
+                title_str = item_data.get('title') or item_data.get('nft_name') or "NFT"
+                
+                # Image fallback logic
+                if not img_url or any(x in str(img_url) for x in ["ton_symbol.png", "gift.svg"]):
+                    if str(title_str).startswith('@'):
+                        img_url = f"https://nft.fragment.com/username/{str(title_str).lstrip('@')}.webp"
+                    elif str(title_str).startswith('+'):
+                        import re as _re
+                        clean_n = _re.sub(r'[^0-9]', '', str(title_str))
+                        img_url = f"https://nft.fragment.com/number/{clean_n}.webp"
+                    elif " #" in str(title_str):
+                        try:
+                            import re as _re
+                            n_part = str(title_str).split(" #")[0]
+                            num_p = str(title_str).split(" #")[1]
+                            c_slug = _re.sub(r'[^a-zA-Z0-9]', '-', n_part).strip('-').lower()
+                            c_slug = _re.sub(r'-+', '-', c_slug)
+                            img_url = f"https://nft.fragment.com/gift/{c_slug}-{num_p}.webp"
+                        except: img_url = "https://ton.org/download/ton_symbol.png"
+                    else: img_url = "https://ton.org/download/ton_symbol.png"
+
+                attr_txt = item_meta.get('attributes_lines', '├ <b>Статус:</b> <code>Активен</code>')
+                price_val = item_data.get('price_per_day', 0)
+                
+                caption_text = (
+                    f"🖼 <b>{title_str}</b>\n\n"
+                    f"📊 <b>Детали:</b>\n{attr_txt}\n\n"
+                    f"💰 <b>Цена:</b> <code>{price_val} TON/день</code>\n\n"
+                    f"Нажми кнопку ниже, чтобы арендовать этот предмет!"
+                )
+                
+                status_str = item_data.get('status', 'available')
+                button_label = "💎 Предзаказ" if status_str == 'rented' else "💎 Арендовать"
+                
+                import urllib.parse
+                nft_addr_val = item_data.get('nft_address')
+                encoded_addr = urllib.parse.quote(str(nft_addr_val))
+                
+                # Robust URL joining
+                base_url = WEB_APP_URL
+                sep = "&" if "?" in base_url else "?"
+                wapp_url = f"{base_url}{sep}nft_address={encoded_addr}"
+                
+                kb_obj = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text=button_label, web_app=WebAppInfo(url=wapp_url))]])
+                
+                try: 
+                    await message.answer_photo(photo=img_url, caption=caption_text, reply_markup=kb_obj, parse_mode="HTML")
+                except: 
+                    await message.answer(text=caption_text, reply_markup=kb_obj, parse_mode="HTML")
+                return
+            else:
+                await message.answer("❌ <b>Товар не найден.</b>", parse_mode="HTML")
+                return
+
+    await db.add_user(message.from_user.id, message.from_user.username, message.from_user.full_name)
     await message.answer(
         "💎 <b>LIVE NFT Rental Market</b>\n\nДанные подгружаются в реальном времени напрямую с маркетплейса.",
-        reply_markup=kb.main_menu(message.from_user.id == ADMIN_ID),
+        reply_markup=kb.main_menu(WEB_APP_URL, message.from_user.id == ADMIN_ID),
         parse_mode="HTML"
     )
 
-@dp.message(F.text == "🎁 Аренда NFT подарков")
-async def open_market_direct(message: Message):
-    keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
-        [types.InlineKeyboardButton(text="💎 Открыть маркет аренды", web_app=types.WebAppInfo(url=WEB_APP_URL))],
-        [types.InlineKeyboardButton(text="🛒 Моя корзина (0)", callback_data="view_cart")]
+
+@dp.callback_query(F.data == "main_menu")
+async def back_to_main_menu(callback: CallbackQuery):
+    await callback.message.edit_text(
+        "💎 <b>LIVE NFT Rental Market</b>\n\nДанные подгружаются в реальном времени напрямую с маркетплейса.",
+        reply_markup=kb.main_menu(WEB_APP_URL, callback.from_user.id == ADMIN_ID),
+        parse_mode="HTML"
+    )
+
+@dp.callback_query(F.data == "rent_gifts")
+async def info_rent_gifts(callback: CallbackQuery):
+    # Раздел Маркета с синей кнопкой входа
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🛍 Открыть каталог", web_app=WebAppInfo(url=WEB_APP_URL), style="primary")],
+        [InlineKeyboardButton(text="🛒 Моя корзина", callback_data="view_cart")],
+        [InlineKeyboardButton(text="Назад", callback_data="main_menu", icon_custom_emoji_id="5359511310096672647")]
     ])
-    await message.answer(
-        "🏷 <b>Маркет аренды NFT подарков</b>\n\nВыбирайте любые доступные подарки, фильтруйте по номеру или цене и арендуйте в один клик!",
+    await callback.message.edit_text(
+        "🏷 <b>Маркет аренды NFT</b>\n\nЗдесь вы можете арендовать подарки, анонимные номера и другие NFT в один клик. Все лоты подгружаются в реальном времени.",
         reply_markup=keyboard,
         parse_mode="HTML"
     )
 
-@dp.message(F.text == "👤 Профиль")
-async def show_profile(message: Message):
-    await message.answer(f"👤 <b>Профиль</b>\n\nID: <code>{message.from_user.id}</code>\nСтатус: <code>Пользователь</code>", parse_mode="HTML")
+@dp.callback_query(F.data == "rent_numbers")
+async def info_rent_numbers(callback: CallbackQuery):
+    await callback.message.edit_text(
+        "📱 <b>Аренда номеров +888</b>\n\nДанный раздел находится в разработке.",
+        reply_markup=kb.info_keyboard(),
+        parse_mode="HTML"
+    )
 
-@dp.message(F.text == "ℹ️ Информация")
-async def show_info(message: Message):
-    await message.answer("ℹ️ <b>О сервисе</b>\n\nМы предоставляем услуги аренды NFT подарков и номеров +888 на базе TON.", parse_mode="HTML")
+@dp.callback_query(F.data == "profile")
+async def profile_details(callback: CallbackQuery):
+    user_id = callback.from_user.id
+    username = callback.from_user.username or callback.from_user.full_name
+    
+    # Компактный профиль без баланса с новыми ID
+    text = (
+        f"<tg-emoji emoji-id='5116582462276764538'>👤</tg-emoji> <b>Ваш профиль:</b>\n\n"
+        f"<tg-emoji emoji-id='5460795800101594035'>📝</tg-emoji> <b>Имя:</b> {username}\n"
+        f"<tg-emoji emoji-id='5447644880824181073'>🆔</tg-emoji> <b>ID:</b> <code>{user_id}</code>\n\n"
+        "✨ <i>Используйте маркет для аренды NFT и номеров.</i>"
+    )
+    
+    await callback.message.edit_text(
+        text,
+        reply_markup=kb.profile_keyboard(),
+        parse_mode="HTML"
+    )
 
-@dp.message(F.text == "👨‍💻 Поддержка")
-async def show_support(message: Message):
-    await message.answer("👨‍💻 <b>Поддержка</b>\n\nПо всем вопросам пишите: @admin_support", parse_mode="HTML")
+@dp.callback_query(F.data == "support")
+async def support_details(callback: CallbackQuery):
+    # Компактный саппорт: всё в одну линию для каждого контакта
+    text = (
+        "<tg-emoji emoji-id='5362079447136610876'>👨‍💻</tg-emoji> <b>Поддержка OctoRent:</b>\n\n"
+        "<tg-emoji emoji-id='5390928897082663005'>⚙️</tg-emoji> Ошибки: @Paulie_Gualtiery | <tg-emoji emoji-id='5472239203590888751'>💎</tg-emoji> Другое: @OctoRent_Support\n\n"
+        "<i>Мы постараемся ответить вам как можно скорее!</i>"
+    )
+    await callback.message.edit_text(
+        text,
+        reply_markup=kb.support_keyboard(),
+        parse_mode="HTML"
+    )
 
-@dp.message(F.text == "📱 Аренда +888")
-async def show_plus888(message: Message):
-    await message.answer("📱 <b>Аренда номеров +888</b>\n\nДанный раздел находится в разработке.", parse_mode="HTML")
+@dp.callback_query(F.data == "referrals")
+async def referrals_menu(callback: CallbackQuery):
+    """Реферальное меню с статистикой и ссылкой"""
+    user_id = callback.from_user.id
+    
+    # Получаем статистику
+    stats = await db.get_referral_stats(user_id)
+    
+    # Генерируем реферальную ссылку
+    bot_info = await bot.get_me()
+    ref_link = f"https://t.me/{bot_info.username}?start=ref_{user_id}"
+    
+    # Форматируем последние начисления
+    earnings_text = ""
+    if stats['recent_earnings']:
+        earnings_text = "\n\n<b>📊 Последние начисления:</b>\n"
+        for earning in stats['recent_earnings'][:5]:  # Показываем только 5 последних
+            earnings_text += f"├ <code>{earning['amount']} TON</code> (заказ #{earning['order_id']})\n"
+        if earnings_text:
+            earnings_text = earnings_text.replace("├", "└", earnings_text.count("├") - 1)
+    
+    text = (
+        "<tg-emoji emoji-id='5472239203590888751'>🎁</tg-emoji> <b>Реферальная программа</b>\n\n"
+        f"<b>👥 Ваши рефералы:</b> <code>{stats['referrals_count']}</code>\n"
+        f"<b>💰 Доступно:</b> <code>{stats['balance']:.4f} TON</code>\n"
+        f"<b>📈 Всего заработано:</b> <code>{stats['total_earned']:.4f} TON</code>\n"
+        f"<b>💸 Выведено:</b> <code>{stats['total_withdrawn']:.4f} TON</code>\n"
+        f"{earnings_text}\n\n"
+        f"<b>🔗 Ваша реферальная ссылка:</b>\n"
+        f"<code>{ref_link}</code>\n\n"
+        f"<i>Приглашайте друзей и получайте 25% от наценки с каждой их покупки!</i>"
+    )
+    
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="📋 Скопировать ссылку", url=ref_link)],
+        [InlineKeyboardButton(text="📤 Поделиться", url=f"https://t.me/share/url?url={ref_link}&text=Присоединяйся к OctoRent!")],
+        [InlineKeyboardButton(text="💰 Вывести средства", callback_data="withdraw_referral")] if stats['balance'] >= 0.1 else [],
+        [InlineKeyboardButton(
+            text="Назад", 
+            callback_data="profile",
+            icon_custom_emoji_id="5359511310096672647"
+        )]
+    ])
+    
+    await callback.message.edit_text(
+        text,
+        reply_markup=keyboard,
+        parse_mode="HTML"
+    )
+
+@dp.callback_query(F.data == "withdraw_referral")
+async def withdraw_referral_handler(callback: CallbackQuery):
+    """Обработчик вывода реферальных средств"""
+    user_id = callback.from_user.id
+    stats = await db.get_referral_stats(user_id)
+    
+    if stats['balance'] < 0.1:
+        await callback.answer("❌ Минимальная сумма для вывода: 0.1 TON", show_alert=True)
+        return
+    
+    text = (
+        "<tg-emoji emoji-id='5296355151743838259'>💰</tg-emoji> <b>Вывод средств</b>\n\n"
+        f"<b>Доступно для вывода:</b> <code>{stats['balance']:.4f} TON</code>\n\n"
+        "Для вывода средств откройте Mini App и подключите кошелек TON Connect.\n"
+        "Вывод будет доступен в разделе 'Рефералы' → 'Вывести средства'.\n\n"
+        "<i>Минимальная сумма вывода: 0.1 TON</i>"
+    )
+    
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🛍 Открыть Mini App", web_app=WebAppInfo(url=WEB_APP_URL))],
+        [InlineKeyboardButton(
+            text="Назад", 
+            callback_data="referrals",
+            icon_custom_emoji_id="5359511310096672647"
+        )]
+    ])
+    
+    await callback.message.edit_text(
+        text,
+        reply_markup=keyboard,
+        parse_mode="HTML"
+    )
+
+
+@dp.callback_query(F.data == "deposit")
+async def deposit_handler(callback: CallbackQuery):
+    # Раздел пополнения баланса
+    text = (
+        "<tg-emoji emoji-id='5296355151743838259'>💰</tg-emoji> <b>Пополнение баланса (TON)</b>\n\n"
+        "Для пополнения баланса отправьте желаемую сумму на адрес кошелька бота:\n\n"
+        "<code>EQB_YOUR_BOT_WALLET_ADDRESS</code>\n\n"
+        "⚠️ <b>ВАЖНО:</b> Обязательно укажите ваш ID в комментарии к транзакции, иначе средства не будут зачислены автоматически:\n"
+        f"Комментарий: <code>{callback.from_user.id}</code>\n\n"
+        "<i>Зачисление происходит в течение 5-10 минут после подтверждения сети.</i>"
+    )
+    await callback.message.edit_text(
+        text,
+        reply_markup=kb.profile_keyboard(),
+        parse_mode="HTML"
+    )
+
+@dp.callback_query(F.data == "info")
+async def info_details(callback: CallbackQuery):
+    # Используем САМЫЕ ПЕРВЫЕ ID, которые ты скидывал (с новым Back)
+    text = (
+        "<tg-emoji emoji-id='5197269100878907942'>ℹ️</tg-emoji> <b>Информация о сервисе:</b>\n\n"
+        "<tg-emoji emoji-id='5319302290127991242'>📱</tg-emoji> Сервис OctoRent предоставляет услугу аренды NFT подарков, NFT и анонимных номеров +888\n\n"
+        "<tg-emoji emoji-id='5188481279963715781'>⏳</tg-emoji> В скором времени появится покупка товаров и больше новых возможностей, связанных с NFT\n\n"
+        "<tg-emoji emoji-id='5337017423906226569'>👨‍💻</tg-emoji> Кодер — @Paulie_Gualtiery\n"
+        "<tg-emoji emoji-id='5215416746453776052'>👥</tg-emoji> Админ — @nerksqq"
+    )
+    await callback.message.edit_text(
+        text,
+        reply_markup=kb.info_keyboard(),
+        parse_mode="HTML"
+    )
 
 @dp.callback_query(F.data.startswith("model_"))
 async def show_items_live(callback: CallbackQuery):
@@ -224,50 +520,297 @@ async def view_item_live(callback: CallbackQuery):
 @dp.inline_query()
 async def inline_handler(query: InlineQuery):
     try:
-        text = query.query.strip()
-        print(f"DEBUG: Inline query received: '{text}'")
+        text = query.query.strip().lower()
+        logging.info(f"!!! DEBUG INLINE !!! Query: '{text}' from user {query.from_user.id}")
+        user_id = query.from_user.id
         
-        items = await db.search_items_inline(text, limit=30)
-        print(f"DEBUG: Found {len(items)} items for query '{text}'")
+        # 🔄 RE-READ ENV: Force override to catch tunnel URL updates
+        load_dotenv(override=True)
+        current_web_url = (os.getenv("WEB_APP_URL") or WEB_APP_URL).rstrip('/')
         
-        results = []
-        for item in items:
-            meta = json.loads(item['metadata'] or '{}')
-            img = meta.get('image') or "https://ton.org/download/ton_symbol.png"
+        bot_info = await bot.get_me()
+        bot_username = bot_info.username
+        ref_link = f"https://t.me/{bot_username}?start=ref_{user_id}"
+
+        # 🎁 Referral link sharing result
+        if not text or text == "ref" or text.startswith("ref_"):
+            # TOTAL RANDOM ID: Bypass any Telegram caching of old failures
+            res_id = f"ref_{user_id}_{os.urandom(4).hex()}"
             
-            status_text = "Доступно" if item['status'] == 'available' else "Арендовано"
-            desc = f"Цена: {item['price_per_day']} TON/день | {status_text}"
+            thumb_url = f"{current_web_url}/pictures/referral_128x128.png"
+            # Fallback thumbnail if tunnel is slow to load
+            stable_thumb = "https://ton.org/download/ton_symbol.png"
             
-            # WebApp deep link
-            webapp_url = f"{WEB_APP_URL}?nft_address={item['nft_address']}"
-            
-            msg_text = (
-                f"🖼 <b>{item['title']}</b>\n"
-                f"💰 Цена: <code>{item['price_per_day']} TON/день</code>\n"
-                f"📦 Статус: <b>{status_text}</b>"
+            logging.info(f"!!! INLINE REF !!! Query='{text}' ID={res_id} Thumb={thumb_url}")
+
+            # 🛠 ARTICLE IS MORE ROBUST: Less likely to be ignored if image fails to load
+            share_result = InlineQueryResultArticle(
+                id=res_id,
+                title="🎁 Реферальная система",
+                description="Приглашай друзей и получай бонусы! 💰",
+                thumbnail_url=thumb_url,
+                input_message_content=InputTextMessageContent(
+                    message_text=(
+                        f"🎁 <b>Присоединяйся к OctoRent!</b>\n\n"
+                        f"Арендуй NFT подарки, юзернеймы и номера напрямую в Telegram.\n\n"
+                        f"🔗 <b>Твоя ссылка для входа:</b>\n{ref_link}"
+                        f"<a href='{current_web_url}/pictures/referral.png'>&#8205;</a>" # Invisible link for big image preview
+                    ),
+                    parse_mode="HTML",
+                    disable_web_page_preview=False
+                ),
+                reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
+                    InlineKeyboardButton(text="🚀 Открыть в OctoRent", url=ref_link)
+                ]])
             )
             
-            results.append(InlineQueryResultArticle(
-                id=f"nft_{item['nft_address']}",
-                title=item['title'],
-                description=desc,
-                thumbnail_url=img,
-                input_message_content=InputTextMessageContent(message_text=msg_text, parse_mode="HTML"),
-                reply_markup=InlineKeyboardMarkup(inline_keyboard=[
-                    [InlineKeyboardButton(text="💎 Перейти к аренде", url=f"https://t.me/OctoRent_bot/rent?startapp=nft_{item['nft_address']}")]
-                ])
-            ))
+            # If "ref" is searched, show only this result
+            if text == "ref":
+                logging.info(f"Returning Article result for {user_id}")
+                try:
+                    await query.answer([share_result], cache_time=1, is_personal=True)
+                except Exception as ex:
+                    logging.error(f"!!! FAILED TO ANSWER INLINE !!! Error: {ex}")
+                return
+            
+            results = [share_result]
+        else:
+            results = []
+
+        items = await db.search_items_inline(text, limit=30)
+        logging.info(f"DEBUG DB: Search for '{text}' found {len(items)} items")
         
-        print(f"DEBUG: Sending {len(results)} results")
-        await query.answer(results, cache_time=1, is_personal=False)
+        for item in items:
+            try:
+                # Load metadata to get image/video
+                meta = {}
+                try:
+                    if item['metadata']:
+                        meta = json.loads(item['metadata'])
+                except: pass
+
+                image_url = meta.get("image")
+
+                try:
+                    item_title = item['title'] or item['nft_name'] or 'NFT'
+                except:
+                    item_title = 'NFT'
+
+                # Determine type
+                is_gift = (item['type'] == 'gift') or (not item_title.startswith('@') and not item_title.startswith('+'))
+                logging.info(f"DEBUG ITEM: '{item_title}' (Type: {item['type']}, is_gift: {is_gift})")
+
+                tg_nft_link = None
+                # Fallback for gifts: generate image URL from name+number
+                if is_gift and " #" in item_title:
+                    try:
+                        import re as _re
+                        name_part, num_part = item_title.rsplit(" #", 1)
+                        clean_slug = _re.sub(r'[^a-zA-Z0-9]', '', name_part)
+                        tg_nft_link = f"https://t.me/nft/{clean_slug}-{num_part}"
+                        if not image_url or "gift.svg" in image_url:
+                            low_slug = clean_slug.lower()
+                            image_url = f"https://nft.fragment.com/gift/{low_slug}-{num_part}.webp"
+                    except: pass
+
+                # Handle fragments (usernames/numbers) images
+                if not is_gift:
+                    # TonAPI image proxy is unreliable (returns 404 for some items)
+                    # Use Fragment's native image service
+                    if item_title.startswith('@'):
+                        clean_username = item_title.lstrip('@')
+                        image_url = f"https://nft.fragment.com/username/{clean_username}.webp"
+                        logging.info(f"DEBUG FRAGMENT: Username image: {image_url}")
+                    elif item_title.startswith('+'):
+                        # Number format: +888 0932 8147 -> 88809328147
+                        import re as _re
+                        clean_num = _re.sub(r'[^0-9]', '', item_title)
+                        image_url = f"https://nft.fragment.com/number/{clean_num}.webp"
+                        logging.info(f"DEBUG FRAGMENT: Number image: {image_url}")
+                    else:
+                        image_url = f"https://tonapi.io/v2/nfts/{item['nft_address']}/image"
+                        logging.info(f"DEBUG FRAGMENT: Falling back to TonAPI image: {image_url}")
+
+                if not image_url or "gift.svg" in image_url:
+                    if os.path.exists(os.path.join("web", "pictures", "referral_128x128.png")):
+                        image_url = f"{WEB_APP_URL.rstrip('/')}/pictures/referral_128x128.png"
+                    else:
+                        image_url = "https://ton.org/download/ton_symbol.png"
+
+                # Format price
+                try:
+                    price_rounded = round(float(item['price_per_day']), 4)
+                except:
+                    price_rounded = 0.0
+
+                bot_username_str = "OctoRent_bot"
+                # 🚀 STABLE BOT LINK: Using ?start= instead of ?startapp= to prevent BOT_INVALID when domain changes
+                share_link = f"https://t.me/{bot_username_str}?start=nft_{item['nft_address']}"
+                
+                title_prefix = "🎁" if is_gift else "💎"
+                item_type_label = "Gift" if is_gift else item['type'].capitalize()
+                
+                # Caption shown under the photo in chat
+                caption_text = (
+                    f"{title_prefix} <b>{item_title}</b>\n"
+                    f"────────────────────\n"
+                    f"<b>Тип:</b> <code>{item_type_label}</code>\n"
+                    f"<b>Цена:</b> <code>{price_rounded} TON/day</code>\n\n"
+                    f"⚡️ <i>Доступно для аренды в OctoRent</i>"
+                )
+
+                res_id = f"item_{item['id']}"
+                logging.info(f"DEBUG RESULT: Appending {res_id} for {item_title}")
+
+                # Use InlineQueryResultPhoto so image shows BIG in chat
+                results.append(InlineQueryResultPhoto(
+                    id=res_id,
+                    photo_url=image_url,
+                    thumbnail_url=image_url,
+                    title=f"{title_prefix} {item_title}",
+                    description=f"⚡️ {price_rounded} TON/day | Rent Now",
+                    caption=caption_text,
+                    parse_mode="HTML",
+                    reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
+                        InlineKeyboardButton(text="⚡️ Арендовать за " + str(price_rounded) + " TON", url=share_link)
+                    ]])
+                ))
+            except Exception as e:
+                logging.error(f"Error processing inline item: {e}")
+                continue
+
+        logging.info(f"DEBUG FINAL: {len(results)} results ready for '{text}'")
+        await query.answer(results, cache_time=1, is_personal=True)
+
     except Exception as e:
-        print(f"ERROR in inline_handler: {e}")
-        import traceback
-        traceback.print_exc()
+        logging.error(f"Error in inline_handler: {e}", exc_info=True)
+        # Return empty results on error to avoid infinite loading
+        try:
+            await query.answer([], cache_time=5)
+        except: pass
+
+@dp.message(Command("fix_url"))
+async def cmd_fix_url(message: Message, command: CommandObject):
+    """
+    Manual fix for the Menu Button URL.
+    Usage: /fix_url https://new-url.trycloudflare.com
+    If no URL provided, tries to use the one from environment.
+    """
+    if message.from_user.id != ADMIN_ID:
+        return
+        
+    url_to_set = None
+    if command.args:
+        url_to_set = command.args.strip()
+    else:
+        # Re-read from env just in case
+        load_dotenv()
+        url_to_set = os.getenv("WEB_APP_URL")
+        
+    if not url_to_set:
+        await message.answer("❌ URL not found in args or .env")
+        return
+
+    try:
+        await bot.set_chat_menu_button(
+            menu_button=MenuButtonWebApp(text="💎 Open Shop", web_app=WebAppInfo(url=url_to_set))
+        )
+        await message.answer(f"✅ Menu Button updated to:\n{url_to_set}")
+    except Exception as e:
+        await message.answer(f"❌ Failed to update: {e}")
+
+async def check_expirations():
+    """Фоновая задача для уведомления об окончании аренды"""
+    while True:
+        try:
+            now = int(asyncio.get_event_loop().time() + 1739284608) # Примерное текущее время, лучше брать из системы
+            import time
+            current_time = int(time.time())
+            
+            async with db.aiosqlite.connect(db.DB_PATH) as conn:
+                conn.row_factory = db.aiosqlite.Row
+                # Находим аренды, которые закончились в последние 5 минут и по которым еще не было уведомления
+                # (Для простоты: находим всех кто подписан на уведомления для итемов, которые сейчас 'available' но были 'rented')
+                # Но лучше: хранить время окончания в items и проверять его.
+                
+                async with conn.execute("""
+                    SELECT n.user_id, n.nft_address, i.title, i.metadata 
+                    FROM item_notifications n
+                    JOIN items i ON n.nft_address = i.nft_address
+                    WHERE i.status = 'available'
+                """) as cursor:
+                    rows = await cursor.fetchall()
+                    for row in rows:
+                        user_id, nft_addr, title, meta_json = row['user_id'], row['nft_address'], row['title'], row['metadata']
+                        meta = json.loads(meta_json or '{}')
+                        
+                        text = (
+                            f"🔔 <b>Предмет снова доступен!</b>\n\n"
+                            f"Подарок <b>{title}</b> теперь свободен и его можно арендовать.\n"
+                            f"Нажмите кнопку ниже, чтобы открыть маркетплейс."
+                        )
+                        
+                        image_url = meta.get('image') or "https://ton.org/download/ton_symbol.png"
+                        
+                        try:
+                            # Отправляем уведомление
+                            await bot.send_photo(
+                                chat_id=user_id,
+                                photo=image_url,
+                                caption=text,
+                                parse_mode="HTML"
+                            )
+                            # Удаляем уведомление чтобы не спамить
+                            await conn.execute("DELETE FROM item_notifications WHERE user_id = ? AND nft_address = ?", (user_id, nft_addr))
+                        except Exception as e:
+                            logging.error(f"Failed to notify user {user_id}: {e}")
+                
+                await conn.commit()
+                
+        except Exception as e:
+            logging.error(f"Error in check_expirations: {e}")
+        
+        await asyncio.sleep(60) # Проверка каждую минуту
 
 async def main():
     await db.init_db()
     print("LIVE-BOT ЗАПУЩЕН! Реальное время активно.")
+    
+    # Запускаем фоновую задачу
+    # Запускаем фоновую задачу
+    asyncio.create_task(check_expirations())
+    
+    # 🚀 Update Menu Button with current URL
+    if WEB_APP_URL:
+        try:
+            # Note: Bot API 9.4 allows custom emoji on menu buttons if bot owner has Premium
+            # We use a dynamic label to bust client-side cache
+            await bot.set_chat_menu_button(
+                menu_button=MenuButtonWebApp(
+                    text="🛍 Market", 
+                    web_app=WebAppInfo(url=WEB_APP_URL)
+                )
+            )
+            logging.info(f"✅ Menu Button updated: {WEB_APP_URL}")
+        except Exception as e:
+            logging.error(f"❌ Failed to set menu button: {e}")
+
+    # 💎 NEW Bot API 9.4: Profile Photo management
+    # Example: await bot.set_my_profile_photo(photo=...)
+
+    print("LIVE-BOT ЗАПУЩЕН! Реальное время активно.")
+    
+    # Send startup message to Admin
+    if ADMIN_ID:
+        try:
+            # API 9.4 allows richer text and custom emojis in messages
+            kb_admin = InlineKeyboardMarkup(inline_keyboard=[
+                [InlineKeyboardButton(text="🛍 Open Market", web_app=WebAppInfo(url=WEB_APP_URL))]
+            ])
+            await bot.send_message(ADMIN_ID, "🚀 **OctoRent Bot Online!**\n\nСистема запущена и отслеживает новые лоты.", reply_markup=kb_admin)
+        except Exception as e:
+            logging.warning(f"Could not notify admin: {e}")
+
     await dp.start_polling(bot)
 
 if __name__ == "__main__":

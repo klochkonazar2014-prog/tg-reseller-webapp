@@ -1,9 +1,16 @@
+# Version: 1.2.0
 import subprocess
 import time
 import sys
 import os
 import re
 from dotenv import load_dotenv
+
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+    except:
+        pass
 
 load_dotenv()
 OWNER_WALLET_ADDR = os.getenv("OWNER_WALLET")
@@ -23,8 +30,8 @@ def update_web_config(url):
     if os.path.exists(app_js_path):
         with open(app_js_path, "r", encoding="utf-8", errors="ignore") as f:
             content = f.read()
-        # Заменяем любой BACKEND_URL на наш постоянный
-        content = re.sub(r'const BACKEND_URL = ".*?";', f'const BACKEND_URL = "{url}";', content)
+        # Заменяем любой BACKEND_URL на наш постоянный (теперь поддерживаем и одинарные, и двойные кавычки)
+        content = re.sub(r'const\s+BACKEND_URL\s*=\s*["\'].*?["\'];', f'const BACKEND_URL = "{url}";', content)
         with open(app_js_path, "w", encoding="utf-8") as f:
             f.write(content)
             
@@ -60,6 +67,32 @@ def update_web_config(url):
     except Exception as e:
         log(f"GitHub Sync Error: {e}")
 
+def update_env(url):
+    log(f"Updating .env with WEB_APP_URL: {url}")
+    env_path = ".env"
+    if not os.path.exists(env_path):
+        log("ERROR: .env not found")
+        return
+        
+    with open(env_path, "r", encoding="utf-8") as f:
+        lines = f.readlines()
+        
+    new_lines = []
+    found = False
+    for line in lines:
+        if line.strip().startswith("WEB_APP_URL="):
+            new_lines.append(f"WEB_APP_URL={url or PERMANENT_URL}\n")
+            found = True
+        else:
+            new_lines.append(line)
+            
+    if not found:
+        new_lines.append(f"WEB_APP_URL={url or PERMANENT_URL}\n")
+        
+    with open(env_path, "w", encoding="utf-8") as f:
+        f.writelines(new_lines)
+    log(".env update successful.")
+
 def run_all():
     log("--- Starting OctoRent Bot System (Demo Mode) ---")
     
@@ -94,8 +127,10 @@ def run_all():
         
     if found_url:
         update_web_config(found_url)
+        update_env(found_url)
     else:
         log("WARNING: Tunnel URL not detected. Using PERMANENT_URL.")
+        update_env(None)
 
     # 2. Start Live Server
     log(f"[2/4] Starting Live Server (Port 8001)...")
@@ -103,15 +138,23 @@ def run_all():
     
     # 3. Start Telegram Bot
     log(f"[3/4] Starting Telegram Bot...")
-    bot_proc = subprocess.Popen([sys.executable, "bot.py"], bufsize=1)
+    bot_env = os.environ.copy()
+    if found_url:
+        bot_env["WEB_APP_URL"] = found_url
+    
+    bot_proc = subprocess.Popen([sys.executable, "bot.py"], bufsize=1, env=bot_env)
 
     # 4. Start Parser
     log(f"[4/4] Starting Parser...")
     parser_proc = subprocess.Popen([sys.executable, "parser.py"], bufsize=1)
 
     # 5. Start Auto-Buyer
-    log(f"[5/5] Starting Auto-Buyer...")
+    log(f"[5/6] Starting Auto-Buyer...")
     buyer_proc = subprocess.Popen([sys.executable, "auto_buyer.py"], bufsize=1)
+
+    # 6. Start Background Worker (Deep Sync)
+    log(f"[6/6] Starting Background Worker...")
+    worker_proc = subprocess.Popen([sys.executable, "background_worker.py"], bufsize=1)
 
     log("\nALL SYSTEMS GO!")
     log(f"Web App: {found_url if found_url else PERMANENT_URL}")
@@ -125,6 +168,7 @@ def run_all():
         bot_proc.terminate()
         parser_proc.terminate()
         buyer_proc.terminate()
+        worker_proc.terminate()
         cf_proc.terminate()
         log("All processes terminated.")
 
