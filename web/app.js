@@ -9,7 +9,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://apps-atmosphere-theories-governmental.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://sims-simpsons-relatives-mary.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -893,11 +893,18 @@ async function loadFriendsData() {
 
         document.getElementById('empty-friends-hint').style.display = 'none';
         listCont.innerHTML = friends.map(f => {
-            const name = f.username ? '@' + f.username : (f.full_name || ('ID: ' + f.user_id));
+            const name = f.full_name || (f.username ? '@' + f.username : ('ID: ' + f.user_id));
+            const displayLabel = f.username || f.full_name || String(f.user_id);
+            const fallbackUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayLabel)}&background=0088cc&color=fff&size=44&bold=true&rounded=true`;
+            // Real Telegram photo if username exists
+            const avatarUrl = f.username
+                ? `https://t.me/i/userpic/320/${f.username}.jpg`
+                : fallbackUrl;
             const profit = f.profit || 0;
             return `
                 <div class="service-item" style="cursor: default;">
-                    <div class="service-icon" style="background: rgba(0, 136, 204, 0.1); width: 44px; height: 44px; font-size: 20px;">👤</div>
+                    <img src="${avatarUrl}" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover; flex-shrink: 0;"
+                         onerror="this.src='${fallbackUrl}'">
                     <div style="flex: 1; margin-left: 12px;">
                         <div style="font-weight: 700; font-size: 15px;">${name}</div>
                         ${profit === 0 ? `<div style="font-size: 11px; color: #8b9bb4;">Новый реферал</div>` : ''}
