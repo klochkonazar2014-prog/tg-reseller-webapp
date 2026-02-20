@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://dangerous-rice-boutique-period.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://connecting-reporting-friday-serve.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -1409,7 +1409,8 @@ function initFilterLists() {
     }
 
     (window.STATIC_COLLECTIONS || []).forEach(col => {
-        if (col.name.toLowerCase().includes(nftSearch)) {
+        const lowerName = col.name.toLowerCase();
+        if (lowerName.includes(nftSearch) && !lowerName.includes('phantom') && !lowerName.includes('unknown')) {
             addFilterItem(nftCont, col.name, col.name, 'nft', ACTIVE_FILTERS.nft === col.name, col.image);
         }
     });
@@ -1529,7 +1530,13 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
         // Model or NFT or fallback
         let icon = imgUrl;
         if (key === 'model') {
-            icon = `/models/${name}.webp`;
+            const cleanColl = (collectionContext || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+            if (cleanColl) {
+                // Models often share thumb with collection
+                icon = `/file/gifts/${cleanColl}/thumb.webp`;
+            } else {
+                icon = `/models/${name}.webp`;
+            }
         } else if (key === 'nft') {
             const cleanName = name.toLowerCase().replace(/[^a-z0-9]/g, '');
             icon = `/file/gifts/${cleanName}/thumb.webp`;
@@ -1544,8 +1551,8 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
             }
         }
 
-        visualHTML = `<div class="filter-icon-box">
-            <img src="${icon}" class="filter-img" style="width:100%; height:100%; object-fit:contain; z-index:2; opacity:0; transition:opacity 0.2s; padding:7px;" 
+        visualHTML = `<div class="filter-icon-box" style="background: rgba(255,255,255,0.03);">
+            <img src="${icon}" class="filter-img" style="width:100%; height:100%; object-fit:contain; z-index:2; opacity:0; transition:opacity 0.2s; padding:0;" 
                 onload="this.style.opacity='1';"
                 onerror="handleFilterImageError(this, '${name.replace(/'/g, "\\'")}', '${(collectionContext || '').replace(/'/g, "\\'")}', '${(fallbackImgUrl || '').replace(/'/g, "\\'")}', '${key}')">
         </div>`;
