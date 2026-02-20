@@ -708,7 +708,7 @@ body {
     transition: height 0.3s ease;
 }
 
-.octo-footer {
+.mrkt-footer {
     padding: 24px;
     display: flex;
     gap: 12px;
@@ -3534,7 +3534,6 @@ body.hide-filters .header-column {
 }
 
 /* --- Filter & Market Footer Buttons Alignment (Round 9) --- */
-.octo-footer,
 .mrkt-footer {
     display: flex !important;
     gap: 12px !important;
@@ -3548,7 +3547,6 @@ body.hide-filters .header-column {
     box-sizing: border-box !important;
 }
 
-.octo-footer button,
 .mrkt-footer button {
     flex: 1 !important;
     height: 52px !important;
@@ -3963,7 +3961,12 @@ tc-root>div {
     border-radius: 12px;
     box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
     transform: scale(0.9);
-    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: transform 0.1s ease-out;
+    /* Faster for drag/zoom */
+    touch-action: none;
+    /* Disable default browser touch actions */
+    user-select: none;
+    -webkit-user-drag: none;
 }
 
 .tc-lightbox.active img {

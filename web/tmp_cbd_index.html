@@ -1,0 +1,637 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>MRKT</title>
+    <script src="https://telegram.org/js/telegram-web-app.js?v=1770520600"></script>
+    <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;800;900&display=swap" rel="stylesheet">
+    <script src="lottie.min.js"></script>
+    <script>
+        // Global Error Handler for Mobile Debugging
+        window.onerror = function (msg, url, lineNo, columnNo, error) {
+            var string = msg.toLowerCase();
+            var substring = "script error";
+            if (string.indexOf(substring) > -1) {
+                alert('Script Error: See Console for Detail');
+            } else {
+                var message = [
+                    'Message: ' + msg,
+                    'URL: ' + url,
+                    'Line: ' + lineNo,
+                    'Column: ' + columnNo,
+                    'Error object: ' + JSON.stringify(error)
+                ].join(' - ');
+                // Only alert on critical errors if loader is still visible
+                if (document.getElementById('loading-screen') && document.getElementById('loading-screen').style.display !== 'none') {
+                    alert("App Crash: " + message);
+                }
+            }
+            return false;
+        };
+    </script>
+    <link rel="stylesheet" href="style.css?v=1770520600">
+    <style>
+        /* CRITICAL OVERRIDES - DO NOT REMOVE */
+        .main-rent-btn svg,
+        .main-rent-btn svg path,
+        .main-rent-btn .icon-ton::before,
+        #main-rent-action-btn svg,
+        #main-rent-action-btn svg path,
+        .card-price-btn svg,
+        .card-price-btn svg path,
+        .card-cart-btn svg,
+        .card-cart-btn svg path {
+            fill: #FFFFFF !important;
+            stroke: #FFFFFF !important;
+            filter: brightness(0) invert(1) !important;
+            -webkit-filter: brightness(0) invert(1) !important;
+            opacity: 1 !important;
+        }
+
+        .main-rent-btn,
+        .card-price-btn {
+            background: linear-gradient(135deg, #0098EA 0%, #0077CC 100%) !important;
+            color: #ffffff !important;
+            border: none !important;
+        }
+
+        .card-cart-btn {
+            background: #1c1c1e !important;
+            color: #ffffff !important;
+        }
+
+        /* Ensure icon-ton is white on blue buttons */
+        .card-price-btn .icon-ton::before,
+        .main-rent-btn .icon-ton::before {
+            filter: brightness(0) invert(1) !important;
+        }
+
+        .arrow-v {
+            font-size: 8px;
+            margin-left: 4px;
+            opacity: 0.5;
+            vertical-align: middle;
+        }
+
+        /* Ensure TonConnect UI is always on top of EVERYTHING */
+        #tc-widget-root,
+        .tc-root,
+        .tc-modal-container,
+        .ton-connect-ui-modal-container {
+            z-index: 100000 !important;
+        }
+
+        /* Hide Ownership rows as per request */
+        .ownership-row {
+            display: none !important;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Full Screen Product View -->
+    <div id="product-view" class="product-view" onclick="if(event.target===this){closeProductView()}">
+        <div class="product-view-header"
+            style="background: rgba(15, 21, 28, 0.95); display: flex; align-items: center; justify-content: space-between; padding: 12px 16px;">
+            <button class="back-btn" onclick="closeProductView()" style="background:none; border:none; color:#fff;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+            </button>
+            <div style="display: flex; gap: 15px; color: #8b9bb4;">
+                <button onclick="handleShareClick()"
+                    style="background:none; border:none; color:inherit; padding:0; cursor:pointer;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                        <polyline points="16 6 12 2 8 6"></polyline>
+                        <line x1="12" y1="2" x2="12" y2="15"></line>
+                    </svg>
+                </button>
+                <button id="notify-btn" onclick="handleNotifyClick()"
+                    style="background:none; border:none; color:inherit; padding:0; cursor:pointer; display:none;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="product-main-media" style="position: relative;">
+            <div id="view-status-banner" class="status-banner" style="display:none;"></div>
+            <div id="view-media-status-overlay" class="media-status-overlay" style="display:none;"></div>
+            <div id="view-media-container" style="width:100%; height:100%;"></div>
+            <div id="view-lottie"
+                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></div>
+        </div>
+
+        <div class="product-info-section">
+            <div class="product-title-row" style="width: 100%; overflow: hidden;">
+                <div id="view-title-wrapper" class="blue-scroll-x" style="flex: 1; margin-right: 10px;">
+                    <h1 id="view-title" style="color:#fff; display: inline-block; white-space: nowrap;">Name #000</h1>
+                </div>
+                <div id="view-copy-btn-main" style="cursor:pointer; color:#8b9bb4; padding:8px; flex-shrink: 0;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                </div>
+            </div>
+
+            <div id="view-collection" class="product-collection-link">Collection ></div>
+            <div id="view-address" style="display:none !important;"></div>
+            <div id="view-countdown-container" style="display:none; margin-top:12px; font-weight: 700;">
+                <span id="view-countdown-label">Ends in</span> <span id="view-countdown-timer" style="color: #fff;">00 :
+                    00 : 00 : 00</span>
+            </div>
+            <div id="view-release-badge" style="display:none; margin-top:12px;"></div>
+
+
+            <div class="pricing-card"
+                style="background: rgba(255, 255, 255, 0.1); border-radius: 24px; padding: 20px; margin: 16px 0;">
+                <div class="pricing-grid" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+                    <div>
+                        <div id="view-label-price" class="pricing-label"
+                            style="font-size: 11px; color:#8794a1; font-weight:600; margin-bottom:4px;">Price per
+                            day
+                        </div>
+                        <div class="pricing-value">
+                            <div id="view-daily-price" style="font-size: 16px; font-weight:700; color:#fff;">0.00
+                            </div>
+                            <div id="view-daily-price-usd" style="font-size: 11px; color:#8794a1; margin-top:2px;">
+                                ~$0.00</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div id="view-label-period" class="pricing-label"
+                            style="font-size: 11px; color:#8794a1; font-weight:600; margin-bottom:4px;">Period
+                            (Days)
+                        </div>
+                        <div id="view-duration-range" class="pricing-value"
+                            style="font-size: 16px; font-weight:700; color:#fff;">1 тАФ 34</div>
+                    </div>
+                    <div>
+                        <div id="view-label-discount" class="pricing-label"
+                            style="font-size: 11px; color:#8794a1; font-weight:600; margin-bottom:4px;">Discount
+                        </div>
+                        <div id="view-discount" class="pricing-value"
+                            style="font-size: 16px; font-weight:700; color:#fff;">0.1%</div>
+                    </div>
+                </div>
+                <div class="auto-relist-note"
+                    style="margin-top: 12px; display: flex; gap: 8px; font-size: 11px; color: #8794a1;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="23 4 23 10 17 10"></polyline>
+                        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                    </svg>
+                    <span><b id="view-auto-relist-title">Auto re-list.</b> <span id="view-auto-relist-desc">This NFT
+                            will be available for rent automatically after the period ends.</span></span>
+                </div>
+            </div>
+
+            <div class="rent-action-row" style="display: flex; gap: 12px; margin-top: 16px;">
+                <div class="rent-period-stepper"
+                    style="display: flex; background: rgba(36, 46, 56, 0.9); border-radius: 16px; height: 52px; flex: 0.3; overflow: hidden; align-items:center;">
+                    <button class="step-minus" onclick="adjustDuration(-1)"
+                        style="flex:1; border:none; background:none; color:#8b9bb4; font-size:22px; cursor:pointer; height:100%;">тИТ</button>
+                    <input type="number" id="rent-duration-input" value="1" readonly
+                        style="width:40px; padding:0; background:none; border:none; color:#fff; text-align:center; font-weight:700; font-size:15px; pointer-events:none;">
+                    <button class="step-plus" onclick="adjustDuration(1)"
+                        style="flex:1; border:none; background:none; color:#8b9bb4; font-size:22px; cursor:pointer; height:100%;">+</button>
+                </div>
+                <button id="main-rent-action-btn" class="main-rent-btn"
+                    style="flex: 1; background: linear-gradient(135deg, #0098EA 0%, #0077CC 100%); border:none; border-radius:16px; height:52px; color:#fff; font-weight:700; font-size:14px; display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer;">
+                    ╨Р╤А╨╡╨╜╨┤╨╛╨▓╨░╤В╤М ╨╖╨░ <span id="rent-btn-price" class="icon-ton">0.00</span>
+                </button>
+            </div>
+
+            <div class="fee-notice-box"
+                style="margin-top: 16px; background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 12px; font-size: 11px; color: #8794a1;">
+                <span><span id="fee-notice-text">You will additionally send 0.2 TON to process the transaction.
+                        Remain
+                        TON will be returned to you.</span>
+                    <a href="javascript:void(0)" onclick="showHelp('fee')"
+                        style="color: #0088cc; text-decoration: none;" id="fee-what-mean">What does it
+                        mean?</a></span>
+            </div>
+
+            <div id="listing-warning-box"
+                style="display: none; margin-top: 16px; background: rgba(255, 149, 0, 0.1); border: 1px solid rgba(255, 149, 0, 0.2); border-radius: 12px; padding: 12px; font-size: 11px; color: #FF9500;">
+                <div style="font-weight: 700; margin-bottom: 2px;">This gift was listed for rent less than 24 hours
+                    ago.
+                </div>
+                <div>Listed at: <span id="view-listed-time">...</span> <a href="javascript:void(0)"
+                        onclick="showHelp('listing')" style="color: #FF9500; text-decoration: underline;">What does
+                        it
+                        mean?</a></div>
+            </div>
+
+
+            <div class="owner-col-section"
+                style="margin-top: 24px; background: rgba(255, 255, 255, 0.1); border-radius: 24px; overflow: hidden;">
+                <!-- Hidden as per user request to hide wallet info -->
+                <div class="detail-row"
+                    style="display: none; padding: 14px 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); justify-content: space-between; align-items: center;">
+                    <span id="view-owner-label" style="color: #fff; font-weight: 700; font-size: 13px;">Owner</span>
+                    <span id="view-owner" style="color: var(--accent-blue); font-size: 13px;">... ></span>
+                </div>
+                <div class="detail-row"
+                    style="display: none; padding: 14px 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); justify-content: space-between; align-items: center;">
+                    <span id="view-address-label" style="color: #fff; font-weight: 700; font-size: 13px;">NFT
+                        address</span>
+                    <span id="view-address-secondary"
+                        style="color: var(--accent-blue); font-size: 13px; display:flex; align-items:center; gap:6px;">...</span>
+                </div>
+                <div class="detail-row"
+                    style="display: none; padding: 14px 16px; justify-content: space-between; align-items: center;">
+                    <span style="color: #fff; font-weight: 700; font-size: 13px;">Storage</span>
+                    <span style="color: #8794a1; font-size: 13px;">The Open Network</span>
+                </div>
+            </div>
+
+            <div class="properties-tabs"
+                style="margin-top: 24px; border-bottom: 2px solid rgba(255,255,255,0.05); display: flex; gap: 20px;">
+                <div class="tab-item active" id="details-tab"
+                    style="color: #fff; font-weight: 700; font-size: 14px; padding-bottom: 8px; border-bottom: 2px solid var(--accent-blue); cursor: pointer;">
+                    Details</div>
+            </div>
+
+            <div id="view-properties" style="margin-top: 16px; margin-bottom: 40px;">
+                <!-- Dynamic props here -->
+            </div>
+
+        </div>
+    </div>
+
+    <!-- TC Link Modal -->
+    <div id="tc-modal-overlay" class="modal-overlay" onclick="closeTcModal()"></div>
+    <div id="tc-modal" class="filter-panel"
+        style="height: auto; max-height: 80vh; bottom: 0; border-radius: 24px 24px 0 0;">
+        <div class="mrkt-modal-header">
+            <h3>╨Я╨╛╨┤╨║╨╗╤О╤З╨╕╤В╤М Fragment</h3>
+            <button onclick="closeTcModal()"
+                style="background:none; border:none; color:#8b9bb4; font-size:24px; cursor: pointer;">тЬХ</button>
+        </div>
+        <div style="padding: 20px; color: #8b9bb4; font-size: 14px;">
+            <p>1. ╨Ч╨░╨╣╨┤╨╕╤В╨╡ ╨╜╨░ Fragment.com (╤Б ╨║╨╛╨╝╨┐╤М╤О╤В╨╡╤А╨░ ╨╕╨╗╨╕ ╨┤╤А╤Г╨│╨╛╨│╨╛ ╨▒╤А╨░╤Г╨╖╨╡╤А╨░).</p>
+            <p>2. ╨Э╨░╨╢╨╝╨╕╤В╨╡ <b>Connect TON</b>.</p>
+            <p>3. ╨б╨║╨╛╨┐╨╕╤А╤Г╨╣╤В╨╡ ╤Б╤Б╤Л╨╗╨║╤Г <b>TON Connect Link</b> (╨║╨╜╨╛╨┐╨║╨░ ╤А╤П╨┤╨╛╨╝ ╤Б QR-╨║╨╛╨┤╨╛╨╝).</p>
+            <p>4. ╨Т╤Б╤В╨░╨▓╤М╤В╨╡ ╨╡╤С ╤Б╤О╨┤╨░:</p>
+
+            <input type="text" id="tc-link-input" placeholder="tc://..."
+                style="width: 100%; height: 50px; background: rgba(255,255,255,0.05); border: 1px solid #333; border-radius: 12px; margin-top: 15px; color: #fff; padding: 0 15px;">
+
+            <input type="hidden" id="tc-current-order-id">
+
+            <button onclick="submitTcLink()" class="btn-yellow" style="width: 100%; margin-top: 20px;">╨Я╨╛╨┤╨║╨╗╤О╤З╨╕╤В╤М
+                ╨║╨╛╤И╨╡╨╗╨╡╨║</button>
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="help-modal-overlay" class="modal-overlay" onclick="closeHelpModal()"></div>
+    <div id="help-modal" class="filter-panel"
+        style="height: auto; max-height: 80vh; bottom: 0; border-radius: 24px 24px 0 0;">
+        <div class="mrkt-modal-header">
+            <h3 id="help-title">Help</h3>
+            <button onclick="closeHelpModal()"
+                style="background:none; border:none; color:#8b9bb4; font-size:24px; cursor: pointer;">тЬХ</button>
+        </div>
+        <div id="help-body" style="padding: 20px; color: #fff; font-size: 14px; line-height: 1.6;">
+        </div>
+    </div>
+
+    <!-- Premium Loading Screen -->
+    <div id="loading-screen">
+        <div class="premium-spinner"></div>
+        <div class="loader-logo">OCTORENT</div>
+    </div>
+
+    <!-- Header MRKT -->
+    <div class="header-column">
+        <!-- Search -->
+        <div class="search-row">
+            <div class="search-wrapper">
+                <svg style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #8b9bb4;"
+                    width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input type="text" id="search-input" class="search-bar" placeholder="╨Я╨╛╨╕╤Б╨║ ╨┐╨╛ ╨╜╨░╨╖╨▓╨░╨╜╨╕╤О">
+            </div>
+
+
+            <!-- Unified Header Badge (Pill) -->
+            <div id="header-unified-badge" class="header-unified-badge" onclick="handleHeaderBadgeClick()">
+                <div id="header-wallet-pill" class="header-pill-content" style="display:none;">
+                    <span class="icon-ton"></span>
+                    <span id="header-wallet-address">Wallet</span>
+                </div>
+                <div id="header-connect-pill" class="header-pill-content" style="display:flex;">
+                    <span class="icon-ton"></span>
+                    <span id="header-wallet-connect-text">Connect Wallet</span>
+                </div>
+                <img id="header-mini-avatar" src="https://ui-avatars.com/api/?name=U&background=2c2c2e&color=fff"
+                    class="header-badge-avatar">
+            </div>
+        </div>
+
+        <!-- Chips -->
+        <div class="chips-row">
+            <button class="chip-btn icon-only" onclick="openAdvancedFilters()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M4 21v-7m0-4V3m8 18v-9m0-4V3m8 18v-5m0-4V3M1 14h6m2-6h6m2 8h6"></path>
+                </svg>
+            </button>
+
+            <button class="chip-btn" onclick="toggleGenericModal('nft')">
+                <span id="chip-label-nft">NFT</span> <span class="arrow-v">тЦ╝</span>
+            </button>
+            <button class="chip-btn" onclick="toggleGenericModal('model')">
+                <span id="chip-label-model">╨Ь╨╛╨┤╨╡╨╗╤М</span> <span class="arrow-v">тЦ╝</span>
+            </button>
+            <button class="chip-btn" onclick="toggleGenericModal('bg')">
+                <span id="chip-label-bg">╨д╨╛╨╜</span> <span class="arrow-v">тЦ╝</span>
+            </button>
+            <button class="chip-btn" onclick="toggleGenericModal('symbol')">
+                <span id="chip-label-symbol">╨б╨╕╨╝╨▓╨╛╨╗</span> <span class="arrow-v">тЦ╝</span>
+            </button>
+        </div>
+
+        <input type="hidden" id="filter-nft" value="all">
+        <input type="hidden" id="filter-sort" value="price_asc">
+    </div>
+
+    <!-- Filter Modal (Advanced) -->
+    <div id="mrkt-modal-overlay" class="modal-overlay" onclick="closeMrktModal()"></div>
+    <div id="mrkt-modal" class="filter-panel">
+        <div class="mrkt-modal-header">
+            <h3 id="mrkt-label-filters">╨д╨╕╨╗╤М╤В╤А╤Л</h3>
+            <button onclick="closeMrktModal()"
+                style="background:none; border:none; color:#8b9bb4; font-size:24px; cursor: pointer;">тЬХ</button>
+        </div>
+
+        <div class="filter-content">
+            <!-- Gift Number Section -->
+            <div id="mrkt-label-gift-number" class="filter-section-title">╨Э╨╛╨╝╨╡╤А ╨┐╨╛╨┤╨░╤А╨║╨░</div>
+            <div class="filter-input-row">
+                <div class="filter-input-wrapper">
+                    <span>#</span>
+                    <input type="number" id="filter-gift-number" placeholder="╨Э╨╛╨╝╨╡╤А">
+                </div>
+            </div>
+
+            <!-- Sort Section -->
+            <div class="filter-accordion" onclick="toggleAccordion('sort-acc', this)">
+                <span id="mrkt-label-sort">╨б╨╛╤А╤В╨╕╤А╨╛╨▓╨░╤В╤М ╨┐╨╛</span>
+                <div class="filter-accordion-arrow">тЦ╝</div>
+            </div>
+            <div id="sort-acc" class="accordion-content">
+                <div id="sort-list-container" style="padding: 0 20px;"></div>
+            </div>
+
+            <!-- Price Section -->
+            <div class="filter-accordion" onclick="toggleAccordion('price-acc', this)">
+                <span id="mrkt-label-price">╨ж╨╡╨╜╨░</span>
+                <div class="filter-accordion-arrow">тЦ╝</div>
+            </div>
+            <div id="price-acc" class="accordion-content">
+                <div class="filter-input-row" style="padding-top:10px;">
+                    <div class="filter-input-wrapper">
+                        <span>тЦ╝</span>
+                        <input type="number" id="filter-price-from" placeholder="╨Ю╤В">
+                    </div>
+                    <div style="color:#555">тАФ</div>
+                    <div class="filter-input-wrapper">
+                        <input type="number" id="filter-price-to" placeholder="╨Ф╨╛">
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="filter-accordion" onclick="toggleAccordion('nft-acc', this)">
+                <span>NFT</span>
+                <div class="filter-accordion-arrow">тЦ╝</div>
+            </div>
+            <div id="nft-acc" class="accordion-content">
+                <div class="filter-search-wrapper" style="padding: 10px 20px;">
+                    <input type="text" id="filter-search-nft" class="filter-search-input" placeholder="╨Я╨╛╨╕╤Б╨║ NFT..."
+                        oninput="filterList('nft')">
+                </div>
+                <div id="nft-list-container" style="padding: 0 20px;"></div>
+            </div>
+
+            <div class="filter-accordion" onclick="toggleAccordion('model-acc', this)">
+                <span>╨Ь╨╛╨┤╨╡╨╗╤М</span>
+                <div class="filter-accordion-arrow">тЦ╝</div>
+            </div>
+            <div id="model-acc" class="accordion-content">
+                <div class="filter-search-wrapper" style="padding: 10px 20px;">
+                    <input type="text" id="filter-search-model" class="filter-search-input"
+                        placeholder="╨Я╨╛╨╕╤Б╨║ ╨╝╨╛╨┤╨╡╨╗╨╕..." oninput="filterList('model')">
+                </div>
+                <div id="model-list-container" style="padding: 0 20px;"></div>
+            </div>
+
+            <div class="filter-accordion" onclick="toggleAccordion('bg-acc', this)">
+                <span>╨д╨╛╨╜</span>
+                <div class="filter-accordion-arrow">тЦ╝</div>
+            </div>
+            <div id="bg-acc" class="accordion-content">
+                <div class="filter-search-wrapper" style="padding: 10px 20px;">
+                    <input type="text" id="filter-search-bg" class="filter-search-input" placeholder="╨Я╨╛╨╕╤Б╨║ ╤Д╨╛╨╜╨░..."
+                        oninput="filterList('bg')">
+                </div>
+                <div id="bg-list-container" style="padding: 0 20px;"></div>
+            </div>
+
+            <div class="filter-accordion" onclick="toggleAccordion('symbol-acc', this)">
+                <span>╨б╨╕╨╝╨▓╨╛╨╗</span>
+                <div class="filter-accordion-arrow">тЦ╝</div>
+            </div>
+            <div id="symbol-acc" class="accordion-content">
+                <div class="filter-search-wrapper" style="padding: 10px 20px;">
+                    <input type="text" id="filter-search-symbol" class="filter-search-input"
+                        placeholder="╨Я╨╛╨╕╤Б╨║ ╤Б╨╕╨╝╨▓╨╛╨╗╨░..." oninput="filterList('symbol')">
+                </div>
+                <div id="symbol-list-container" style="padding: 0 20px;"></div>
+            </div>
+        </div>
+
+        <div class="mrkt-footer">
+            <button id="mrkt-btn-reset" class="btn-gray" onclick="resetMrktModal()">╨Ю╤З╨╕╤Б╤В╨╕╤В╤М ╨▓╤Б╨╡</button>
+            <button id="mrkt-btn-apply" class="btn-yellow" onclick="applyMrktModal()">╨Я╨╛╨║╨░╨╖╨░╤В╤М ╤А╨╡╨╖╤Г╨╗╤М╤В╨░╤В╤Л</button>
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div class="container">
+        <!-- Market Tab -->
+        <div id="market-container">
+            <div id="top-loader" class="loader">╨Ч╨░╨│╤А╤Г╨╖╨║╨░ ╨┤╨░╨╜╨╜╤Л╤Е ╤А╤Л╨╜╨║╨░...</div>
+            <div id="items-view" class="grid"></div>
+            <div id="scroll-loader" class="premium-spinner" style="display:none; margin: 20px auto;"></div>
+            <div id="loader-trigger" style="height: 40px;"></div>
+        </div>
+
+        <!-- Profile Tab -->
+        <div id="profile-container" style="display: none;">
+            <!-- Profile Dashboard Header -->
+            <div class="profile-dashboard-card">
+                <div class="profile-main-info">
+                    <div class="avatar-glow-wrapper">
+                        <img id="profile-avatar" src="https://ui-avatars.com/api/?name=User&background=0088cc&color=fff"
+                            class="dashboard-avatar">
+                    </div>
+                    <div class="profile-text-info">
+                        <h2 id="profile-name">Telegram User</h2>
+                        <p id="profile-id">ID: 000000000</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Wallet Connectivity -->
+            <div id="profile-label-wallet" class="dash-section-title">Wallet</div>
+            <div id="wallet-btn-container" style="margin-bottom: 24px; padding: 0 16px;">
+                <button id="profile-ton-connect-btn" class="blue-btn" onclick="handleProfileWalletClick()">
+                    <span class="icon-ton"></span>
+                    <span id="blue-wallet-text">Connect Wallet</span>
+                </button>
+            </div>
+
+            <!-- Services Section -->
+            <div id="profile-label-settings" class="dash-section-title">Settings & Support</div>
+            <div class="services-list">
+                <div class="service-item" onclick="toggleHistory()">
+                    <div class="service-icon history" style="background: rgba(0, 136, 204, 0.1);">ЁЯХТ</div>
+                    <div id="profile-label-history" class="service-text">Rental History</div>
+                    <div class="service-arrow">тА║</div>
+                </div>
+                <div id="history-content"
+                    style="display: none; padding: 0 16px 16px 16px; background: rgba(255,255,255,0.02);">
+                    <div id="history-list">Loading history...</div>
+                </div>
+
+                <div class="service-item" onclick="tg.openTelegramLink('https://t.me/Paulie_Gualtiery')">
+                    <div class="service-icon" style="background: rgba(255, 152, 0, 0.1);">тЭУ</div>
+                    <div id="profile-label-support" class="service-text">Support & FAQ</div>
+                    <div class="service-arrow">тА║</div>
+                </div>
+
+                <div class="service-item" onclick="switchLanguage()">
+                    <div class="service-icon" style="background: rgba(33, 150, 243, 0.1);">ЁЯМР</div>
+                    <div class="service-text">Language / ╨п╨╖╤Л╨║</div>
+                    <div id="lang-label" class="service-arrow"
+                        style="font-size: 14px; color: #8b9bb4; font-weight: 700;">╨а╤Г╤Б╤Б╨║╨╕╨╣ тА║</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Nav -->
+    <div class="bottom-nav">
+        <div id="mode-toggle-container" class="mode-toggle-container">
+            <button id="mode-toggle-btn" class="mode-toggle-btn" onclick="toggleCatalogMode()">
+                <span id="mode-toggle-text">╨Ъ╨░╤В╨░╨╗╨╛╨│ ╨░╤А╨╡╨╜╨┤╨╛╨▓╨░╨╜╨╜╤Л╤Е ╤В╨╛╨▓╨░╤А╨╛╨▓</span>
+            </button>
+        </div>
+
+        <div class="nav-items-row">
+            <div class="nav-item active" onclick="switchTab(0)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <path d="M16 10a4 4 0 0 1-8 0"></path>
+                </svg>
+                <span id="nav-label-gifts">╨Я╨╛╨┤╨░╤А╨║╨╕</span>
+            </div>
+
+            <div class="nav-item" onclick="switchTab(1)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                    <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                    <path d="M9 14l2 2 4-4"></path>
+                </svg>
+                <span id="nav-label-usernames">╨Э╨╕╨║╨╕</span>
+            </div>
+
+            <div class="nav-item" onclick="switchTab(2)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path
+                        d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z">
+                    </path>
+                </svg>
+                <span id="nav-label-numbers">╨Э╨╛╨╝╨╡╤А╨░</span>
+            </div>
+
+            <div class="nav-item" onclick="switchTab(3)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                <span id="nav-label-profile">╨Я╤А╨╛╤Д╨╕╨╗╤М</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Language Selection Drawer (Bottom Sheet) -->
+    <div id="language-drawer" class="bottom-sheet" style="display: none;">
+        <div class="bottom-sheet-backdrop" onclick="closeLanguageDrawer()"></div>
+        <div class="bottom-sheet-content">
+            <div class="bottom-sheet-header">
+                <div class="bottom-sheet-dash"></div>
+                <h3>╨Т╤Л╨▒╨╡╤А╨╕╤В╨╡ ╤П╨╖╤Л╨║ / Select Language</h3>
+            </div>
+            <div class="bottom-sheet-list">
+                <div class="drawer-item" onclick="selectLanguage('ru')">
+                    <span class="drawer-icon">ЁЯЗ╖ЁЯЗ║</span>
+                    <span class="drawer-text">╨а╤Г╤Б╤Б╨║╨╕╨╣</span>
+                    <span id="check-ru" class="drawer-check">тЬУ</span>
+                </div>
+                <div class="drawer-item" onclick="selectLanguage('en')">
+                    <span class="drawer-icon">ЁЯЗ║ЁЯЗ╕</span>
+                    <span class="drawer-text">English</span>
+                    <span id="check-en" class="drawer-check" style="display:none;">тЬУ</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wallet Management Drawer -->
+    <div id="wallet-drawer" class="bottom-sheet" style="display: none;">
+        <div class="bottom-sheet-backdrop" onclick="closeWalletDrawer()"></div>
+        <div class="bottom-sheet-content">
+            <div class="bottom-sheet-header">
+                <div class="bottom-sheet-dash"></div>
+                <h3 id="wallet-drawer-title">╨г╨┐╤А╨░╨▓╨╗╨╡╨╜╨╕╨╡ ╨║╨╛╤И╨╡╨╗╤М╨║╨╛╨╝</h3>
+            </div>
+            <div class="bottom-sheet-list">
+                <div class="drawer-item" onclick="copyWalletAddress()">
+                    <span class="drawer-icon">ЁЯУЛ</span>
+                    <span id="label-copy-address" class="drawer-text">╨Ъ╨╛╨┐╨╕╤А╨╛╨▓╨░╤В╤М ╨░╨┤╤А╨╡╤Б</span>
+                </div>
+                <div class="drawer-item" onclick="disconnectWallet()">
+                    <span class="drawer-icon" style="color:#FF3B30;">тЬХ</span>
+                    <span id="label-disconnect-wallet" class="drawer-text" style="color:#FF3B30;">╨Ю╤В╨║╨╗╤О╤З╨╕╤В╤М
+                        ╨║╨╛╤И╨╡╨╗╨╡╨║</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="global-mode-loader" class="global-mode-loader" style="display: none;">
+        <div class="loader-content">
+            <div class="premium-spinner"></div>
+            <p id="global-loader-text">╨Я╨╡╤А╨╡╨╝╨╡╤Й╨░╨╡╨╝╤Б╤П ╨▓ ╨░╤А╨╡╨╜╨┤╨╜╤Л╨╣ ╨║╨░╤В╨░╨╗╨╛╨│...</p>
+        </div>
+    </div>
+
+    <script src="app.js?v=1770520600"></script>
+</body>
+
+</html>

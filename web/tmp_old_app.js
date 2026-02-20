@@ -1,14 +1,12 @@
-// Consts
+﻿// Consts
 let tg = null;
-let IS_SHARING_REF = false; // Prevent double clicks on referral share
-
 const MY_MARKUP = 0.20;
 const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/web/tonconnect-manifest.json";
 
-// 🚀 Dynamic Backend Detection
+// ЁЯЪА Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://sites-cakes-changing-hold.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://ski-optimum-developing-clients.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -23,7 +21,6 @@ let CURRENT_STATUS = 'available'; // available, rented
 let GLOBAL_TON_PRICE = 0;
 let FRIENDLY_ADDR_CACHE = {};
 let COUNTDOWN_INTERVALS = {};
-let SEEN_ITEM_IDS = new Set(); // DUPLICATE PROTECTION
 
 /**
  * Converts Raw address (0:hex) to User-Friendly Non-bounceable (UQ...)
@@ -72,116 +69,104 @@ const isBadUrl = (url) => {
 
 const TRANSLATIONS = {
     ru: {
-        gifts: "Подарки",
-        usernames: "Ники",
-        numbers: "Номера",
-        rented_tab: "Арендовано",
-        profile: "Профиль",
-        search: "Поиск",
-        no_items: "Ничего не найдено",
-        reset_filters: "Попробуйте сбросить фильтры",
-        price_per_day: "Цена в день",
-        period: "Срок (дни)",
-        discount: "Скидка",
-        days: "Дни",
-        rent: "Арендовать",
-        rent_days: "Аренда на {min}–{max} дн.",
-        per_day: "В день",
-        min_price: "Мин. цена",
-        you_will_send: "Вы дополнительно отправите {amount} TON для обработки транзакции. Остаток TON будет возвращен вам.",
-        processing: "Подключение...",
-        success_tc: "Успешно! Теперь вернитесь на Fragment и нажмите Display in Telegram.",
-        tc_link_placeholder: "Вставьте tc:// ссылку с Fragment",
-        rarity: "Редкость",
-        model: "Модель",
-        symbol: "Символ",
-        backdrop: "Фон",
-        copy_success: "Скопировано",
-        lang_ru: "Русский",
+        gifts: "╨Я╨╛╨┤╨░╤А╨║╨╕",
+        usernames: "╨Э╨╕╨║╨╕",
+        numbers: "╨Э╨╛╨╝╨╡╤А╨░",
+        rented_tab: "╨Р╤А╨╡╨╜╨┤╨╛╨▓╨░╨╜╨╛",
+        profile: "╨Я╤А╨╛╤Д╨╕╨╗╤М",
+        search: "╨Я╨╛╨╕╤Б╨║",
+        no_items: "╨Э╨╕╤З╨╡╨│╨╛ ╨╜╨╡ ╨╜╨░╨╣╨┤╨╡╨╜╨╛",
+        reset_filters: "╨Я╨╛╨┐╤А╨╛╨▒╤Г╨╣╤В╨╡ ╤Б╨▒╤А╨╛╤Б╨╕╤В╤М ╤Д╨╕╨╗╤М╤В╤А╤Л",
+        price_per_day: "╨ж╨╡╨╜╨░ ╨▓ ╨┤╨╡╨╜╤М",
+        period: "╨б╤А╨╛╨║ (╨┤╨╜╨╕)",
+        discount: "╨б╨║╨╕╨┤╨║╨░",
+        days: "╨Ф╨╜╨╕",
+        rent: "╨Р╤А╨╡╨╜╨┤╨╛╨▓╨░╤В╤М",
+        rent_days: "╨Р╤А╨╡╨╜╨┤╨░ ╨╜╨░ {min}тАУ{max} ╨┤╨╜.",
+        per_day: "╨Т ╨┤╨╡╨╜╤М",
+        min_price: "╨Ь╨╕╨╜. ╤Ж╨╡╨╜╨░",
+        you_will_send: "╨Т╤Л ╨┤╨╛╨┐╨╛╨╗╨╜╨╕╤В╨╡╨╗╤М╨╜╨╛ ╨╛╤В╨┐╤А╨░╨▓╨╕╤В╨╡ {amount} TON ╨┤╨╗╤П ╨╛╨▒╤А╨░╨▒╨╛╤В╨║╨╕ ╤В╤А╨░╨╜╨╖╨░╨║╤Ж╨╕╨╕. ╨Ю╤Б╤В╨░╤В╨╛╨║ TON ╨▒╤Г╨┤╨╡╤В ╨▓╨╛╨╖╨▓╤А╨░╤Й╨╡╨╜ ╨▓╨░╨╝.",
+        processing: "╨Я╨╛╨┤╨║╨╗╤О╤З╨╡╨╜╨╕╨╡...",
+        success_tc: "╨г╤Б╨┐╨╡╤И╨╜╨╛! ╨в╨╡╨┐╨╡╤А╤М ╨▓╨╡╤А╨╜╨╕╤В╨╡╤Б╤М ╨╜╨░ Fragment ╨╕ ╨╜╨░╨╢╨╝╨╕╤В╨╡ Display in Telegram.",
+        tc_link_placeholder: "╨Т╤Б╤В╨░╨▓╤М╤В╨╡ tc:// ╤Б╤Б╤Л╨╗╨║╤Г ╤Б Fragment",
+        rarity: "╨а╨╡╨┤╨║╨╛╤Б╤В╤М",
+        model: "╨Ь╨╛╨┤╨╡╨╗╤М",
+        symbol: "╨б╨╕╨╝╨▓╨╛╨╗",
+        backdrop: "╨д╨╛╨╜",
+        copy_success: "╨б╨║╨╛╨┐╨╕╤А╨╛╨▓╨░╨╜╨╛",
+        lang_ru: "╨а╤Г╤Б╤Б╨║╨╕╨╣",
         lang_en: "English",
-        what_is_this: "Что это значит?",
-        settings_support: "Настройки и поддержка",
-        profile_settings: "Настройки и поддержка",
-        rental_history: "История аренды",
-        profile_history: "История аренды",
-        support_faq: "Поддержка и FAQ",
-        profile_support: "Поддержка и FAQ",
-        wallet_mgmt: "Управление кошельком",
-        profile_wallet: "Кошелек",
-        connect_wallet: "Подключить",
-        connect_wallet_full: "Подключить кошелек",
-        connected: "Подключено",
-        details: "Детали",
-        owner: "Владелец",
-        address: "Адрес",
-        auto_relist: "Авто-перевыставление",
-        auto_relist_desc: "Этот NFT будет автоматически доступен для аренды после окончания срока.",
-        rent_button: "Арендовать за {amount}",
-        rent_for: "Арендовать за",
-        preorder_for: "Забронировать за",
-        loading: "Загрузка...",
-        filters: "Фильтры",
-        gift_number: "Номер подарка",
-        sort_by: "Сортировка",
-        price: "Цена",
-        from: "От",
-        to: "До",
-        clear_all: "Очистить все",
-        show_results: "Показать результаты",
-        search_hint: "Поиск...",
-        history_empty: "История пуста",
-        invalid_tc_link: "Пожалуйста, вставьте корректную ссылку tc:// с Fragment",
-        status_pending: "Ожидает оплату",
-        status_rented: "Ожидает ссылку",
-        just_now: "Только что",
-        hours_ago: "ч. назад",
-        what_is_this_long: "Вы отправляете небольшую сумму TON для покрытия комиссии сети и работы сервиса. Остаток будет возвращен вам автоматически.",
-        wallet_mgmt: "Управление кошельком",
-        copy_address: "Копировать адрес",
-        disconnect_wallet: "Отключить кошелек",
-        all: "Все",
-        select_all: "Выбрать все",
-        select_collection_first: "Выберите NFT коллекцию, чтобы увидеть список моделей.",
-        search_filter_hint: "Поиск {label}...",
-        search_filter_global: " (Все NFT)",
-        sort_price_asc: "Цена (По возрастанию)",
-        sort_price_desc: "Цена (По убыванию)",
-        sort_num_asc: "Номер (По возрастанию)",
-        sort_num_desc: "Номер (По убыванию)",
-        sort_model_rare: "Редкость модели",
-        sort_bg_rare: "Редкость фона",
-        sort_symbol_rare: "Редкость символа",
-        error_insufficient_funds: "Недостаточно средств на кошельке для совершения транзакции.",
-        available_from: "Освободится",
-        preorder_warning_no_relist: "Внимание: у этого NFT выключен авто-перевыставление. Предзаказ может не сработать, если владелец не выставит его вручную.",
-        mode_rent_btn: "Каталог арендованных товаров",
-        mode_shop_btn: "Каталог доступных для аренды товаров",
-        loading_to_rent: "Загрузка каталога арендованных товаров...",
-        loading_to_shop: "Загрузка каталога доступных для аренды товаров...",
-        rent_title_suffix: " (Аренда)",
-        auto_relist_label: "Авто-перевыставление",
-        yes: "Да",
-        no: "Нет",
-        rented_by_you: "Арендовано вами",
-        rented_by_others: "Арендовано",
-        status_awaiting_fragment: "Ожидает подключения к Fragment",
-        connect_to_fragment: "Подключить к Fragment",
-        ends_in: "Освободится через",
-        days_label: "Дни",
-        day_label: "День",
-        days_2_4: "Дня",
-
-        // --- TC Tutorial ---
-        tut_step_1: "Перейдите на сайт <a href='#' onclick='copyText(\"fragment.com\", event)' class='copy-link'>fragment.com</a>",
-        tut_step_2: "Нажмите на кнопку <b>Connect Ton</b>",
-        tut_step_3: "Нажмите на значок <b>копирования</b>, чтобы скопировать ссылку на подключение кошелька, где хранится актив.",
-        tut_input_desc: "<b>Введите ссылку</b>, чтобы мы могли подключить кошелек с активом.",
-        tut_step_4: "После подключения кошелька нажмите на <b>адрес кошелька</b>, далее кликните на кнопку <b>My Assets</b> и перейдите в тот раздел, в котором вы покупали актив (NFT, Номер, Юзернейм).",
-        tut_step_5: "Выберите, куда именно вы хотите, чтобы показывался арендованный актив, и нажмите кнопку <b>Save</b>.",
-        tut_step_6: "Поздравляем! Ваш актив теперь привязан к OctoRent. Приятного использования! ✨",
-        tut_next: "Далее",
-        tut_finish: "Удачного пользования!",
-        tut_connect: "Подключить актив"
+        what_is_this: "╨з╤В╨╛ ╤Н╤В╨╛ ╨╖╨╜╨░╤З╨╕╤В?",
+        settings_support: "╨Э╨░╤Б╤В╤А╨╛╨╣╨║╨╕ ╨╕ ╨┐╨╛╨┤╨┤╨╡╤А╨╢╨║╨░",
+        profile_settings: "╨Э╨░╤Б╤В╤А╨╛╨╣╨║╨╕ ╨╕ ╨┐╨╛╨┤╨┤╨╡╤А╨╢╨║╨░",
+        rental_history: "╨Ш╤Б╤В╨╛╤А╨╕╤П ╨░╤А╨╡╨╜╨┤╤Л",
+        profile_history: "╨Ш╤Б╤В╨╛╤А╨╕╤П ╨░╤А╨╡╨╜╨┤╤Л",
+        support_faq: "╨Я╨╛╨┤╨┤╨╡╤А╨╢╨║╨░ ╨╕ FAQ",
+        profile_support: "╨Я╨╛╨┤╨┤╨╡╤А╨╢╨║╨░ ╨╕ FAQ",
+        wallet_mgmt: "╨г╨┐╤А╨░╨▓╨╗╨╡╨╜╨╕╨╡ ╨║╨╛╤И╨╡╨╗╤М╨║╨╛╨╝",
+        profile_wallet: "╨Ъ╨╛╤И╨╡╨╗╨╡╨║",
+        connect_wallet: "╨Я╨╛╨┤╨║╨╗╤О╤З╨╕╤В╤М",
+        connect_wallet_full: "╨Я╨╛╨┤╨║╨╗╤О╤З╨╕╤В╤М ╨║╨╛╤И╨╡╨╗╨╡╨║",
+        connected: "╨Я╨╛╨┤╨║╨╗╤О╤З╨╡╨╜╨╛",
+        details: "╨Ф╨╡╤В╨░╨╗╨╕",
+        owner: "╨Т╨╗╨░╨┤╨╡╨╗╨╡╤Ж",
+        address: "╨Р╨┤╤А╨╡╤Б",
+        auto_relist: "╨Р╨▓╤В╨╛-╨┐╨╡╤А╨╡╨▓╤Л╤Б╤В╨░╨▓╨╗╨╡╨╜╨╕╨╡",
+        auto_relist_desc: "╨н╤В╨╛╤В NFT ╨▒╤Г╨┤╨╡╤В ╨░╨▓╤В╨╛╨╝╨░╤В╨╕╤З╨╡╤Б╨║╨╕ ╨┤╨╛╤Б╤В╤Г╨┐╨╡╨╜ ╨┤╨╗╤П ╨░╤А╨╡╨╜╨┤╤Л ╨┐╨╛╤Б╨╗╨╡ ╨╛╨║╨╛╨╜╤З╨░╨╜╨╕╤П ╤Б╤А╨╛╨║╨░.",
+        rent_button: "╨Р╤А╨╡╨╜╨┤╨╛╨▓╨░╤В╤М ╨╖╨░ {amount}",
+        rent_for: "╨Р╤А╨╡╨╜╨┤╨╛╨▓╨░╤В╤М ╨╖╨░",
+        preorder_for: "╨Ч╨░╨▒╤А╨╛╨╜╨╕╤А╨╛╨▓╨░╤В╤М ╨╖╨░",
+        loading: "╨Ч╨░╨│╤А╤Г╨╖╨║╨░...",
+        filters: "╨д╨╕╨╗╤М╤В╤А╤Л",
+        gift_number: "╨Э╨╛╨╝╨╡╤А ╨┐╨╛╨┤╨░╤А╨║╨░",
+        sort_by: "╨б╨╛╤А╤В╨╕╤А╨╛╨▓╨║╨░",
+        price: "╨ж╨╡╨╜╨░",
+        from: "╨Ю╤В",
+        to: "╨Ф╨╛",
+        clear_all: "╨Ю╤З╨╕╤Б╤В╨╕╤В╤М ╨▓╤Б╨╡",
+        show_results: "╨Я╨╛╨║╨░╨╖╨░╤В╤М ╤А╨╡╨╖╤Г╨╗╤М╤В╨░╤В╤Л",
+        search_hint: "╨Я╨╛╨╕╤Б╨║...",
+        history_empty: "╨Ш╤Б╤В╨╛╤А╨╕╤П ╨┐╤Г╤Б╤В╨░",
+        invalid_tc_link: "╨Я╨╛╨╢╨░╨╗╤Г╨╣╤Б╤В╨░, ╨▓╤Б╤В╨░╨▓╤М╤В╨╡ ╨║╨╛╤А╤А╨╡╨║╤В╨╜╤Г╤О ╤Б╤Б╤Л╨╗╨║╤Г tc:// ╤Б Fragment",
+        status_pending: "╨Ю╨╢╨╕╨┤╨░╨╡╤В ╨╛╨┐╨╗╨░╤В╤Г",
+        status_rented: "╨Ю╨╢╨╕╨┤╨░╨╡╤В ╤Б╤Б╤Л╨╗╨║╤Г",
+        just_now: "╨в╨╛╨╗╤М╨║╨╛ ╤З╤В╨╛",
+        hours_ago: "╤З. ╨╜╨░╨╖╨░╨┤",
+        what_is_this_long: "╨Т╤Л ╨╛╤В╨┐╤А╨░╨▓╨╗╤П╨╡╤В╨╡ ╨╜╨╡╨▒╨╛╨╗╤М╤И╤Г╤О ╤Б╤Г╨╝╨╝╤Г TON ╨┤╨╗╤П ╨┐╨╛╨║╤А╤Л╤В╨╕╤П ╨║╨╛╨╝╨╕╤Б╤Б╨╕╨╕ ╤Б╨╡╤В╨╕ ╨╕ ╤А╨░╨▒╨╛╤В╤Л ╤Б╨╡╤А╨▓╨╕╤Б╨░. ╨Ю╤Б╤В╨░╤В╨╛╨║ ╨▒╤Г╨┤╨╡╤В ╨▓╨╛╨╖╨▓╤А╨░╤Й╨╡╨╜ ╨▓╨░╨╝ ╨░╨▓╤В╨╛╨╝╨░╤В╨╕╤З╨╡╤Б╨║╨╕.",
+        wallet_mgmt: "╨г╨┐╤А╨░╨▓╨╗╨╡╨╜╨╕╨╡ ╨║╨╛╤И╨╡╨╗╤М╨║╨╛╨╝",
+        copy_address: "╨Ъ╨╛╨┐╨╕╤А╨╛╨▓╨░╤В╤М ╨░╨┤╤А╨╡╤Б",
+        disconnect_wallet: "╨Ю╤В╨║╨╗╤О╤З╨╕╤В╤М ╨║╨╛╤И╨╡╨╗╨╡╨║",
+        all: "╨Т╤Б╨╡",
+        select_all: "╨Т╤Л╨▒╤А╨░╤В╤М ╨▓╤Б╨╡",
+        select_collection_first: "╨Т╤Л╨▒╨╡╤А╨╕╤В╨╡ NFT ╨║╨╛╨╗╨╗╨╡╨║╤Ж╨╕╤О, ╤З╤В╨╛╨▒╤Л ╤Г╨▓╨╕╨┤╨╡╤В╤М ╤Б╨┐╨╕╤Б╨╛╨║ ╨╝╨╛╨┤╨╡╨╗╨╡╨╣.",
+        search_filter_hint: "╨Я╨╛╨╕╤Б╨║ {label}...",
+        search_filter_global: " (╨Т╤Б╨╡ NFT)",
+        sort_price_asc: "╨ж╨╡╨╜╨░ (╨Я╨╛ ╨▓╨╛╨╖╤А╨░╤Б╤В╨░╨╜╨╕╤О)",
+        sort_price_desc: "╨ж╨╡╨╜╨░ (╨Я╨╛ ╤Г╨▒╤Л╨▓╨░╨╜╨╕╤О)",
+        sort_num_asc: "╨Э╨╛╨╝╨╡╤А (╨Я╨╛ ╨▓╨╛╨╖╤А╨░╤Б╤В╨░╨╜╨╕╤О)",
+        sort_num_desc: "╨Э╨╛╨╝╨╡╤А (╨Я╨╛ ╤Г╨▒╤Л╨▓╨░╨╜╨╕╤О)",
+        sort_model_rare: "╨а╨╡╨┤╨║╨╛╤Б╤В╤М ╨╝╨╛╨┤╨╡╨╗╨╕",
+        sort_bg_rare: "╨а╨╡╨┤╨║╨╛╤Б╤В╤М ╤Д╨╛╨╜╨░",
+        sort_symbol_rare: "╨а╨╡╨┤╨║╨╛╤Б╤В╤М ╤Б╨╕╨╝╨▓╨╛╨╗╨░",
+        error_insufficient_funds: "╨Э╨╡╨┤╨╛╤Б╤В╨░╤В╨╛╤З╨╜╨╛ ╤Б╤А╨╡╨┤╤Б╤В╨▓ ╨╜╨░ ╨║╨╛╤И╨╡╨╗╤М╨║╨╡ ╨┤╨╗╤П ╤Б╨╛╨▓╨╡╤А╤И╨╡╨╜╨╕╤П ╤В╤А╨░╨╜╨╖╨░╨║╤Ж╨╕╨╕.",
+        available_from: "╨Ю╤Б╨▓╨╛╨▒╨╛╨┤╨╕╤В╤Б╤П",
+        preorder_warning_no_relist: "╨Т╨╜╨╕╨╝╨░╨╜╨╕╨╡: ╤Г ╤Н╤В╨╛╨│╨╛ NFT ╨▓╤Л╨║╨╗╤О╤З╨╡╨╜ ╨░╨▓╤В╨╛-╨┐╨╡╤А╨╡╨▓╤Л╤Б╤В╨░╨▓╨╗╨╡╨╜╨╕╨╡. ╨Я╤А╨╡╨┤╨╖╨░╨║╨░╨╖ ╨╝╨╛╨╢╨╡╤В ╨╜╨╡ ╤Б╤А╨░╨▒╨╛╤В╨░╤В╤М, ╨╡╤Б╨╗╨╕ ╨▓╨╗╨░╨┤╨╡╨╗╨╡╤Ж ╨╜╨╡ ╨▓╤Л╤Б╤В╨░╨▓╨╕╤В ╨╡╨│╨╛ ╨▓╤А╤Г╤З╨╜╤Г╤О.",
+        mode_rent_btn: "╨Ъ╨░╤В╨░╨╗╨╛╨│ ╨░╤А╨╡╨╜╨┤╨╛╨▓╨░╨╜╨╜╤Л╤Е ╤В╨╛╨▓╨░╤А╨╛╨▓",
+        mode_shop_btn: "╨Ъ╨░╤В╨░╨╗╨╛╨│ ╨┤╨╛╤Б╤В╤Г╨┐╨╜╤Л╤Е ╨┤╨╗╤П ╨░╤А╨╡╨╜╨┤╤Л ╤В╨╛╨▓╨░╤А╨╛╨▓",
+        loading_to_rent: "╨Ч╨░╨│╤А╤Г╨╖╨║╨░ ╨║╨░╤В╨░╨╗╨╛╨│╨░ ╨░╤А╨╡╨╜╨┤╨╛╨▓╨░╨╜╨╜╤Л╤Е ╤В╨╛╨▓╨░╤А╨╛╨▓...",
+        loading_to_shop: "╨Ч╨░╨│╤А╤Г╨╖╨║╨░ ╨║╨░╤В╨░╨╗╨╛╨│╨░ ╨┤╨╛╤Б╤В╤Г╨┐╨╜╤Л╤Е ╨┤╨╗╤П ╨░╤А╨╡╨╜╨┤╤Л ╤В╨╛╨▓╨░╤А╨╛╨▓...",
+        rent_title_suffix: " (╨Р╤А╨╡╨╜╨┤╨░)",
+        auto_relist_label: "╨Р╨▓╤В╨╛-╨┐╨╡╤А╨╡╨▓╤Л╤Б╤В╨░╨▓╨╗╨╡╨╜╨╕╨╡",
+        yes: "╨Ф╨░",
+        no: "╨Э╨╡╤В",
+        rented_by_you: "╨Р╤А╨╡╨╜╨┤╨╛╨▓╨░╨╜╨╛ ╨▓╨░╨╝╨╕",
+        rented_by_others: "╨Р╤А╨╡╨╜╨┤╨╛╨▓╨░╨╜╨╛",
+        status_awaiting_fragment: "╨Ю╨╢╨╕╨┤╨░╨╡╤В ╨┐╨╛╨┤╨║╨╗╤О╤З╨╡╨╜╨╕╤П ╨║ Fragment",
+        connect_to_fragment: "╨Я╨╛╨┤╨║╨╗╤О╤З╨╕╤В╤М ╨║ Fragment",
+        ends_in: "╨Ю╤Б╨▓╨╛╨▒╨╛╨┤╨╕╤В╤Б╤П ╤З╨╡╤А╨╡╨╖",
+        days_label: "╨Ф╨╜╨╕",
+        day_label: "╨Ф╨╡╨╜╤М",
+        days_2_4: "╨Ф╨╜╤П"
     },
     en: {
         gifts: "Gifts",
@@ -197,7 +182,7 @@ const TRANSLATIONS = {
         discount: "Discount",
         days: "Days",
         rent: "Rent",
-        rent_days: "Rent for {min}–{max} days",
+        rent_days: "Rent for {min}тАУ{max} days",
         per_day: "Per day",
         min_price: "Min. price",
         you_will_send: "You will additionally send {amount} TON to process the transaction. Remain TON will be returned to you.",
@@ -269,19 +254,7 @@ const TRANSLATIONS = {
         ends_in: "Ends in",
         days_label: "Days",
         day_label: "Day",
-        days_2_4: "Days",
-
-        // --- TC Tutorial ---
-        tut_step_1: "Go to <a href='#' onclick='copyText(\"fragment.com\", event)' class='copy-link'>fragment.com</a>",
-        tut_step_2: "Click <b>Connect Ton</b>",
-        tut_step_3: "Click the <b>copy icon</b> to copy the connection link for the wallet where the asset is stored.",
-        tut_input_desc: "<b>Enter the link</b> so we can connect the wallet with the asset.",
-        tut_step_4: "After connecting, click your <b>wallet address</b>, then <b>My Assets</b> and go to the category of your asset (NFT, Number, or Username).",
-        tut_step_5: "Choose where you want the asset to be displayed and click <b>Save</b>.",
-        tut_step_6: "Congratulations! Your asset is now linked to OctoRent. Enjoy! ✨",
-        tut_next: "Next",
-        tut_finish: "Happy using!",
-        tut_connect: "Connect Asset"
+        days_2_4: "Days"
     }
 };
 
@@ -300,37 +273,8 @@ const copyToClipboard = (text) => {
                 window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
             }
         }).catch(err => console.error('Copy failed', err));
-    } else {
-        const el = document.createElement('textarea');
-        el.value = text;
-        document.body.appendChild(el);
-        el.select();
-        document.execCommand('copy');
-        document.body.removeChild(el);
     }
 };
-
-function showToast(msg) {
-    let container = document.getElementById('toast-container');
-    if (!container) {
-        container = document.createElement('div');
-        container.id = 'toast-container';
-        container.style.cssText = 'position:fixed; bottom:100px; left:50%; transform:translateX(-50%); z-index:10000; pointer-events:none; display:flex; flex-direction:column; align-items:center; gap:8px;';
-        document.body.appendChild(container);
-    }
-
-    // Remove existing toasts to prevent stacking
-    container.innerHTML = '';
-
-    const toast = document.createElement('div');
-    toast.className = 'toast-notification active'; // CSS handles transition
-    toast.innerText = msg;
-    container.appendChild(toast);
-    setTimeout(() => {
-        toast.classList.remove('active');
-        setTimeout(() => { if (toast.parentNode === container) toast.remove(); }, 300);
-    }, 3000);
-}
 const renderTonAmount = (val) => `<span class="icon-before icon-ton tm-amount">${val}</span>`;
 const renderTonAmountNoIcon = (val) => `<span class="tm-amount icon-ton" style="font-size:inherit;">${val}</span>`;
 
@@ -436,36 +380,16 @@ const SLUG_MAPPING = {
 
 function getTelegifterUrl(type, name, collection, slugIndex = 0) {
     if (!name || name === 'Unknown' || name === 'Default' || name === 'Gift' || name === 'Gift #?') return null;
+    const cleanName = encodeURIComponent(name);
 
     if (type === 'symbol') {
-        const cleanName = name.replace(/[?#]/g, ''); // Basic sanitization
-        return `file/gifts/symbol/${cleanName}.webp`;
+        return `${TG_ASSETS_URL}/symbol/${cleanName}.webp`;
     }
 
     if (type === 'model') {
-        // Models use format: /file/gifts/collectionslug/model.webp
-        // We need collection slug for this
-        if (collection) {
-            const colSlug = collection.toLowerCase().replace(/[^a-z0-9]/g, '');
-            const modelSlug = name.toLowerCase().replace(/[^a-z0-9]/g, '');
-            return `file/gifts/${colSlug}/model.${modelSlug}.webp`;
-        }
-
-        // Fallback or old logic if no collection context
-        const slugBase = name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/[\s]+/g, '');
-        const numbers = [888, 1, 777, 555, 123, 100];
-        if (slugIndex < numbers.length) {
-            return `https://nft.fragment.com/gift/${slugBase}-${numbers[slugIndex]}.medium.jpg`;
-        }
-        return null;
+        // Use local caching endpoint (handled by live_server.py + model_cache.py)
+        return `/models/${cleanName}.webp`;
     }
-
-    if (type === 'nft') {
-        // NFT collections use format: /file/gifts/collectionslug/thumb.webp
-        const collectionSlug = name.toLowerCase().replace(/[^a-z0-9]/g, '');
-        return `file/gifts/${collectionSlug}/thumb.webp`;
-    }
-
     return null;
 }
 
@@ -537,13 +461,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     try {
         if (window.Telegram && window.Telegram.WebApp) {
             tg = window.Telegram.WebApp;
-            tg.ready();
             tg.expand();
             tg.MainButton.hide();
         }
         updateUILanguage();
 
-        // ⏳ Failsafe: Hide loader after 5s no matter what
+        // тП│ Failsafe: Hide loader after 5s no matter what
         setTimeout(() => {
             const screen = document.getElementById('loading-screen');
             if (screen && screen.style.display !== 'none') {
@@ -554,97 +477,56 @@ document.addEventListener("DOMContentLoaded", async () => {
         }, 5000);
 
         initTonConnect();
-        loadProfileData();
+        loadProfileData(); // Call after initTonConnect
         loadFilterData();
+        await loadLiveItems(true);
 
-        // 🚀 NON-BLOCKING: Start loading but don't AWAIT here
-        const catalogPromise = loadLiveItems(true);
-
+        // --- Deep Link handling ---
         const urlParams = new URLSearchParams(window.location.search);
         let deepNftAddr = urlParams.get('nft_address');
 
+        // Support tgWebAppStartParam (from Direct Link)
         if (!deepNftAddr && tg.initDataUnsafe && tg.initDataUnsafe.start_param) {
-            const sp = tg.initDataUnsafe.start_param;
-            if (sp.startsWith('nft_')) deepNftAddr = sp.replace('nft_', '');
+            const startParam = tg.initDataUnsafe.start_param;
+            if (startParam.startsWith('nft_')) {
+                deepNftAddr = startParam.replace('nft_', '');
+            }
         }
-
         if (deepNftAddr) {
-            console.log("🚀 Deep link:", deepNftAddr);
-            showToast(CURRENT_LANG === 'ru' ? "Загрузка товара..." : "Loading item...");
-            const tMap = { 'gift': 0, 'username': 1, 'number': 2 };
+            const match = ALL_MARKET_ITEMS.find(it => it.nft_address === deepNftAddr);
+            if (match) {
+                openProductView(match);
+            } else {
+                // If not in current catalog, try to fetch it specifically or alert
+                fetch(`${BACKEND_URL}/api/nft_details?nft_address=${deepNftAddr}`)
+                    .then(r => r.json())
+                    .then(details => {
+                        if (details && details.address) {
+                            // Normalize details to match our item structure
+                            const m = details.metadata || {};
+                            const fakeItem = {
+                                nft_address: details.address,
+                                nft_name: details.name,
+                                price_per_day: 0, // Will be updated by status check or remains 0
+                                status: 'available',
+                                type: 'gift',
+                                metadata: JSON.stringify(m)
+                            };
+                            openProductView(fakeItem);
+                        }
+                    }).catch(e => console.error("Deep link fetch error:", e));
+            }
 
-            const openDeepItem = (it) => {
-                if (!it) return;
-                const idx = tMap[it.type];
-                if (idx !== undefined) switchTab(idx);
-                setTimeout(() => {
-                    openProductView(it);
-                    showToast(CURRENT_LANG === 'ru' ? "Готово!" : "Ready!");
-                }, 800);
-            };
-
-            (async () => {
-                try {
-                    // Quick check local cache (wait max 2s for catalog)
-                    await Promise.race([catalogPromise, new Promise(r => setTimeout(r, 2000))]);
-                    const cached = (ALL_MARKET_ITEMS || []).find(x => {
-                        const a = String(x.nft_address || '').toLowerCase();
-                        const t = deepNftAddr.toLowerCase();
-                        return a === t || a.replace(/-/g, '+').replace(/_/g, '/') === t.replace(/-/g, '+').replace(/_/g, '/');
-                    });
-
-                    if (cached) {
-                        showToast(CURRENT_LANG === 'ru' ? "Найдено в кэше" : "Found in cache");
-                        openDeepItem(cached);
-                        return;
+            // FIX: Add click handler for product-view background
+            const productView = document.getElementById('product-view');
+            if (productView) {
+                productView.addEventListener('click', function (e) {
+                    // Close if clicking on product-view itself OR on elements with overflow-y-scroll
+                    if (e.target.id === 'product-view' || e.target.classList.contains('product-view')) {
+                        closeProductView();
                     }
-
-                    // Fetch from server with timeout
-                    const ctrl = new AbortController();
-                    const tid = setTimeout(() => ctrl.abort(), 10000);
-                    const r = await fetch(`${BACKEND_URL}/api/nft_details?nft_address=${encodeURIComponent(deepNftAddr)}`, { signal: ctrl.signal });
-                    clearTimeout(tid);
-
-                    if (!r.ok) throw new Error("HTTP " + r.status);
-                    const d = await r.json();
-                    if (d && (d.address || d.nft_address)) {
-                        const m = d.metadata || {};
-                        const iName = d.name || d.nft_name || d.title || '';
-                        let type = d.type || 'gift';
-                        if (iName.startsWith('@')) type = 'username';
-                        else if (iName.startsWith('+')) type = 'number';
-
-                        openDeepItem({
-                            id: d.id || Date.now(),
-                            nft_address: d.address || d.nft_address,
-                            nft_name: iName,
-                            nft_image: d.image || m.image,
-                            _realImage: d.image || m.image,
-                            price_per_day: d.price_per_day || 0,
-                            status: d.status || 'available',
-                            type: type,
-                            metadata: typeof d.metadata === 'string' ? d.metadata : JSON.stringify(d.metadata || {})
-                        });
-                    } else {
-                        showToast(CURRENT_LANG === 'ru' ? "Товар не найден" : "Item not found");
-                    }
-                } catch (e) {
-                    console.error("DL Error:", e);
-                    showToast(e.name === 'AbortError' ? "Таймаут сервера" : "Ошибка: " + e.message);
-                }
-            })();
-        }
-
-        await catalogPromise; // Ensure catalog is fully loaded for normal browsing
-        // FIX: Add click handler for product-view background
-        const productView = document.getElementById('product-view');
-        if (productView) {
-            productView.addEventListener('click', function (e) {
-                // Close if clicking on product-view itself OR on elements with overflow-y-scroll
-                if (e.target.id === 'product-view' || e.target.classList.contains('product-view')) {
-                    closeProductView();
-                }
-            });
+                });
+            }
         }
 
         document.getElementById('search-input').addEventListener('input', debounce((e) => {
@@ -664,7 +546,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             if (now - lastTouchEnd <= 300) {
                 // Check if target is scrollable or input
                 if (!e.target.closest('.chips-row') && !e.target.closest('input')) {
-                    // e.preventDefault();
+                    // e.preventDefault(); // Removed to avoid blocking clicks
                 }
             }
             lastTouchEnd = now;
@@ -684,21 +566,15 @@ document.addEventListener("DOMContentLoaded", async () => {
             };
         });
 
-    } catch (e) { console.error("Init Error: ", e); }
+    } catch (e) { alert("Init Error: " + e.message); }
 });
 
 function switchTab(index) {
-    // Indices: 0 = Gifts, 1 = Usernames, 2 = Numbers, 3 = Friends, 4 = Profile
+    // Indices: 0 = Gifts, 1 = Usernames, 2 = Numbers, 3 = Profile
     const navItems = document.querySelectorAll('.nav-item');
     navItems.forEach((nav, i) => {
         nav.classList.toggle('active', i === index);
     });
-
-    // Reset all major containers
-    document.getElementById('market-container').style.display = 'none';
-    document.getElementById('profile-container').style.display = 'none';
-    document.getElementById('friends-container').style.display = 'none';
-    document.getElementById('mode-toggle-container').style.display = 'none';
 
     if (index < 3) { // Market tabs
         let newType = CURRENT_TYPE;
@@ -713,6 +589,7 @@ function switchTab(index) {
         }
 
         document.getElementById('market-container').style.display = 'block';
+        document.getElementById('profile-container').style.display = 'none';
         document.getElementById('mode-toggle-container').style.display = 'block';
 
         const headerTitle = document.querySelector('.header h1') || document.querySelector('.logo-text');
@@ -722,213 +599,42 @@ function switchTab(index) {
             if (index === 2) baseTitle = t('numbers');
             headerTitle.innerText = baseTitle + (CURRENT_STATUS === 'rented' ? t('rent_title_suffix') : '');
         }
-    } else if (index === 3) { // Friends tab (NEW RESTORATION)
-        document.getElementById('friends-container').style.display = 'block';
-        const headerTitle = document.querySelector('.header h1') || document.querySelector('.logo-text');
-        if (headerTitle) headerTitle.innerText = t('friends') || 'Друзья';
-        loadFriendsData();
-    } else if (index === 4) { // Profile tab
+
+        // FIX: Removed - was hiding nav
+        // document.body.classList.remove('profile-active');
+    } else { // Profile tab
+        document.getElementById('market-container').style.display = 'none';
         document.getElementById('profile-container').style.display = 'block';
+        document.getElementById('mode-toggle-container').style.display = 'none';
+
         const headerTitle = document.querySelector('.header h1') || document.querySelector('.logo-text');
         if (headerTitle) headerTitle.innerText = t('profile');
         if (window.Telegram && window.Telegram.WebApp) {
             tg.HapticFeedback.impactOccurred('medium');
         }
+
+        // FIX: Nav should always be visible
+        // document.body.classList.add('profile-active');
+        const bNav = document.querySelector('.bottom-nav');
+        if (bNav) bNav.classList.add('profile-mode');
     }
 
-    // Nav mode (profile vs other)
-    const bNav = document.querySelector('.bottom-nav');
-    if (bNav) {
-        if (index === 4) bNav.classList.add('profile-mode');
-        else bNav.classList.remove('profile-mode');
-    }
-
-    // Filter visibility logic
-    if (index === 1 || index === 2 || index === 3) { // Usernames, Numbers, or Friends
+    // NEW: Filter visibility logic
+    if (index === 1 || index === 2) { // Usernames or Numbers
         document.body.classList.add('hide-filters');
     } else {
         document.body.classList.remove('hide-filters');
     }
-}
 
-// --- Friends Logic ---
-async function loadFriendsData() {
-    const userId = tg.initDataUnsafe?.user?.id || 0;
-    try {
-        const res = await fetch(`${BACKEND_URL}/api/referral/stats?user_id=${userId}`);
-        const data = await res.json();
-
-        const balEl = document.getElementById('friends-balance-val');
-        if (balEl) balEl.innerText = data.balance.toFixed(4);
-
-        const listCont = document.getElementById('friends-list-items');
-        if (!listCont) return;
-
-        if (!data.referrals || data.referrals.length === 0) {
-            document.getElementById('empty-friends-hint').style.display = 'block';
-            return;
-        }
-
-        document.getElementById('empty-friends-hint').style.display = 'none';
-        listCont.innerHTML = data.referrals.map(f => {
-            const name = f.username ? '@' + f.username : (f.full_name || ('ID: ' + f.user_id));
-            return `
-                <div class="service-item" style="cursor: default;">
-                    <div class="service-icon" style="background: rgba(0, 136, 204, 0.1); width: 44px; height: 44px; font-size: 20px;">👤</div>
-                    <div style="flex: 1; margin-left: 12px;">
-                        <div style="font-weight: 700; font-size: 15px;">${name}</div>
-                    </div>
-                    <div style="text-align: right;">
-                        <div style="font-weight: 800; font-size: 14px; color: #0088cc;">+${f.profit.toFixed(4)} TON</div>
-                        <div style="font-size: 11px; color: #8b9bb4; opacity: 0.6;">прибыль</div>
-                    </div>
-                </div>
-            `;
-        }).join('');
-
-    } catch (e) {
-        console.error("Load Friends Error:", e);
+    if (index !== 3) {
+        const bNav = document.querySelector('.bottom-nav');
+        if (bNav) bNav.classList.remove('profile-mode');
     }
 }
 
-function showEarningsHelp() {
-    console.log("Earnings help clicked");
-    const sheet = document.getElementById('earnings-help-sheet');
-    if (sheet) sheet.classList.add('active');
-}
-
-function closeEarningsHelp() {
-    const sheet = document.getElementById('earnings-help-sheet');
-    if (sheet) sheet.classList.remove('active');
-}
-
-async function shareReferralLink() {
-    if (IS_SHARING_REF) return;
-    IS_SHARING_REF = true;
-
-    console.log("shareReferralLink called!");
-    // Diagnostic log
-    console.log("SDK Support:", {
-        sendPreparedInlineMessage: !!(window.Telegram?.WebApp?.sendPreparedInlineMessage),
-        shareURL: !!(window.Telegram?.WebApp?.shareURL),
-        switchInlineQuery: !!(window.Telegram?.WebApp?.switchInlineQuery)
-    });
-
-    const btn = document.querySelector('.btn-invite-white');
-    const originalText = btn ? btn.innerText : null;
-    if (btn) {
-        btn.style.opacity = '0.7';
-        btn.innerText = '...';
-    }
-
-    const userId = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user?.id) || 0;
-    const botUser = "OctoRent_bot";
-    const refLink = `https://t.me/${botUser}/app?startapp=${userId}`;
-    const shareText = "🎁 Твой подарок уже ждёт тебя в OctoRent!\n\nЗабирай его прямо сейчас — и получай призы на свой аккаунт ✨";
-
-    try {
-        // Stage 1: Premium Prepared Message (v7.8+)
-        if (window.Telegram?.WebApp?.sendPreparedInlineMessage) {
-            try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 5000);
-
-                console.log("Calling prepare_share with type=referral, user_id:", userId);
-                const res = await fetch(`${BACKEND_URL}/api/referral/prepare_share`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        user_id: userId,
-                        type: 'referral'  // IMPORTANT: tell backend this is a referral share
-                    }),
-                    signal: controller.signal
-                });
-                clearTimeout(timeoutId);
-                const data = await res.json();
-                console.log("prepare_share response:", data);
-                if (data.status === 'ok' && data.id) {
-                    console.log("Sending prepared inline message with id:", data.id);
-                    window.Telegram.WebApp.sendPreparedInlineMessage(data.id);
-                    return;
-                } else {
-                    console.warn("prepare_share returned error:", data);
-                }
-            } catch (e) {
-                console.warn("Stage 1 failed:", e.message);
-            }
-        }
-
-        // Stage 2: switchInlineQuery
-        if (window.Telegram?.WebApp?.switchInlineQuery) {
-            console.log("Using Stage 2: switchInlineQuery");
-            window.Telegram.WebApp.switchInlineQuery('ref', ['users', 'groups', 'channels']);
-            return;
-        }
-
-        // Stage 3: Clipboard (Last resort)
-        console.log("Using Stage 3: clipboard fallback");
-        copyToClipboard(refLink);
-        showToast("Реферальная ссылка скопирована!");
-    } catch (e) {
-        console.error("All sharing stages failed:", e);
-        showToast("Ошибка при попытке поделиться");
-    } finally {
-        setTimeout(() => {
-            IS_SHARING_REF = false;
-            if (btn && originalText) {
-                btn.style.opacity = '1';
-                btn.innerText = originalText;
-            }
-        }, 1000);
-    }
-}
-
-// Alias for filter modal
-function openOctoModal() {
-    console.log("Opening filter modal...");
-    openAdvancedFilters();
-}
-
-let IS_WITHDRAWING = false;
-async function handleReferralWithdraw() {
-    if (IS_WITHDRAWING) return;
-    IS_WITHDRAWING = true;
-
-    const btn = document.querySelector('.withdraw-btn-white');
-    const originalText = btn ? btn.innerText : null;
-    if (btn) {
-        btn.disabled = true;
-        btn.style.opacity = '0.7';
-        btn.innerText = t('processing');
-    }
-
-    console.log("Withdraw button clicked");
-    const userId = tg.initDataUnsafe?.user?.id || 0;
-    try {
-        const res = await fetch(`${BACKEND_URL}/api/referral/withdraw`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_id: userId, amount: 0.1, wallet_address: "manual" })
-        });
-        const data = await res.json();
-        if (data.status === 'ok') {
-            showToast("Вывод успешно запрошен!");
-            loadFriendsData();
-        } else {
-            showToast("Минимальный баланс на вывод 0.1 TON");
-        }
-    } catch (e) {
-        showToast("Ошибка соединения");
-    } finally {
-        setTimeout(() => {
-            IS_WITHDRAWING = false;
-            if (btn && originalText) {
-                btn.disabled = false;
-                btn.style.opacity = '1';
-                btn.innerText = originalText;
-            }
-        }, 1500); // 1.5s debounce
-    }
+// Obsolete loadUserOrders removed as tab is gone.
+function loadUserOrders() {
+    // No-op 
 }
 
 // --- Modal Logic ---
@@ -944,13 +650,13 @@ function showHelp(amount) {
         <div style="font-weight:700; color:#fff; margin-bottom:10px;">${t('you_will_send', { amount: amount })}</div>
     `;
 
-    const modal = document.getElementById('help-modal');
-    if (modal) modal.classList.add('active');
+    document.getElementById('help-modal-overlay').classList.add('active');
+    document.getElementById('help-modal').classList.add('active');
 }
 
-function closeHelp() {
-    const modal = document.getElementById('help-modal');
-    if (modal) modal.classList.remove('active');
+function closeHelpModal() {
+    document.getElementById('help-modal-overlay').classList.remove('active');
+    document.getElementById('help-modal').classList.remove('active');
 }
 
 function closeTcModal() {
@@ -960,8 +666,7 @@ function closeTcModal() {
 async function submitTcLink() {
     const orderId = document.getElementById('tc-current-order-id').value;
     const link = document.getElementById('tc-link-input').value.trim();
-    const btn = document.querySelector('#tc-modal .tc-btn-premium') || document.querySelector('#tc-modal .btn-yellow');
-    if (!btn) return;
+    const btn = document.querySelector('#tc-modal .btn-yellow');
     const originalText = btn.innerText;
 
     if (!link.startsWith('tc://')) {
@@ -974,14 +679,7 @@ async function submitTcLink() {
 
     console.log("SubmitTC: OrderID=" + orderId + ", Link=" + link);
     if (!orderId) {
-        alert("Ошибка: ID заказа не найден. Перезагрузите страницу.");
-        btn.innerText = originalText;
-        btn.disabled = false;
-        return;
-    }
-
-    if (orderId === 'TEST_ID') {
-        tg.showAlert("Это тестовый режим. В реальном приложении ссылка была бы отправлена на сервер.");
+        alert("╨Ю╤И╨╕╨▒╨║╨░: ID ╨╖╨░╨║╨░╨╖╨░ ╨╜╨╡ ╨╜╨░╨╣╨┤╨╡╨╜. ╨Я╨╡╤А╨╡╨╖╨░╨│╤А╤Г╨╖╨╕╤В╨╡ ╤Б╤В╤А╨░╨╜╨╕╤Ж╤Г.");
         btn.innerText = originalText;
         btn.disabled = false;
         return;
@@ -1001,23 +699,23 @@ async function submitTcLink() {
         console.log("Response data:", data);
 
         if (data.status === 'ok') {
-            console.log("SubmitTC Success. Switching to Phase 2 Tutorial.");
-            // Phase 2: Success onboarding
-            tutorialPhase = 2;
-            currentTutorialStep = 4;
-            renderTutorialStep();
-
+            if (window.Telegram && window.Telegram.WebApp) {
+                tg.showAlert("╨г╤Б╨┐╨╡╤И╨╜╨╛! ╨в╨╡╨┐╨╡╤А╤М ╨▓╨╡╤А╨╜╨╕╤В╨╡╤Б╤М ╨╜╨░ Fragment ╨╕ ╨╜╨░╨╢╨╝╨╕╤В╨╡ Display in Telegram.");
+            } else {
+                alert("╨г╤Б╨┐╨╡╤И╨╜╨╛! ╨в╨╡╨┐╨╡╤А╤М ╨▓╨╡╤А╨╜╨╕╤В╨╡╤Б╤М ╨╜╨░ Fragment ╨╕ ╨╜╨░╨╢╨╝╨╕╤В╨╡ Display in Telegram.");
+            }
             document.getElementById('tc-link-input').value = "";
+            closeTcModal();
             loadHistoryContent();
         } else {
-            throw new Error(data.error || "Ошибка сервера");
+            throw new Error(data.error || "╨Ю╤И╨╕╨▒╨║╨░ ╤Б╨╡╤А╨▓╨╡╤А╨░");
         }
     } catch (e) {
         console.error("SubmitTC Error:", e);
         if (window.Telegram && window.Telegram.WebApp) {
-            tg.showAlert("Ошибка: " + e.message);
+            tg.showAlert("╨Ю╤И╨╕╨▒╨║╨░: " + e.message);
         } else {
-            alert("Ошибка: " + e.message);
+            alert("╨Ю╤И╨╕╨▒╨║╨░: " + e.message);
         }
     } finally {
         btn.innerText = originalText;
@@ -1091,8 +789,6 @@ async function loadLiveItems(reset = true) {
     if (reset) {
         GLOBAL_OFFSET = 0;
         HAS_MORE = true;
-        SEEN_ITEM_IDS.clear(); // Reset duplicates tracker
-        ALL_MARKET_ITEMS = []; // 🚀 Clear global items list on reset
         document.getElementById('items-view').innerHTML = '';
         if (topLoader) topLoader.style.display = 'block';
         window.scrollTo({ top: 0, behavior: 'instant' });
@@ -1137,32 +833,12 @@ async function loadLiveItems(reset = true) {
             throw new Error(`Server status: ${response ? response.status : 'Network Error'}`);
         }
 
-        let data;
-        try {
-            data = await response.json();
-        } catch (je) {
-            console.error("JSON Parse Error:", je, "Response was:", response);
-            throw new Error("Invalid server response (JSON parse failed)");
-        }
-
-        console.log(`Loaded ${data.items ? data.items.length : 0} items from server.`);
+        const data = await response.json();
 
         if (data && data.items) {
-            const items = data.items.filter(item => {
-                const uid = item.nft_address || item.id;
-                if (SEEN_ITEM_IDS.has(uid)) return false;
-                SEEN_ITEM_IDS.add(uid);
-                return true;
-            });
-
-            if (data.items.length < BATCH_SIZE) {
-                console.log("No more items to load (reached end of collection).");
-                HAS_MORE = false;
-            }
-            GLOBAL_OFFSET += data.items.length;
-
-            // 🚀 POPULATE CACHE: Crucial for deep link matching!
-            ALL_MARKET_ITEMS = ALL_MARKET_ITEMS.concat(items);
+            const items = data.items;
+            if (items.length < BATCH_SIZE) HAS_MORE = false;
+            GLOBAL_OFFSET += items.length;
 
             const processed = items
                 .filter(item => item.type === CURRENT_TYPE) // Strict client-side type check
@@ -1174,7 +850,6 @@ async function loadLiveItems(reset = true) {
                 });
 
             if (reset && items.length === 0) {
-                console.warn("No items found for current filters.");
                 document.getElementById('items-view').innerHTML = `
                     <div class="error-msg" style="padding-top: 100px; text-align:center;">
                         <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: #333; margin-bottom: 20px;">
@@ -1189,21 +864,16 @@ async function loadLiveItems(reset = true) {
             }
 
             if (reset) initFilterLists();
-        } else {
-            console.error("Server returned OK status but missing items field:", data);
         }
 
         if (document.getElementById('top-loader')) document.getElementById('top-loader').style.display = 'none';
         if (document.getElementById('scroll-loader')) document.getElementById('scroll-loader').style.display = 'none';
         hideLoading();
     } catch (e) {
-        console.error("CRITICAL Load Error:", e);
-        if (reset && document.getElementById('top-loader')) {
-            document.getElementById('top-loader').innerText = "Ошибка соединения с сервером. Показываем демо-данные.";
-            setTimeout(() => { if (document.getElementById('top-loader')) document.getElementById('top-loader').style.display = 'none'; }, 2000);
-        }
+        console.error("Load Error details:", e);
+        if (reset && document.getElementById('top-loader')) document.getElementById('top-loader').innerText = "╨Ю╤И╨╕╨▒╨║╨░ ╤Б╨╛╨╡╨┤╨╕╨╜╨╡╨╜╨╕╤П ╤Б ╤Б╨╡╤А╨▓╨╡╤А╨╛╨╝. ╨Я╨╛╨║╨░╨╖╤Л╨▓╨░╨╡╨╝ ╨┤╨╡╨╝╨╛-╨┤╨░╨╜╨╜╤Л╨╡.";
 
-        // --- 🧪 DEV/DEMO FALLBACK: Inject mock data if backend is dead ---
+        // --- ЁЯзк DEV/DEMO FALLBACK: Inject mock data if backend is dead ---
         if (reset) {
             console.log("Backend unreachable. Injecting demo cards for UI testing.");
             const demoItems = [
@@ -1238,7 +908,6 @@ async function loadLiveItems(reset = true) {
         hideLoading();
     } finally {
         IS_LOADING = false;
-        console.log("loadLiveItems finished. IS_LOADING reset to false.");
     }
 }
 
@@ -1257,6 +926,7 @@ async function loadFilterData() {
         const res = await fetch(`${BACKEND_URL}/api/filters`);
         const data = await res.json();
         console.log('[FILTERS] Received keys:', Object.keys(data));
+        window.FILTERS_CACHE = data;
 
         if (data) {
             // NFTs = collections
@@ -1392,16 +1062,11 @@ function initFilterLists() {
         { id: 'bg_rare', n: t('sort_bg_rare') },
         { id: 'symbol_rare', n: t('sort_symbol_rare') }
     ];
-    if (sortCont) {
-        sortCont.innerHTML = '';
-        sorts.forEach(s => addFilterItem(sortCont, s.n, s.id, 'sort', ACTIVE_FILTERS.sort === s.id));
-    }
+    sortCont.innerHTML = '';
+    sorts.forEach(s => addFilterItem(sortCont, s.n, s.id, 'sort', ACTIVE_FILTERS.sort === s.id));
 
     const nftCont = document.getElementById('nft-list-container');
-    const nftSearchInput = document.getElementById('filter-search-nft');
-    if (!nftCont) return;
-
-    const nftSearch = nftSearchInput ? nftSearchInput.value.toLowerCase() : "";
+    const nftSearch = document.getElementById('filter-search-nft').value.toLowerCase();
     nftCont.innerHTML = '';
 
     if (!nftSearch || t('all').toLowerCase().includes(nftSearch)) {
@@ -1467,10 +1132,11 @@ function initFilterLists() {
             allItems.forEach(item => {
                 if (item.name.toLowerCase().includes(sVal)) {
                     // Try to get clean visual first
-                    let icon = null;
-                    if (m.key === 'symbol') icon = getTelegifterUrl('symbol', item.name);
-                    else if (m.key === 'model') icon = getTelegifterUrl('model', item.name, item.collection);
+                    let visual = null;
+                    if (m.key === 'symbol') visual = getTelegifterUrl('symbol', item.name);
+                    else if (m.key === 'model') visual = getTelegifterUrl('model', item.name, item.collection);
 
+                    let icon = visual || item.image;
                     if (!icon && (m.key === 'bg' || m.key === 'symbol')) icon = VISUAL_MAP[m.key][item.name] || null;
                     // FIX: Pass item.collection as collectionContext
                     addFilterItem(cont, item.name, item.name, m.key, ACTIVE_FILTERS[m.key] === item.name, icon, item.collection, item.image);
@@ -1490,10 +1156,11 @@ function initFilterLists() {
         items.forEach(item => {
             if (item.name.toLowerCase().includes(sVal)) {
                 // Try clean visual
-                let icon = null;
-                if (m.key === 'symbol') icon = getTelegifterUrl('symbol', item.name);
-                else if (m.key === 'model') icon = getTelegifterUrl('model', item.name, selectedNFT);
+                let visual = null;
+                if (m.key === 'symbol') visual = getTelegifterUrl('symbol', item.name);
+                else if (m.key === 'model') visual = getTelegifterUrl('model', item.name, selectedNFT);
 
+                let icon = visual || item.image;
                 if (!icon && (m.key === 'bg' || m.key === 'symbol')) icon = VISUAL_MAP[m.key][item.name] || null;
                 addFilterItem(cont, item.name, item.name, m.key, ACTIVE_FILTERS[m.key] === item.name, icon, selectedNFT, item.image);
             }
@@ -1510,21 +1177,23 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
     let visualHTML = '';
     if (isAll) {
         visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: linear-gradient(135deg, #2a2a2a, #1a1a1a); border: 1px solid rgba(255,255,255,0.1); display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; overflow:hidden;">
-            <div style="font-size:10px; font-weight:900; color:#fff; letter-spacing:1px; z-index:2; font-family: 'Outfit', sans-serif;">ВСЕ</div>
+            <div style="font-size:10px; font-weight:900; color:#fff; letter-spacing:1px; z-index:2; font-family: 'Outfit', sans-serif;">╨Т╨б╨Х</div>
             <div style="width:16px; height:2px; background: #0088cc; margin-top:4px; border-radius:1px; z-index:2;"></div>
             <div style="position:absolute; top:0; left:0; width:100%; height:100%; background: url('https://telegifter.ru/wp-content/themes/gifts/assets/img/bg-logo-mini.webp'); opacity:0.1; background-size: 20px;"></div>
         </div>`;
     } else if (key === 'symbol') {
         const tgSymbol = getTelegifterUrl('symbol', name);
-        const iconSrc = tgSymbol || (VISUAL_MAP.symbol && VISUAL_MAP.symbol[name]);
+        const iconSrc = tgSymbol || VISUAL_MAP.symbol[name];
         visualHTML = `<img src="${iconSrc}" class="filter-img" style="filter: brightness(0) invert(1); width:28px; height:28px; object-fit:contain;" onerror="this.style.display='none'">`;
     } else if (key === 'bg') {
-        const bgStyle = (VISUAL_MAP.bg && VISUAL_MAP.bg[name]) || '#333';
+        const bgStyle = VISUAL_MAP.bg[name] || '#333';
         visualHTML = `<div class="filter-color-circle" style="background: ${bgStyle}; position:relative; overflow:hidden; width:52px; height:52px; border-radius:12px;">
             <div style="position:absolute; top:0; left:0; width:100%; height:100%; background: url('https://telegifter.ru/wp-content/themes/gifts/assets/img/bg-logo-mini.webp'); opacity:0.3; background-size: 20px;"></div>
         </div>`;
     } else if (key === 'model' || key === 'nft' || (imgUrl && !isBadUrl(imgUrl))) {
-        let icon = imgUrl;
+        // CLEAN STRATEGY Phase 2:
+        // 1. Models: Prefer local /models/ asset
+        // 2. NFTs: Prefer TonAPI collection logo (extremely clean)
         if (key === 'model') {
             icon = `/models/${name}.webp`;
         } else if (key === 'nft' && window.FILTERS_CACHE && window.FILTERS_CACHE.nft_addresses && window.FILTERS_CACHE.nft_addresses[name]) {
@@ -1564,10 +1233,12 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
         e.stopPropagation();
         ACTIVE_FILTERS[key] = value ? value.trim() : value;
 
+        // Reset sub-filters if collection changed
         if (key === 'nft') {
             ACTIVE_FILTERS.model = 'all';
             ACTIVE_FILTERS.bg = 'all';
             ACTIVE_FILTERS.symbol = 'all';
+            // Also clear search inputs for sub-filters
             ['model', 'bg', 'symbol'].forEach(k => {
                 const inp = document.getElementById(`filter-search-${k}`);
                 if (inp) inp.value = '';
@@ -1581,61 +1252,6 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
 }
 
 function applyHeaderSearch() {
-    loadLiveItems(true);
-}
-
-
-
-function openAdvancedFilters() {
-    const modal = document.getElementById('mrkt-modal');
-    const overlay = document.getElementById('mrkt-modal-overlay');
-    if (modal) modal.classList.add('active');
-    if (overlay) overlay.classList.add('active');
-}
-
-function closeMrktModal() {
-    const modal = document.getElementById('mrkt-modal');
-    const overlay = document.getElementById('mrkt-modal-overlay');
-    if (modal) modal.classList.remove('active');
-    if (overlay) overlay.classList.remove('active');
-}
-
-function resetMrktModal() {
-    ACTIVE_FILTERS = {
-        nft: 'all',
-        model: 'all',
-        bg: 'all',
-        symbol: 'all',
-        tags: 'all',
-        sort: 'price_asc',
-        price_from: null,
-        price_to: null,
-        gift_number: null,
-        search: ACTIVE_FILTERS.search || ""
-    };
-
-    const gNum = document.getElementById('filter-gift-number');
-    const pFrom = document.getElementById('filter-price-from');
-    const pTo = document.getElementById('filter-price-to');
-
-    if (gNum) gNum.value = "";
-    if (pFrom) pFrom.value = "";
-    if (pTo) pTo.value = "";
-
-    initFilterLists();
-    applyHeaderSearch();
-}
-
-function applyMrktModal() {
-    const gNum = document.getElementById('filter-gift-number');
-    const pFrom = document.getElementById('filter-price-from');
-    const pTo = document.getElementById('filter-price-to');
-
-    ACTIVE_FILTERS.gift_number = gNum ? gNum.value : "";
-    ACTIVE_FILTERS.price_from = pFrom ? pFrom.value : "";
-    ACTIVE_FILTERS.price_to = pTo ? pTo.value : "";
-
-    closeMrktModal();
     loadLiveItems(true);
 }
 
@@ -1669,7 +1285,7 @@ function createItemCard(item) {
 
     // For Gifts: Keep title below.
     // For Numbers/Usernames: Title is now inside media, so empty here? 
-    // User requested: "карточка с нимером | цена" -> Title IN card, Price below.
+    // User requested: "╨║╨░╤А╤В╨╛╤З╨║╨░ ╤Б ╨╜╨╕╨╝╨╡╤А╨╛╨╝ | ╤Ж╨╡╨╜╨░" -> Title IN card, Price below.
     // So for Num/User, we hide the card-title div or leave empty.
 
     const isUsername = (item.type === 'username') || item.nft_name.startsWith('@');
@@ -1699,29 +1315,6 @@ function createItemCard(item) {
         </div>
     `;
 
-    // IMAGE OVERLAY (Rented/Pending)
-    const overlay = document.createElement('div');
-    overlay.className = 'card-overlay';
-    if (item.status === 'rented') {
-        overlay.classList.add('rented');
-        overlay.innerHTML = `<span>${t('rented')}</span>`;
-
-        // NEW: Mini Timer for Card
-        if (item.rent_ends_at) {
-            const miniTimer = document.createElement('div');
-            miniTimer.className = 'card-mini-timer';
-            miniTimer.id = `card-timer-${item.id}`;
-            card.appendChild(miniTimer);
-            startCountdown(parseInt(item.rent_ends_at), miniTimer, true);
-        }
-    } else if (item.status === 'pending') {
-        overlay.classList.add('pending');
-        overlay.innerHTML = `<span>${t('pending')}</span>`;
-    }
-    if (item.status === 'rented' || item.status === 'pending') {
-        card.querySelector('.card-image-wrapper').appendChild(overlay);
-    }
-
     // Click on entire card
     card.onclick = (e) => {
         e.stopPropagation();
@@ -1731,7 +1324,31 @@ function createItemCard(item) {
     return card;
 }
 
-// Duplicate modal functions removed
+function openAdvancedFilters() {
+    document.getElementById('mrkt-modal').classList.add('active');
+    document.getElementById('mrkt-modal-overlay').classList.add('active');
+}
+function closeMrktModal() {
+    document.getElementById('mrkt-modal').classList.remove('active');
+    document.getElementById('mrkt-modal-overlay').classList.remove('active');
+}
+function resetMrktModal() {
+    ACTIVE_FILTERS = { nft: 'all', model: 'all', bg: 'all', symbol: 'all', tags: 'all', sort: 'price_asc', price_from: null, price_to: null, gift_number: null, search: ACTIVE_FILTERS.search };
+    document.getElementById('filter-gift-number').value = "";
+    document.getElementById('filter-price-from').value = "";
+    document.getElementById('filter-price-to').value = "";
+    initFilterLists();
+    applyHeaderSearch();
+}
+function applyMrktModal() {
+    // Collect from inputs
+    ACTIVE_FILTERS.gift_number = document.getElementById('filter-gift-number').value;
+    ACTIVE_FILTERS.price_from = document.getElementById('filter-price-from').value;
+    ACTIVE_FILTERS.price_to = document.getElementById('filter-price-to').value;
+
+    closeMrktModal();
+    loadLiveItems(true); // Trigger server-side refresh
+}
 
 function debounce(func, wait) {
     let timeout;
@@ -1799,12 +1416,88 @@ function handleGiftImageError(img, name) {
     }
 }
 
+function handleFilterImageError(img, name, collection, fallback, key) {
+    img.dataset.attempt = img.dataset.attempt ? parseInt(img.dataset.attempt) + 1 : 1;
+    const attempt = parseInt(img.dataset.attempt);
+
+    if (attempt === 1) {
+        // 1. If it's a model and local load failed, try the Collection image (clean/base gift) from TonAPI
+        if (key === 'model' && collection && window.FILTERS_CACHE && window.FILTERS_CACHE.nft_addresses && window.FILTERS_CACHE.nft_addresses[collection]) {
+            const addr = window.FILTERS_CACHE.nft_addresses[collection];
+            img.src = `https://cache.tonapi.io/img/collection/${addr}/image.png`;
+            return;
+        }
+
+        // 2. If it's an NFT (collection) and TonAPI failed, try Fragment or base model
+        if (key === 'nft' && img.src.includes('tonapi.io')) {
+            let n = name;
+            if (n.endsWith('s') && n.length > 4) n = n.slice(0, -1);
+            const f = generateFragmentUrls(n + " #1", 0);
+            if (f.image) {
+                img.src = f.image;
+                return;
+            }
+        }
+
+        // 3. Last resort Fragment fallback for models if TonAPI also failed
+        if (key === 'model' && !img.src.includes('fragment.com') && !img.src.includes('tonapi.io')) {
+            const f = generateFragmentUrls(name + " #1", 0);
+            if (f.image) {
+                img.src = f.image;
+                return;
+            }
+        }
+
+        // Try cache-busting the current URL
+        if (img.src && !img.src.includes('?refresh=')) {
+            img.src = img.src + (img.src.includes('?') ? '&' : '?') + 'refresh=' + Date.now();
+            return;
+        }
+    }
+
+    if (attempt === 2) {
+        // 2. Try generic Fragment URL for models/nfts (gift type)
+        // If it's a model (e.g. "Red"), its name alone isn't enough on Fragment, 
+        // so we use the collection name (e.g. "Clover Pins") as the source
+        let n = (key === 'model' && collection) ? collection : name;
+        if (n && !n.includes('#')) {
+            // Basic singularization for "Clover Pins" -> "Clover Pin"
+            if (n.endsWith('s') && n.length > 4) n = n.slice(0, -1);
+
+            const f = generateFragmentUrls(n + " #1", 0);
+            if (f.image && f.image !== img.src.split('?')[0]) {
+                img.src = f.image;
+                return;
+            }
+        }
+    }
+
+    if (attempt === 3) {
+        // 3. Try hyphenated fallback
+        let n = (key === 'model' && collection) ? collection : name;
+        if (n && !n.includes('#')) {
+            if (n.endsWith('s') && n.length > 4) n = n.slice(0, -1);
+
+            const f = generateFragmentUrls(n + " #1", 1);
+            if (f.image && f.image !== img.src.split('?')[0]) {
+                img.src = f.image;
+                return;
+            }
+        }
+    }
+
+    // Final fallback
+    img.src = fallback || 'https://nft.fragment.com/guide/gift.svg';
+    img.onerror = null;
+    img.style.opacity = '1';
+}
+
 function renderMediaHTML(it, isModal = false) {
     const isNum = (it.type === 'number') || it.nft_name.includes('+888');
     const isUser = (it.type === 'username') || it.nft_name.startsWith('@');
     const minD = Math.floor((it.min_duration || 86400) / 86400);
     const maxD = Math.floor((it.max_duration || 2592000) / 86400);
-    const daysLabel = `${t('days')}: ${minD} – ${maxD}`;
+    const daysLabel = `${t('days')}: ${minD} тАУ ${maxD}`;
 
     if (isNum || isUser) {
         let inner = "";
@@ -1874,7 +1567,7 @@ async function openProductView(item) {
         if (item.status === 'rented' && item.rent_ends_at) {
             // Create a unique timer element ID
             const timerId = 'release-timer-' + item.id;
-            releaseBadge.innerHTML = `<div id="${timerId}" style="display:block; font-size:16px; font-weight:700; color:#fff; margin-bottom:12px; width: 100%;"></div>`;
+            releaseBadge.innerHTML = `<div id="${timerId}" style="margin-bottom:12px;"></div>`;
             releaseBadge.style.display = 'block';
 
             // Start the countdown timer
@@ -1940,11 +1633,6 @@ async function openProductView(item) {
         viewCopyBtn.onclick = () => copyNftTitle(item.nft_name);
     }
 
-    const shareBtn = document.getElementById('view-share-icon');
-    if (shareBtn) {
-        shareBtn.onclick = handleShareClick;
-    }
-
     const notifyBtn = document.getElementById('notify-btn');
     if (notifyBtn) {
         notifyBtn.style.display = (item.status === 'rented') ? 'block' : 'none';
@@ -2006,7 +1694,7 @@ async function openProductView(item) {
     const minDays = Math.floor((item.min_duration || 86400) / 86400);
     const maxDays = Math.floor((item.max_duration || 2592000) / 86400);
     const rangeEl = document.getElementById('view-duration-range');
-    if (rangeEl) rangeEl.textContent = `${minDays} — ${maxDays}`;
+    if (rangeEl) rangeEl.textContent = `${minDays} тАФ ${maxDays}`;
     document.getElementById('view-discount').innerText = "0.1%";
     document.getElementById('rent-duration-input').value = minDays;
 
@@ -2021,13 +1709,13 @@ async function openProductView(item) {
         const giftSlug = giftBaseName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join('');
         const tgNftLink = `https://t.me/nft/${giftSlug}-${nftNum}`;
 
-        const createPropRow = (label, value) => {
-            if (!value || value === 'Unknown' || value === 'Gift' || value === 'None') return null;
+        const createPropRow = (label, value, statKey) => {
+            const displayValue = (!value || value === 'Unknown' || value === 'Gift') ? 'тАФ' : value;
             const row = document.createElement('div');
             row.className = 'property-item';
             row.innerHTML = `
                 <div class="prop-left"><div class="prop-name">${label}</div></div>
-                <div class="prop-right"><span style="color:var(--accent-blue); font-weight:600;">${value}</span></div>`;
+                <div class="prop-right"><span style="color:var(--accent-blue); font-weight:600;">${displayValue}</span></div>`;
             return row;
         };
 
@@ -2040,12 +1728,11 @@ async function openProductView(item) {
 
         // Helper for clickable properties
         const appendClickableProp = (label, val, key) => {
-            if (!val || val === 'Unknown' || val === 'Gift' || val === 'None') return;
-            const r = createPropRow(label, val);
-            if (!r) return;
+            if (!val) return;
+            const r = createPropRow(label, val, key);
             r.classList.add('clickable-prop'); // Ensure visual feedback
             // Add arrow
-            r.querySelector('.prop-right').innerHTML += `<span class="arrow-v" style="font-size:12px; margin-left:8px;">›</span>`;
+            r.querySelector('.prop-right').innerHTML += `<span class="arrow-v" style="font-size:12px; margin-left:8px;">тА║</span>`;
 
             r.onclick = () => {
                 // FAILSAFE: Ensure we set the Collection filter too, otherwise Model list is disabled
@@ -2060,27 +1747,13 @@ async function openProductView(item) {
         };
 
         if (item._modelName) appendClickableProp(t('model'), item._modelName, 'model');
-
-        // Restore missing symbol logic
-        let sym = item._symbol;
-        if (!sym && item.attributes) {
-            const sAttr = item.attributes.find(a => a.trait_type.toLowerCase() === 'symbol' || a.trait_type.toLowerCase() === 'символ');
-            if (sAttr) sym = sAttr.value;
-        }
-        if (sym) appendClickableProp(t('symbol'), sym, 'symbol');
-
+        if (item._symbol) appendClickableProp(t('symbol'), item._symbol, 'symbol');
         if (item._backdrop) appendClickableProp(t('backdrop'), item._backdrop, 'bg');
 
-        // Auto-relist status - ONLY FOR GIFTS
-        if (item.type === 'gift') {
-            const isYes = item.auto_relist !== undefined ? Boolean(parseInt(item.auto_relist)) : true;
-            const reRow = createPropRow(t('auto_relist_label'), isYes ? t('yes') : t('no'));
-            if (reRow) {
-                if (!isYes) reRow.querySelector('.prop-right span').style.color = '#ff3b30';
-                else reRow.querySelector('.prop-right span').style.color = 'var(--accent-blue)';
-                propCont.appendChild(reRow);
-            }
-        }
+        // Auto-relist status
+        const reRow = createPropRow(t('auto_relist_label'), item.auto_relist ? t('yes') : t('no'));
+        if (!item.auto_relist) reRow.querySelector('.prop-right span').style.color = '#ff3b30';
+        propCont.appendChild(reRow);
     }
 
     // Rent Button
@@ -2098,11 +1771,7 @@ async function openProductView(item) {
         if (rentBtnTextEl) rentBtnTextEl.textContent = t('rent_button', { amount: '' }).replace('{amount}', '').trim();
 
         rentBtn.onclick = async () => {
-            // Critical: Open Ton Connect modal WITHIN the product view context
-            if (!tonConnectUI.connected) {
-                await tonConnectUI.openModal();
-                return;
-            }
+            if (!tonConnectUI.connected) { await tonConnectUI.openModal(); return; }
 
             // ALERT: Check auto-relist for pre-orders
             if (item.status === 'rented' && !item.auto_relist) {
@@ -2180,9 +1849,6 @@ async function openProductView(item) {
                 if (countdownCont) countdownCont.style.display = 'none';
             }
 
-            // 4. Check Notification Status
-            checkNotificationStatus(item.nft_address);
-
             // 4. Existing warning logic and attributes
             if (details.rent && details.rent.listed_at) {
                 const diffHrs = (Date.now() - (details.rent.listed_at * 1000)) / (1000 * 60 * 60);
@@ -2192,23 +1858,30 @@ async function openProductView(item) {
                     if (wt) wt.innerText = diffHrs < 1 ? t('just_now') : `${Math.round(diffHrs)} ${t('hours_ago')}`;
                 }
             }
-            if (details.attributes && propCont) {
+            if (details.attributes) {
                 details.attributes.forEach(attr => {
                     const trait = attr.trait_type.toLowerCase();
-                    const label = t(trait) || attr.trait_type;
-                    let row = Array.from(propCont.querySelectorAll('.property-item')).find(r => r.querySelector('.prop-name')?.textContent === label);
-
-                    if (!row) {
-                        // Create row if missing (e.g. Symbol was not in initial item)
-                        let key = trait;
-                        if (key === 'backdrop' || key === 'background' || key === 'фон') key = 'bg';
-                        if (key === 'symbol' || key === 'символ') key = 'symbol';
-                        if (key === 'model' || key === 'модель') key = 'model';
-
-                        appendClickableProp(label, attr.value, key);
-                    } else {
+                    const row = Array.from(document.querySelectorAll('.property-item')).find(r => r.querySelector('.prop-name')?.textContent === t(trait));
+                    if (row) {
                         const valSpan = row.querySelector('.prop-right span');
                         if (valSpan) valSpan.textContent = attr.value;
+
+                        // NEW: Make attribute clickable to filter
+                        row.classList.add('clickable-prop');
+                        row.onclick = () => {
+                            let filterKey = trait;
+                            if (filterKey === 'backdrop' || filterKey === 'background' || filterKey === '╤Д╨╛╨╜') {
+                                filterKey = 'bg';
+                            }
+                            if (ACTIVE_FILTERS.hasOwnProperty(filterKey)) {
+                                ACTIVE_FILTERS[filterKey] = attr.value;
+                                closeProductView();
+                                switchTab(0); // Go to Gifts
+                                initFilterLists();
+                                applyHeaderSearch();
+                                tg?.HapticFeedback?.impactOccurred('light');
+                            }
+                        };
                     }
                 });
             }
@@ -2279,10 +1952,10 @@ function updateTotalPrice() {
         usdEl.innerText = `~$${totalUsd}`;
     }
 
-    // Обновить текст кнопки с учетом языка и статуса (Аренда vs Предзаказ)
+    // ╨Ю╨▒╨╜╨╛╨▓╨╕╤В╤М ╤В╨╡╨║╤Б╤В ╨║╨╜╨╛╨┐╨║╨╕ ╤Б ╤Г╤З╨╡╤В╨╛╨╝ ╤П╨╖╤Л╨║╨░ ╨╕ ╤Б╤В╨░╤В╤Г╤Б╨░ (╨Р╤А╨╡╨╜╨┤╨░ vs ╨Я╤А╨╡╨┤╨╖╨░╨║╨░╨╖)
     const rentBtn = document.getElementById('main-rent-action-btn');
     if (rentBtn) {
-        // Попробуем найти текстовый узел или элемент с текстом
+        // ╨Я╨╛╨┐╤А╨╛╨▒╤Г╨╡╨╝ ╨╜╨░╨╣╤В╨╕ ╤В╨╡╨║╤Б╤В╨╛╨▓╤Л╨╣ ╤Г╨╖╨╡╨╗ ╨╕╨╗╨╕ ╤Н╨╗╨╡╨╝╨╡╨╜╤В ╤Б ╤В╨╡╨║╤Б╤В╨╛╨╝
         const textNode = Array.from(rentBtn.childNodes).find(n => n.nodeType === Node.TEXT_NODE && n.textContent.trim().length > 0);
         if (textNode) {
             const isRented = CURRENT_PAYMENT_ITEM && CURRENT_PAYMENT_ITEM.status === 'rented';
@@ -2303,144 +1976,21 @@ function closeProductView() {
     }
 }
 
-let IS_SHARE_OPENING = false;
-async function handleShareClick() {
-    console.log("Share button clicked!");
-    if (IS_SHARE_OPENING) {
-        console.warn("Share already opening, skipping...");
-        return;
-    }
-    IS_SHARE_OPENING = true;
-
-    try {
-        if (!CURRENT_PAYMENT_ITEM) {
-            console.error("No current payment item for sharing!");
-            showToast("Ошибка: товар не выбран");
-            return;
-        }
-
-        const item = CURRENT_PAYMENT_ITEM;
-        // Construct full item name with number if it's a gift
-        let itemName = item.nft_name || item.title || "NFT";
-        if (item.type === 'gift' && item.nft_id && !itemName.includes('#')) {
-            itemName += ` #${item.nft_id}`;
-        }
-        const userId = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user?.id) || 0;
+function handleShareClick() {
+    if (!CURRENT_PAYMENT_ITEM) return;
+    const cleanName = CURRENT_PAYMENT_ITEM.nft_name.replace('@', '');
+    if (tg && tg.switchInlineQuery) {
+        tg.switchInlineQuery(cleanName, ['users', 'groups', 'channels']);
+    } else {
         const botUser = "OctoRent_bot";
-        const shareLink = `https://t.me/${botUser}/app?startapp=nft_${item.nft_address || item.id}`;
-
-        console.log("Preparing share for item:", itemName, "type:", item.type, "User:", userId);
-
-        // Stage 1: Premium Prepared Message (requires Telegram 7.8+)
-        if (window.Telegram?.WebApp?.sendPreparedInlineMessage) {
-            try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 4000);
-
-                const res = await fetch(`${BACKEND_URL}/api/referral/prepare_share`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        user_id: userId,
-                        type: item.type || 'gift',
-                        name: itemName,
-                        nft_address: item.nft_address || '',
-                        rent_ends_at: item.rent_ends_at || null // NEW: pass exploration
-                    }),
-                    signal: controller.signal
-                });
-                clearTimeout(timeoutId);
-                const data = await res.json();
-                console.log("Prepare share response:", data);
-                if (data.status === 'ok' && data.id) {
-                    console.log("Sending prepared inline message with id:", data.id);
-                    window.Telegram.WebApp.sendPreparedInlineMessage(data.id);
-                    return;
-                } else {
-                    console.warn("prepare_share returned error:", data);
-                }
-            } catch (e) {
-                console.warn("Product share stage 1 failed:", e.message);
-            }
-        }
-
-        // Stage 2: switchInlineQuery (works in older Telegram versions)
-        if (window.Telegram?.WebApp?.switchInlineQuery) {
-            console.log("Using switchInlineQuery fallback with:", itemName);
-            // DO NOT strip numbers or @, we need exact match for bot search
-            window.Telegram.WebApp.switchInlineQuery(itemName, ['users', 'groups', 'channels']);
-            return;
-        }
-
-        // Stage 3: shareURL
-        if (window.Telegram?.WebApp?.shareURL) {
-            console.log("Using shareURL fallback");
-            window.Telegram.WebApp.shareURL(shareLink, `💎 ${itemName} — аренда в OctoRent`);
-            return;
-        }
-
-        // Stage 4: Clipboard
-        console.log("Using clipboard fallback");
+        const shareLink = `https://t.me/${botUser}?start=nft_${CURRENT_PAYMENT_ITEM.nft_address}`;
         copyToClipboard(shareLink);
-        showToast(t('link_copied'));
-    } catch (err) {
-        console.error("Critical error in handleShareClick:", err);
-    } finally {
-        setTimeout(() => {
-            console.log("Resetting IS_SHARE_OPENING");
-            IS_SHARE_OPENING = false;
-        }, 1000);
+        showToast(CURRENT_LANG === 'ru' ? "╨б╤Б╤Л╨╗╨║╨░ ╤Б╨║╨╛╨┐╨╕╤А╨╛╨▓╨░╨╜╨░" : "Link copied");
     }
 }
 
-async function handleNotifyClick() {
-    if (!CURRENT_PAYMENT_ITEM || !CURRENT_PAYMENT_ITEM.nft_address) return;
-
-    const userId = tg.initDataUnsafe?.user?.id || 0;
-    const btn = document.getElementById('notify-btn');
-    if (!btn) return;
-
-    try {
-        const resp = await fetch(`${BACKEND_URL}/api/toggle_notification`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                user_id: userId,
-                nft_address: CURRENT_PAYMENT_ITEM.nft_address
-            })
-        });
-        const d = await resp.json();
-
-        if (d.status === 'ok') {
-            const isActive = d.action === 'added';
-            btn.classList.toggle('active', isActive);
-
-            showToast(isActive ?
-                (CURRENT_LANG === 'ru' ? "Уведомление включено" : "Notification enabled") :
-                (CURRENT_LANG === 'ru' ? "Уведомление выключено" : "Notification disabled")
-            );
-
-            if (tg && tg.HapticFeedback) {
-                tg.HapticFeedback.notificationOccurred('success');
-            }
-        }
-    } catch (e) {
-        console.error("Notify toggle error:", e);
-    }
-}
-
-async function checkNotificationStatus(nftAddress) {
-    const btn = document.getElementById('notify-btn');
-    if (!btn) return;
-
-    const userId = tg.initDataUnsafe?.user?.id || 0;
-    try {
-        const r = await fetch(`${BACKEND_URL}/api/check_notification_status?user_id=${userId}&nft_address=${nftAddress}`);
-        const d = await r.json();
-        btn.classList.toggle('active', !!d.subscribed);
-    } catch (e) {
-        console.error("Notify status check error:", e);
-    }
+function handleNotifyClick() {
+    showToast(CURRENT_LANG === 'ru' ? "╨Т╤Л ╨┐╨╛╨╗╤Г╤З╨╕╤В╨╡ ╤Г╨▓╨╡╨┤╨╛╨╝╨╗╨╡╨╜╨╕╨╡, ╨║╨╛╨│╨┤╨░ NFT ╨╛╤Б╨▓╨╛╨▒╨╛╨┤╨╕╤В╤Б╤П" : "You will be notified when this NFT is available");
 }
 
 function copyNftTitle(name) {
@@ -2457,254 +2007,32 @@ function renderItemsBatch(items) {
     observeNewCards();
 }
 
-/* --- TC TUTORIAL LOGIC --- */
-let currentTutorialStep = 1;
-let tutorialPhase = 1; // 1: Education, 2: Finalization
-let progressTimer = null;
-
-const TUTORIAL_DATA = {
-    1: { img: 'pictures/tutorial/step1.png', key: 'tut_step_1' },
-    2: { img: 'pictures/tutorial/step2.png', key: 'tut_step_2' },
-    3: { img: 'pictures/tutorial/step3.png', key: 'tut_step_3' },
-    4: { img: 'pictures/tutorial/step4.png', key: 'tut_step_4' },
-    5: { img: 'pictures/tutorial/step5.png', key: 'tut_step_5' },
-    6: { img: 'pictures/tutorial/step6.png', key: 'tut_step_6' }
-};
-
-function copyText(text, event) {
-    if (event) {
-        event.preventDefault();
-        event.stopPropagation();
-    }
-    navigator.clipboard.writeText(text).then(() => {
-        // Show indicator in button span if exists
-        const btn = document.getElementById('tutorial-next-btn');
-        if (btn) {
-            const original = btn.querySelector('span').innerText;
-            btn.querySelector('span').innerText = t('copy_success');
-            setTimeout(() => {
-                btn.querySelector('span').innerText = original;
-            }, 1000);
-        } else {
-            tg.showAlert(t('copy_success'));
-        }
-    });
-}
-
 function openTcModal(orderId, isPolling = false) {
     document.getElementById('tc-current-order-id').value = orderId;
     document.getElementById('tc-modal-overlay').classList.add('active');
     document.getElementById('tc-modal').classList.add('active');
 
+    const body = document.getElementById('tc-modal-body');
     if (isPolling) {
-        renderPolling();
+        body.innerHTML = `
+    <div id="tc-polling-state" style="text-align:center; padding: 20px 0;">
+        <div class="premium-spinner" style="margin: 0 auto 20px;"></div>
+        <p style="color:#fff; font-weight:700; margin-bottom:10px;">╨Ц╨┤╨╡╨╝ ╨┐╨╛╨┤╤В╨▓╨╡╤А╨╢╨┤╨╡╨╜╨╕╤П ╨╛╨┐╨╗╨░╤В╤Л...</p>
+        <p>╨Ю╨▒╤Л╤З╨╜╨╛ ╤Н╤В╨╛ ╨╖╨░╨╜╨╕╨╝╨░╨╡╤В 15-40 ╤Б╨╡╨║╤Г╨╜╨┤. ╨Э╨╡ ╨╖╨░╨║╤А╤Л╨▓╨░╨╣╤В╨╡ ╤Н╤В╨╛ ╨╛╨║╨╜╨╛.</p>
+    </div>
+`;
     } else {
-        tutorialPhase = 1;
-        currentTutorialStep = 1;
-        renderTutorialStep();
+        // Reset to default
+        body.innerHTML = `
+    <p>1. ╨Ч╨░╨╣╨┤╨╕╤В╨╡ ╨╜╨░ Fragment.com (╤Б ╨║╨╛╨╝╨┐╤М╤О╤В╨╡╤А╨░ ╨╕╨╗╨╕ ╨┤╤А╤Г╨│╨╛╨│╨╛ ╨▒╤А╨░╤Г╨╖╨╡╤А╨░).</p>
+    <p>2. ╨Э╨░╨╢╨╝╨╕╤В╨╡ <b>Connect TON</b>.</p>
+    <p>3. ╨б╨║╨╛╨┐╨╕╤А╤Г╨╣╤В╨╡ ╤Б╤Б╤Л╨╗╨║╤Г <b>TON Connect Link</b> (╨║╨╜╨╛╨┐╨║╨░ ╤А╤П╨┤╨╛╨╝ ╤Б QR-╨║╨╛╨┤╨╛╨╝).</p>
+    <p>4. ╨Т╤Б╤В╨░╨▓╤М╤В╨╡ ╨╡╤С ╤Б╤О╨┤╨░:</p>
+    <input type="text" id="tc-link-input" placeholder="tc://..."
+        style="width: 100%; height: 50px; background: rgba(255,255,255,0.05); border: 1px solid #333; border-radius: 12px; margin-top: 15px; color: #fff; padding: 0 15px;">
+    <button onclick="submitTcLink()" class="btn-yellow" style="width: 100%; margin-top: 20px;">╨Я╨╛╨┤╨║╨╗╤О╤З╨╕╤В╤М ╨║╨╛╤И╨╡╨╗╨╡╨║</button>
+`;
     }
-}
-
-function renderPolling() {
-    const body = document.getElementById('tc-modal-body');
-    body.className = "tc-redesign-container";
-    body.innerHTML = `
-        <div class="tc-polling-premium">
-            <div class="premium-spinner" style="width: 60px; height: 60px; margin-bottom: 24px;"></div>
-            <div class="tc-polling-title">Ждем подтверждения...</div>
-            <div class="tc-polling-desc">
-                Обычно это занимает 15-40 секунд.<br>
-                Пожалуйста, не закрывайте это окно.
-            </div>
-        </div>
-    `;
-}
-
-function renderTutorialStep() {
-    const body = document.getElementById('tc-modal-body');
-    const data = TUTORIAL_DATA[currentTutorialStep];
-
-    body.className = ""; // Remove container to avoid double padding if needed
-    body.innerHTML = `
-        <div class="tutorial-container">
-            <div class="tutorial-image-wrapper" onclick="openLightbox('${data.img}')">
-                <img src="${data.img}" class="tutorial-image" alt="Step ${currentTutorialStep}">
-            </div>
-            <div class="tutorial-desc">${t(data.key)}</div>
-            <button id="tutorial-next-btn" class="btn-progress" disabled onclick="nextTutorialStep()">
-                <div class="progress-fill"></div>
-                <span>${currentTutorialStep === 6 ? t('tut_finish') : t('tut_next')}</span>
-            </button>
-        </div>
-    `;
-
-    startProgressTimer();
-}
-
-function startProgressTimer() {
-    if (progressTimer) clearInterval(progressTimer);
-    const btn = document.getElementById('tutorial-next-btn');
-    const fill = btn.querySelector('.progress-fill');
-
-    let width = 0;
-    btn.disabled = true;
-    btn.classList.remove('active');
-
-    progressTimer = setInterval(() => {
-        width += 1;
-        fill.style.width = width + '%';
-        if (width >= 100) {
-            clearInterval(progressTimer);
-            btn.disabled = false;
-            btn.classList.add('active');
-        }
-    }, 30); // 3000ms / 100 = 30ms
-}
-
-function nextTutorialStep() {
-    if (tutorialPhase === 1) {
-        if (currentTutorialStep < 3) {
-            currentTutorialStep++;
-            renderTutorialStep();
-        } else {
-            renderInputStep();
-        }
-    } else if (tutorialPhase === 2) {
-        if (currentTutorialStep < 6) {
-            currentTutorialStep++;
-            renderTutorialStep();
-        } else {
-            closeTcModal();
-        }
-    }
-}
-
-function renderInputStep() {
-    const body = document.getElementById('tc-modal-body');
-    body.className = "tc-redesign-container";
-    body.innerHTML = `
-        <div class="tc-step" style="animation: fadeInUp 0.4s ease-out; gap: 12px; align-items: center;">
-            <div class="tc-step-number" style="background: rgba(0, 136, 204, 0.2); border: 1px solid var(--accent-blue);">🔗</div>
-            <div class="tc-step-text" style="font-size: 15px;">${t('tut_input_desc')}</div>
-        </div>
-        
-        <div class="tc-input-wrapper" style="animation: fadeInUp 0.4s ease-out 0.1s; opacity:0; animation-fill-mode: forwards;">
-            <div class="tc-input-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-                </svg>
-            </div>
-            <input type="text" id="tc-link-input" class="tc-input-premium" placeholder="tc://...">
-        </div>
-
-        <button onclick="submitTcLink()" class="tc-btn-premium" style="animation: fadeInUp 0.4s ease-out 0.2s; opacity:0; animation-fill-mode: forwards;">
-            ${t('tut_connect')}
-        </button>
-    `;
-}
-
-let lightboxZoomState = { scale: 1, x: 0, y: 0, lastX: 0, lastY: 0, lastScale: 1, initialDist: 0 };
-
-function openLightbox(src) {
-    const lb = document.getElementById('tc-lightbox');
-    const img = document.getElementById('lightbox-img');
-    img.src = src;
-
-    // Reset state
-    lightboxZoomState = { scale: 1, x: 0, y: 0, lastX: 0, lastY: 0, lastScale: 1, initialDist: 0 };
-    updateLightboxTransform();
-
-    lb.classList.add('active');
-    document.body.style.overflow = 'hidden';
-
-    setupLightboxEvents(img);
-}
-
-function setupLightboxEvents(img) {
-    if (img.dataset.eventsSet) return;
-    img.dataset.eventsSet = "true";
-
-    img.addEventListener('touchstart', (e) => {
-        if (e.touches.length === 2) {
-            lightboxZoomState.initialDist = Math.hypot(
-                e.touches[0].pageX - e.touches[1].pageX,
-                e.touches[0].pageY - e.touches[1].pageY
-            );
-        } else if (e.touches.length === 1) {
-            lightboxZoomState.lastX = e.touches[0].pageX - lightboxZoomState.x;
-            lightboxZoomState.lastY = e.touches[0].pageY - lightboxZoomState.y;
-        }
-    });
-
-    img.addEventListener('touchmove', (e) => {
-        if (e.touches.length === 2) {
-            const dist = Math.hypot(
-                e.touches[0].pageX - e.touches[1].pageX,
-                e.touches[0].pageY - e.touches[1].pageY
-            );
-            const delta = dist / lightboxZoomState.initialDist;
-            lightboxZoomState.scale = Math.min(Math.max(lightboxZoomState.lastScale * delta, 1), 5);
-        } else if (e.touches.length === 1 && lightboxZoomState.scale > 1) {
-            lightboxZoomState.x = e.touches[0].pageX - lightboxZoomState.lastX;
-            lightboxZoomState.y = e.touches[0].pageY - lightboxZoomState.lastY;
-        }
-        updateLightboxTransform();
-    });
-
-    img.addEventListener('touchend', (e) => {
-        lightboxZoomState.lastScale = lightboxZoomState.scale;
-        if (lightboxZoomState.scale <= 1) {
-            lightboxZoomState.x = 0;
-            lightboxZoomState.y = 0;
-            updateLightboxTransform();
-        }
-    });
-
-    // Double tap reset
-    let lastTap = 0;
-    img.addEventListener('touchend', (e) => {
-        const now = Date.now();
-        if (now - lastTap < 300) {
-            lightboxZoomState.scale = lightboxZoomState.scale > 1 ? 1 : 2;
-            lightboxZoomState.lastScale = lightboxZoomState.scale;
-            lightboxZoomState.x = 0;
-            lightboxZoomState.y = 0;
-            updateLightboxTransform();
-        }
-        lastTap = now;
-    });
-
-    // Wheel zoom for Desktop
-    img.addEventListener('wheel', (e) => {
-        e.preventDefault();
-        const delta = e.deltaY > 0 ? 0.9 : 1.1;
-        lightboxZoomState.scale = Math.min(Math.max(lightboxZoomState.scale * delta, 1), 5);
-        lightboxZoomState.lastScale = lightboxZoomState.scale;
-        if (lightboxZoomState.scale <= 1) {
-            lightboxZoomState.x = 0;
-            lightboxZoomState.y = 0;
-        }
-        updateLightboxTransform();
-    }, { passive: false });
-}
-
-function updateLightboxTransform() {
-    const img = document.getElementById('lightbox-img');
-    if (!img) return;
-    img.style.transform = `translate(${lightboxZoomState.x}px, ${lightboxZoomState.y}px) scale(${lightboxZoomState.scale})`;
-}
-
-function closeLightbox() {
-    const lb = document.getElementById('tc-lightbox');
-    lb.classList.remove('active');
-    document.body.style.overflow = '';
-}
-
-function closeTcModal() {
-    if (progressTimer) clearInterval(progressTimer);
-    document.getElementById('tc-modal-overlay').classList.remove('active');
-    document.getElementById('tc-modal').classList.remove('active');
 }
 const trigger = document.getElementById('loader-trigger');
 if (trigger) {
@@ -2740,9 +2068,9 @@ async function loadHistoryContent() {
         if (!orders || orders.length === 0) {
             list.innerHTML = `
                 <div style="color:#8b9bb4; text-align:center; padding:40px 20px;">
-                    <div style="font-size:32px; margin-bottom:10px; opacity:0.5;">📭</div>
+                    <div style="font-size:32px; margin-bottom:10px; opacity:0.5;">ЁЯУн</div>
                     <div style="font-weight:700; color:#fff;">${t('history_empty')}</div>
-                    <div style="font-size:12px; margin-top:5px;">У вас пока нет активных или прошлых аренд</div>
+                    <div style="font-size:12px; margin-top:5px;">╨г ╨▓╨░╤Б ╨┐╨╛╨║╨░ ╨╜╨╡╤В ╨░╨║╤В╨╕╨▓╨╜╤Л╤Е ╨╕╨╗╨╕ ╨┐╤А╨╛╤И╨╗╤Л╤Е ╨░╤А╨╡╨╜╨┤</div>
                 </div>`;
             return;
         }
@@ -2770,10 +2098,10 @@ async function loadHistoryContent() {
                 displayStatus = t('status_rented');
             } else if (o.status === 'active') {
                 statusColor = '#34C759';
-                displayStatus = 'Активен';
+                displayStatus = '╨Р╨║╤В╨╕╨▓╨╡╨╜';
             } else if (o.status === 'paid') {
                 statusColor = '#007AFF';
-                displayStatus = 'Обработка...';
+                displayStatus = '╨Ю╨▒╤А╨░╨▒╨╛╤В╨║╨░...';
             }
 
             item.innerHTML = `
@@ -2782,7 +2110,7 @@ async function loadHistoryContent() {
                     <span class="status-tag" style="color:${statusColor}; border: 1px solid ${statusColor}44; background: ${statusColor}11;">${displayStatus}</span>
                 </div>
                 <div style="display:flex; justify-content:space-between; font-size:12px; color:#8b9bb4; font-weight:600;">
-                    <span>${o.days} дн.</span>
+                    <span>${o.days} ╨┤╨╜.</span>
                     <span class="tm-amount icon-ton" style="font-size:inherit; font-weight:800; color:#fff;">${o.total_price}</span>
                 </div>
                 ${showTcBtn ? `
@@ -2794,20 +2122,68 @@ async function loadHistoryContent() {
             list.appendChild(item);
         });
     } catch (e) {
-        list.innerHTML = '<div style="color:#ff3b30; text-align:center; padding:10px;">Ошибка загрузки</div>';
+        list.innerHTML = '<div style="color:#ff3b30; text-align:center; padding:10px;">╨Ю╤И╨╕╨▒╨║╨░ ╨╖╨░╨│╤А╤Г╨╖╨║╨╕</div>';
     }
 }
 
-// Countdown function moved to timer_helper.js with simple text format
+function startCountdown(endTime, targetEl) {
+    if (typeof endTime !== 'number') return;
+    const intervalKey = targetEl.id || 'global-timer';
+    if (COUNTDOWN_INTERVALS[intervalKey]) clearInterval(COUNTDOWN_INTERVALS[intervalKey]);
+
+    const endDate = new Date(endTime * 1000);
+    const dateStr = endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+    // Market App Style: Ends in [0 days] : [14] : [37] : [02] Feb 8, 2026
+    const update = () => {
+        const now = Math.floor(Date.now() / 1000);
+        const diff = endTime - now;
+
+        if (diff <= 0) {
+            targetEl.innerHTML = `<span style="color:#FF3B30; font-weight:800;">EXPIRED</span>`;
+            clearInterval(COUNTDOWN_INTERVALS[intervalKey]);
+            return;
+        }
+
+        const d = Math.floor(diff / 86400);
+        const h = Math.floor((diff % 86400) / 3600);
+        const m = Math.floor((diff % 3600) / 60);
+        const s = diff % 60;
+        const pad = (n) => n.toString().padStart(2, '0');
+
+        targetEl.innerHTML = `
+            <div class="market-timer-row">
+                <span class="mt-label">${t('ends_in')}</span>
+                
+                <div class="mt-pill mt-wide">${d} ${t('days')}</div>
+                <span class="mt-sep">:</span>
+                
+                <div class="mt-pill">${pad(h)}</div>
+                <span class="mt-sep">:</span>
+                
+                <div class="mt-pill">${pad(m)}</div>
+                <span class="mt-sep">:</span>
+                
+                <div class="mt-pill">${pad(s)}</div>
+                
+                <span class="mt-date">${dateStr}</span>
+            </div>
+        `;
+    };
+
+    update();
+    COUNTDOWN_INTERVALS[intervalKey] = setInterval(update, 1000);
+
+}
 
 function copyWallet() {
     if (tonConnectUI && tonConnectUI.account && tonConnectUI.account.address) {
         copyToClipboard(tonConnectUI.account.address);
-        if (tg) tg.showAlert("Адрес скопирован!");
-        else alert("Адрес скопирован!");
+        if (tg) tg.showAlert("╨Р╨┤╤А╨╡╤Б ╤Б╨║╨╛╨┐╨╕╤А╨╛╨▓╨░╨╜!");
+        else alert("╨Р╨┤╤А╨╡╤Б ╤Б╨║╨╛╨┐╨╕╤А╨╛╨▓╨░╨╜!");
     } else {
-        if (tg) tg.showAlert("Кошелек не подключен");
-        else alert("Кошелек не подключен");
+        if (tg) tg.showAlert("╨Ъ╨╛╤И╨╡╨╗╨╡╨║ ╨╜╨╡ ╨┐╨╛╨┤╨║╨╗╤О╤З╨╡╨╜");
+        else alert("╨Ъ╨╛╤И╨╡╨╗╨╡╨║ ╨╜╨╡ ╨┐╨╛╨┤╨║╨╗╤О╤З╨╡╨╜");
     }
 }
 
@@ -2942,7 +2318,7 @@ function switchLanguage() {
     const checkRu = document.getElementById('check-ru');
     const checkEn = document.getElementById('check-en');
     if (label && checkRu && checkEn) {
-        const isRu = label.innerText.includes('Русский');
+        const isRu = label.innerText.includes('╨а╤Г╤Б╤Б╨║╨╕╨╣');
         checkRu.style.display = isRu ? 'block' : 'none';
         checkEn.style.display = isRu ? 'none' : 'block';
     }
@@ -2960,7 +2336,7 @@ function closeLanguageDrawer() {
 }
 
 function selectLanguage(lang) {
-    // Сохраняем выбранный язык
+    // ╨б╨╛╤Е╤А╨░╨╜╤П╨╡╨╝ ╨▓╤Л╨▒╤А╨░╨╜╨╜╤Л╨╣ ╤П╨╖╤Л╨║
     CURRENT_LANG = lang;
     localStorage.setItem('lang', lang);
 
@@ -2969,11 +2345,11 @@ function selectLanguage(lang) {
     const checkEn = document.getElementById('check-en');
 
     if (lang === 'ru') {
-        if (label) label.innerText = 'Русский ›';
+        if (label) label.innerText = '╨а╤Г╤Б╤Б╨║╨╕╨╣ тА║';
         if (checkRu) checkRu.style.display = 'block';
         if (checkEn) checkEn.style.display = 'none';
     } else {
-        if (label) label.innerText = 'English ›';
+        if (label) label.innerText = 'English тА║';
         if (checkRu) checkRu.style.display = 'none';
         if (checkEn) checkEn.style.display = 'block';
     }
@@ -2982,7 +2358,7 @@ function selectLanguage(lang) {
         tg.HapticFeedback.notificationOccurred('success');
     }
 
-    // Закрыть drawer и перезагрузить страницу для применения языка
+    // ╨Ч╨░╨║╤А╤Л╤В╤М drawer ╨╕ ╨┐╨╡╤А╨╡╨╖╨░╨│╤А╤Г╨╖╨╕╤В╤М ╤Б╤В╤А╨░╨╜╨╕╤Ж╤Г ╨┤╨╗╤П ╨┐╤А╨╕╨╝╨╡╨╜╨╡╨╜╨╕╤П ╤П╨╖╤Л╨║╨░
     setTimeout(() => {
         closeLanguageDrawer();
         setTimeout(() => {
@@ -3006,22 +2382,22 @@ function startPollingOrder(orderId) {
             if (myOrder) {
                 console.log("Order status:", myOrder.status);
                 if (myOrder.status === 'rented') {
-                    // Бот выкупил NFT, пора вводить ссылку
+                    // ╨С╨╛╤В ╨▓╤Л╨║╤Г╨┐╨╕╨╗ NFT, ╨┐╨╛╤А╨░ ╨▓╨▓╨╛╨┤╨╕╤В╤М ╤Б╤Б╤Л╨╗╨║╤Г
                     clearInterval(ORDER_POLL_INTERVAL);
                     ORDER_POLL_INTERVAL = null;
                     tg.HapticFeedback.notificationOccurred('success');
                     openTcModal(orderId, false); // Switch to input mode
                 } else if (myOrder.status === 'active') {
-                    // Уже все готово
+                    // ╨г╨╢╨╡ ╨▓╤Б╨╡ ╨│╨╛╤В╨╛╨▓╨╛
                     clearInterval(ORDER_POLL_INTERVAL);
                     ORDER_POLL_INTERVAL = null;
-                    tg.showAlert("Аренда активна!");
+                    tg.showAlert("╨Р╤А╨╡╨╜╨┤╨░ ╨░╨║╤В╨╕╨▓╨╜╨░!");
                 }
             }
         } catch (e) {
             console.error("Polling error:", e);
         }
-    }, 5000); // Опрос каждые 5 сек
+    }, 5000); // ╨Ю╨┐╤А╨╛╤Б ╨║╨░╨╢╨┤╤Л╨╡ 5 ╤Б╨╡╨║
 }
 
 // Ensure correct initial load
@@ -3037,7 +2413,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Check initial language UI
     const langLabel = document.getElementById('lang-label');
-    if (langLabel) langLabel.innerText = CURRENT_LANG === 'ru' ? 'Русский ›' : 'English ›';
+    if (langLabel) langLabel.innerText = CURRENT_LANG === 'ru' ? '╨а╤Г╤Б╤Б╨║╨╕╨╣ тА║' : 'English тА║';
 
     // Chips translation
     const setChip = (id, key) => {
@@ -3058,22 +2434,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize TON Price
     fetchTonPrice();
     setInterval(fetchTonPrice, 60000); // Update every minute
-
 });
-
-// Global exposed functions for inline HTML events
-window.shareReferralLink = shareReferralLink;
-window.handleReferralWithdraw = handleReferralWithdraw;
-window.showEarningsHelp = showEarningsHelp;
-window.closeEarningsHelp = closeEarningsHelp;
-window.openOctoModal = openOctoModal;
-window.toggleGenericModal = toggleGenericModal;
-window.applyOctoModal = applyOctoModal;
-window.resetOctoModal = resetOctoModal;
-window.closeOctoModal = closeOctoModal;
-window.showToast = showToast;
-window.copyToClipboard = copyToClipboard;
-window.handleShareClick = handleShareClick;
 
 async function fetchTonPrice() {
     try {

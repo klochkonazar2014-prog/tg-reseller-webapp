@@ -6,7 +6,7 @@
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>OctoRent</title>
-    <script src="https://telegram.org/js/telegram-web-app.js?v=1771554030"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js?v=1771556775"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;800;900&display=swap" rel="stylesheet">
     <script src="lottie.min.js"></script>
@@ -33,7 +33,7 @@
             return false;
         };
     </script>
-    <link rel="stylesheet" href="style.css?v=1771554030">
+    <link rel="stylesheet" href="style.css?v=1771556775">
     <style>
         /* CRITICAL OVERRIDES - DO NOT REMOVE */
         .main-rent-btn svg,
@@ -335,34 +335,29 @@
     </div>
 
     <!-- Filter Modal (Advanced) -->
-    <div id="octo-modal-overlay" class="modal-overlay" onclick="closeOctoModal()"></div>
-    <div id="octo-modal" class="filter-panel">
-        <div class="octo-modal-header">
-            <h3 id="octo-label-filters">Фильтры</h3>
-            <button onclick="closeOctoModal()"
-                style="background: none; border: none; color: #8b9bb4; padding: 10px; cursor: pointer;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-            </button>
+    <div id="mrkt-modal-overlay" class="modal-overlay" onclick="closeMrktModal()"></div>
+    <div id="mrkt-modal" class="filter-panel">
+        <div class="mrkt-modal-header">
+            <h3 id="mrkt-label-filters">Фильтры</h3>
+            <button onclick="closeMrktModal()"
+                style="background:none; border:none; color:#8b9bb4; font-size:24px; cursor: pointer;">✕</button>
         </div>
-        <div class="filter-body">
-            <div id="octo-label-gift-number" class="filter-section-title">Номер подарка</div>
+        <div class="filter-content">
+            <div id="mrkt-label-gift-number" class="filter-section-title">Номер подарка</div>
             <div class="filter-input-wrapper">
                 <input type="number" id="filter-gift-number" placeholder="Например: 123">
             </div>
 
-            <div class="filter-section">
-                <span id="octo-label-sort">Сортировать по</span>
-                <div id="sort-list-container" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;">
-                    <!-- Injected by JS -->
-                </div>
+            <div class="filter-accordion" onclick="toggleAccordion('sort-acc', this)">
+                <span id="mrkt-label-sort">Сортировать по</span>
+                <div class="filter-accordion-arrow">▼</div>
+            </div>
+            <div id="sort-acc" class="accordion-content">
+                <div id="sort-list-container" style="padding: 0 20px;"></div>
             </div>
 
-            <div class="filter-section">
-                <span id="octo-label-price">Цена</span>
+            <div class="filter-accordion" onclick="toggleAccordion('price-acc', this)">
+                <span id="mrkt-label-price">Цена</span>
                 <div class="filter-accordion-arrow">▼</div>
             </div>
             <div id="price-acc" class="accordion-content">
@@ -428,9 +423,9 @@
             </div>
         </div>
 
-        <div class="octo-footer">
-            <button id="octo-btn-reset" class="btn-gray" onclick="resetOctoModal()">Очистить все</button>
-            <button id="octo-btn-apply" class="btn-yellow" onclick="applyOctoModal()">Показать результаты</button>
+        <div class="mrkt-footer">
+            <button id="mrkt-btn-reset" class="btn-gray" onclick="resetMrktModal()">Очистить все</button>
+            <button id="mrkt-btn-apply" class="btn-yellow" onclick="applyMrktModal()">Показать результаты</button>
         </div>
     </div>
 
@@ -757,7 +752,7 @@
     </div>
 
     <script src="timer_helper.js"></script>
-    <script src="app.js?v=1771554030"></script>
+    <script src="app.js?v=1771556775"></script>
 </body>
 
 </html>
