@@ -859,7 +859,7 @@ body {
     color: var(--accent-blue);
 }
 
-.octo-modal-header {
+.mrkt-modal-header {
     padding: 24px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     display: flex;
@@ -867,7 +867,7 @@ body {
     justify-content: space-between;
 }
 
-.octo-modal-header h3 {
+.mrkt-modal-header h3 {
     margin: 0;
     font-size: 20px;
     font-weight: 800;
@@ -958,72 +958,11 @@ body {
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-#nft-list-container,
-#model-list-container,
-#bg-list-container,
-#symbol-list-container {
-    display: grid !important;
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 12px !important;
-    padding: 10px 20px !important;
-}
 
-#sort-list-container {
-    display: flex !important;
-    flex-wrap: wrap !important;
-    gap: 8px !important;
-    padding: 0 4px !important;
-}
 
-.filter-list-item {
-    display: flex;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
-    text-align: center !important;
-    padding: 16px 12px !important;
-    margin: 0 !important;
-    border-radius: 18px !important;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    cursor: pointer;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    position: relative;
-    height: 100%;
-}
 
-.filter-list-item:active {
-    transform: scale(0.96);
-    background: rgba(255, 255, 255, 0.06);
-}
 
-.filter-list-item.selected {
-    background: rgba(0, 136, 204, 0.12) !important;
-    border-color: rgba(0, 136, 204, 0.4) !important;
-}
 
-.filter-item-left {
-    display: flex;
-    flex-direction: column !important;
-    align-items: center !important;
-    gap: 12px !important;
-    width: 100%;
-}
-
-.filter-item-name {
-    color: white;
-    font-weight: 700;
-    font-size: 13px !important;
-    line-height: 1.2;
-    text-align: center;
-    width: 100%;
-}
-
-.checkbox-box {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-}
 
 /* MODALS */
 .mrkt-modal-header {
