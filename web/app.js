@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://optimization-repeated-town-through.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://simpsons-chips-staying-pcs.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -1502,6 +1502,25 @@ function initFilterLists() {
             }
         });
     });
+
+    // --- UPDATE CHIP LABELS ---
+    const updateChip = (id, key, defaultLabel) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const val = ACTIVE_FILTERS[key];
+        if (val && val !== 'all') {
+            el.innerText = val;
+            el.parentElement.classList.add('active'); // Highlight active chip
+        } else {
+            el.innerText = defaultLabel;
+            el.parentElement.classList.remove('active');
+        }
+    };
+
+    updateChip('chip-label-nft', 'nft', 'NFT');
+    updateChip('chip-label-model', 'model', t('model'));
+    updateChip('chip-label-bg', 'bg', t('backdrop'));
+    updateChip('chip-label-symbol', 'symbol', t('symbol'));
 }
 
 function addFilterItem(container, name, value, key, isSelected, imgUrl, collectionContext, fallbackImgUrl) {
