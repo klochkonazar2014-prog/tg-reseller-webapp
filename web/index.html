@@ -6,7 +6,7 @@
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>OctoRent</title>
-    <script src="https://telegram.org/js/telegram-web-app.js?v=1771616388"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js?v=1771619262"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;800;900&display=swap" rel="stylesheet">
     <script src="lottie.min.js"></script>
@@ -33,7 +33,7 @@
             return false;
         };
     </script>
-    <link rel="stylesheet" href="style.css?v=1771616388">
+    <link rel="stylesheet" href="style.css?v=1771619262">
     <style>
         /* CRITICAL OVERRIDES - DO NOT REMOVE */
         .main-rent-btn svg,
@@ -186,7 +186,8 @@
                         <polyline points="23 4 23 10 17 10"></polyline>
                         <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
                     </svg>
-                    <span><b id="view-auto-relist-title">Auto re-list.</b> <span id="view-auto-relist-desc">This NFT
+                    <span><b id="view-auto-relist-title" data-i18n="auto_relist">Auto re-list.</b> <span
+                            id="view-auto-relist-desc">This NFT
                             will be available for rent automatically after the period ends.</span></span>
                 </div>
             </div>
@@ -248,7 +249,7 @@
         style="height: auto; max-height: 90vh; bottom: 0; border-radius: 28px 28px 0 0;">
         <div class="modal-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding: 20px 24px;">
             <h3 style="font-size: 18px; font-weight: 800; color: #fff;">Подключить Fragment</h3>
-            <button onclick="closeTcModal()"
+            <button id="tc-modal-close-btn" onclick="closeTcModal()"
                 style="background:none; border:none; color:#8b9bb4; font-size:24px; cursor: pointer;">✕</button>
         </div>
         <div id="tc-modal-body" class="tc-redesign-container">
@@ -318,16 +319,16 @@
             </button>
 
             <button class="chip-btn" onclick="toggleGenericModal('nft')">
-                <span id="chip-label-nft">NFT</span> <span class="arrow-v">▼</span>
+                <span id="chip-label-nft" data-i18n="filters_nft">NFT</span> <span class="arrow-v">▼</span>
             </button>
             <button class="chip-btn" onclick="toggleGenericModal('model')">
-                <span id="chip-label-model">Модель</span> <span class="arrow-v">▼</span>
+                <span id="chip-label-model" data-i18n="filters_model">Модель</span> <span class="arrow-v">▼</span>
             </button>
             <button class="chip-btn" onclick="toggleGenericModal('bg')">
-                <span id="chip-label-bg">Фон</span> <span class="arrow-v">▼</span>
+                <span id="chip-label-bg" data-i18n="filters_bg">Фон</span> <span class="arrow-v">▼</span>
             </button>
             <button class="chip-btn" onclick="toggleGenericModal('symbol')">
-                <span id="chip-label-symbol">Символ</span> <span class="arrow-v">▼</span>
+                <span id="chip-label-symbol" data-i18n="filters_symbol">Символ</span> <span class="arrow-v">▼</span>
             </button>
         </div>
 
@@ -339,18 +340,20 @@
     <div id="mrkt-modal-overlay" class="modal-overlay" onclick="closeMrktModal()"></div>
     <div id="mrkt-modal" class="filter-panel">
         <div class="mrkt-modal-header">
-            <h3 id="mrkt-label-filters">Фильтры</h3>
+            <h3 id="mrkt-label-filters" data-i18n="filters_title">Фильтры</h3>
             <button onclick="closeMrktModal()"
                 style="background:none; border:none; color:#8b9bb4; font-size:24px; cursor: pointer;">✕</button>
         </div>
         <div class="filter-content">
-            <div id="mrkt-label-gift-number" class="filter-section-title">Номер подарка</div>
+            <div id="mrkt-label-gift-number" class="filter-section-title" data-i18n="filter_gift_number">Номер подарка
+            </div>
             <div class="filter-input-wrapper">
-                <input type="number" id="filter-gift-number" placeholder="Например: 123">
+                <input type="number" id="filter-gift-number" placeholder="Например: 123"
+                    data-i18n="filter_gift_placeholder">
             </div>
 
             <div class="filter-accordion" onclick="toggleAccordion('sort-acc', this)">
-                <span id="mrkt-label-sort">Сортировать по</span>
+                <span id="mrkt-label-sort" data-i18n="filter_sort_by">Сортировать по</span>
                 <div class="filter-accordion-arrow">▼</div>
             </div>
             <div id="sort-acc" class="accordion-content">
@@ -358,18 +361,18 @@
             </div>
 
             <div class="filter-accordion" onclick="toggleAccordion('price-acc', this)">
-                <span id="mrkt-label-price">Цена</span>
+                <span id="mrkt-label-price" data-i18n="filter_price">Цена</span>
                 <div class="filter-accordion-arrow">▼</div>
             </div>
             <div id="price-acc" class="accordion-content">
                 <div class="filter-input-row" style="padding-top:10px;">
                     <div class="filter-input-wrapper">
                         <span>▼</span>
-                        <input type="number" id="filter-price-from" placeholder="От">
+                        <input type="number" id="filter-price-from" placeholder="От" data-i18n="filter_price_from">
                     </div>
                     <div style="color:#555">—</div>
                     <div class="filter-input-wrapper">
-                        <input type="number" id="filter-price-to" placeholder="До">
+                        <input type="number" id="filter-price-to" placeholder="До" data-i18n="filter_price_to">
                     </div>
                 </div>
             </div>
@@ -382,7 +385,7 @@
             <div id="nft-acc" class="accordion-content">
                 <div class="filter-search-wrapper" style="padding: 10px 20px;">
                     <input type="text" id="filter-search-nft" class="filter-search-input" placeholder="Поиск NFT..."
-                        oninput="filterList('nft')">
+                        data-i18n="search_nft" oninput="filterList('nft')">
                 </div>
                 <div id="nft-list-container" style="padding: 0 20px;"></div>
             </div>
@@ -394,7 +397,7 @@
             <div id="model-acc" class="accordion-content">
                 <div class="filter-search-wrapper" style="padding: 10px 20px;">
                     <input type="text" id="filter-search-model" class="filter-search-input"
-                        placeholder="Поиск модели..." oninput="filterList('model')">
+                        placeholder="Поиск модели..." data-i18n="search_model" oninput="filterList('model')">
                 </div>
                 <div id="model-list-container" style="padding: 0 20px;"></div>
             </div>
@@ -406,7 +409,7 @@
             <div id="bg-acc" class="accordion-content">
                 <div class="filter-search-wrapper" style="padding: 10px 20px;">
                     <input type="text" id="filter-search-bg" class="filter-search-input" placeholder="Поиск фона..."
-                        oninput="filterList('bg')">
+                        data-i18n="search_bg" oninput="filterList('bg')">
                 </div>
                 <div id="bg-list-container" style="padding: 0 20px;"></div>
             </div>
@@ -418,15 +421,17 @@
             <div id="symbol-acc" class="accordion-content">
                 <div class="filter-search-wrapper" style="padding: 10px 20px;">
                     <input type="text" id="filter-search-symbol" class="filter-search-input"
-                        placeholder="Поиск символа..." oninput="filterList('symbol')">
+                        placeholder="Поиск символа..." data-i18n="search_symbol" oninput="filterList('symbol')">
                 </div>
                 <div id="symbol-list-container" style="padding: 0 20px;"></div>
             </div>
         </div>
 
         <div class="mrkt-footer">
-            <button id="mrkt-btn-reset" class="btn-gray" onclick="resetMrktModal()">Очистить все</button>
-            <button id="mrkt-btn-apply" class="btn-yellow" onclick="applyMrktModal()">Показать результаты</button>
+            <button id="mrkt-btn-reset" class="btn-gray" onclick="resetMrktModal()" data-i18n="filter_reset">Очистить
+                все</button>
+            <button id="mrkt-btn-apply" class="btn-yellow" onclick="applyMrktModal()" data-i18n="filter_apply">Показать
+                результаты</button>
         </div>
     </div>
 
@@ -445,7 +450,7 @@
                 <div class="timer-block" id="timer-secs">00</div>
             </div>
 
-            <div id="top-loader" class="loader">Загрузка данных рынка...</div>
+            <div id="top-loader" class="loader" data-i18n="loader_market">Загрузка данных рынка...</div>
             <div id="items-view" class="grid"></div>
             <div id="scroll-loader" class="premium-spinner" style="display:none; margin: 20px auto;"></div>
             <div id="loader-trigger" style="height: 40px;"></div>
@@ -460,7 +465,8 @@
             style="background: linear-gradient(135deg, #0098EA 0%, #0077CC 100%); padding: 24px; border-radius: 20px; text-align: center; margin: 16px; box-shadow: 0 8px 16px rgba(0,136,204,0.3);">
             <div
                 style="font-size: 13px; font-weight: 700; opacity: 0.8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
-                Доступный баланс</div>
+                <span data-i18n="friends_balance">Доступный баланс</span>
+            </div>
             <div
                 style="font-size: 36px;font-weight: 900;display: flex;align-items: center;justify-content: center;gap: 5px;">
                 <span id="friends-balance-val">0</span>
@@ -469,35 +475,36 @@
             </div>
             <button class="withdraw-btn-white" onclick="handleReferralWithdraw()"
                 style="margin-top: 20px; background: rgb(255, 255, 255); color: rgb(0, 136, 204); border: none; padding: 12px 24px; border-radius: 12px; font-weight: 800; width: 100%; transition: transform 0.2s; transform: scale(1);"
-                onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">Вывести
-                средства</button>
+                onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'"
+                data-i18n="friends_withdraw">Вывести средства</button>
             <button class="btn-invite-white" onclick="shareReferralLink()"
-                style="width: 100%; height: 50px; font-weight: 900; font-size: 16px; border-radius: 12px; margin-top: 12px; background: #fff; color: #0088cc; border: none; box-shadow: 0 4px 12px rgba(255,255,255,0.2);">
+                style="width: 100%; height: 50px; font-weight: 900; font-size: 16px; border-radius: 12px; margin-top: 12px; background: #fff; color: #0088cc; border: none; box-shadow: 0 4px 12px rgba(255,255,255,0.2);"
+                data-i18n="friends_invite">
                 Пригласить друзей
             </button>
         </div>
 
         <div class="commission-notice"
             style="background: rgba(255,255,255,0.03); padding: 16px; border-radius: 16px; margin: 0 16px 24px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border: 1px solid rgba(255,255,255,0.05);">
-            <div style="font-size: 13px; color: #8b9bb4; line-height: 1.5;">За каждую аренду твоего друга мы выплачиваем
-                тебе бонус <b>25%</b>! 💸</div>
+            <div style="font-size: 13px; color: #8b9bb4; line-height: 1.5;"><span data-i18n="friends_bonus_text">За
+                    каждую аренду твоего друга мы выплачиваем тебе бонус <b>25%</b>! 💸</span></div>
             <button class="how-much-link" onclick="showEarningsHelp()"
-                style="background: rgba(0,136,204,0.15); border: none; color: #00aaff; padding: 8px 12px; border-radius: 10px; font-size: 12px; font-weight: 800; white-space: nowrap;">Сколько
-                это?</button>
+                style="background: rgba(0,136,204,0.15); border: none; color: #00aaff; padding: 8px 12px; border-radius: 10px; font-size: 12px; font-weight: 800; white-space: nowrap;"
+                data-i18n="friends_how_much">Сколько это?</button>
         </div>
 
         <div class="friends-list-section" style="padding: 0 16px;">
             <h3
                 style="font-size: 20px; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; gap: 10px;">
-                👥 <span id="friends-list-title">Мои друзья</span>
+                👥 <span id="friends-list-title" data-i18n="friends_list_title">Мои друзья</span>
             </h3>
             <div id="friends-list-items" style="display: flex; flex-direction: column; gap: 12px;">
                 <!-- Items injected by JS -->
                 <div id="empty-friends-hint"
                     style="text-align: center; padding: 60px 20px; color: #8b9bb4; font-size: 15px; background: rgba(255,255,255,0.02); border-radius: 16px; border: 1px dashed rgba(255,255,255,0.1);">
-                    У вас пока нет друзей в системе.<br><span
-                        style="font-size: 13px; opacity: 0.7; margin-top: 8px; display: block;">Поделитесь ссылкой,
-                        чтобы начать зарабатывать!</span>
+                    <span data-i18n="friends_empty_1">У вас пока нет друзей в системе.</span><br><span
+                        style="font-size: 13px; opacity: 0.7; margin-top: 8px; display: block;"><span
+                            data-i18n="friends_empty_2">Поделитесь ссылкой, чтобы начать зарабатывать!</span></span>
                 </div>
             </div>
 
@@ -510,20 +517,22 @@
         <div class="bottom-sheet-content">
             <div class="bottom-sheet-header">
                 <div class="bottom-sheet-dash"></div>
-                <h3>Бонусная программа</h3>
+                <h3 data-i18n="earnings_title">Бонусная программа</h3>
             </div>
             <div class="bottom-sheet-body">
                 <p style="font-size: 15px; color: #8b9bb4; line-height: 1.6; margin-bottom: 24px;">
-                    За каждую аренду твоего друга мы выплачиваем тебе бонус — <b style="color: #fff;">25%</b> от суммы
-                    нашей комиссии! 💸
+                    <span data-i18n="earnings_desc">За каждую аренду твоего друга мы выплачиваем тебе бонус — <b
+                            style="color: #fff;">25%</b> от суммы нашей комиссии! 💸</span>
                 </p>
                 <div class="earnings-table-container"
                     style="background: rgba(255,255,255,0.03); border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05);">
                     <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
                         <thead style="background: rgba(255,255,255,0.05);">
                             <tr>
-                                <th style="text-align: left; padding: 14px; color: #8b9bb4;">Цена аренды</th>
-                                <th style="text-align: right; padding: 14px; color: #8b9bb4;">Ваш доход</th>
+                                <th style="text-align: left; padding: 14px; color: #8b9bb4;"
+                                    data-i18n="earnings_th_price">Цена аренды</th>
+                                <th style="text-align: right; padding: 14px; color: #8b9bb4;"
+                                    data-i18n="earnings_th_income">Ваш доход</th>
                             </tr>
                         </thead>
                         <tbody style="color: #ffffff;">
@@ -568,11 +577,12 @@
                 <div
                     style="background: rgba(0,136,204,0.1); padding: 14px; border-radius: 14px; margin-top: 24px; font-size: 13px; color: #00aaff; display: flex; gap: 12px; line-height: 1.4;">
                     <span style="font-size: 18px;">💡</span>
-                    <span>Рекомендуй OctoRent друзьям и получай пассивный доход <b>25%</b> с каждой их аренды!</span>
+                    <span data-i18n="earnings_footer">Рекомендуй OctoRent друзьям и получай пассивный доход <b>25%</b> с
+                        каждой их аренды!</span>
                 </div>
                 <button class="btn-yellow"
                     style="width: 100%; margin-top: 28px; height: 50px; font-weight: 800; font-size: 16px; border-radius: 14px;"
-                    onclick="closeEarningsHelp()">Понятно</button>
+                    onclick="closeEarningsHelp()" data-i18n="earnings_ok">Понятно</button>
             </div>
         </div>
     </div>
@@ -594,56 +604,32 @@
         </div>
 
         <!-- Wallet Connectivity -->
-        <div id="profile-label-wallet" class="dash-section-title">Wallet</div>
+        <div id="profile-label-wallet" class="dash-section-title" data-i18n="profile_wallet_title">Wallet</div>
         <div id="wallet-btn-container" style="margin-bottom: 24px; padding: 0 16px;">
             <button id="profile-ton-connect-btn" class="blue-btn" onclick="handleProfileWalletClick()">
                 <span class="icon-ton"></span>
-                <span id="blue-wallet-text">Connect Wallet</span>
+                <span id="blue-wallet-text" data-i18n="profile_connect_wallet">Connect Wallet</span>
             </button>
         </div>
 
         <!-- Services Section -->
-        <div id="profile-label-settings" class="dash-section-title">Settings & Support</div>
+        <div id="profile-label-settings" class="dash-section-title" data-i18n="profile_settings_title">Settings &
+            Support</div>
         <div class="services-list">
-            <!-- 🛠 DEV TEST: TC Link Redesign -->
-            <div class="service-item" id="dev-test-tc-btn" onclick="openTcModal('TEST_ID')"
-                style="border: 1px dashed rgba(255, 149, 0, 0.4); background: rgba(255, 149, 0, 0.05);">
-                <div class="service-icon" style="background: rgba(255, 149, 0, 0.2);">🛠️</div>
-                <div class="service-text" style="color: #FF9500;">Test TC Modal (Dev ONLY)</div>
-                <div class="service-arrow" style="color: #FF9500;">›</div>
-            </div>
-
-            <div class="service-item" onclick="toggleHistory()">
-                <div class="service-icon history" style="background: rgba(0, 136, 204, 0.1);">🕒</div>
-                <div id="profile-label-history" class="service-text">Rental History</div>
+            <div class="service-item" id="btn-fragment-connect" onclick="openTcModal('GENERAL')">
+                <div class="service-icon" style="background: rgba(0, 136, 204, 0.1);">💎</div>
+                <div id="profile-label-fragment" class="service-text" data-i18n="profile_fragment">Подключить актив к
+                    Fragment</div>
                 <div class="service-arrow">›</div>
-            </div>
-            <div id="history-content"
-                style="display: none; padding: 0 16px 16px 16px; background: rgba(255,255,255,0.02);">
-                <div id="history-list">Loading history...</div>
-            </div>
-
-            <div class="service-item" onclick="tg.openTelegramLink('https://t.me/Paulie_Gualtiery')">
-                <div class="service-icon" style="background: rgba(255, 152, 0, 0.1);">❓</div>
-                <div id="profile-label-support" class="service-text">Support & FAQ</div>
-                <div class="service-arrow">›</div>
-            </div>
-
-            <div class="service-item" onclick="switchLanguage()">
-                <div class="service-icon" style="background: rgba(33, 150, 243, 0.1);">🌐</div>
-                <div class="service-text">Language / Язык</div>
-                <div id="lang-label" class="service-arrow" style="font-size: 14px; color: #8b9bb4; font-weight: 700;">
-                    Русский ›</div>
             </div>
         </div>
-    </div>
     </div>
 
     <!-- Bottom Nav -->
     <div class="bottom-nav">
         <div id="mode-toggle-container" class="mode-toggle-container">
             <button id="mode-toggle-btn" class="mode-toggle-btn" onclick="toggleCatalogMode()">
-                <span id="mode-toggle-text">Каталог арендованных товаров</span>
+                <span id="mode-toggle-text" data-i18n="mode_toggle_rent">Каталог арендованных товаров</span>
             </button>
         </div>
 
@@ -654,7 +640,7 @@
                     <line x1="3" y1="6" x2="21" y2="6"></line>
                     <path d="M16 10a4 4 0 0 1-8 0"></path>
                 </svg>
-                <span id="nav-label-gifts">Подарки</span>
+                <span id="nav-label-gifts" data-i18n="nav_gifts">Подарки</span>
             </div>
 
             <div class="nav-item" onclick="switchTab(1)">
@@ -663,7 +649,7 @@
                     <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
                     <path d="M9 14l2 2 4-4"></path>
                 </svg>
-                <span id="nav-label-usernames">Ники</span>
+                <span id="nav-label-usernames" data-i18n="nav_usernames">Ники</span>
             </div>
 
             <div class="nav-item" onclick="switchTab(2)">
@@ -672,7 +658,7 @@
                         d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z">
                     </path>
                 </svg>
-                <span id="nav-label-numbers">Номера</span>
+                <span id="nav-label-numbers" data-i18n="nav_numbers">Номера</span>
             </div>
 
             <div class="nav-item" onclick="switchTab(3)">
@@ -682,7 +668,7 @@
                     <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
                     <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                 </svg>
-                <span id="nav-label-friends">Друзья</span>
+                <span id="nav-label-friends" data-i18n="nav_friends">Друзья</span>
             </div>
 
             <div class="nav-item" onclick="switchTab(4)">
@@ -690,7 +676,7 @@
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                     <circle cx="12" cy="7" r="4"></circle>
                 </svg>
-                <span id="nav-label-profile">Профиль</span>
+                <span id="nav-label-profile" data-i18n="nav_profile">Профиль</span>
             </div>
         </div>
     </div>
@@ -701,7 +687,7 @@
         <div class="bottom-sheet-content">
             <div class="bottom-sheet-header">
                 <div class="bottom-sheet-dash"></div>
-                <h3>Выберите язык / Select Language</h3>
+                <h3 data-i18n="lang_title">Выберите язык / Select Language</h3>
             </div>
             <div class="bottom-sheet-list">
                 <div class="drawer-item" onclick="selectLanguage('ru')">
@@ -724,17 +710,17 @@
         <div class="bottom-sheet-content">
             <div class="bottom-sheet-header">
                 <div class="bottom-sheet-dash"></div>
-                <h3 id="wallet-drawer-title">Управление кошельком</h3>
+                <h3 id="wallet-drawer-title" data-i18n="wallet_drawer_title">Управление кошельком</h3>
             </div>
             <div class="bottom-sheet-list">
                 <div class="drawer-item" onclick="copyWalletAddress()">
                     <span class="drawer-icon">📋</span>
-                    <span id="label-copy-address" class="drawer-text">Копировать адрес</span>
+                    <span id="label-copy-address" class="drawer-text" data-i18n="copy_address">Копировать адрес</span>
                 </div>
                 <div class="drawer-item" onclick="disconnectWallet()">
                     <span class="drawer-icon" style="color:#FF3B30;">✕</span>
-                    <span id="label-disconnect-wallet" class="drawer-text" style="color:#FF3B30;">Отключить
-                        кошелек</span>
+                    <span id="label-disconnect-wallet" class="drawer-text" style="color:#FF3B30;"
+                        data-i18n="disconnect_wallet">Отключить кошелек</span>
                 </div>
             </div>
         </div>
@@ -742,7 +728,7 @@
     <div id="global-mode-loader" class="global-mode-loader" style="display: none;">
         <div class="loader-content">
             <div class="premium-spinner"></div>
-            <p id="global-loader-text">Перемещаемся в арендный каталог...</p>
+            <p id="global-loader-text" data-i18n="loader_moving">Перемещаемся в арендный каталог...</p>
         </div>
     </div>
 
@@ -753,7 +739,7 @@
     </div>
 
     <script src="timer_helper.js"></script>
-    <script src="app.js?v=1771616388"></script>
+    <script src="app.js?v=1771619262"></script>
 </body>
 
 </html>
