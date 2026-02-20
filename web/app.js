@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://planner-talk-live-police.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://dangerous-rice-boutique-period.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -1465,7 +1465,8 @@ function initFilterLists() {
             }
 
             allItems.forEach(item => {
-                if (item.name.toLowerCase().includes(sVal)) {
+                const lowerName = item.name.toLowerCase();
+                if (lowerName.includes(sVal) && !lowerName.includes('phantom') && !lowerName.includes('unknown')) {
                     // Try to get clean visual first
                     let icon = null;
                     if (m.key === 'symbol') icon = getTelegifterUrl('symbol', item.name);
@@ -1488,7 +1489,8 @@ function initFilterLists() {
 
         const items = (ATTR_STATS[m.key] && ATTR_STATS[m.key][selectedNFT]) || [];
         items.forEach(item => {
-            if (item.name.toLowerCase().includes(sVal)) {
+            const lowerName = item.name.toLowerCase();
+            if (lowerName.includes(sVal) && !lowerName.includes('phantom') && !lowerName.includes('unknown')) {
                 // Try clean visual
                 let icon = null;
                 if (m.key === 'symbol') icon = getTelegifterUrl('symbol', item.name);
@@ -1503,13 +1505,13 @@ function initFilterLists() {
 
 function addFilterItem(container, name, value, key, isSelected, imgUrl, collectionContext, fallbackImgUrl) {
     const div = document.createElement('div');
-    div.className = `filter-list-item ${isSelected ? 'selected' : ''}`;
+    div.className = `filter-list-row ${isSelected ? 'selected' : ''}`;
 
     const isAll = value === 'all';
 
     let visualHTML = '';
     if (isAll) {
-        visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: linear-gradient(135deg, #2a2a2a, #1a1a1a); border: 1px solid rgba(255,255,255,0.1); display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; overflow:hidden;">
+        visualHTML = `<div class="filter-icon-box" style="background: linear-gradient(135deg, #2a2a2a, #1a1a1a); border: 1px solid rgba(255,255,255,0.1); display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; overflow:hidden;">
             <div style="font-size:10px; font-weight:900; color:#fff; letter-spacing:1px; z-index:2; font-family: 'Outfit', sans-serif;">ВСЕ</div>
             <div style="width:16px; height:2px; background: #0088cc; margin-top:4px; border-radius:1px; z-index:2;"></div>
             <div style="position:absolute; top:0; left:0; width:100%; height:100%; background: url('https://telegifter.ru/wp-content/themes/gifts/assets/img/bg-logo-mini.webp'); opacity:0.1; background-size: 20px;"></div>
@@ -1517,20 +1519,23 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
     } else if (key === 'symbol') {
         const tgSymbol = getTelegifterUrl('symbol', name);
         const iconSrc = tgSymbol || (VISUAL_MAP.symbol && VISUAL_MAP.symbol[name]);
-        visualHTML = `<img src="${iconSrc}" class="filter-img" style="filter: brightness(0) invert(1); width:28px; height:28px; object-fit:contain;" onerror="this.style.display='none'">`;
+        visualHTML = `<div class="filter-icon-box" style="background: #000;"><img src="${iconSrc}" class="filter-img" style="filter: brightness(0) invert(1); width:28px; height:28px; object-fit:contain;" onerror="this.style.display='none'"></div>`;
     } else if (key === 'bg') {
         const bgStyle = (VISUAL_MAP.bg && VISUAL_MAP.bg[name]) || '#333';
-        visualHTML = `<div class="filter-color-circle" style="background: ${bgStyle}; position:relative; overflow:hidden; width:52px; height:52px; border-radius:12px;">
+        visualHTML = `<div class="filter-icon-box" style="background: ${bgStyle}; position:relative; overflow:hidden;">
             <div style="position:absolute; top:0; left:0; width:100%; height:100%; background: url('https://telegifter.ru/wp-content/themes/gifts/assets/img/bg-logo-mini.webp'); opacity:0.3; background-size: 20px;"></div>
         </div>`;
-    } else if (key === 'model' || key === 'nft' || (imgUrl && !isBadUrl(imgUrl))) {
+    } else {
+        // Model or NFT or fallback
         let icon = imgUrl;
         if (key === 'model') {
             icon = `/models/${name}.webp`;
-        } else if (key === 'nft' && window.FILTERS_CACHE && window.FILTERS_CACHE.nft_addresses && window.FILTERS_CACHE.nft_addresses[name]) {
-            const addr = window.FILTERS_CACHE.nft_addresses[name];
-            icon = `https://cache.tonapi.io/img/collection/${addr}/image.png`;
-        } else if (!icon || isBadUrl(icon)) {
+        } else if (key === 'nft') {
+            const cleanName = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+            icon = `/file/gifts/${cleanName}/thumb.webp`;
+        }
+
+        if (!icon || isBadUrl(icon)) {
             if (key === 'nft') {
                 let n = name;
                 if (n.endsWith('s') && n.length > 4) n = n.slice(0, -1);
@@ -1539,26 +1544,19 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
             }
         }
 
-        visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: rgba(255, 255, 255, 0.05); border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
+        visualHTML = `<div class="filter-icon-box">
             <img src="${icon}" class="filter-img" style="width:100%; height:100%; object-fit:contain; z-index:2; opacity:0; transition:opacity 0.2s; padding:7px;" 
                 onload="this.style.opacity='1';"
                 onerror="handleFilterImageError(this, '${name.replace(/'/g, "\\'")}', '${(collectionContext || '').replace(/'/g, "\\'")}', '${(fallbackImgUrl || '').replace(/'/g, "\\'")}', '${key}')">
         </div>`;
-    } else {
-        visualHTML = `<div style="width:52px; height:52px; border-radius:12px; background: rgba(255, 255, 255, 0.05); border:1px solid rgba(255, 255, 255, 0.1); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
-        </div>`;
     }
 
     div.innerHTML = `
-        <div class="filter-item-left" style="overflow: hidden;">
+        <div class="filter-left">
             ${visualHTML}
-            <div style="display:flex; flex-direction:column; margin-left:14px; overflow: hidden;">
-                <span class="filter-item-name">${name}</span>
-            </div>
+            <span class="filter-label">${name}</span>
         </div>
-        <div class="checkbox-box" style="flex-shrink:0; width:22px; height:22px; border-radius:6px; border:2px solid ${isSelected ? '#0088cc' : '#333'}; display:flex; align-items:center; justify-content:center; margin-left:10px;">
-            ${isSelected ? '<div style="width:10px; height:10px; background:#0088cc; border-radius:2px;"></div>' : ''}
-        </div>
+        <div class="filter-checkbox"></div>
     `;
     div.onclick = (e) => {
         e.stopPropagation();
