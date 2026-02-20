@@ -9,7 +9,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://frost-exercise-happening-sparc.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://answers-sense-curves-handbook.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -275,6 +275,10 @@ const TRANSLATIONS = {
         profile_support: "Support & FAQ",
         profile_lang: "Language / Язык",
         mode_toggle_rent: "Rented Items Catalog",
+        mode_rent_btn: "Rented items catalog",
+        mode_shop_btn: "Available items catalog",
+        loading_to_rent: "Loading rented items catalog...",
+        loading_to_shop: "Loading available items catalog...",
         nav_gifts: "Gifts",
         nav_usernames: "Usernames",
         nav_numbers: "Numbers",
@@ -394,6 +398,9 @@ const TRANSLATIONS = {
         tut_step_4: "After connecting, click your <b>wallet address</b>, then <b>My Assets</b> and go to the category of your asset (NFT, Number, or Username).",
         tut_step_5: "Choose where you want the asset to be displayed and click <b>Save</b>.",
         tut_step_6: "Congratulations! Your asset is now linked to OctoRent. Enjoy! ✨",
+        rent_for: "Rent for",
+        preorder_for: "Pre-order for",
+        auto_relist_label: "Auto-relist",
         tut_next: "Next",
         tut_finish: "Happy using!",
         tut_connect: "Connect Asset"
@@ -955,50 +962,26 @@ async function shareReferralLink() {
     const shareText = "🎁 Твой подарок уже ждёт тебя в OctoRent!\n\nЗабирай его прямо сейчас — и получай призы на свой аккаунт ✨";
 
     try {
-        // Stage 1: Premium Prepared Message (v7.8+)
-        if (window.Telegram?.WebApp?.sendPreparedInlineMessage) {
-            try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 5000);
-
-                console.log("Calling prepare_share with type=referral, user_id:", userId);
-                const res = await fetch(`${BACKEND_URL}/api/referral/prepare_share`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        user_id: userId,
-                        type: 'referral'  // IMPORTANT: tell backend this is a referral share
-                    }),
-                    signal: controller.signal
-                });
-                clearTimeout(timeoutId);
-                const data = await res.json();
-                console.log("prepare_share response:", data);
-                if (data.status === 'ok' && data.id) {
-                    console.log("Sending prepared inline message with id:", data.id);
-                    window.Telegram.WebApp.sendPreparedInlineMessage(data.id);
-                    return;
-                } else {
-                    console.warn("prepare_share returned error:", data);
-                }
-            } catch (e) {
-                console.warn("Stage 1 failed:", e.message);
-            }
+        // Step 1: try shareURL (standard link sharing with preview)
+        if (window.Telegram?.WebApp?.shareURL) {
+            console.log("Using shareURL for refLink");
+            window.Telegram.WebApp.shareURL(refLink, shareText);
+            return;
         }
 
-        // Stage 2: switchInlineQuery
+        // Step 2: fall back to switchInlineQuery
         if (window.Telegram?.WebApp?.switchInlineQuery) {
-            console.log("Using Stage 2: switchInlineQuery");
+            console.log("Using switchInlineQuery fallback");
             window.Telegram.WebApp.switchInlineQuery('ref', ['users', 'groups', 'channels']);
             return;
         }
 
-        // Stage 3: Clipboard (Last resort)
-        console.log("Using Stage 3: clipboard fallback");
+        // Step 3: Copy to clipboard as last resort
+        console.log("Using clipboard fallback");
         copyToClipboard(refLink);
         showToast("Реферальная ссылка скопирована!");
     } catch (e) {
-        console.error("All sharing stages failed:", e);
+        console.error("Sharing failed:", e);
         showToast("Ошибка при попытке поделиться");
     } finally {
         setTimeout(() => {
@@ -2475,15 +2458,18 @@ function updateTotalPrice() {
         usdEl.innerText = `~$${totalUsd}`;
     }
 
-    // Обновить текст кнопки с учетом языка и статуса (Аренда vs Предзаказ)
+    // Обновить текст кнопки с учетом языка и статуса
     const rentBtn = document.getElementById('main-rent-action-btn');
     if (rentBtn) {
-        // Попробуем найти текстовый узел или элемент с текстом
-        const textNode = Array.from(rentBtn.childNodes).find(n => n.nodeType === Node.TEXT_NODE && n.textContent.trim().length > 0);
-        if (textNode) {
-            const isRented = CURRENT_PAYMENT_ITEM && CURRENT_PAYMENT_ITEM.status === 'rented';
-            textNode.textContent = ' ' + (isRented ? t('preorder_for') : t('rent_for')) + ' ';
-        }
+        const isRented = CURRENT_PAYMENT_ITEM && CURRENT_PAYMENT_ITEM.status === 'rented';
+        const btnLabel = isRented ? t('preorder_for') : t('rent_for');
+        const priceSpanEl = document.getElementById('rent-btn-price');
+        const priceVal = priceSpanEl ? priceSpanEl.innerText : '';
+        // Clear only text nodes, keep child elements (like price span, svg)
+        Array.from(rentBtn.childNodes)
+            .filter(n => n.nodeType === Node.TEXT_NODE)
+            .forEach(n => n.remove());
+        rentBtn.insertBefore(document.createTextNode(' ' + btnLabel + ' '), rentBtn.firstChild);
     }
 }
 
@@ -3306,13 +3292,13 @@ function applyTranslations() {
         }
     });
 
-    // Special logic
+    // Special logic: mode toggle
     const modeBtn = document.getElementById('mode-toggle-btn');
     if (modeBtn) {
-        const isShopMode = !modeBtn.classList.contains('shop-mode');
+        const isRentalMode = modeBtn.classList.contains('rental');
         const modeText = document.getElementById('mode-toggle-text');
         if (modeText) {
-            modeText.innerText = isShopMode ? t('mode_rent_btn') : t('mode_shop_btn');
+            modeText.innerText = isRentalMode ? t('mode_shop_btn') : t('mode_rent_btn');
         }
     }
 }
