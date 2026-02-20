@@ -8,7 +8,7 @@ const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://reactions-instead-annotated-buildings.trycloudflare.com"; // Cloudflare Tunnel URL
+const BACKEND_URL = "https://measuring-millions-cia-separate.trycloudflare.com"; // Cloudflare Tunnel URL
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -1526,12 +1526,12 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
         // Model or NFT or fallback
         let icon = imgUrl;
         if (key === 'model') {
-            const cleanColl = (collectionContext || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-            if (cleanColl) {
-                // Models often share thumb with collection
-                icon = `/file/gifts/${cleanColl}/thumb.webp`;
-            } else {
-                icon = `/models/${name}.webp`;
+            // Priority: Local model image
+            icon = getTelegifterUrl('model', name, collectionContext);
+            if (!icon) {
+                const cleanColl = (collectionContext || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+                if (cleanColl) icon = `file/gifts/${cleanColl}/thumb.webp`;
+                else icon = `models/${name}.webp`;
             }
         } else if (key === 'nft') {
             const cleanName = name.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -1868,6 +1868,14 @@ function renderMediaHTML(it, isModal = false) {
         return inner;
     } else {
         let iSrc = it._realImage;
+
+        // Priority: Local model image if available
+        if (it._modelName) {
+            const collName = (it._collection && it._collection.name) ? it._collection.name : "Gifts";
+            const modelUrl = getTelegifterUrl('model', it._modelName, collName);
+            if (modelUrl) iSrc = modelUrl;
+        }
+
         // ALWAYS try to fix fragment urls if they don't have hyphens but are gifts
         if (iSrc && iSrc.includes('nft.fragment.com/gift/') && !iSrc.includes('-') && !SLUG_MAPPING[iSrc.split('/').pop().split('-')[0]]) {
             const f = generateFragmentUrls(it.nft_name);
