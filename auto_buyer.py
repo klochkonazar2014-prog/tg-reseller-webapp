@@ -118,22 +118,45 @@ async def process_payment(order):
         logging.error(f"Некорректный формат ответа от MarketApp: {deal}")
         return
 
-    # 4. Отправляем транзакцию через наш кошелек
+    # 4. Инициализируем кошелек (v5R1 или v4R2)
     try:
         client = ToncenterV2Client(base_url="https://toncenter.com", api_key=TONCENTER_API_KEY)
-        
-        # Определяем версию кошелька: v5R1 если адрес начинается на UQB/EQB, иначе v4R2
         import binascii
-        if OWNER_WALLET_ADDR and (OWNER_WALLET_ADDR.startswith("UQB") or OWNER_WALLET_ADDR.startswith("EQB")):
-            logging.info("📝 Использую кошелек версии v5R1 (W5) с фиксированным Wallet ID 2147483409")
-            if OWNER_HEX_KEY:
+        
+        wallet = None
+        # Проверяем HEX-ключ (приоритет)
+        if OWNER_HEX_KEY:
+            try:
                 full_key = binascii.unhexlify(OWNER_HEX_KEY)
-                wallet = WalletV5R1(client, private_key=full_key[:32], public_key=full_key[32:], wallet_id=2147483409)
-            else:
+                pk = full_key[:32]
+                pub = full_key[32:] if len(full_key) >= 64 else None # Авто-детекция публичного ключа если не передан
+                
+                if OWNER_WALLET_ADDR and (OWNER_WALLET_ADDR.startswith("UQB") or OWNER_WALLET_ADDR.startswith("EQB")):
+                    logging.info("📝 Использую кошелек версии v5R1 (W5) с HEX-ключом")
+                    wallet = WalletV5R1(client, private_key=pk, public_key=pub, wallet_id=2147483409)
+                else:
+                    logging.info("📝 Использую кошелек версии v4R2 с HEX-ключом")
+                    wallet = WalletV4R2(client, private_key=pk, public_key=pub)
+            except Exception as e_hex:
+                logging.error(f"❌ Ошибка инициализации кошелька по HEX: {e_hex}")
+
+        # Если HEX не сработал или нет, пробуем SEED
+        if not wallet and OWNER_SEED:
+            if OWNER_WALLET_ADDR and (OWNER_WALLET_ADDR.startswith("UQB") or OWNER_WALLET_ADDR.startswith("EQB")):
                 wallet, _, _, _ = WalletV5R1.from_mnemonic(client, OWNER_SEED, wallet_id=2147483409)
-        else:
-            logging.info("📝 Использую кошелек версии v4R2")
-            wallet, _, _, _ = WalletV4R2.from_mnemonic(client, OWNER_SEED)
+            else:
+                wallet, _, _, _ = WalletV4R2.from_mnemonic(client, OWNER_SEED)
+
+        if not wallet:
+            logging.error(f"❌ Не удалось инициализировать кошелек для #{order['id']}. Проверьте OWNER_HEX_KEY и OWNER_SEED.")
+            return
+
+        # Проверка соответствия адреса (предупреждение)
+        if OWNER_WALLET_ADDR:
+            gen_addr = str(wallet.address)
+            # Сравниваем только базовую часть base64 для игнорирования префиксов
+            if gen_addr[3:-2] not in OWNER_WALLET_ADDR:
+                logging.warning(f"⚠️ ВНИМАНИЕ: Сгенерированный адрес {gen_addr} не совпадает с {OWNER_WALLET_ADDR} в .env! Покупка может не пройти.")
         
         # Конвертируем BOC из Base64 в объект Cell
         try:
@@ -221,6 +244,11 @@ async def monitor_wallet():
                 logging.info(f"🔎 Сканирую {addr[:10]}... (последние 50)...")
                 txs = await client.get_transactions(addr, limit=50)
                 
+                new_last_hash = None
+                if txs:
+                    import binascii
+                    new_last_hash = binascii.hexlify(txs[0].cell.hash).decode()
+
                 for tx in txs:
                     import binascii
                     tx_hash = binascii.hexlify(tx.cell.hash).decode()
@@ -230,7 +258,6 @@ async def monitor_wallet():
                     
                     tx_time = datetime.datetime.fromtimestamp(tx.now)
                     now_time = datetime.datetime.now()
-                    diff = (now_time - tx_time).total_seconds()
                     
                     logging.info(f"🔹 [{addr[:8]}] Проверяю транзакцию {tx_hash[:10]} (Time: {tx_time})")
 
@@ -300,9 +327,8 @@ async def monitor_wallet():
                     except Exception as e_inner:
                         logging.error(f"Ошибка обработки транзакции {tx_hash[:10]}: {e_inner}")
                     
-                if txs: 
-                    import binascii
-                    last_tx_hashes[addr] = binascii.hexlify(txs[0].cell.hash).decode()
+                if new_last_hash: 
+                    last_tx_hashes[addr] = new_last_hash
                 
             except Exception as e:
                 logging.error(f"Ошибка мониторинга {addr[:10]}: {e}")
