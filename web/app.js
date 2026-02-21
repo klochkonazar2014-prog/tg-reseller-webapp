@@ -4,7 +4,7 @@ let tg = null;
 let IS_SHARING_REF = false; // Prevent double clicks on referral share
 
 const MY_MARKUP = 0.20;
-const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/web/tonconnect-manifest.json";
+const MANIFEST_URL = BACKEND_URL + "/tonconnect-manifest.json";
 
 // 🚀 Dynamic Backend Detection
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
@@ -225,6 +225,11 @@ const TRANSLATIONS = {
         error_insufficient_funds: "Недостаточно средств на кошельке для совершения транзакции.",
         available_from: "Освободится",
         preorder_warning_no_relist: "Внимание: у этого NFT выключен авто-перевыставление. Предзаказ может не сработать, если владелец не выставит его вручную.",
+        error_user_rejected: "Транзакция отменена в кошельке.",
+        error_insufficient_funds: "Недостаточно средств на кошельке (нужно +~0.25 TON на комиссию).",
+        error_sdk_init_failed: "Ошибка связи с кошельком. Попробуйте обновить страницу.",
+        error_transaction_failed: "Транзакция не удалась. Проверьте баланс и попробуйте снова.",
+        error_unknown: "Ошибка: {msg}",
         mode_rent_btn: "Каталог арендованных товаров",
         mode_shop_btn: "Каталог доступных для аренды товаров",
         loading_to_rent: "Загрузка каталога арендованных товаров...",
@@ -414,6 +419,11 @@ const TRANSLATIONS = {
         rent_for: "Rent for",
         preorder_for: "Pre-order for",
         auto_relist_label: "Auto-relist",
+        error_user_rejected: "Transaction rejected in wallet.",
+        error_insufficient_funds: "Insufficient funds (need +~0.25 TON for fees).",
+        error_sdk_init_failed: "Wallet connection error. Please refresh the page.",
+        error_transaction_failed: "Transaction failed. Please check your balance.",
+        error_unknown: "Error: {msg}",
         tut_next: "Next",
         tut_finish: "Happy using!",
         tut_connect: "Connect Asset"
@@ -2311,9 +2321,17 @@ async function openProductView(item) {
                 const r = await apiFetch(`${BACKEND_URL}/api/prepare_rent?nft_address=${item.nft_address}&days=${days}&user_id=${userId}`);
                 const d = await r.json();
                 if (d.error) throw new Error(d.error);
-                const res = await tonConnectUI.sendTransaction({ validUntil: Math.floor(Date.now() / 1000) + 600, messages: d.messages });
+                const res = await tonConnectUI.sendTransaction({
+                    validUntil: Math.floor(Date.now() / 1000) + 600,
+                    messages: d.messages
+                });
+
                 if (res) {
-                    await apiFetch(`${BACKEND_URL}/api/mark_rented`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nft_address: item.nft_address, order_id: d.order_id }) });
+                    await apiFetch(`${BACKEND_URL}/api/mark_rented`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ nft_address: item.nft_address, order_id: d.order_id })
+                    });
                     closeProductView();
                     loadLiveItems(true);
                     openTcModal(d.order_id, true, true);
@@ -2321,7 +2339,21 @@ async function openProductView(item) {
                 }
             } catch (e) {
                 console.error("Rent Error:", e);
-                tg.showAlert(e.message || "Error");
+                let msg = e.message || "Error";
+
+                // Friendly error mapping
+                if (msg.includes("UserRejectionError") || msg.toLowerCase().includes("rejected")) {
+                    msg = t('error_user_rejected');
+                } else if (msg.toLowerCase().includes("not enough") || msg.toLowerCase().includes("balance") || msg.includes("filter is not a function")) {
+                    // "filter is not a function" often happens when SDK fails to parse state due to empty balance or non-initialized account
+                    msg = t('error_insufficient_funds');
+                } else if (msg.includes("TON_CONNECT_SDK_ERROR")) {
+                    msg = t('error_transaction_failed');
+                } else {
+                    msg = t('error_unknown', { msg: msg });
+                }
+
+                tg.showAlert(msg);
             } finally {
                 rentBtn.innerHTML = originalHTML;
                 rentBtn.disabled = false;
