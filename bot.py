@@ -39,7 +39,7 @@ logging.info("Bot starting...")
 load_dotenv()
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_ID = int(os.getenv("ADMIN_ID", 0))
-WEB_APP_URL = os.getenv("WEB_APP_URL")
+WEB_APP_URL = os.getenv("WEB_APP_URL") or os.getenv("BACKEND_URL")
 OWNER_WALLET = os.getenv("OWNER_WALLET")
 MARKETAPP_TOKEN = os.getenv("MARKETAPP_TOKEN")
 MARKUP_PERCENT = 20
