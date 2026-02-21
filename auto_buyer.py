@@ -18,7 +18,7 @@ import database as db
 import aiohttp
 from tonutils.client import ToncenterV2Client
 from tonutils.wallet import WalletV4R2, WalletV5R1
-from tonutils.utils import Cell
+from tonutils.utils import Cell, begin_cell
 import base64
 
 
@@ -323,11 +323,82 @@ async def check_pending_orders():
             
         await asyncio.sleep(30) # Проверка каждые 30 секунд
 
+async def process_referral_withdrawals():
+    """Периодически проверяет очередь выплат и отправляет TON пользователям"""
+    logging.info("💸 Воркер автоматических выплат реферальных вознаграждений запущен...")
+    while True:
+        try:
+            pending = await db.get_pending_withdrawals()
+            if not pending:
+                await asyncio.sleep(60) # Если пусто, спим минуту
+                continue
+            
+            # Инициализируем клиент и кошелек
+            client = ToncenterV2Client(base_url="https://toncenter.com", api_key=TONCENTER_API_KEY)
+            
+            import binascii
+            if OWNER_WALLET_ADDR and (OWNER_WALLET_ADDR.startswith("UQB") or OWNER_WALLET_ADDR.startswith("EQB")):
+                if OWNER_HEX_KEY:
+                    full_key = binascii.unhexlify(OWNER_HEX_KEY)
+                    wallet = WalletV5R1(client, private_key=full_key[:32], public_key=full_key[32:], wallet_id=2147483409)
+                else:
+                    wallet, _, _, _ = WalletV5R1.from_mnemonic(client, OWNER_SEED, wallet_id=2147483409)
+            else:
+                wallet, _, _, _ = WalletV4R2.from_mnemonic(client, OWNER_SEED)
+
+            for wd in pending:
+                logging.info(f"💰 Обработка выплаты #{wd['id']}: {wd['amount']} TON на {wd['wallet_address']}")
+                
+                try:
+                    # Обновляем статус на 'processing', чтобы другие воркеры не подхватили (на будущее)
+                    await db.update_withdrawal_status(wd['id'], 'processing')
+                    
+                    current_seqno = await wallet.get_seqno(client, wallet.address)
+                    
+                    # Отправка транзакции (простой перевод без Payload)
+                    # Используем комментарий для удобства пользователя
+                    transfer_memo = f"Referral payout from OctoRent"
+                    body_cell = begin_cell().store_uint(0, 32).store_string(transfer_memo).end_cell()
+                    
+                    await wallet.transfer(
+                        destination=wd['wallet_address'],
+                        amount=wd['amount'],
+                        body=body_cell,
+                        seqno=current_seqno
+                    )
+                    
+                    logging.info(f"🚀 Выплата #{wd['id']} отправлена. Ожидаем seqno {current_seqno} -> {current_seqno + 1}")
+                    
+                    # Краткое ожидание подтверждения
+                    success = False
+                    for _ in range(6): 
+                        await asyncio.sleep(10)
+                        if await wallet.get_seqno(client, wallet.address) > current_seqno:
+                            logging.info(f"✅ Выплата #{wd['id']} подтверждена!")
+                            success = True
+                            break
+                    
+                    if success:
+                        await db.update_withdrawal_status(wd['id'], 'completed')
+                    else:
+                        logging.warning(f"⚠️ Выплата #{wd['id']} отправлена, но seqno еще не вырос. Считаем выполненным.")
+                        await db.update_withdrawal_status(wd['id'], 'completed')
+
+                except Exception as e_wd:
+                    logging.error(f"❌ Ошибка при выплате #{wd['id']}: {e_wd}")
+                    await db.update_withdrawal_status(wd['id'], 'failed')
+
+        except Exception as e:
+            logging.error(f"Ошибка в воркере выплат: {e}")
+            
+        await asyncio.sleep(60)
+
 async def main():
     # Запускаем мониторинг кошелька и воркер предзаказов параллельно
     await asyncio.gather(
         monitor_wallet(),
-        check_pending_orders()
+        check_pending_orders(),
+        process_referral_withdrawals()
     )
 
 if __name__ == "__main__":

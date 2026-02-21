@@ -118,6 +118,19 @@ async def init_db():
             )
         """)
         
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS referral_withdrawals (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                amount REAL NOT NULL,
+                wallet_address TEXT NOT NULL,
+                status TEXT DEFAULT 'pending', -- pending, processing, completed, failed
+                tx_hash TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
         await db.commit()
 
 async def add_user(user_id, username=None, full_name=None):
@@ -445,6 +458,13 @@ async def withdraw_referral_balance(user_id, amount):
                WHERE user_id = ?""",
             (amount, amount, user_id)
         )
+
+        # Создаем запись в очереди на выплату
+        await db.execute(
+            """INSERT INTO referral_withdrawals (user_id, amount, wallet_address)
+               VALUES (?, ?, ?)""",
+            (user_id, amount, wallet_address if wallet_address else "unknown")
+        )
         
         await db.commit()
         return True
@@ -498,4 +518,18 @@ async def get_referral_friends(user_id):
         async with db.execute(refined_query, (user_id,)) as cursor:
             rows = await cursor.fetchall()
             return [dict(row) for row in rows]
+
+async def get_pending_withdrawals():
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        async with db.execute("SELECT * FROM referral_withdrawals WHERE status = 'pending'") as cursor:
+            return await cursor.fetchall()
+
+async def update_withdrawal_status(withdrawal_id, status, tx_hash=None):
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute(
+            "UPDATE referral_withdrawals SET status = ?, tx_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+            (status, tx_hash, withdrawal_id)
+        )
+        await db.commit()
 
