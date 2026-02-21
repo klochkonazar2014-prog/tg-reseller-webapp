@@ -326,9 +326,16 @@ async def handle_submit_tc_link(request):
         order_id = data.get('order_id')
         tc_link = data.get('tc_link')
         
+        user_id = get_authenticated_user_id(request)
+        if not user_id:
+            return web.json_response({'error': 'Unauthorized'}, status=401)
+        
         order = await db.get_order_by_id(order_id)
         if not order:
             return web.json_response({'error': 'Order not found'}, status=404)
+            
+        if order['user_id'] != user_id:
+            return web.json_response({'error': 'Access denied: not your order'}, status=403)
         
         # Convert sqlite3.Row to dict to use .get() method
         order_dict = dict(order)
