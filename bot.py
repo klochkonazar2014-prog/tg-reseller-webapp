@@ -309,6 +309,31 @@ async def profile_details(callback: CallbackQuery):
         parse_mode="HTML"
     )
 
+@dp.callback_query(F.data == "history")
+async def show_history(callback: CallbackQuery):
+    user_id = callback.from_user.id
+    orders = await db.get_user_orders(user_id)
+    
+    if not orders:
+        await callback.answer("📜 У вас пока нет истории аренды.", show_alert=True)
+        return
+        
+    text = (
+        "📜 <b>Ваша история аренды</b>\n\n"
+        "Здесь отображаются все ваши заказы. Если заказ ожидает подключения, нажмите кнопку под ним, чтобы привязать кошелек."
+    )
+    
+    await callback.message.edit_text(
+        text,
+        reply_markup=kb.history_keyboard(orders[:10], WEB_APP_URL), # Показываем последние 10
+        parse_mode="HTML"
+    )
+
+@dp.callback_query(F.data.startswith("noop_"))
+async def noop_handler(callback: CallbackQuery):
+    # Просто гасим уведомление для информационных кнопок
+    await callback.answer()
+
 @dp.callback_query(F.data == "support")
 async def support_details(callback: CallbackQuery):
     # Компактный саппорт: всё в одну линию для каждого контакта

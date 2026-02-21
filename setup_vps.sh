@@ -18,7 +18,7 @@ echo "===================================================="
 # 1. Update and basic tools
 echo "📥 Updating system packages..."
 sudo apt update && sudo apt upgrade -y
-sudo apt install -y python$PYTHON_VERSION python$PYTHON_VERSION-venv python3-pip nginx certbot python3-certbot-nginx git ufw curl htop
+sudo apt install -y python$PYTHON_VERSION python$PYTHON_VERSION-venv python3-pip nginx certbot python3-certbot-nginx git ufw curl htop cron
 
 # 2. Configure Swap (Critical for e2-micro)
 if [ ! -f /swapfile ]; then

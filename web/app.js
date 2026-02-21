@@ -3289,6 +3289,18 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchTonPrice();
     setInterval(fetchTonPrice, 60000); // Update every minute
 
+    // 🔥 DEEP LINK CHECK: For Rent History "Connect" buttons
+    const urlParams = new URLSearchParams(window.location.search);
+    const orderId = urlParams.get('order_id');
+    const action = urlParams.get('action');
+    if (orderId && action === 'connect') {
+        console.log("🔥 DEEP LINK: Connect for Order", orderId);
+        setTimeout(() => {
+            if (typeof openTcModal === 'function') {
+                openTcModal(parseInt(orderId));
+            }
+        }, 1200); // Give it a bit more time to settle
+    }
 });
 
 // Global exposed functions for inline HTML events
