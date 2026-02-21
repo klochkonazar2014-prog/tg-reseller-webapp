@@ -316,7 +316,9 @@ async def handle_prepare_rent(request):
         logging.info(f"Referral earning added: {referral_commission} TON to user {referrer_id} for order {order_id}")
 
     import base64
-    payload = base64.b64encode(begin_cell().store_uint(0, 32).store_string(f"order:{order_id}").end_cell().to_boc(False)).decode('utf-8')
+    # New Memo Format: order:{id} | nft:{addr[:8]}...
+    memo_text = f"order:{order_id} | nft:{nft_address[:12]}..."
+    payload = base64.b64encode(begin_cell().store_uint(0, 32).store_string(memo_text).end_cell().to_boc(False)).decode('utf-8')
     return web.json_response({"messages": [{"address": OWNER_WALLET, "amount": str(int(total_final * 1e9)), "payload": payload}], "order_id": order_id})
 
 

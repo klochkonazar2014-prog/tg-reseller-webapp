@@ -210,9 +210,9 @@ async def monitor_wallet():
     import datetime
     while True:
         try:
-            # Получаем последние транзакции
-            logging.info(f"🔎 Сканирую последние 20 транзакций...")
-            txs = await client.get_transactions(OWNER_WALLET_ADDR, limit=20)
+            # Получаем последние транзакции (увеличиваем лимит)
+            logging.info(f"🔎 Сканирую последние 50 транзакций...")
+            txs = await client.get_transactions(OWNER_WALLET_ADDR, limit=50)
             
             for tx in txs:
                 import binascii
@@ -221,16 +221,15 @@ async def monitor_wallet():
                 if last_tx_hash == tx_hash: 
                     break
                 
-                # ПРОВЕРКА ВРЕМЕНИ: Если транзакция старше 2 часов, игнорируем
                 tx_time = datetime.datetime.fromtimestamp(tx.now)
                 now_time = datetime.datetime.now()
                 diff = (now_time - tx_time).total_seconds()
                 
                 logging.info(f"🔹 Проверяю транзакцию {tx_hash[:10]} (Time: {tx_time}, Diff: {int(diff)}s)")
 
-                if diff > 7200: # 2 часа
-                    logging.info(f"⏳ Пропущена (очень старая)")
-                    continue
+                # УДАЛЕНО: Ограничение в 2 часа (7200). 
+                # Мы полагаемся на проверку tx_hash в БД и статус заказа. 
+                # Это позволяет боту обрабатывать платежи, пришедшие пока он был выключен.
 
                 try:
                     # Нас интересуют только ВХОДЯЩИЕ транзакции
@@ -257,8 +256,12 @@ async def monitor_wallet():
                                         if op_code == 0:
                                             memo_text = reader.load_string().strip()
                                             logging.info(f"   📝 Найден комментарий: {memo_text}")
-                                            if memo_text.startswith("order:"):
-                                                order_id = int(memo_text.split(":")[1])
+                                            
+                                            # Гибкий парсинг: ищем "order:X" в любой части строки
+                                            import re
+                                            match = re.search(r'order:(\d+)', memo_text)
+                                            if match:
+                                                order_id = int(match.group(1))
                                                 async with conn.execute("SELECT * FROM orders WHERE id = ?", (order_id,)) as cursor:
                                                     order = await cursor.fetchone()
                                                     if order:
@@ -285,7 +288,8 @@ async def monitor_wallet():
                                 task = asyncio.create_task(process_payment(order))
                                 task.add_done_callback(handle_task_result)
                             else:
-                                logging.info(f"   ❓ Нет подходящего заказа на сумму {amount_ton} TON")
+                                if amount_ton > 0.01: # Игнорируем микро-спам
+                                    logging.warning(f"   ❓ ВНИМАНИЕ: Не опознан платеж! Сумма: {amount_ton} TON, Memo: '{memo_text if 'memo_text' in locals() else 'N/A'}', Hash: {tx_hash}")
                 except Exception as e_inner:
                     logging.error(f"Ошибка обработки транзакции {tx_hash[:10]}: {e_inner}")
                 
