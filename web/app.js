@@ -4,7 +4,6 @@ let tg = null;
 let IS_SHARING_REF = false; // Prevent double clicks on referral share
 
 const MY_MARKUP = 0.20;
-const OWNER_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/web/tonconnect-manifest.json";
 
 // 🚀 Dynamic Backend Detection
