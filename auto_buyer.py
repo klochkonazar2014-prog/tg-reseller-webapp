@@ -201,106 +201,113 @@ async def process_payment(order):
     logging.info(f"🎉 Процесс покупки для #{order['id']} завершен.")
 
 async def monitor_wallet():
-    """Следим за транзакциями на кошельке"""
-    logging.info(f"👀 Мониторинг кошелька {OWNER_WALLET_ADDR} запущен...")
+    """Следим за транзакциями на кошельках (новом и старом для совместимости)"""
+    # Список кошельков для мониторинга
+    WALLETS_TO_MONITOR = [OWNER_WALLET_ADDR]
+    OLD_WALLET = "UQBxgCx_WJ4_fKgz8tec73NZadhoDzV250-Y0taVPJstZsRl"
+    if OLD_WALLET not in WALLETS_TO_MONITOR:
+        WALLETS_TO_MONITOR.append(OLD_WALLET)
+        
+    logging.info(f"👀 Мониторинг кошельков {WALLETS_TO_MONITOR} запущен...")
     
     client = ToncenterV2Client(base_url="https://toncenter.com", api_key="")
-    last_tx_hash = None
+    last_tx_hashes = {addr: None for addr in WALLETS_TO_MONITOR}
 
     import datetime
     while True:
-        try:
-            # Получаем последние транзакции (увеличиваем лимит)
-            logging.info(f"🔎 Сканирую последние 50 транзакций...")
-            txs = await client.get_transactions(OWNER_WALLET_ADDR, limit=50)
-            
-            for tx in txs:
-                import binascii
-                tx_hash = binascii.hexlify(tx.cell.hash).decode()
+        for addr in WALLETS_TO_MONITOR:
+            try:
+                # Получаем последние транзакции (увеличиваем лимит)
+                logging.info(f"🔎 Сканирую {addr[:10]}... (последние 50)...")
+                txs = await client.get_transactions(addr, limit=50)
                 
-                if last_tx_hash == tx_hash: 
-                    break
-                
-                tx_time = datetime.datetime.fromtimestamp(tx.now)
-                now_time = datetime.datetime.now()
-                diff = (now_time - tx_time).total_seconds()
-                
-                logging.info(f"🔹 Проверяю транзакцию {tx_hash[:10]} (Time: {tx_time}, Diff: {int(diff)}s)")
+                for tx in txs:
+                    import binascii
+                    tx_hash = binascii.hexlify(tx.cell.hash).decode()
+                    
+                    if last_tx_hashes[addr] == tx_hash: 
+                        break
+                    
+                    tx_time = datetime.datetime.fromtimestamp(tx.now)
+                    now_time = datetime.datetime.now()
+                    diff = (now_time - tx_time).total_seconds()
+                    
+                    logging.info(f"🔹 [{addr[:8]}] Проверяю транзакцию {tx_hash[:10]} (Time: {tx_time})")
 
-                # УДАЛЕНО: Ограничение в 2 часа (7200). 
-                # Мы полагаемся на проверку tx_hash в БД и статус заказа. 
-                # Это позволяет боту обрабатывать платежи, пришедшие пока он был выключен.
+                    # Мы полагаемся на проверку tx_hash в БД и статус заказа. 
+                    # Это позволяет боту обрабатывать платежи, пришедшие пока он был выключен.
 
-                try:
-                    # Нас интересуют только ВХОДЯЩИЕ транзакции
-                    if tx.in_msg and hasattr(tx.in_msg.info, "value_coins") and tx.in_msg.info.value_coins > 0:
-                        amount_ton = tx.in_msg.info.value_coins / 1e9
-                        logging.info(f"   💰 Найдена входящая: {amount_ton} TON")
-                        
-                        # ПРОВЕРКА: Не обрабатывали ли мы этот хеш уже?
-                        async with db.aiosqlite.connect(db.DB_PATH) as conn:
-                            conn.row_factory = db.aiosqlite.Row
-                            async with conn.execute("SELECT id FROM orders WHERE tx_hash = ?", (tx_hash,)) as check_cur:
-                                if await check_cur.fetchone():
-                                    logging.info(f"   ⚠️ Уже обработана (tx_hash в базе)")
-                                    continue # Уже было
-
-                            # Пытаемся получить комментарий (memo)
-                            order = None
-                            try:
-                                if tx.in_msg.body:
-                                    # Комментарий в TON начинается с 0x00000000
-                                    reader = tx.in_msg.body.begin_parse()
-                                    if len(reader) >= 32:
-                                        op_code = reader.load_uint(32)
-                                        if op_code == 0:
-                                            memo_text = reader.load_string().strip()
-                                            logging.info(f"   📝 Найден комментарий: {memo_text}")
-                                            
-                                            # Гибкий парсинг: ищем "order:X" в любой части строки
-                                            import re
-                                            match = re.search(r'order:(\d+)', memo_text)
-                                            if match:
-                                                order_id = int(match.group(1))
-                                                async with conn.execute("SELECT * FROM orders WHERE id = ?", (order_id,)) as cursor:
-                                                    order = await cursor.fetchone()
-                                                    if order:
-                                                        logging.info(f"   🎯 ПРЯМОЕ ПОПАДАНИЕ! Комментарий указывает на заказ #{order_id}")
-                            except Exception as e_memo:
-                                logging.debug(f"   Не удалось распарсить комментарий: {e_memo}")
-
-                            if not order:
-                                # Резервный поиск по сумме (если нет комментария или он не верный)
-                                async with conn.execute(
-                                    "SELECT * FROM orders WHERE status = 'pending_payment' AND ABS(total_price - ?) < 0.001 ORDER BY created_at DESC",
-                                    (amount_ton,)
-                                ) as cursor:
-                                    order = await cursor.fetchone()
+                    try:
+                        # Нас интересуют только ВХОДЯЩИЕ транзакции
+                        if tx.in_msg and hasattr(tx.in_msg.info, "value_coins") and tx.in_msg.info.value_coins > 0:
+                            amount_ton = tx.in_msg.info.value_coins / 1e9
+                            logging.info(f"   💰 Найдена входящая: {amount_ton} TON")
                             
-                            if order:
-                                logging.info(f"   🎯 СОВПАДЕНИЕ! Оплата {amount_ton} TON для заказа #{order['id']}")
-                                await db.update_order_status(order['id'], 'paid', tx_hash=tx_hash)
-                                
-                                def handle_task_result(task):
-                                    try: task.result()
-                                    except Exception as e: logging.error(f"❌ Ошибка в задаче process_payment: {e}")
+                            # ПРОВЕРКА: Не обрабатывали ли мы этот хеш уже?
+                            async with db.aiosqlite.connect(db.DB_PATH) as conn:
+                                conn.row_factory = db.aiosqlite.Row
+                                async with conn.execute("SELECT id FROM orders WHERE tx_hash = ?", (tx_hash,)) as check_cur:
+                                    if await check_cur.fetchone():
+                                        # logging.info(f"   ⚠️ Уже обработана (tx_hash в базе)")
+                                        continue # Уже было
 
-                                task = asyncio.create_task(process_payment(order))
-                                task.add_done_callback(handle_task_result)
-                            else:
-                                if amount_ton > 0.01: # Игнорируем микро-спам
-                                    logging.warning(f"   ❓ ВНИМАНИЕ: Не опознан платеж! Сумма: {amount_ton} TON, Memo: '{memo_text if 'memo_text' in locals() else 'N/A'}', Hash: {tx_hash}")
-                except Exception as e_inner:
-                    logging.error(f"Ошибка обработки транзакции {tx_hash[:10]}: {e_inner}")
+                                # Пытаемся получить комментарий (memo)
+                                order = None
+                                memo_text = "N/A"
+                                try:
+                                    if tx.in_msg.body:
+                                        # Комментарий в TON начинается с 0x00000000
+                                        reader = tx.in_msg.body.begin_parse()
+                                        if len(reader) >= 32:
+                                            op_code = reader.load_uint(32)
+                                            if op_code == 0:
+                                                memo_text = reader.load_string().strip()
+                                                logging.info(f"   📝 Найден комментарий: {memo_text}")
+                                                
+                                                # Гибкий парсинг: ищем "order:X" в любой части строки
+                                                import re
+                                                match = re.search(r'order:(\d+)', memo_text)
+                                                if match:
+                                                    order_id = int(match.group(1))
+                                                    async with conn.execute("SELECT * FROM orders WHERE id = ?", (order_id,)) as cursor:
+                                                        order = await cursor.fetchone()
+                                                        if order:
+                                                            logging.info(f"   🎯 ПРЯМОЕ ПОПАДАНИЕ! Комментарий указывает на заказ #{order_id}")
+                                except Exception as e_memo:
+                                    logging.debug(f"   Не удалось распарсить комментарий: {e_memo}")
+
+                                if not order:
+                                    # Резервный поиск по сумме (если нет комментария или он не верный)
+                                    async with conn.execute(
+                                        "SELECT * FROM orders WHERE status = 'pending_payment' AND ABS(total_price - ?) < 0.001 ORDER BY created_at DESC",
+                                        (amount_ton,)
+                                    ) as cursor:
+                                        order = await cursor.fetchone()
+                                
+                                if order:
+                                    logging.info(f"   🎯 СОВПАДЕНИЕ! Оплата {amount_ton} TON для заказа #{order['id']}")
+                                    await db.update_order_status(order['id'], 'paid', tx_hash=tx_hash)
+                                    
+                                    def handle_task_result(task):
+                                        try: task.result()
+                                        except Exception as e: logging.error(f"❌ Ошибка в задаче process_payment: {e}")
+
+                                    task = asyncio.create_task(process_payment(order))
+                                    task.add_done_callback(handle_task_result)
+                                else:
+                                    if amount_ton > 0.01: # Игнорируем микро-спам
+                                        logging.warning(f"   ❓ ВНИМАНИЕ: Не опознан платеж! Сумма: {amount_ton} TON, Memo: '{memo_text}', Hash: {tx_hash}")
+                    except Exception as e_inner:
+                        logging.error(f"Ошибка обработки транзакции {tx_hash[:10]}: {e_inner}")
+                    
+                if txs: 
+                    import binascii
+                    last_tx_hashes[addr] = binascii.hexlify(txs[0].cell.hash).decode()
                 
-            if txs: 
-                import binascii
-                last_tx_hash = binascii.hexlify(txs[0].cell.hash).decode()
+            except Exception as e:
+                logging.error(f"Ошибка мониторинга {addr[:10]}: {e}")
             
-        except Exception as e:
-            logging.error(f"Ошибка мониторинга: {e}")
-            
-        await asyncio.sleep(5) # Проверка раз в 5 секунд
+        await asyncio.sleep(10) # Проверка раз в 10 секунд
 
 async def check_pending_orders():
     """Периодически проверяет оплаченные заказы (в т.ч. предзаказы) и пытается их выкупить, если товар доступен"""
