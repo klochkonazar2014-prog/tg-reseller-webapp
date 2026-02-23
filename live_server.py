@@ -370,6 +370,7 @@ async def handle_submit_tc_link(request):
                 
                 if r.status != 200:
                     logging.error(f"Fragment API returned non-200 status: {r.status}")
+                    logging.error(f"Response body: {response_text}")
                     return web.json_response({
                         "status": "error", 
                         "message": f"Fragment API error: {r.status}",

@@ -32,9 +32,12 @@ MARKET_TOKENS = [
     os.getenv("MARKETAPP_TOKEN_BUYER", "973841-96c70c60ff2965ef2aec54391351ebc8-1769456638")
 ]
 PROXY_URL = os.getenv("PROXY_URL")
-TONCENTER_API_KEY = None # Ключ не прошел авторизацию (401), убираем.
+TONCENTER_API_KEY = os.getenv("TONCENTER_API_KEY")
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - [AUTO-BUYER] - %(message)s')
+
+# Глобальный набор для предотвращения двойной обработки одного и того же заказа
+processing_orders = set()
 
 def get_token():
     import random
@@ -86,152 +89,156 @@ async def rent_on_marketapp(nft_address, days, price_per_day_nano):
 
 async def process_payment(order):
     """Процесс выкупа NFT после получения оплаты от юзера"""
-    
-    # 1. Получаем оригинал из БД, чтобы знать цену
-    item = await db.get_item_by_id_addr(order['nft_address'])
-    if not item:
-        logging.error(f"NFT {order['nft_address']} не найден в базе данных.")
-        return
-
-    price_per_day_nano = int(item['original_price'] * 1e9)
-    
-    # 2. ПОЛУЧАЕМ ТОКЕН СРАЗУ (до ожидания ссылки)
-    logging.info(f"🔑 Запрашиваем сессию MarketApp для заказа #{order['id']}...")
-    deal, api_token = await rent_on_marketapp(order['nft_address'], order['days'], price_per_day_nano)
-    
-    if not deal or not api_token:
-        logging.error(f"❌ Не удалось получить токен сессии для #{order['id']}. Попробуем позже.")
-        return
-
-    # 3. Сохраняем токен в БД
-    async with db.aiosqlite.connect(db.DB_PATH) as conn:
-        await conn.execute("UPDATE orders SET api_token = ? WHERE id = ?", (api_token, order['id']))
-        await conn.commit()
-    
-    # Ответ API v1 имеет структуру: {"transaction": {"validUntil": ..., "messages": [{"address": ..., "amount": ..., "payload": ...}]}}
-    transaction_data = deal.get("transaction", {}).get("messages", [{}])[0]
-    dest_addr = transaction_data.get("address")
-    payload_boc = transaction_data.get("payload") # это base64 BOC
-    amount_nano = int(transaction_data.get("amount", 0))
-    
-    if not dest_addr or not payload_boc:
-        logging.error(f"Некорректный формат ответа от MarketApp: {deal}")
-        return
-
-    # 4. Инициализируем кошелек (v5R1 или v4R2)
+    order_id = order['id']
     try:
-        client = ToncenterV2Client(base_url="https://toncenter.com", api_key=TONCENTER_API_KEY)
-        import binascii
-        from tonutils.utils import Address as TonAddress
+        # 1. Получаем оригинал из БД, чтобы знать цену
+        item = await db.get_item_by_id_addr(order['nft_address'])
+        if not item:
+            logging.error(f"NFT {order['nft_address']} не найден в базе данных.")
+            return
+
+        price_per_day_nano = int(item['original_price'] * 1e9)
         
-        wallet = None
-        # Проверяем HEX-ключ (приоритет)
-        if OWNER_HEX_KEY:
-            try:
-                full_key = binascii.unhexlify(OWNER_HEX_KEY)
-                pk = full_key[:32]
-                pub = full_key[32:] if len(full_key) >= 64 else None
-                
-                if OWNER_WALLET_ADDR and (OWNER_WALLET_ADDR.startswith("UQB") or OWNER_WALLET_ADDR.startswith("EQB")):
-                    logging.info("📝 Использую кошелек версии v5R1 (W5) с HEX-ключом")
-                    # Пробуем оба распространённых wallet_id (официальный 2147483409 и серый 698983191)
-                    for wid in [2147483409, 698983191]:
-                        w_test = WalletV5R1(client, private_key=pk, public_key=pub, wallet_id=wid)
-                        gen = w_test.address.to_str(is_bounceable=False)
-                        if OWNER_WALLET_ADDR and gen[3:] == OWNER_WALLET_ADDR[3:]:
-                            wallet = w_test
-                            logging.info(f"✅ Найден W5 wallet_id={wid}: {gen}")
-                            break
-                    if not wallet:
-                        # Адрес не совпал ни с одним wallet_id — используем первый и принудительно ставим адрес
-                        wallet = WalletV5R1(client, private_key=pk, public_key=pub, wallet_id=2147483409)
+        # 2. ПОЛУЧАЕМ ТОКЕН СРАЗУ (до ожидания ссылки)
+        logging.info(f"🔑 Запрашиваем сессию MarketApp для заказа #{order['id']}...")
+        deal, api_token = await rent_on_marketapp(order['nft_address'], order['days'], price_per_day_nano)
+        
+        if not deal or not api_token:
+            logging.error(f"❌ Не удалось получить токен сессии для #{order['id']}. Попробуем позже.")
+            return
+
+        # 3. Сохраняем токен в БД
+        async with db.aiosqlite.connect(db.DB_PATH) as conn:
+            await conn.execute("UPDATE orders SET api_token = ? WHERE id = ?", (api_token, order['id']))
+            await conn.commit()
+        
+        # Ответ API v1 имеет структуру: {"transaction": {"validUntil": ..., "messages": [{"address": ..., "amount": ..., "payload": ...}]}}
+        transaction_data = deal.get("transaction", {}).get("messages", [{}])[0]
+        dest_addr = transaction_data.get("address")
+        payload_boc = transaction_data.get("payload") # это base64 BOC
+        amount_nano = int(transaction_data.get("amount", 0))
+        
+        if not dest_addr or not payload_boc:
+            logging.error(f"Некорректный формат ответа от MarketApp: {deal}")
+            return
+
+        # 4. Инициализируем кошелек (v5R1 или v4R2)
+        try:
+            client = ToncenterV2Client(base_url="https://toncenter.com", api_key=TONCENTER_API_KEY)
+            import binascii
+            from tonutils.utils import Address as TonAddress
+            
+            wallet = None
+            # Проверяем HEX-ключ (приоритет)
+            if OWNER_HEX_KEY:
+                try:
+                    full_key = binascii.unhexlify(OWNER_HEX_KEY)
+                    pk = full_key[:32]
+                    pub = full_key[32:] if len(full_key) >= 64 else None
+                    
+                    if OWNER_WALLET_ADDR and (OWNER_WALLET_ADDR.startswith("UQB") or OWNER_WALLET_ADDR.startswith("EQB")):
+                        logging.info("📝 Использую кошелек версии v5R1 (W5) с HEX-ключом")
+                        # Пробуем оба распространённых wallet_id (официальный 2147483409 и серый 698983191)
+                        for wid in [2147483409, 698983191]:
+                            w_test = WalletV5R1(client, private_key=pk, public_key=pub, wallet_id=wid)
+                            gen = w_test.address.to_str(is_bounceable=False)
+                            if OWNER_WALLET_ADDR and gen[3:] == OWNER_WALLET_ADDR[3:]:
+                                wallet = w_test
+                                logging.info(f"✅ Найден W5 wallet_id={wid}: {gen}")
+                                break
+                        if not wallet:
+                            # Адрес не совпал ни с одним wallet_id — используем первый и принудительно ставим адрес
+                            wallet = WalletV5R1(client, private_key=pk, public_key=pub, wallet_id=2147483409)
+                            if OWNER_WALLET_ADDR:
+                                logging.warning(f"⚠️ Принудительно задаю адрес из .env: {OWNER_WALLET_ADDR}")
+                                wallet._address = TonAddress(OWNER_WALLET_ADDR)
+                    else:
+                        logging.info("📝 Использую кошелек версии v4R2 с HEX-ключом")
+                        wallet = WalletV4R2(client, private_key=pk, public_key=pub)
                         if OWNER_WALLET_ADDR:
-                            logging.warning(f"⚠️ Принудительно задаю адрес из .env: {OWNER_WALLET_ADDR}")
-                            wallet._address = TonAddress(OWNER_WALLET_ADDR)
-                else:
-                    logging.info("📝 Использую кошелек версии v4R2 с HEX-ключом")
-                    wallet = WalletV4R2(client, private_key=pk, public_key=pub)
-                    if OWNER_WALLET_ADDR:
+                            gen = wallet.address.to_str(is_bounceable=False)
+                            if gen[3:] != OWNER_WALLET_ADDR[3:]:
+                                logging.warning(f"⚠️ Принудительно задаю адрес из .env: {OWNER_WALLET_ADDR}")
+                                wallet._address = TonAddress(OWNER_WALLET_ADDR)
+                except Exception as e_hex:
+                    logging.error(f"❌ Ошибка инициализации кошелька по HEX: {e_hex}")
+
+            # Если HEX не сработал или нет, пробуем SEED
+            if not wallet and OWNER_SEED:
+                try:
+                    if OWNER_WALLET_ADDR and (OWNER_WALLET_ADDR.startswith("UQB") or OWNER_WALLET_ADDR.startswith("EQB")):
+                        wallet, _, _, _ = await WalletV5R1.from_mnemonic(client, OWNER_SEED, wallet_id=2147483409)
                         gen = wallet.address.to_str(is_bounceable=False)
                         if gen[3:] != OWNER_WALLET_ADDR[3:]:
                             logging.warning(f"⚠️ Принудительно задаю адрес из .env: {OWNER_WALLET_ADDR}")
                             wallet._address = TonAddress(OWNER_WALLET_ADDR)
-            except Exception as e_hex:
-                logging.error(f"❌ Ошибка инициализации кошелька по HEX: {e_hex}")
+                    else:
+                        wallet, _, _, _ = await WalletV4R2.from_mnemonic(client, OWNER_SEED)
+                except Exception as e_seed:
+                    logging.error(f"❌ Ошибка инициализации кошелька по SEED: {e_seed}")
 
-        # Если HEX не сработал или нет, пробуем SEED
-        if not wallet and OWNER_SEED:
+            if not wallet:
+                logging.error(f"❌ Не удалось инициализировать кошелек для #{order['id']}. Проверьте OWNER_HEX_KEY и OWNER_SEED.")
+                return
+
+            logging.info(f"💳 Кошелек бота: {wallet.address.to_str(is_bounceable=False)}")
+            
+            # Конвертируем BOC из Base64 в объект Cell
             try:
-                if OWNER_WALLET_ADDR and (OWNER_WALLET_ADDR.startswith("UQB") or OWNER_WALLET_ADDR.startswith("EQB")):
-                    wallet, _, _, _ = await WalletV5R1.from_mnemonic(client, OWNER_SEED, wallet_id=2147483409)
-                    gen = wallet.address.to_str(is_bounceable=False)
-                    if gen[3:] != OWNER_WALLET_ADDR[3:]:
-                        logging.warning(f"⚠️ Принудительно задаю адрес из .env: {OWNER_WALLET_ADDR}")
-                        wallet._address = TonAddress(OWNER_WALLET_ADDR)
-                else:
-                    wallet, _, _, _ = await WalletV4R2.from_mnemonic(client, OWNER_SEED)
-            except Exception as e_seed:
-                logging.error(f"❌ Ошибка инициализации кошелька по SEED: {e_seed}")
-
-        if not wallet:
-            logging.error(f"❌ Не удалось инициализировать кошелек для #{order['id']}. Проверьте OWNER_HEX_KEY и OWNER_SEED.")
-            return
-
-        logging.info(f"💳 Кошелек бота: {wallet.address.to_str(is_bounceable=False)}")
-        
-        # Конвертируем BOC из Base64 в объект Cell
-        try:
-            body_cell = Cell.one_from_boc(base64.b64decode(payload_boc))
-        except Exception as e:
-            logging.error(f"Ошибка декодирования BOC: {e}. Пробую отправить как текст.")
-            body_cell = payload_boc
-
-        # Получаем текущий seqno для отслеживания подтверждения
-        current_seqno = await wallet.get_seqno(client, wallet.address)
-        
-        # ВАЖНО: tonutils Wallet.transfer принимает сумму в целых TON!
-        amount_ton = amount_nano / 1e9
-        logging.info(f"🚀 Отправляю {amount_ton} TON на {dest_addr} (seqno: {current_seqno})...")
-        
-        # Отправка транзакции с Payload
-        await wallet.transfer(
-            destination=dest_addr,
-            amount=amount_ton,
-            body=body_cell,
-            seqno=current_seqno
-        )
-        
-        logging.info(f"⏳ Транзакция отправлена в сеть. Ожидание подтверждения (seqno: {current_seqno} -> {current_seqno + 1})...")
-        
-        # Ждем подтверждения транзакции (инкремента seqno)
-        success = False
-        for _ in range(12): # Ждем до 2 минут (12 * 10сек)
-            await asyncio.sleep(10)
-            try:
-                new_seqno = await wallet.get_seqno(client, wallet.address)
-                if new_seqno > current_seqno:
-                    logging.info(f"✅ Транзакция подтверждена! (seqno: {new_seqno})")
-                    success = True
-                    break
+                body_cell = Cell.one_from_boc(base64.b64decode(payload_boc))
             except Exception as e:
-                logging.error(f"Ошибка при проверке seqno: {e}")
-        
-        if not success:
-            logging.warning(f"⚠️ Не дождались подтверждения транзакции для #{order['id']}, но продолжаем.")
+                logging.error(f"Ошибка декодирования BOC: {e}. Пробую отправить как текст.")
+                body_cell = payload_boc
 
-    except Exception as e:
-        logging.error(f"❌ Ошибка блокчейна для #{order['id']}: {e}")
-        return
+            # Получаем текущий seqno для отслеживания подтверждения
+            current_seqno = await wallet.get_seqno(client, wallet.address)
+            
+            # ВАЖНО: tonutils Wallet.transfer принимает сумму в целых TON!
+            amount_ton = amount_nano / 1e9
+            logging.info(f"🚀 Отправляю {amount_ton} TON на {dest_addr} (seqno: {current_seqno})...")
+            
+            # Отправка транзакции с Payload
+            await wallet.transfer(
+                destination=dest_addr,
+                amount=amount_ton,
+                body=body_cell,
+                seqno=current_seqno
+            )
+            
+            logging.info(f"⏳ Транзакция отправлена в сеть. Ожидание подтверждения (seqno: {current_seqno} -> {current_seqno + 1})...")
+            
+            # Ждем подтверждения транзакции (инкремента seqno)
+            success = False
+            for _ in range(12): # Ждем до 2 минут (12 * 10сек)
+                await asyncio.sleep(10)
+                try:
+                    new_seqno = await wallet.get_seqno(client, wallet.address)
+                    if new_seqno > current_seqno:
+                        logging.info(f"✅ Транзакция подтверждена! (seqno: {new_seqno})")
+                        success = True
+                        break
+                except Exception as e:
+                    logging.error(f"Ошибка при проверке seqno: {e}")
+            
+            if not success:
+                logging.warning(f"⚠️ Не дождались подтверждения транзакции для #{order['id']}, но продолжаем.")
+
+        except Exception as e:
+            logging.error(f"❌ Ошибка блокчейна для #{order_id}: {e}")
+            return
+    finally:
+        if order_id in processing_orders:
+            processing_orders.remove(order_id)
 
     # 5. ТЕПЕРЬ МЕНЯЕМ СТАТУС НА 'rented' (теперь пользователь может отправить ссылку)
-    await db.update_order_status(order['id'], 'rented')
-    logging.info(f"🔒 Транзакция выполнена, статус изменен на 'rented' для #{order['id']}")
+    await db.update_order_status(order_id, 'rented')
+    logging.info(f"🔒 Транзакция выполнена, статус изменен на 'rented' для #{order_id}")
 
     # 6. ЕСЛИ ССЫЛКА УЖЕ ЕСТЬ В БД (пользователь ввел заранее), ПРИВЯЗЫВАЕМ ЕЁ
-    current_order = await db.get_order_by_id(order['id'])
+    current_order = await db.get_order_by_id(order_id)
     if current_order and current_order['tc_link']:
         tc_link = current_order['tc_link']
-        logging.info(f"🔗 Ссылка обнаружена в БД для #{order['id']}. Привязываю автоматически...")
+        logging.info(f"🔗 Ссылка обнаружена в БД для #{order_id}. Привязываю автоматически...")
         try:
             url_tc = f"{MARKETAPP_API}/rent/{order['nft_address']}/tonconnect/"
             payload_tc = {"tonconnect_url": tc_link}
@@ -242,7 +249,7 @@ async def process_payment(order):
         except Exception as e:
             logging.error(f"❌ Ошибка авто-привязки ссылки: {e}")
 
-    logging.info(f"🎉 Процесс покупки для #{order['id']} завершен.")
+    logging.info(f"🎉 Процесс покупки для #{order_id} завершен.")
 
 async def monitor_wallet():
     """Следим за транзакциями на кошельках (новом и старом для совместимости)"""
@@ -333,7 +340,12 @@ async def monitor_wallet():
                                         order = await cursor.fetchone()
                                 
                                 if order:
+                                    if order['id'] in processing_orders:
+                                        logging.info(f"   ⚠️ Заказ #{order['id']} уже в обработке, пропускаем.")
+                                        continue
+                                        
                                     logging.info(f"   🎯 СОВПАДЕНИЕ! Оплата {amount_ton} TON для заказа #{order['id']}")
+                                    processing_orders.add(order['id'])
                                     await db.update_order_status(order['id'], 'paid', tx_hash=tx_hash)
                                     
                                     def handle_task_result(task):
@@ -368,10 +380,14 @@ async def check_pending_orders():
                     pending = await cursor.fetchall()
             
             for order in pending:
+                if order['id'] in processing_orders:
+                    continue
+
                 # Проверяем, доступен ли товар сейчас в нашей базе
                 item = await db.get_item_by_id_addr(order['nft_address'])
                 if item and item['status'] == 'available':
                     logging.info(f"🚀 Предзаказ/Оплаченный заказ #{order['id']} дождался доступности {order['nft_name']}. Начинаю выкуп...")
+                    processing_orders.add(order['id'])
                     asyncio.create_task(process_payment(dict(order)))
                 else:
                     logging.debug(f"⏳ Заказ #{order['id']} всё еще ждет доступности {order['nft_name']}...")
