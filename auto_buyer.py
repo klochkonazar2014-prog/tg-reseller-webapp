@@ -187,7 +187,7 @@ async def process_payment(order):
             body_cell = payload_boc
 
         # Получаем текущий seqno для отслеживания подтверждения
-        current_seqno = await wallet.get_seqno()
+        current_seqno = await wallet.get_seqno(client, wallet.address)
         
         # ВАЖНО: tonutils Wallet.transfer принимает сумму в целых TON!
         amount_ton = amount_nano / 1e9
