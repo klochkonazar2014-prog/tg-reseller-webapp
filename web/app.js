@@ -1,15 +1,16 @@
+// 🚀 Dynamic Backend Detection
+var BACKEND_URL = "https://octorent.duckdns.org"; // Production VPS URL
+const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
 let isTcModalMandatory = false;
 // Consts
 let tg = null;
 let IS_SHARING_REF = false; // Prevent double clicks on referral share
 
+console.log("Using backend:", BACKEND_URL);
+
 const MY_MARKUP = 0.20;
 const MANIFEST_URL = BACKEND_URL + "/tonconnect-manifest.json";
-
-// 🚀 Dynamic Backend Detection
-const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "https://octorent.duckdns.org"; // Production VPS URL
-console.log("Using backend:", BACKEND_URL);
 
 /**
  * 🔒 Secure API fetch wrapper
