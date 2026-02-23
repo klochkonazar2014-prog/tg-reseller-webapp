@@ -1,0 +1,124 @@
+🚩 OctoRent - РУКОВОДСТВО ПО УПРАВЛЕНИЮ СЕРВЕРОМ 🚩🦾
+
+============================================================
+1. РАБОТА С GITHUB (ОБНОВЛЕНИЕ КОДА)
+============================================================
+
+# Проверить статус изменений (что изменилось на сервере)
+git status
+
+# Скачать последние обновления из Git
+git pull origin main
+
+# Если git pull выдает ошибку конфликтов и нужно ПРИНУДИТЕЛЬНО обновить (затереть локальные правки):
+# ВНИМАНИЕ: Это удалит патчи, если они не были закомичены!
+# git fetch --all
+# git reset --hard origin/main
+
+============================================================
+2. УПРАВЛЕНИЕ СЕРВИСАМИ (SYSTEMCTL)
+============================================================
+
+# Перезагрузить всё (Сервер и Авто-байер)
+sudo systemctl restart octorent-server octorent-buyer
+
+# Остановить всё
+sudo systemctl stop octorent-server octorent-buyer
+
+# Запустить всё
+sudo systemctl start octorent-server octorent-buyer
+
+# Проверить статус (работают ли сейчас)
+sudo systemctl status octorent-server octorent-buyer
+
+============================================================
+3. ПРОСМОТР ЛОГОВ (ЧТО ПРОИСХОДИТ В РЕАЛЬНОМ ВРЕМЕНИ)
+============================================================
+
+# Логи Веб-Сервера
+journalctl -u octorent-server -f -n 100
+
+# Логи Авто-байера (самое важное для аренды)
+journalctl -u octorent-buyer -f -n 100
+
+# Логи Телеграм Бота
+tail -f /home/octorent/bot_debug.log
+
+============================================================
+4. ПРОВЕРКА БАЗЫ ДАННЫХ
+============================================================
+
+# Посмотреть последние 5 заказов (статус, предмет, ссылка Fragment)
+/home/octorent/.venv/bin/python -c "import sqlite3; conn = sqlite3.connect('/home/octorent/database.db'); conn.row_factory = sqlite3.Row; [print(f'ID={r[0]} Status={r[1]} NFT={r[2]} TC={r[3]}') for r in conn.execute('SELECT id, status, nft_name, tc_link FROM orders ORDER BY id DESC LIMIT 5')]"
+
+# Сбросить заказ #12 (если надо перекупить)
+/home/octorent/.venv/bin/python -c "import sqlite3; conn = sqlite3.connect('/home/octorent/database.db'); conn.execute(\"UPDATE orders SET status='paid', tx_hash=NULL WHERE id=12\"); conn.commit(); print('Order 12 reset')"
+
+============================================================
+5. ФИКС ПРИВЯЗКИ К FRAGMENT (ЗАПУСКАТЬ ОДИН РАЗ)
+============================================================
+
+### ШАГ 1: Патч live_server.py
+/home/octorent/.venv/bin/python - << 'PYEOF'
+import os
+content = open('/home/octorent/live_server.py', 'r').read()
+old = 'token = os.getenv("MARKETAPP_TOKEN_BUYER")'
+new = """token = dict(order).get('api_token') or os.getenv("MARKETAPP_TOKEN_BUYER")
+        if not token:
+            import logging
+            logging.error(f"No API token found for order {order_id}")
+            from aiohttp import web
+            return web.json_response({'error': 'Internal configuration error: missing token'}, status=500)"""
+if old in content:
+    open('/home/octorent/live_server.py', 'w').write(content.replace(old, new))
+    print('OK: live_server.py patched')
+else:
+    print('Already patched or not found')
+PYEOF
+
+### ШАГ 2: Патч auto_buyer.py
+/home/octorent/.venv/bin/python - << 'PYEOF'
+import os
+content = open('/home/octorent/auto_buyer.py', 'r').read()
+sync_func = """
+async def sync_rented_tc_links():
+    \"\"\"Фоновая задача для автоматической привязки tc_link к Fragment (дожим)\"\"\"
+    import logging, aiohttp, database as db, asyncio
+    logging.info("🔗 Воркер синхронизации TonConnect запущен...")
+    while True:
+        try:
+            async with db.aiosqlite.connect(db.DB_PATH) as conn:
+                conn.row_factory = db.aiosqlite.Row
+                async with conn.execute(
+                    "SELECT * FROM orders WHERE status IN ('rented', 'active') AND tc_link IS NOT NULL AND api_token IS NOT NULL"
+                ) as cursor:
+                    orders = await cursor.fetchall()
+            if orders:
+                async with aiohttp.ClientSession() as session:
+                    for order in orders:
+                        try:
+                            logging.info(f"🔄 [Sync] Пробую привязку Fragment для заказа #{order['id']}...")
+                            url_tc = f"https://api.marketapp.ws/v1/rent/{order['nft_address']}/tonconnect/"
+                            payload_tc = {"tonconnect_url": order['tc_link']}
+                            headers = {"Authorization": order['api_token'], "Content-Type": "application/json"}
+                            async with session.post(url_tc, headers=headers, json=payload_tc, timeout=15) as resp:
+                                body = await resp.text()
+                                logging.info(f"📥 [Sync] Ответ #{order['id']}: {resp.status} {body}")
+                        except Exception as e_order:
+                            logging.error(f"❌ [Sync] Ошибка #{order['id']}: {e_order}")
+        except Exception as e:
+            logging.error(f"❌ [Sync] Ошибка воркера: {e}")
+        await asyncio.sleep(120)
+"""
+if "async def sync_rented_tc_links():" not in content:
+    content = content.replace("async def main():", sync_func + "\nasync def main():")
+if "sync_rented_tc_links()" not in content:
+    content = content.replace("process_referral_withdrawals()", "process_referral_withdrawals(),\n        sync_rented_tc_links()")
+open('/home/octorent/auto_buyer.py', 'w').write(content)
+print('OK: auto_buyer.py patched')
+PYEOF
+
+### ШАГ 3: Перезагрузка
+sudo systemctl restart octorent-server octorent-buyer
+
+🚩🦾🚀

@@ -108,68 +108,90 @@ def item_action_keyboard(item, web_app_url, owner_wallet):
         )]
     ])
 
-def history_keyboard(orders, web_app_url):
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[], row_width=1)
+def history_keyboard(orders, web_app_url, page=0):
+    import re
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[])
     
-    for order in orders:
-        # Title row
-        title = order['nft_name']
-        keyboard.inline_keyboard.append([InlineKeyboardButton(text=f"🎁 {title}", callback_data=f"noop_{order['id']}")])
-        
-        # Status row (Row with 3 buttons as requested)
-        status = order['status']
-        
-        s1 = "🔴 Закончена" if status == 'expired' else "Закончена"
-        s2 = "🟢 Арендовано" if status == 'active' else "Арендовано"
-        s3 = "⏳ Ожидает" if status == 'rented' or status == 'paid' else "Ожидает"
-        
-        # Add emojis to highlight active status
-        if status == 'expired': s1 = "✅ " + s1
-        if status == 'active': s2 = "✅ " + s2
-        if status == 'rented' or status == 'paid': s3 = "✅ " + s3
+    if not orders:
+        keyboard.inline_keyboard.append([InlineKeyboardButton(text="Нет заказов", callback_data="noop_empty")])
+        keyboard.inline_keyboard.append([InlineKeyboardButton(
+            text="Назад", callback_data="main_menu",
+            icon_custom_emoji_id="5359511310096672647"
+        )])
+        return keyboard
 
+    total = len(orders)
+    page = min(max(0, page), total - 1)
+    order = orders[page]
+    title = order['nft_name']
+    status = order['status']
+
+    # 1. Название подарка (некликабельно)
+    keyboard.inline_keyboard.append([
+        InlineKeyboardButton(text=f"🎁 {title}", callback_data=f"noop_{order['id']}")
+    ])
+
+    # 2. ОДИН статус
+    status_map = {
+        'expired': '🔴 Закончена',
+        'active':  '🟢 Арендовано',
+        'rented':  '⏳ Ожидает подключения к Fragment',
+        'paid':    '⏳ Ожидает подключения к Fragment',
+        'pending': '🕐 В обработке',
+        'pending_payment': '🕐 Ожидает оплаты',
+    }
+    status_text = status_map.get(status, f'❓ {status}')
+    keyboard.inline_keyboard.append([
+        InlineKeyboardButton(text=status_text, callback_data=f"noop_st_{order['id']}")
+    ])
+
+    # 3. Ссылка «Посмотреть» на подарок
+    tg_link = None
+    if " #" in title:
+        name_part, num_part = title.rsplit(" #", 1)
+        slug = re.sub(r'[^a-zA-Z0-9]', '', name_part)
+        tg_link = f"https://t.me/nft/{slug}-{num_part}"
+    elif title.startswith('@'):
+        tg_link = f"https://t.me/nft/{title.lstrip('@')}"
+    elif title.startswith('+'):
+        clean_n = re.sub(r'[^0-9]', '', title)
+        tg_link = f"https://t.me/nft/{clean_n}"
+
+    if tg_link:
         keyboard.inline_keyboard.append([
-            InlineKeyboardButton(text=s1, callback_data=f"noop_s1_{order['id']}"),
-            InlineKeyboardButton(text=s2, callback_data=f"noop_s2_{order['id']}"),
-            InlineKeyboardButton(text=s3, callback_data=f"noop_s3_{order['id']}")
+            InlineKeyboardButton(text="🖼 Посмотреть", url=tg_link)
         ])
-        
-        # Action row: TG link & connect
-        actions = []
-        
-        # Generate TG link for gifts
-        import re
-        tg_link = None
-        if " #" in title:
-            name_part, num_part = title.rsplit(" #", 1)
-            slug = re.sub(r'[^a-zA-Z0-9]', '', name_part)
-            tg_link = f"https://t.me/nft/{slug}-{num_part}"
-        elif title.startswith('@'):
-            tg_link = f"https://t.me/nft/{title.lstrip('@')}"
-        elif title.startswith('+'):
-            clean_n = re.sub(r'[^0-9]', '', title)
-            tg_link = f"https://t.me/nft/{clean_n}"
-            
-        if tg_link:
-            actions.append(InlineKeyboardButton(text="🖼 Посмотреть", url=tg_link))
-        
-        if actions:
-            keyboard.inline_keyboard.append(actions)
-            
-        # Nuke-button for connecting (Full width)
-        if status == 'rented':
-            # Support direct deep link in webapp
-            sep = "&" if "?" in web_app_url else "?"
-            connect_url = f"{web_app_url}{sep}order_id={order['id']}&action=connect"
-            keyboard.inline_keyboard.append([
-                InlineKeyboardButton(text="🔗 Подключить к Fragment", web_app=WebAppInfo(url=connect_url))
-            ])
-            
-        keyboard.inline_keyboard.append([InlineKeyboardButton(text="──────────────", callback_data="noop_sep")])
 
+    # 4. Кнопка подключения к Fragment (только если rented)
+    if status == 'rented':
+        sep = "&" if "?" in web_app_url else "?"
+        connect_url = f"{web_app_url}{sep}order_id={order['id']}&action=connect"
+        keyboard.inline_keyboard.append([
+            InlineKeyboardButton(text="🔗 Подключить к Fragment", web_app=WebAppInfo(url=connect_url))
+        ])
+
+    # 5. Навигация: ‹ | N/Total | ›
+    if total > 1:
+        prev_btn = InlineKeyboardButton(
+            text="◀️",
+            callback_data=f"history_page_{page - 1}" if page > 0 else "noop_nav"
+        )
+        counter_btn = InlineKeyboardButton(
+            text=f"{page + 1} / {total}",
+            callback_data="noop_page"
+        )
+        next_btn = InlineKeyboardButton(
+            text="▶️",
+            callback_data=f"history_page_{page + 1}" if page < total - 1 else "noop_nav"
+        )
+        keyboard.inline_keyboard.append([prev_btn, counter_btn, next_btn])
+
+    # 6. Кнопка «Назад»
     keyboard.inline_keyboard.append([InlineKeyboardButton(
-        text="Назад", 
+        text="Назад",
         callback_data="main_menu",
         icon_custom_emoji_id="5359511310096672647"
     )])
+
     return keyboard
+

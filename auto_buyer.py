@@ -122,6 +122,7 @@ async def process_payment(order):
     try:
         client = ToncenterV2Client(base_url="https://toncenter.com", api_key=TONCENTER_API_KEY)
         import binascii
+        from tonutils.utils import Address as TonAddress
         
         wallet = None
         # Проверяем HEX-ключ (приоритет)
@@ -129,34 +130,54 @@ async def process_payment(order):
             try:
                 full_key = binascii.unhexlify(OWNER_HEX_KEY)
                 pk = full_key[:32]
-                pub = full_key[32:] if len(full_key) >= 64 else None # Авто-детекция публичного ключа если не передан
+                pub = full_key[32:] if len(full_key) >= 64 else None
                 
                 if OWNER_WALLET_ADDR and (OWNER_WALLET_ADDR.startswith("UQB") or OWNER_WALLET_ADDR.startswith("EQB")):
                     logging.info("📝 Использую кошелек версии v5R1 (W5) с HEX-ключом")
-                    wallet = WalletV5R1(client, private_key=pk, public_key=pub, wallet_id=2147483409)
+                    # Пробуем оба распространённых wallet_id (официальный 2147483409 и серый 698983191)
+                    for wid in [2147483409, 698983191]:
+                        w_test = WalletV5R1(client, private_key=pk, public_key=pub, wallet_id=wid)
+                        gen = w_test.address.to_str(is_bounceable=False)
+                        if OWNER_WALLET_ADDR and gen[3:] == OWNER_WALLET_ADDR[3:]:
+                            wallet = w_test
+                            logging.info(f"✅ Найден W5 wallet_id={wid}: {gen}")
+                            break
+                    if not wallet:
+                        # Адрес не совпал ни с одним wallet_id — используем первый и принудительно ставим адрес
+                        wallet = WalletV5R1(client, private_key=pk, public_key=pub, wallet_id=2147483409)
+                        if OWNER_WALLET_ADDR:
+                            logging.warning(f"⚠️ Принудительно задаю адрес из .env: {OWNER_WALLET_ADDR}")
+                            wallet._address = TonAddress(OWNER_WALLET_ADDR)
                 else:
                     logging.info("📝 Использую кошелек версии v4R2 с HEX-ключом")
                     wallet = WalletV4R2(client, private_key=pk, public_key=pub)
+                    if OWNER_WALLET_ADDR:
+                        gen = wallet.address.to_str(is_bounceable=False)
+                        if gen[3:] != OWNER_WALLET_ADDR[3:]:
+                            logging.warning(f"⚠️ Принудительно задаю адрес из .env: {OWNER_WALLET_ADDR}")
+                            wallet._address = TonAddress(OWNER_WALLET_ADDR)
             except Exception as e_hex:
                 logging.error(f"❌ Ошибка инициализации кошелька по HEX: {e_hex}")
 
         # Если HEX не сработал или нет, пробуем SEED
         if not wallet and OWNER_SEED:
-            if OWNER_WALLET_ADDR and (OWNER_WALLET_ADDR.startswith("UQB") or OWNER_WALLET_ADDR.startswith("EQB")):
-                wallet, _, _, _ = WalletV5R1.from_mnemonic(client, OWNER_SEED, wallet_id=2147483409)
-            else:
-                wallet, _, _, _ = WalletV4R2.from_mnemonic(client, OWNER_SEED)
+            try:
+                if OWNER_WALLET_ADDR and (OWNER_WALLET_ADDR.startswith("UQB") or OWNER_WALLET_ADDR.startswith("EQB")):
+                    wallet, _, _, _ = await WalletV5R1.from_mnemonic(client, OWNER_SEED, wallet_id=2147483409)
+                    gen = wallet.address.to_str(is_bounceable=False)
+                    if gen[3:] != OWNER_WALLET_ADDR[3:]:
+                        logging.warning(f"⚠️ Принудительно задаю адрес из .env: {OWNER_WALLET_ADDR}")
+                        wallet._address = TonAddress(OWNER_WALLET_ADDR)
+                else:
+                    wallet, _, _, _ = await WalletV4R2.from_mnemonic(client, OWNER_SEED)
+            except Exception as e_seed:
+                logging.error(f"❌ Ошибка инициализации кошелька по SEED: {e_seed}")
 
         if not wallet:
             logging.error(f"❌ Не удалось инициализировать кошелек для #{order['id']}. Проверьте OWNER_HEX_KEY и OWNER_SEED.")
             return
 
-        # Проверка соответствия адреса (предупреждение)
-        if OWNER_WALLET_ADDR:
-            gen_addr = str(wallet.address)
-            # Сравниваем только базовую часть base64 для игнорирования префиксов
-            if gen_addr[3:-2] not in OWNER_WALLET_ADDR:
-                logging.warning(f"⚠️ ВНИМАНИЕ: Сгенерированный адрес {gen_addr} не совпадает с {OWNER_WALLET_ADDR} в .env! Покупка может не пройти.")
+        logging.info(f"💳 Кошелек бота: {wallet.address.to_str(is_bounceable=False)}")
         
         # Конвертируем BOC из Base64 в объект Cell
         try:
@@ -166,7 +187,7 @@ async def process_payment(order):
             body_cell = payload_boc
 
         # Получаем текущий seqno для отслеживания подтверждения
-        current_seqno = await wallet.get_seqno(client, wallet.address)
+        current_seqno = await wallet.get_seqno()
         
         # ВАЖНО: tonutils Wallet.transfer принимает сумму в целых TON!
         amount_ton = amount_nano / 1e9
@@ -430,12 +451,52 @@ async def process_referral_withdrawals():
             
         await asyncio.sleep(60)
 
+async def sync_rented_tc_links():
+    """Фоновая задача для автоматической привязки tc_link к Fragment (дожим)"""
+    logging.info("🔗 Воркер синхронизации TonConnect запущен...")
+    while True:
+        try:
+            # Ищем заказы со статусом 'rented' (или даже 'active'), где есть ссылка, но она еще не была "дожата"
+            # Мы можем ориентироваться на то, что если tc_link есть, а статус все ещё rented, то надо пробовать.
+            async with db.aiosqlite.connect(db.DB_PATH) as conn:
+                conn.row_factory = db.aiosqlite.Row
+                async with conn.execute(
+                    "SELECT * FROM orders WHERE status IN ('rented', 'active') AND tc_link IS NOT NULL AND api_token IS NOT NULL"
+                ) as cursor:
+                    orders = await cursor.fetchall()
+
+            if orders:
+                async with aiohttp.ClientSession() as session:
+                    for order in orders:
+                        try:
+                            logging.info(f"🔄 [Sync] Пробую привязку Fragment для заказа #{order['id']} (NFT: {order['nft_address'][32:]})...")
+                            url_tc = f"{MARKETAPP_API}/rent/{order['nft_address']}/tonconnect/"
+                            payload_tc = {"tonconnect_url": order['tc_link']}
+                            headers = {"Authorization": order['api_token'], "Content-Type": "application/json"}
+                            
+                            async with session.post(url_tc, headers=headers, json=payload_tc, timeout=15, proxy=PROXY_URL) as resp:
+                                body = await resp.text()
+                                if resp.status == 200:
+                                    logging.info(f"✅ [Sync] Успешная привязка для #{order['id']}! Ответ: {body}")
+                                    # Опционально: можно пометить в БД что привязка выполнена, чтобы не спамить. 
+                                    # Но на данный момент у нас нет отдельного поля. MarketApp сам отсечет повторы.
+                                else:
+                                    # Если ошибка типа "Уже привязано" - это тоже хорошо.
+                                    logging.info(f"ℹ️ [Sync] Ответ MarketApp для #{order['id']} ({resp.status}): {body}")
+                        except Exception as e_order:
+                            logging.error(f"❌ [Sync] Ошибка привязки заказа #{order['id']}: {e_order}")
+        except Exception as e:
+            logging.error(f"❌ [Sync] Ошибка в воркере синхронизации TC: {e}")
+            
+        await asyncio.sleep(120) # Проверяем раз в 2 минуты
+
 async def main():
     # Запускаем мониторинг кошелька и воркер предзаказов параллельно
     await asyncio.gather(
         monitor_wallet(),
         check_pending_orders(),
-        process_referral_withdrawals()
+        process_referral_withdrawals(),
+        sync_rented_tc_links()
     )
 
 if __name__ == "__main__":

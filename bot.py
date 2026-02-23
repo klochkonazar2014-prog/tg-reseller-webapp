@@ -318,16 +318,38 @@ async def show_history(callback: CallbackQuery):
         await callback.answer("📜 У вас пока нет истории аренды.", show_alert=True)
         return
         
-    text = (
-        "📜 <b>Ваша история аренды</b>\n\n"
-        "Здесь отображаются все ваши заказы. Если заказ ожидает подключения, нажмите кнопку под ним, чтобы привязать кошелек."
-    )
+    text = "📜 <b>Ваша история аренды</b>"
     
     await callback.message.edit_text(
         text,
-        reply_markup=kb.history_keyboard(orders[:10], WEB_APP_URL), # Показываем последние 10
+        reply_markup=kb.history_keyboard(orders, WEB_APP_URL, page=0),
         parse_mode="HTML"
     )
+    await callback.answer()
+
+@dp.callback_query(F.data.startswith("history_page_"))
+async def history_page(callback: CallbackQuery):
+    try:
+        page = int(callback.data.split("_")[-1])
+    except (ValueError, IndexError):
+        await callback.answer()
+        return
+    
+    user_id = callback.from_user.id
+    orders = await db.get_user_orders(user_id)
+    
+    if not orders:
+        await callback.answer("Нет заказов", show_alert=True)
+        return
+    
+    page = min(max(0, page), len(orders) - 1)
+    text = "📜 <b>Ваша история аренды</b>"
+    
+    await callback.message.edit_reply_markup(
+        reply_markup=kb.history_keyboard(orders, WEB_APP_URL, page=page)
+    )
+    await callback.answer()
+
 
 @dp.callback_query(F.data.startswith("noop_"))
 async def noop_handler(callback: CallbackQuery):

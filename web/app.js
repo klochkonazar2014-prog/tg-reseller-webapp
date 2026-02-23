@@ -1125,7 +1125,7 @@ async function submitTcLink() {
     try {
         const url = `${BACKEND_URL}/api/submit_tc_link`;
         console.log("Fetching: " + url);
-        const res = await fetch(url, {
+        const res = await apiFetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ order_id: parseInt(orderId), tc_link: link })

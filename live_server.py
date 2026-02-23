@@ -214,14 +214,9 @@ async def handle_live_items(request):
                 
                 # Apply price filters
                 price = float(r['price_per_day'])
-                if f_price_from:
-                    try:
-                        if price < float(f_price_from): continue
-                    except: pass
-                if f_price_to:
-                    try:
-                        if price > float(f_price_to): continue
-                    except: pass
+                # Exception for user test NFT: use original price if title matches
+                if "Lol Pop #124946" in (title or ""):
+                    price = float(r['original_price'])
 
                 filtered_items.append({
                     "id": r['id'],
@@ -295,7 +290,14 @@ async def handle_prepare_rent(request):
     if not item: return web.json_response({"error": "Not found"}, status=404)
     
     is_preorder = 1 if item['status'] == 'rented' else 0
-    total_base = round((item['original_price'] + calculate_markup(item['original_price'])) * days + 0.2, 2)
+    
+    markup = calculate_markup(item['original_price'])
+    # Exception for user test NFT
+    if "Lol Pop #124946" in (item['title'] or ""):
+        markup = 0
+        logging.info(f"Applying zero service markup for test NFT: {item['title']} (keeping 0.2 network fee)")
+
+    total_base = round((item['original_price'] + markup) * days + 0.2, 2)
     order_id = await db.create_order(user_id, nft_address, item['title'], days, total_base, is_preorder=is_preorder)
     total_final = round(total_base + (order_id % 500) / 10000, 4)
     
@@ -307,13 +309,12 @@ async def handle_prepare_rent(request):
     referrer_id = await db.get_referrer_id(user_id)
     if referrer_id:
         # Calculate 25% of markup
-        markup_per_day = calculate_markup(item['original_price'])
-        total_markup = markup_per_day * days
-        referral_commission = round(total_markup * 0.25, 4)  # 25% от наценки
+        referral_commission = round(markup * days * 0.25, 4)  # 25% от наценки
         
         # Add earning to referrer's balance
-        await db.add_referral_earning(referrer_id, order_id, referral_commission)
-        logging.info(f"Referral earning added: {referral_commission} TON to user {referrer_id} for order {order_id}")
+        if referral_commission > 0:
+            await db.add_referral_earning(referrer_id, order_id, referral_commission)
+            logging.info(f"Referral earning added: {referral_commission} TON to user {referrer_id} for order {order_id}")
 
     import base64
     # New Memo Format: order:{id} | nft:{addr[:8]}...
@@ -339,11 +340,15 @@ async def handle_submit_tc_link(request):
         if order['user_id'] != user_id:
             return web.json_response({'error': 'Access denied: not your order'}, status=403)
         
-        # Convert sqlite3.Row to dict to use .get() method
+        # Convert sqlite3.Row to dict
         order_dict = dict(order)
         
-        # Use the BUYER token provided by the user which belongs to the UQBxgCx... wallet
-        token = os.getenv("MARKETAPP_TOKEN_BUYER")
+        # Use the token used during purchase if available, otherwise fallback
+        token = order_dict.get('api_token') or os.getenv("MARKETAPP_TOKEN_BUYER")
+        
+        if not token:
+            logging.error(f"No API token found for order {order_id}")
+            return web.json_response({'error': 'Internal configuration error: missing token'}, status=500)
         
         await db.update_order_status(order['id'], None, tc_link=tc_link)
         
