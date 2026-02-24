@@ -1,5 +1,5 @@
 let isTcModalMandatory = false;
-﻿// Consts
+// Consts
 let tg = null;
 const MY_MARKUP = 0.20;
 const OWNER_WALLET = "UQAotn3cT26kUKW5wSpP9dYKxwEQQ0qffDB24HGzuBrJ5PFB";
@@ -785,11 +785,12 @@ async function submitTcLink() {
 
         if (data.status === 'ok') {
             if (window.Telegram && window.Telegram.WebApp) {
-                tg.showAlert("╨г╤Б╨┐╨╡╤И╨╜╨╛! ╨в╨╡╨┐╨╡╤А╤М ╨▓╨╡╤А╨╜╨╕╤В╨╡╤Б╤М ╨╜╨░ Fragment ╨╕ ╨╜╨░╨╢╨╝╨╕╤В╨╡ Display in Telegram.");
+                tg.showAlert("Успешно! Теперь вернитесь на Fragment и нажмите Display in Telegram.");
             } else {
-                alert("╨г╤Б╨┐╨╡╤И╨╜╨╛! ╨в╨╡╨┐╨╡╤А╤М ╨▓╨╡╤А╨╜╨╕╤В╨╡╤Б╤М ╨╜╨░ Fragment ╨╕ ╨╜╨░╨╢╨╝╨╕╤В╨╡ Display in Telegram.");
+                alert("Успешно! Теперь вернитесь на Fragment и нажмите Display in Telegram.");
             }
-            document.getElementById('tc-link-input').value = "";
+            const input = document.getElementById('tc-link-input');
+            if (input) input.value = "";
             closeTcModal();
             loadHistoryContent();
         } else {
@@ -2297,8 +2298,8 @@ function applyTranslations() {
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
         const translation = t(key);
-        if(translation && translation !== key) {
-            if(el.tagName === 'INPUT' && el.hasAttribute('placeholder')) {
+        if (translation && translation !== key) {
+            if (el.tagName === 'INPUT' && el.hasAttribute('placeholder')) {
                 el.placeholder = translation;
             } else {
                 el.innerHTML = translation;
@@ -2308,7 +2309,7 @@ function applyTranslations() {
 
     // Special logic
     const modeBtn = document.getElementById('mode-toggle-btn');
-    if(modeBtn) {
+    if (modeBtn) {
         const isShopMode = !modeBtn.classList.contains('shop-mode');
         const modeText = document.getElementById('mode-toggle-text');
         if (modeText) {

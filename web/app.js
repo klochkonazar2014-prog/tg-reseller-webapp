@@ -1140,9 +1140,9 @@ async function submitTcLink() {
             // Phase 2: Success onboarding
             tutorialPhase = 2;
             currentTutorialStep = 4;
+            const input = document.getElementById('tc-link-input');
+            if (input) input.value = "";
             renderTutorialStep();
-
-            document.getElementById('tc-link-input').value = "";
             loadHistoryContent();
         } else {
             throw new Error(data.error || "Ошибка сервера");
