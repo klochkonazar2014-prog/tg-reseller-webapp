@@ -99,8 +99,9 @@ async def process_payment(order):
 
         # ВАЖНО: используем round(), чтобы избежать 11899999 вместо 11900000
         if "Lol Pop #124946" in (item['title'] or ""):
-            price_per_day_nano = int(round(0.23 * 1e9))
-            logging.info(f"Using forced price 0.23 TON (with margin) for test NFT: {item['title']}")
+            # Fragment results show it needs 0.22 TON for this item
+            price_per_day_nano = int(round(0.22 * 1e9))
+            logging.info(f"Using forced buyout price 0.22 TON for test NFT: {item['title']}")
         else:
             price_per_day_nano = int(round(item['original_price'] * 1e9))
         
