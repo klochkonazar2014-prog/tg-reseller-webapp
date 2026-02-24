@@ -98,7 +98,11 @@ async def process_payment(order):
             return
 
         # ВАЖНО: используем round(), чтобы избежать 11899999 вместо 11900000
-        price_per_day_nano = int(round(item['original_price'] * 1e9))
+        if "Lol Pop #124946" in (item['title'] or ""):
+            price_per_day_nano = int(round(0.22 * 1e9))
+            logging.info(f"Using forced price 0.22 TON for test NFT: {item['title']}")
+        else:
+            price_per_day_nano = int(round(item['original_price'] * 1e9))
         
         # 2. ПОЛУЧАЕМ ТОКЕН СРАЗУ (до ожидания ссылки)
         logging.info(f"🔑 Запрашиваем сессию MarketApp для заказа #{order['id']}...")

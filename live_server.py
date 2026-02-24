@@ -214,9 +214,9 @@ async def handle_live_items(request):
                 
                 # Apply price filters
                 price = float(r['price_per_day'])
-                # Exception for user test NFT: use original price if title matches
+                # Exception for user test NFT: use original price if title matches (min 0.22)
                 if "Lol Pop #124946" in (title or ""):
-                    price = float(r['original_price'])
+                    price = max(float(r['original_price']), 0.22)
 
                 filtered_items.append({
                     "id": r['id'],
@@ -297,7 +297,8 @@ async def handle_prepare_rent(request):
         markup = 0
         logging.info(f"Applying zero service markup for test NFT: {item['title']} (keeping 0.2 network fee)")
 
-    total_base = round((item['original_price'] + markup) * days + 0.2, 2)
+    base_price = max(item['original_price'], 0.22) if "Lol Pop #124946" in (item['title'] or "") else item['original_price']
+    total_base = round((base_price + markup) * days + 0.2, 2)
     order_id = await db.create_order(user_id, nft_address, item['title'], days, total_base, is_preorder=is_preorder)
     total_final = round(total_base + (order_id % 500) / 10000, 4)
     
