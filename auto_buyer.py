@@ -122,6 +122,8 @@ async def process_payment(order):
             logging.error(f"Некорректный формат ответа от MarketApp: {deal}")
             return
 
+        logging.info(f"📊 Детали сделки: Назначение={dest_addr}, Сумма={amount_nano} nanoTON")
+
         # 4. Инициализируем кошелек (v5R1 или v4R2)
         try:
             client = ToncenterV2Client(base_url="https://toncenter.com", api_key=TONCENTER_API_KEY)
@@ -183,19 +185,29 @@ async def process_payment(order):
 
             logging.info(f"💳 Кошелек бота: {wallet.address.to_str(is_bounceable=False)}")
             
-            # Конвертируем BOC из Base64 в объект Cell
+            # Конвертируем BOC (пробуем сначала Base64, затем Hex)
             try:
-                body_cell = Cell.one_from_boc(base64.b64decode(payload_boc))
-            except Exception as e:
-                logging.error(f"Ошибка декодирования BOC: {e}. Пробую отправить как текст.")
-                body_cell = payload_boc
+                # Пытаемся декодировать как Base64
+                decoded_boc = base64.b64decode(payload_boc)
+                body_cell = Cell.one_from_boc(decoded_boc)
+                logging.info("📦 BOC успешно декодирован из Base64")
+            except Exception:
+                try:
+                    # Если не Base64, пробуем как Hex
+                    decoded_boc = binascii.unhexlify(payload_boc)
+                    body_cell = Cell.one_from_boc(decoded_boc)
+                    logging.info("📦 BOC успешно декодирован из Hex")
+                except Exception as e:
+                    logging.error(f"❌ Ошибка декодирования BOC (ни Base64, ни Hex не подошли): {e}")
+                    body_cell = payload_boc
 
             # Получаем текущий seqno для отслеживания подтверждения
             current_seqno = await wallet.get_seqno(client, wallet.address)
             
-            # ВАЖНО: tonutils Wallet.transfer принимает сумму в целых TON!
-            amount_ton = amount_nano / 1e9
-            logging.info(f"🚀 Отправляю {amount_ton} TON на {dest_addr} (seqno: {current_seqno})...")
+            # ВАЖНО: tonutils Wallet.transfer принимает сумму в TON (float)
+            # Но чтобы избежать проблем с точностью, используем Decimal или просто делим
+            amount_ton = float(amount_nano) / 1e9
+            logging.info(f"🚀 Отправляю {amount_ton:.9f} TON на {dest_addr} (seqno: {current_seqno})...")
             
             # Отправка транзакции с Payload
             await wallet.transfer(
