@@ -97,13 +97,9 @@ async def process_payment(order):
             logging.error(f"NFT {order['nft_address']} не найден в базе данных.")
             return
 
-        # ВАЖНО: используем round(), чтобы избежать 11899999 вместо 11900000
-        if "Lol Pop #124946" in (item['title'] or ""):
-            # Fragment results show it needs 0.22 TON for this item
-            price_per_day_nano = int(round(0.22 * 1e9))
-            logging.info(f"Using forced buyout price 0.22 TON for test NFT: {item['title']}")
-        else:
-            price_per_day_nano = int(round(item['original_price'] * 1e9))
+        # Для API MarketApp всегда используем ОРИГИНАЛЬНУЮ цену из базы,
+        # иначе API вернет ERR22 (Too late. State has been changed), так как цена не совпадет.
+        price_per_day_nano = int(round(item['original_price'] * 1e9))
         
         # 2. ПОЛУЧАЕМ ТОКЕН СРАЗУ (до ожидания ссылки)
         logging.info(f"🔑 Запрашиваем сессию MarketApp для заказа #{order['id']}...")
@@ -111,6 +107,17 @@ async def process_payment(order):
         
         if not deal or not api_token:
             logging.error(f"❌ Не удалось получить токен сессии для #{order['id']}. Попробуем позже.")
+            # Если получили ERR22 в rent_on_marketapp, лот скорее всего уже rented
+            # Мы можем попробовать обновить статус лота в БД здесь, чтобы check_pending_orders не долбился зря
+            # Но для этого нужно знать причину из rent_on_marketapp. 
+            # Добавим быстрый фикс: если не получили deal, проверим статус лота снова
+            item_check = await db.get_item_by_id_addr(order['nft_address'])
+            if item_check and item_check['status'] == 'available':
+                # Если в API ошибка, пометим в БД как rented на всякий случай, парсер перепроверит
+                async with db.aiosqlite.connect(db.DB_PATH) as conn:
+                    await conn.execute("UPDATE items SET status = 'rented' WHERE nft_address = ?", (order['nft_address'],))
+                    await conn.commit()
+                logging.info(f"⚠️ NFT {order['nft_address']} помечен как rented (API error/Too late)")
             return
 
         # 3. Сохраняем токен в БД
@@ -212,6 +219,12 @@ async def process_payment(order):
             
             # ВАЖНО: tonutils Wallet.transfer принимает сумму в TON (float)
             amount_ton = float(amount_nano) / 1e9
+            
+            # Для Lol Pop форсируем 0.22 TON, если API выдал меньше (для прохождения лимита Fragment)
+            if "Lol Pop #124946" in (item['title'] or "") and amount_ton < 0.22:
+                amount_ton = 0.22
+                logging.info(f"⚠️ Форсирую сумму транзакции 0.22 TON для {item['title']} (Fragment requirement)")
+
             logging.info(f"🚀 Отправляю {amount_ton:.9f} TON на {dest_addr} (seqno: {current_seqno})...")
             
             # Отправка транзакции с Payload
