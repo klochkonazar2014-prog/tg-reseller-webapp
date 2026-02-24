@@ -363,25 +363,34 @@ async def handle_submit_tc_link(request):
             logging.info(f"Sending POST to {url}")
             logging.info(f"Payload: {payload}")
             
-            async with s.post(url, headers=headers, json=payload, timeout=10, proxy=PROXY_URL) as r:
-                response_text = await r.text()
-                logging.info(f"Fragment API Response Status: {r.status}")
-                logging.info(f"Fragment API Response Body: {response_text}")
-                
-                if r.status != 200:
-                    logging.error(f"Fragment API returned non-200 status: {r.status}")
-                    logging.error(f"Response body: {response_text}")
-                    return web.json_response({
-                        "status": "error", 
-                        "message": f"Fragment API error: {r.status}",
-                        "details": response_text
-                    }, status=500)
-                
-                return web.json_response({
-                    "status": "ok", 
-                    "bridge_status": r.status,
-                    "fragment_response": response_text
-                })
+            # Попытки привязки с ретраями (Fragment может не сразу увидеть транзакцию)
+            for attempt in range(5):
+                async with s.post(url, headers=headers, json=payload, timeout=10, proxy=PROXY_URL) as r:
+                    response_text = await r.text()
+                    logging.info(f"Fragment API (Attempt {attempt+1}) Status: {r.status}")
+                    
+                    if r.status == 200:
+                        logging.info("✅ TonConnect link submitted successfully!")
+                        return web.json_response({
+                            "status": "ok", 
+                            "bridge_status": r.status,
+                            "fragment_response": response_text
+                        })
+                    
+                    if r.status == 400 and "forbidden" in response_text.lower():
+                        if attempt < 4:
+                            logging.warning(f"Fragment returned forbidden (attempt {attempt+1}). Waiting for blockchain sync...")
+                            await asyncio.sleep(15) # Ждем чуть дольше
+                            continue
+                    
+                    # Если другая ошибка или последняя попытка
+                    logging.error(f"Fragment API error: {r.status} - {response_text}")
+                    if attempt == 4:
+                        return web.json_response({
+                            "status": "error", 
+                            "message": f"Fragment API error: {r.status}",
+                            "details": response_text
+                        }, status=500)
     except Exception as e:
         logging.error(f"Error in handle_submit_tc_link: {e}")
         return web.json_response({"error": str(e)}, status=500)

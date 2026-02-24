@@ -97,7 +97,8 @@ async def process_payment(order):
             logging.error(f"NFT {order['nft_address']} не найден в базе данных.")
             return
 
-        price_per_day_nano = int(item['original_price'] * 1e9)
+        # ВАЖНО: используем round(), чтобы избежать 11899999 вместо 11900000
+        price_per_day_nano = int(round(item['original_price'] * 1e9))
         
         # 2. ПОЛУЧАЕМ ТОКЕН СРАЗУ (до ожидания ссылки)
         logging.info(f"🔑 Запрашиваем сессию MarketApp для заказа #{order['id']}...")
@@ -115,7 +116,7 @@ async def process_payment(order):
         # Ответ API v1 имеет структуру: {"transaction": {"validUntil": ..., "messages": [{"address": ..., "amount": ..., "payload": ...}]}}
         transaction_data = deal.get("transaction", {}).get("messages", [{}])[0]
         dest_addr = transaction_data.get("address")
-        payload_boc = transaction_data.get("payload") # это base64 BOC
+        payload_boc = transaction_data.get("payload") # это base64 BOC или Hex
         amount_nano = int(transaction_data.get("amount", 0))
         
         if not dest_addr or not payload_boc:
@@ -205,7 +206,6 @@ async def process_payment(order):
             current_seqno = await wallet.get_seqno(client, wallet.address)
             
             # ВАЖНО: tonutils Wallet.transfer принимает сумму в TON (float)
-            # Но чтобы избежать проблем с точностью, используем Decimal или просто делим
             amount_ton = float(amount_nano) / 1e9
             logging.info(f"🚀 Отправляю {amount_ton:.9f} TON на {dest_addr} (seqno: {current_seqno})...")
             
@@ -238,26 +238,39 @@ async def process_payment(order):
         except Exception as e:
             logging.error(f"❌ Ошибка блокчейна для #{order_id}: {e}")
             return
+
+    except Exception as e:
+        logging.error(f"❌ Общая ошибка в process_payment для #{order_id}: {e}")
+        return
     finally:
         if order_id in processing_orders:
             processing_orders.remove(order_id)
+            logging.info(f"🔓 Блокировка снята для заказа #{order_id}")
 
     # 5. ТЕПЕРЬ МЕНЯЕМ СТАТУС НА 'rented' (теперь пользователь может отправить ссылку)
-    await db.update_order_status(order_id, 'rented')
+    async with db.aiosqlite.connect(db.DB_PATH) as conn:
+        await conn.execute("UPDATE orders SET status = 'rented' WHERE id = ?", (order_id,))
+        await conn.commit()
     logging.info(f"🔒 Транзакция выполнена, статус изменен на 'rented' для #{order_id}")
 
     # 6. ЕСЛИ ССЫЛКА УЖЕ ЕСТЬ В БД (пользователь ввел заранее), ПРИВЯЗЫВАЕМ ЕЁ
     current_order = await db.get_order_by_id(order_id)
     if current_order and current_order['tc_link']:
         tc_link = current_order['tc_link']
+        saved_token = current_order.get('api_token') or os.getenv("MARKETAPP_TOKEN_BUYER")
         logging.info(f"🔗 Ссылка обнаружена в БД для #{order_id}. Привязываю автоматически...")
         try:
-            url_tc = f"{MARKETAPP_API}/rent/{order['nft_address']}/tonconnect/"
+            url_tc = f"{MARKET_URL}/rent/{order['nft_address']}/tonconnect/"
             payload_tc = {"tonconnect_url": tc_link}
-            headers = {"Authorization": api_token, "Content-Type": "application/json"}
+            headers = {"Authorization": saved_token, "Content-Type": "application/json"}
             async with aiohttp.ClientSession() as session:
-                async with session.post(url_tc, headers=headers, json=payload_tc, timeout=15) as resp:
-                    logging.info(f"📥 Авто-привязка (TonConnect): status={resp.status} body={await resp.text()}")
+                # Небольшой ретрай и тут на всякий случай
+                for _ in range(3):
+                    async with session.post(url_tc, headers=headers, json=payload_tc, timeout=15) as resp:
+                        body = await resp.text()
+                        logging.info(f"📥 Авто-привязка (TonConnect): status={resp.status} body={body}")
+                        if resp.status == 200: break
+                        await asyncio.sleep(10)
         except Exception as e:
             logging.error(f"❌ Ошибка авто-привязки ссылки: {e}")
 
