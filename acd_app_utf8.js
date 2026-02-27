@@ -6,8 +6,8 @@ const OWNER_WALLET = "UQAotn3cT26kUKW5wSpP9dYKxwEQQ0qffDB24HGzuBrJ5PFB";
 const MANIFEST_URL = "https://klochkonazar2014-prog.github.io/tg-reseller-webapp/tonconnect-manifest.json";
 
 // ЁЯЪА Dynamic Backend Detection
-const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const BACKEND_URL = "http://34.135.238.92"; // VPS IP
+const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.includes('trycloudflare.com');
+const BACKEND_URL = isLocal ? window.location.origin : "https://octorent.duckdns.org";
 console.log("Using backend:", BACKEND_URL);
 
 let tonConnectUI;
@@ -472,7 +472,14 @@ const SLUG_MAPPING = {
     'happybrownie': 'happybrownie',
     'kissedfrog': 'kissedfrog',
     'plushpepe': 'plushpepe',
-    'ducks': 'ducks'
+    'ducks': 'ducks',
+    'eternalrose': 'eternalrose',
+    'cloverpin': 'cloverpin',
+    'whipcupcake': 'whipcupcake',
+    'jellypuppy': 'jellypuppy',
+    'magicmushroom': 'magicmushroom',
+    'goldstar': 'goldstar',
+    'khabibspapakha': 'khabibspapakha'
 };
 
 function getTelegifterUrl(type, name, collection, slugIndex = 0) {
@@ -609,29 +616,66 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
         }
         if (deepNftAddr) {
-            const match = ALL_MARKET_ITEMS.find(it => it.nft_address === deepNftAddr);
-            if (match) {
-                openProductView(match);
-            } else {
-                // If not in current catalog, try to fetch it specifically or alert
-                fetch(`${BACKEND_URL}/api/nft_details?nft_address=${deepNftAddr}`)
-                    .then(r => r.json())
-                    .then(details => {
-                        if (details && details.address) {
-                            // Normalize details to match our item structure
-                            const m = details.metadata || {};
-                            const fakeItem = {
-                                nft_address: details.address,
-                                nft_name: details.name,
-                                price_per_day: 0, // Will be updated by status check or remains 0
-                                status: 'available',
-                                type: 'gift',
-                                metadata: JSON.stringify(m)
-                            };
-                            openProductView(fakeItem);
-                        }
-                    }).catch(e => console.error("Deep link fetch error:", e));
-            }
+            console.log("🚀 Deep link:", deepNftAddr);
+            showToast(CURRENT_LANG === 'ru' ? "Загрузка товара..." : "Loading item...");
+            const tMap = { 'gift': 0, 'username': 1, 'number': 2 };
+
+            const openDeepItem = (it) => {
+                if (!it) return;
+                const idx = tMap[it.type];
+                if (idx !== undefined) switchTab(idx);
+                setTimeout(() => {
+                    openProductView(it);
+                    showToast(CURRENT_LANG === 'ru' ? "Готово!" : "Ready!");
+                }, 800);
+            };
+
+            (async () => {
+                try {
+                    // Quick check local cache
+                    const cached = (ALL_MARKET_ITEMS || []).find(x => {
+                        const a = String(x.nft_address || '').toLowerCase();
+                        const t = deepNftAddr.toLowerCase();
+                        return a === t || a.replace(/-/g, '+').replace(/_/g, '/') === t.replace(/-/g, '+').replace(/_/g, '/');
+                    });
+
+                    if (cached) {
+                        openDeepItem(cached);
+                        return;
+                    }
+
+                    // Fetch from server
+                    const r = await fetch(`${BACKEND_URL}/api/nft_details?nft_address=${encodeURIComponent(deepNftAddr)}`);
+                    if (!r.ok) throw new Error("HTTP " + r.status);
+                    const d = await r.json();
+
+                    if (d && (d.address || d.nft_address)) {
+                        const m = d.metadata || {};
+                        const iName = d.name || d.nft_name || d.title || '';
+                        let type = d.type || 'gift';
+                        if (iName.startsWith('@')) type = 'username';
+                        else if (iName.startsWith('+')) type = 'number';
+
+                        openDeepItem({
+                            id: d.id || Date.now(),
+                            nft_address: d.address || d.nft_address,
+                            nft_name: iName,
+                            nft_image: d.image || m.image,
+                            _realImage: d.image || m.image,
+                            price_per_day: d.price_per_day || 0,
+                            status: d.status || 'available',
+                            rent_ends_at: d.rent_ends_at || (d.rent ? d.rent.ends_at : null),
+                            type: type,
+                            metadata: typeof d.metadata === 'string' ? d.metadata : JSON.stringify(d.metadata || {})
+                        });
+                    } else {
+                        showToast(CURRENT_LANG === 'ru' ? "Товар не найден" : "Item not found");
+                    }
+                } catch (e) {
+                    console.error("DL Error:", e);
+                    showToast("Ошибка: " + e.message);
+                }
+            })();
         }
 
         document.getElementById('search-input').addEventListener('input', debounce((e) => {
@@ -1588,226 +1632,241 @@ async function openProductView(item) {
         mediaCont.innerHTML = renderMediaHTML(item);
     }
 
-    // NEW: Release Date Badge in Product View
+    // Live Countdown Timer in Product View - CONSOLIDATED
     const releaseBadge = document.getElementById('view-release-badge');
     if (releaseBadge) {
         if (item.status === 'rented' && item.rent_ends_at) {
-            const date = new Date(item.rent_ends_at * 1000);
-            const dateStr = date.toLocaleDateString(t('lang') === 'ru' ? 'ru-RU' : 'en-US', { day: 'numeric', month: 'short' });
-            releaseBadge.innerHTML = `<div class="rental-badge rented" style="position:static; display:inline-flex; margin-bottom:12px;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:6px;">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <polyline points="12 6 12 12 16 14"></polyline>
-                </svg>
-                ${t('available_from')}: ${dateStr}
-            </div>`;
+            const timerId = 'release-timer-' + item.id;
+            releaseBadge.innerHTML = `<div id="${timerId}" style="display:block; font-size:16px; font-weight:700; color:#fff; margin-bottom:12px; width: 100%;"></div>`;
             releaseBadge.style.display = 'block';
+            const timerEl = document.getElementById(timerId);
+            if (timerEl) {
+                startCountdown(parseInt(item.rent_ends_at), timerEl);
+            }
         } else {
             releaseBadge.style.display = 'none';
         }
     }
+}
 
-    const lottieCont = document.getElementById('view-lottie');
-    if (lottieCont) {
-        lottieCont.innerHTML = '';
-        const fUrls = generateFragmentUrls(item.nft_name);
-        if (fUrls.lottie && item.type === 'gift') {
-            const anim = lottie.loadAnimation({
-                container: lottieCont,
-                renderer: 'svg',
-                loop: true,
-                autoplay: true,
-                path: fUrls.lottie
-            });
-            lottieCont.anim = anim;
-            anim.addEventListener('DOMLoaded', () => {
-                if (mediaCont) mediaCont.style.display = 'none';
-            });
-        }
-    }
-
-    const colName = (item._collection && item._collection.name) ? item._collection.name : "Gifts";
-    const viewTitle = document.getElementById('view-title');
-    if (viewTitle) {
-        viewTitle.innerText = item.nft_name;
-    }
-    const viewCopyBtn = document.getElementById('view-copy-btn-main');
-    if (viewCopyBtn) {
-        viewCopyBtn.onclick = () => copyNftTitle(item.nft_name);
-    }
-
-    const notifyBtn = document.getElementById('notify-btn');
-    if (notifyBtn) {
-        notifyBtn.style.display = (item.status === 'rented') ? 'block' : 'none';
-    }
-    const colEl = document.getElementById('view-collection');
-    if (colEl) {
-        colEl.innerText = `${colName} >`;
-        colEl.style.display = (item.type === 'gift') ? 'block' : 'none';
-        colEl.onclick = () => {
-            ACTIVE_FILTERS.nft = colName;
-            closeProductView();
-            loadLiveItems(true);
-        };
-    }
-
-    const ownerEl = document.getElementById('view-owner');
-    if (ownerEl) {
-        ownerEl.parentElement.style.display = 'none';
-    }
-
-    // Hide Details/Properties for Numbers & Usernames
-    const detailsTab = document.getElementById('details-tab');
-    const propertiesCont = document.getElementById('view-properties');
-    const isGift = (item.type && item.type.toLowerCase() === 'gift');
-    if (detailsTab) detailsTab.style.display = isGift ? 'block' : 'none';
-    if (propertiesCont) propertiesCont.style.display = isGift ? 'block' : 'none';
-
-    // Translation setup
-    const setChip = (id, key) => {
-        const el = document.getElementById(id);
-        if (el) el.innerText = t(key);
-    };
-    setChip('view-label-price', 'price_per_day');
-    setChip('view-label-period', 'period');
-    setChip('view-label-discount', 'discount');
-    setChip('view-auto-relist-title', 'auto_relist');
-    setChip('view-auto-relist-desc', 'auto_relist_desc');
-    setChip('fee-what-mean', 'what_is_this');
-
-    // Hide Address
-    const addrDom = document.getElementById('view-address');
-    if (addrDom) addrDom.style.display = 'none';
-
-    // Pricing & Duration
-    let rawP = parseFloat(item.price_per_day) || 0;
-    const dailyPrice = rawP.toFixed(2);
-    document.getElementById('view-daily-price').innerHTML = renderTonAmount(dailyPrice);
-    if (GLOBAL_TON_PRICE) {
-        document.getElementById('view-daily-price-usd').innerText = `~$${(rawP * GLOBAL_TON_PRICE).toFixed(2)}`;
-    }
-
-    const minDays = Math.floor((item.min_duration || 86400) / 86400);
-    const maxDays = Math.floor((item.max_duration || 2592000) / 86400);
-    const rangeEl = document.getElementById('view-duration-range');
-    if (rangeEl) rangeEl.textContent = `${minDays} тАФ ${maxDays}`;
-    document.getElementById('view-discount').innerText = "0.1%";
-    document.getElementById('rent-duration-input').value = minDays;
-
-    // Attributes
-    const propCont = document.getElementById('view-properties');
-    if (propCont && item.type === 'gift') {
-        propCont.innerHTML = '';
-        // Attributes like Model/Backdrop/Symbol will be added via fetch later, or we can add static ones if available
-        const nftNumMatch = item.nft_name.match(/#(\d+)/);
-        const nftNum = nftNumMatch ? nftNumMatch[1] : '1';
-        const giftBaseName = item.nft_name.replace(/#\d+/, '').trim();
-        const giftSlug = giftBaseName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join('');
-        const tgNftLink = `https://t.me/nft/${giftSlug}-${nftNum}`;
-
-        const createPropRow = (label, value, statKey) => {
-            const displayValue = (!value || value === 'Unknown' || value === 'Gift') ? 'тАФ' : value;
-            const row = document.createElement('div');
-            row.className = 'property-item';
-            row.innerHTML = `
-                <div class="prop-left"><div class="prop-name">${label}</div></div>
-                <div class="prop-right"><span style="color:var(--accent-blue); font-weight:600;">${displayValue}</span></div>`;
-            return row;
-        };
-
-        const tgRow = document.createElement('div');
-        tgRow.className = 'property-item';
-        tgRow.innerHTML = `<div class="prop-left"><div class="prop-name">Telegram</div></div><div class="prop-right"><span style="color:var(--accent-blue); font-weight:600;">${giftBaseName} #${nftNum}</span></div>`;
-        tgRow.onclick = () => tg.openTelegramLink(tgNftLink);
-        propCont.appendChild(tgRow);
-
-        if (item._modelName) propCont.appendChild(createPropRow(t('model'), item._modelName, 'model'));
-        if (item._symbol) propCont.appendChild(createPropRow(t('symbol'), item._symbol, 'symbol'));
-        if (item._backdrop) propCont.appendChild(createPropRow(t('backdrop'), item._backdrop, 'bg'));
-
-        // Auto-relist status
-        const reRow = createPropRow(t('auto_relist_label'), item.auto_relist ? t('yes') : t('no'));
-        if (!item.auto_relist) reRow.querySelector('.prop-right span').style.color = '#ff3b30';
-        propCont.appendChild(reRow);
-    }
-
-    // Rent Button
-    const rentBtn = document.getElementById('main-rent-action-btn');
-    if (rentBtn) {
-        updateTotalPrice();
-        const rentBtnTextEl = rentBtn.querySelector('#rent-btn-text');
-        if (rentBtnTextEl) rentBtnTextEl.textContent = t('rent_button', { amount: '' }).replace('{amount}', '').trim();
-
-        rentBtn.onclick = async () => {
-            if (!tonConnectUI.connected) { await tonConnectUI.openModal(); return; }
-
-            // ALERT: Check auto-relist for pre-orders
-            if (item.status === 'rented' && !item.auto_relist) {
-                const confirmed = confirm(t('preorder_warning_no_relist'));
-                if (!confirmed) return;
-            }
-
-            const days = parseInt(document.getElementById('rent-duration-input').value) || 1;
-            const originalHTML = rentBtn.innerHTML;
-            rentBtn.innerHTML = t('loading');
-            rentBtn.disabled = true;
-            try {
-                const userId = tg.initDataUnsafe?.user?.id || 0;
-                const r = await fetch(`${BACKEND_URL}/api/prepare_rent?nft_address=${item.nft_address}&days=${days}&user_id=${userId}`);
-                const d = await r.json();
-                if (d.error) throw new Error(d.error);
-                const res = await tonConnectUI.sendTransaction({ validUntil: Math.floor(Date.now() / 1000) + 600, messages: d.messages });
-                if (res) {
-                    await fetch(`${BACKEND_URL}/api/mark_rented`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nft_address: item.nft_address, order_id: d.order_id }) });
-                    closeProductView();
-                    loadLiveItems(true);
-                    openTcModal(d.order_id, true, true);
-                    startPollingOrder(d.order_id);
-                }
-            } catch (e) {
-                console.error("Rent Error:", e);
-                tg.showAlert(e.message || "Error");
-            } finally {
-                rentBtn.innerHTML = originalHTML;
-                rentBtn.disabled = false;
-            }
-        };
-    }
-
-    const warningBox = document.getElementById('listing-warning-box');
-    if (warningBox) warningBox.style.display = 'none';
-
-    if (item && item.nft_address) {
-        fetch(`${BACKEND_URL}/api/nft_details?nft_address=${item.nft_address}`)
-            .then(r => r.json())
-            .then(details => {
-                if (details.rent && details.rent.listed_at) {
-                    const diffHrs = (Date.now() - (details.rent.listed_at * 1000)) / (1000 * 60 * 60);
-                    if (diffHrs < 24) {
-                        if (warningBox) warningBox.style.display = 'block';
-                        const wt = document.getElementById('view-listed-time');
-                        if (wt) wt.innerText = diffHrs < 1 ? t('just_now') : `${Math.round(diffHrs)} ${t('hours_ago')}`;
-                    }
-                }
-                if (details.attributes) {
-                    details.attributes.forEach(attr => {
-                        const row = Array.from(document.querySelectorAll('.property-item')).find(r => r.querySelector('.prop-name')?.textContent === t(attr.trait_type.toLowerCase()));
-                        if (row) {
-                            const valSpan = row.querySelector('.prop-value-text');
-                            if (valSpan) valSpan.textContent = attr.value;
-                        }
-                    });
-                }
-            }).catch(e => console.error(e));
-    }
-
-    // Reset scroll at the very end
-    if (pv) {
-        requestAnimationFrame(() => {
-            pv.scrollTop = 0;
-            pv.scrollTo({ top: 0, behavior: 'instant' });
+const lottieCont = document.getElementById('view-lottie');
+if (lottieCont) {
+    lottieCont.innerHTML = '';
+    const fUrls = generateFragmentUrls(item.nft_name);
+    if (fUrls.lottie && item.type === 'gift') {
+        const anim = lottie.loadAnimation({
+            container: lottieCont,
+            renderer: 'svg',
+            loop: true,
+            autoplay: true,
+            path: fUrls.lottie
+        });
+        lottieCont.anim = anim;
+        anim.addEventListener('DOMLoaded', () => {
+            if (mediaCont) mediaCont.style.display = 'none';
         });
     }
+}
+
+const colName = (item._collection && item._collection.name) ? item._collection.name : "Gifts";
+const viewTitle = document.getElementById('view-title');
+if (viewTitle) {
+    viewTitle.innerText = item.nft_name;
+}
+const viewCopyBtn = document.getElementById('view-copy-btn-main');
+if (viewCopyBtn) {
+    viewCopyBtn.onclick = () => copyNftTitle(item.nft_name);
+}
+
+const notifyBtn = document.getElementById('notify-btn');
+if (notifyBtn) {
+    notifyBtn.style.display = (item.status === 'rented') ? 'block' : 'none';
+}
+const colEl = document.getElementById('view-collection');
+if (colEl) {
+    colEl.innerText = `${colName} >`;
+    colEl.style.display = (item.type === 'gift') ? 'block' : 'none';
+    colEl.onclick = () => {
+        ACTIVE_FILTERS.nft = colName;
+        closeProductView();
+        loadLiveItems(true);
+    };
+}
+
+const ownerEl = document.getElementById('view-owner');
+if (ownerEl) {
+    ownerEl.parentElement.style.display = 'none';
+}
+
+// Hide Details/Properties for Numbers & Usernames
+const detailsTab = document.getElementById('details-tab');
+const propertiesCont = document.getElementById('view-properties');
+const isGift = (item.type && item.type.toLowerCase() === 'gift');
+if (detailsTab) detailsTab.style.display = isGift ? 'block' : 'none';
+if (propertiesCont) propertiesCont.style.display = isGift ? 'block' : 'none';
+
+// Translation setup
+const setChip = (id, key) => {
+    const el = document.getElementById(id);
+    if (el) el.innerText = t(key);
+};
+setChip('view-label-price', 'price_per_day');
+setChip('view-label-period', 'period');
+setChip('view-label-discount', 'discount');
+setChip('view-auto-relist-title', 'auto_relist');
+setChip('view-auto-relist-desc', 'auto_relist_desc');
+setChip('fee-what-mean', 'what_is_this');
+
+// Hide Address
+const addrDom = document.getElementById('view-address');
+if (addrDom) addrDom.style.display = 'none';
+
+// Pricing & Duration
+let rawP = parseFloat(item.price_per_day) || 0;
+const dailyPrice = rawP.toFixed(2);
+document.getElementById('view-daily-price').innerHTML = renderTonAmount(dailyPrice);
+if (GLOBAL_TON_PRICE) {
+    document.getElementById('view-daily-price-usd').innerText = `~$${(rawP * GLOBAL_TON_PRICE).toFixed(2)}`;
+}
+
+const minDays = Math.floor((item.min_duration || 86400) / 86400);
+const maxDays = Math.floor((item.max_duration || 2592000) / 86400);
+const rangeEl = document.getElementById('view-duration-range');
+if (rangeEl) rangeEl.textContent = `${minDays} тАФ ${maxDays}`;
+document.getElementById('view-discount').innerText = "0.1%";
+document.getElementById('rent-duration-input').value = minDays;
+
+// Attributes
+const propCont = document.getElementById('view-properties');
+if (propCont && item.type === 'gift') {
+    propCont.innerHTML = '';
+    // Attributes like Model/Backdrop/Symbol will be added via fetch later, or we can add static ones if available
+    const nftNumMatch = item.nft_name.match(/#(\d+)/);
+    const nftNum = nftNumMatch ? nftNumMatch[1] : '1';
+    const giftBaseName = item.nft_name.replace(/#\d+/, '').trim();
+    const giftSlug = giftBaseName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join('');
+    const tgNftLink = `https://t.me/nft/${giftSlug}-${nftNum}`;
+
+    const createPropRow = (label, value, statKey) => {
+        const displayValue = (!value || value === 'Unknown' || value === 'Gift') ? 'тАФ' : value;
+        const row = document.createElement('div');
+        row.className = 'property-item';
+        row.innerHTML = `
+                <div class="prop-left"><div class="prop-name">${label}</div></div>
+                <div class="prop-right"><span style="color:var(--accent-blue); font-weight:600;">${displayValue}</span></div>`;
+        return row;
+    };
+
+    const tgRow = document.createElement('div');
+    tgRow.className = 'property-item';
+    tgRow.innerHTML = `<div class="prop-left"><div class="prop-name">Telegram</div></div><div class="prop-right"><span style="color:var(--accent-blue); font-weight:600;">${giftBaseName} #${nftNum}</span></div>`;
+    tgRow.onclick = () => tg.openTelegramLink(tgNftLink);
+    propCont.appendChild(tgRow);
+
+    if (item._modelName) propCont.appendChild(createPropRow(t('model'), item._modelName, 'model'));
+    if (item._symbol) propCont.appendChild(createPropRow(t('symbol'), item._symbol, 'symbol'));
+    if (item._backdrop) propCont.appendChild(createPropRow(t('backdrop'), item._backdrop, 'bg'));
+
+    // Auto-relist status
+    const reRow = createPropRow(t('auto_relist_label'), item.auto_relist ? t('yes') : t('no'));
+    if (!item.auto_relist) reRow.querySelector('.prop-right span').style.color = '#ff3b30';
+    propCont.appendChild(reRow);
+}
+
+// Rent Button
+const rentBtn = document.getElementById('main-rent-action-btn');
+if (rentBtn) {
+    updateTotalPrice();
+    const rentBtnTextEl = rentBtn.querySelector('#rent-btn-text');
+    if (rentBtnTextEl) rentBtnTextEl.textContent = t('rent_button', { amount: '' }).replace('{amount}', '').trim();
+
+    rentBtn.onclick = async () => {
+        if (!tonConnectUI.connected) { await tonConnectUI.openModal(); return; }
+
+        // ALERT: Check auto-relist for pre-orders
+        if (item.status === 'rented' && !item.auto_relist) {
+            const confirmed = confirm(t('preorder_warning_no_relist'));
+            if (!confirmed) return;
+        }
+
+        const days = parseInt(document.getElementById('rent-duration-input').value) || 1;
+        const originalHTML = rentBtn.innerHTML;
+        rentBtn.innerHTML = t('loading');
+        rentBtn.disabled = true;
+        try {
+            const userId = tg.initDataUnsafe?.user?.id || 0;
+            const r = await fetch(`${BACKEND_URL}/api/prepare_rent?nft_address=${item.nft_address}&days=${days}&user_id=${userId}`);
+            const d = await r.json();
+            if (d.error) throw new Error(d.error);
+            const res = await tonConnectUI.sendTransaction({ validUntil: Math.floor(Date.now() / 1000) + 600, messages: d.messages });
+            if (res) {
+                await fetch(`${BACKEND_URL}/api/mark_rented`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nft_address: item.nft_address, order_id: d.order_id }) });
+                closeProductView();
+                loadLiveItems(true);
+                openTcModal(d.order_id, true, true);
+                startPollingOrder(d.order_id);
+            }
+        } catch (e) {
+            console.error("Rent Error:", e);
+            tg.showAlert(e.message || "Error");
+        } finally {
+            rentBtn.innerHTML = originalHTML;
+            rentBtn.disabled = false;
+        }
+    };
+}
+
+const warningBox = document.getElementById('listing-warning-box');
+if (warningBox) warningBox.style.display = 'none';
+
+if (item && item.nft_address) {
+    fetch(`${BACKEND_URL}/api/nft_details?nft_address=${item.nft_address}`)
+        .then(r => r.json())
+        .then(details => {
+            if (details.rent && details.rent.listed_at) {
+                const diffHrs = (Date.now() - (details.rent.listed_at * 1000)) / (1000 * 60 * 60);
+                if (diffHrs < 24) {
+                    if (warningBox) warningBox.style.display = 'block';
+                    const wt = document.getElementById('view-listed-time');
+                    if (wt) wt.innerText = diffHrs < 1 ? t('just_now') : `${Math.round(diffHrs)} ${t('hours_ago')}`;
+                }
+            }
+            if (details.attributes) {
+                details.attributes.forEach(attr => {
+                    const row = Array.from(document.querySelectorAll('.property-item')).find(r => r.querySelector('.prop-name')?.textContent === t(attr.trait_type.toLowerCase()));
+                    if (row) {
+                        const valSpan = row.querySelector('.prop-value-text');
+                        if (valSpan) valSpan.textContent = attr.value;
+                    }
+                });
+            }
+            // Countdown Logic sync
+            const endTime = details.rent?.ends_at || details.rent_ends_at || item.rent_ends_at;
+            const isRented = item.status === 'rented' || (myOrder && (myOrder.status === 'active' || myOrder.status === 'rented'));
+            const releaseBadge = document.getElementById('view-release-badge');
+
+            if (endTime && isRented && releaseBadge) {
+                const timerId = 'release-timer-' + item.id;
+                let timerEl = document.getElementById(timerId);
+                if (!timerEl) {
+                    releaseBadge.innerHTML = `<div id="${timerId}" style="display:block; font-size:16px; font-weight:700; color:#fff; margin-bottom:12px; width: 100%;"></div>`;
+                    timerEl = document.getElementById(timerId);
+                }
+                if (timerEl) {
+                    releaseBadge.style.display = 'block';
+                    startCountdown(parseInt(endTime), timerEl);
+                }
+            }
+        }).catch(e => console.error(e));
+}
+
+// Reset scroll at the very end
+if (pv) {
+    requestAnimationFrame(() => {
+        pv.scrollTop = 0;
+        pv.scrollTo({ top: 0, behavior: 'instant' });
+    });
+}
 }
 
 function adjustDuration(delta) {

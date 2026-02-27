@@ -9,10 +9,11 @@ import re
 import hmac
 import hashlib
 from urllib.parse import parse_qsl
-from tonutils.utils import begin_cell
+from tonutils.utils import begin_cell, Address
 from dotenv import load_dotenv
 
 load_dotenv()
+USDT_JETTON_ADDRESS = "EQCxE6mUt_9S9clpu7R_6m09wYz3X0mR3GvK7N88m8_L3A1f"
 MARKET_URL = "https://api.marketapp.ws/v1"
 TOKENS = [
     t for t in [
@@ -280,53 +281,281 @@ async def handle_filter_data(request):
             return web.json_response(json.load(f))
     return web.json_response({"error": "Cache not ready. Run parser.py"}, status=503)
 
-async def handle_prepare_rent(request):
-    nft_address, days = request.query.get("nft_address"), int(request.query.get("days", 1))
-    user_id = get_authenticated_user_id(request)
-    if not user_id:
-        return web.json_response({"error": "Unauthorized"}, status=401)
-    
+async def create_rental_order(user_id, nft_address, days):
+    """Helper to create a rental order with proper markup and total price"""
     item = await db.get_item_by_id_addr(nft_address)
-    if not item: return web.json_response({"error": "Not found"}, status=404)
+    if not item: return None, "Not found"
     
     is_preorder = 1 if item['status'] == 'rented' else 0
-    
     markup = calculate_markup(item['original_price'])
+    
     # Exception for user test NFT
     if "Lol Pop #124946" in (item['title'] or ""):
         markup = 0
-        logging.info(f"Applying zero service markup for test NFT: {item['title']} (keeping 0.2 network fee)")
-
-    if "Lol Pop #124946" in (item['title'] or ""):
-        # User formula: 0.01 (base) + 0.2 (network) + 0.02 (mini comm) = 0.23
         total_base = 0.23
-        logging.info(f"Using special total price 0.23 for test NFT")
+        logging.info(f"Applying special logic for test NFT: {item['title']}")
     else:
         total_base = round((item['original_price'] + markup) * days + 0.2, 2)
     
     order_id = await db.create_order(user_id, nft_address, item['title'], days, total_base, is_preorder=is_preorder)
+    # Add unique fractional part to avoid collision in simple transfers
     total_final = round(total_base + (order_id % 500) / 10000, 4)
     
     async with db.aiosqlite.connect(db.DB_PATH) as conn:
         await conn.execute("UPDATE orders SET total_price = ?, status = 'pending_payment' WHERE id = ?", (total_final, order_id))
         await conn.commit()
     
-    # REFERRAL LOGIC: Check if user has a referrer and add earning
+    # Referral Logic
     referrer_id = await db.get_referrer_id(user_id)
-    if referrer_id:
-        # Calculate 25% of markup
-        referral_commission = round(markup * days * 0.25, 4)  # 25% от наценки
-        
-        # Add earning to referrer's balance
+    if referrer_id and markup > 0:
+        referral_commission = round(markup * days * 0.25, 4)
         if referral_commission > 0:
             await db.add_referral_earning(referrer_id, order_id, referral_commission)
-            logging.info(f"Referral earning added: {referral_commission} TON to user {referrer_id} for order {order_id}")
+            
+    return {
+        "order_id": order_id,
+        "total_price": total_final,
+        "item": item
+    }, None
 
+async def handle_prepare_rent(request):
+    try:
+        data = await request.json()
+    except Exception:
+        data = dict(request.query)
+
+    nft_address = data.get("nft_address")
+    days = int(data.get("days", 1))
+    user_id = get_authenticated_user_id(request)
+    
+    if not user_id:
+        return web.json_response({"error": "Unauthorized"}, status=401)
+    
+    res, err = await create_rental_order(user_id, nft_address, days)
+    if err: return web.json_response({"error": err}, status=404)
+    
+    order_id = res['order_id']
+    total_final = res['total_price']
+    
     import base64
-    # New Memo Format: order:{id} | nft:{addr[:8]}...
-    memo_text = f"order:{order_id} | nft:{nft_address[:12]}..."
+    safe_addr = str(nft_address) if nft_address else "unknown"
+    memo_text = f"order:{order_id} | nft:{safe_addr[:12]}..."
     payload = base64.b64encode(begin_cell().store_uint(0, 32).store_string(memo_text).end_cell().to_boc(False)).decode('utf-8')
-    return web.json_response({"messages": [{"address": OWNER_WALLET, "amount": str(int(total_final * 1e9)), "payload": payload}], "order_id": order_id})
+    
+    # Send what app.js expects: status="ok", total_price=X
+    return web.json_response({
+        "status": "ok",
+        "total_price": total_final,
+        "messages": [{"address": OWNER_WALLET, "amount": str(int(total_final * 1e9)), "payload": payload}],
+        "order_id": order_id
+    })
+
+async def fetch_fiat_rates():
+    """Fetches TON price in USD and RUB"""
+    try:
+        async with aiohttp.ClientSession() as session:
+            # Get TON/USD from TonAPI
+            async with session.get('https://tonapi.io/v2/rates?tokens=ton&currencies=usd,rub') as resp:
+                data = await resp.json()
+                rates = data.get('rates', {}).get('TON', {}).get('prices', {})
+                return {
+                    'USD': rates.get('USD', 2.5), # Fallback to 2.5 if API fails
+                    'RUB': rates.get('RUB', 230)   # Fallback to 230 if API fails
+                }
+    except Exception as e:
+        logging.error(f"Error fetching rates: {e}")
+        return {'USD': 2.5, 'RUB': 230}
+
+async def handle_get_rates(request):
+    """API endpoint to get current TON/USD and TON/RUB rates"""
+    rates = await fetch_fiat_rates()
+    return web.json_response(rates)
+
+async def handle_create_fiat_invoice(request):
+    """Creates a fiat invoice via AAIO or CryptoPay"""
+    try:
+        data = await request.json()
+        nft_address = data.get('nft_address')
+        days = int(data.get('days', 1))
+        method = data.get('gateway') # 'aaio' or 'cryptopay'
+        currency = data.get('currency') # 'RUB' or 'USD'
+        
+        user_id = get_authenticated_user_id(request)
+        if not user_id: return web.json_response({"error": "Unauthorized"}, status=401)
+        
+        # Create order first
+        res, err = await create_rental_order(user_id, nft_address, days)
+        if err: return web.json_response({"error": err}, status=404)
+        
+        order_id = res['order_id']
+        total_ton = res['total_price']
+        
+        rates = await fetch_fiat_rates()
+        ton_price = rates.get(currency, 1)
+        
+        # Calculate fiat amount with a small buffer for exchange rate volatility
+        fiat_amount = round(total_ton * ton_price * 1.05, 2)
+        
+        payment_url = ""
+        external_id = ""
+        
+        if method == 'aaio':
+            AAIO_MERCHANT_ID = os.getenv("AAIO_MERCHANT_ID", "YOUR_AAIO_MERCHANT_ID")
+            AAIO_SECRET_1 = os.getenv("AAIO_SECRET_1", "YOUR_AAIO_SECRET_1")
+            external_id = f"order_{order_id}_{int(asyncio.get_event_loop().time())}"
+            
+            # Signature for invoice: merchant_id:amount:currency:secret:order_id
+            sign_str = f"{AAIO_MERCHANT_ID}:{fiat_amount}:{currency}:{AAIO_SECRET_1}:{external_id}"
+            sign = hashlib.sha256(sign_str.encode()).hexdigest()
+            
+            payment_url = f"https://aaio.io/merchant/pay?merchant_id={AAIO_MERCHANT_ID}&amount={fiat_amount}&currency={currency}&order_id={external_id}&sign={sign}"
+            
+        elif method == 'cryptopay':
+            CRYPTO_PAY_TOKEN = os.getenv("CRYPTO_PAY_API_TOKEN", "YOUR_CRYPTO_PAY_TOKEN")
+            # For CryptoPay via @CryptoBot, we usually use their API to create an invoice
+            # This is a placeholder direct link, real implementation should call their API
+            payment_url = f"https://t.me/CryptoBot?start=pay_order_{order_id}" 
+            external_id = f"cp_{order_id}"
+
+        # Update order with fiat info
+        async with db.aiosqlite.connect(db.DB_PATH) as conn:
+            await conn.execute(
+                "UPDATE orders SET currency = ?, payment_gateway = ?, fiat_amount = ?, external_id = ? WHERE id = ?",
+                (currency, method, fiat_amount, external_id, order_id)
+            )
+            await conn.commit()
+            
+        return web.json_response({"status": "ok", "order_id": order_id, "payment_url": payment_url, "fiat_amount": fiat_amount})
+    except Exception as e:
+        logging.error(f"Error creating fiat invoice: {e}")
+        return web.json_response({"error": str(e)}, status=500)
+
+async def handle_get_usdt_payload(request):
+    """
+    Generates a Jetton Transfer payload for USDT payment via TonConnect.
+    The user's wallet will send USDT to OWNER_WALLET with a memo 'order_id:XXX'.
+    """
+    try:
+        order_id = request.query.get('order_id')
+        amount = request.query.get('amount') # In USDT units (6 decimals)
+        
+        if not order_id or not amount:
+            return web.json_response({"error": "Missing params"}, status=400)
+
+        # 1. First, we need the user's USDT Jetton Wallet address to send from.
+        # But wait, in TonConnect, the user sends a transaction to their OWN Jetton Wallet
+        # which then transfers to the destination.
+        # However, the UI doesn't always know the user's Jetton Wallet.
+        # The standard approach is to let the backend find it or provide a generic way.
+        
+        # Actually, for TonConnect, we can just return the HEX of the Cell.
+        # The payload is: 0xf8a7ea5 (op) + 0 (query_id) + amount + OWNER_WALLET + ...
+        
+        # Binary construction of Jetton Transfer:
+        # op: 0xf8a7ea5
+        # query_id: 0
+        # amount: VarUint 16
+        # destination: MsgAddress
+        # response_destination: MsgAddress
+        # custom_payload: Maybe Bit (0)
+        # forward_ton_amount: VarUint 16 (e.g. 0.01 TON)
+        # forward_payload: Either (Cell / Slice) -> OrderID as memo
+        
+        from tonutils.utils import begin_cell, Address
+        
+        # Create memo cell
+        memo_cell = begin_cell().store_uint(0, 32).store_string(f"order_id:{order_id}").end_cell()
+        
+        payload_cell = (
+            begin_cell()
+            .store_uint(0xf8a7ea5, 32) # Op-code transfer
+            .store_uint(0, 64)        # query_id
+            .store_coins(int(amount)) # amount (jetton units)
+            .store_address(Address(OWNER_WALLET)) # to
+            .store_address(Address(OWNER_WALLET)) # response
+            .store_bit(0) # custom_payload
+            .store_coins(10000000) # forward_ton_amount (0.01 TON)
+            .store_bit(1) # forward_payload is cell
+            .store_ref(memo_cell)
+            .end_cell()
+        )
+        
+        payload_hex = payload_cell.to_boc(False).hex()
+        
+        # We also need the user's USDT Jetton Wallet. 
+        # Since the backend doesn't know the user's wallet address yet (it's in the UI),
+        # we can't fetch it here. We'll return the payload and the main USDT Master address.
+        # BUT: The user must send to their JETTON WALLET, not the master.
+        # I'll return the Master and the UI will have to resolve it or we return it if we have it.
+        
+        return web.json_response({
+            "status": "ok",
+            "payload": payload_hex,
+            "usdt_master": USDT_JETTON_ADDRESS
+        })
+    except Exception as e:
+        logging.error(f"Error generating USDT payload: {e}")
+        return web.json_response({"error": str(e)}, status=500)
+
+async def handle_aaio_webhook(request):
+    """AAIO Webhook Handler"""
+    try:
+        data = await request.post()
+        merchant_id = data.get('merchant_id')
+        amount = data.get('amount')
+        external_id = data.get('order_id')
+        sign = data.get('sign')
+        
+        # Verify Signature (Simplified)
+        AAIO_SECRET_2 = os.getenv("AAIO_SECRET_2")
+        check_sign = hashlib.sha256(f"{merchant_id}:{amount}:{external_id}:{AAIO_SECRET_2}".encode()).hexdigest()
+        
+        if sign != check_sign:
+            logging.warning(f"Invalid AAIO signature for order {external_id}")
+            return web.Response(text="invalid_sign", status=400)
+            
+        # Extract order_id from external_id
+        order_id = int(external_id.split('_')[1])
+        
+        # Mark as paid
+        await db.update_order_status(order_id, 'paid')
+        logging.info(f"Order {order_id} marked as PAID via AAIO")
+        
+        return web.Response(text="OK")
+    except Exception as e:
+        logging.error(f"AAIO Webhook Error: {e}")
+        return web.Response(text="error", status=500)
+
+async def handle_cryptopay_webhook(request):
+    """CryptoPay (@CryptoBot) Webhook Handler"""
+    try:
+        # CryptoPay sends body as JSON
+        data = await request.json()
+        
+        # Verify header 'Crypto-Pay-Api-Signature' if needed
+        # (Simplified verification for now)
+        
+        update_type = data.get('update_type')
+        payload = data.get('payload', {})
+        
+        if update_type == 'invoice_paid':
+            external_id = payload.get('payload') # We store order_id or external_id in 'payload' field of invoice
+            status = payload.get('status')
+            
+            if status == 'paid' and external_id:
+                # Extract order_id
+                if external_id.startswith('cp_'):
+                    order_id = int(external_id.replace('cp_', ''))
+                else:
+                    order_id = int(external_id)
+                    
+                await db.update_order_status(order_id, 'paid')
+                logging.info(f"Order {order_id} marked as PAID via CryptoPay")
+        
+        return web.Response(text="OK")
+    except Exception as e:
+        logging.error(f"CryptoPay Webhook Error: {e}")
+        return web.Response(text="error", status=500)
 
 
 async def handle_submit_tc_link(request):
@@ -739,6 +968,222 @@ async def handle_prepare_referral_share(request):
         logging.error(f"Error in prepare_share: {e}", exc_info=True)
         return web.json_response({"error": str(e)}, status=500)
 
+async def handle_create_bot_invoice(request):
+    try:
+        data = await request.json()
+        user_id = get_authenticated_user_id(request)
+        if not user_id: 
+            return web.json_response({"error": "Unauthorized"}, status=401)
+            
+        nft_address = data.get("nft_address")
+        days = int(data.get("days", 1))
+        gateway = data.get("gateway") # 'CRYPTO_BOT' or 'XROCKET'
+        
+        # Use existing helper to create order and get TON price with markup
+        res, err = await create_rental_order(user_id, nft_address, days)
+        if err: return web.json_response({"error": err}, status=404)
+        
+        order_id = res['order_id']
+        total_ton = res['total_price']
+        item = res['item']
+        
+        # Add 0.1 TON commission for bot withdrawal fees
+        amount_with_fee = round(total_ton + 0.1, 2)
+        
+        payment_url = None
+        external_id = None
+        
+        if gateway == 'CRYPTO_BOT':
+            token = os.getenv("CRYPTO_PAY_API_TOKEN")
+            if not token: return web.json_response({"error": "Crypto Bot token not set"}, status=500)
+            
+            # Crypto Bot: base + 0.1 gas + 3% gateway fee
+            final_amount = round((total_ton + 0.1) * 1.03, 2)
+            
+            headers = {"Crypto-Pay-API-Token": token}
+            payload = {
+                "asset": "TON",
+                "amount": str(final_amount),
+                "description": f"Rent NFT: {item['title']} for {days} days",
+                "payload": json.dumps({"order_id": order_id, "user_id": user_id}),
+                "expires_in": 3600
+            }
+            async with aiohttp.ClientSession() as session:
+                async with session.post("https://pay.crypt.bot/api/createInvoice", json=payload, headers=headers) as resp:
+                    res_bot = await resp.json()
+                    if res_bot.get("ok"):
+                        payment_url = res_bot["result"]["pay_url"]
+                        external_id = str(res_bot["result"]["invoice_id"])
+                        
+        elif gateway == 'XROCKET':
+            token = os.getenv("XROCKET_API_TOKEN", "")
+            if not token: return web.json_response({"error": "xRocket token not set"}, status=500)
+            
+            # xRocket: base + 0.1 gas + 1.5% gateway fee
+            final_amount = round((total_ton + 0.1) * 1.015, 2)
+            
+            headers = {"Rocket-Pay-Key": token}
+            payload = {
+                "amount": final_amount,
+                "currency": "TON",
+                "description": f"Rent NFT: {item['title']} for {days} days",
+                "hiddenMessage": "Thank you for your order!",
+                "payload": json.dumps({"order_id": order_id, "user_id": user_id}),
+                "callbackUrl": f"{WEB_APP_URL}/api/webhooks/xrocket"
+            }
+            async with aiohttp.ClientSession() as session:
+                async with session.post("https://pay.xrocket.tg/api/v1/tg-invoices", json=payload, headers=headers) as resp:
+                    res_bot = await resp.json()
+                    if res_bot.get("success"):
+                        payment_url = res_bot["data"]["link"]
+                        external_id = str(res_bot["data"]["id"])
+
+        if payment_url:
+            # Update order with gateway and external ID
+            async with db.aiosqlite.connect(db.DB_PATH) as conn:
+                await conn.execute(
+                    "UPDATE orders SET external_id = ?, payment_gateway = ?, currency = ? WHERE id = ?",
+                    (external_id, gateway, 'TON', order_id)
+                )
+                await conn.commit()
+
+            return web.json_response({"payment_url": payment_url, "order_id": order_id})
+            
+        return web.json_response({"error": "Failed to create invoice"}, status=500)
+        
+    except Exception as e:
+        logging.error(f"Error creating bot invoice: {e}")
+        return web.json_response({"error": str(e)}, status=500)
+
+async def handle_aaio_webhook(request):
+    # Stub for AAIO payment confirmation
+    return web.Response(text="ok")
+
+async def handle_cryptopay_webhook(request):
+    """
+    CryptoPay (@CryptoBot) Webhook Handler.
+    Verifies signature and triggers auto-withdrawal to OWNER_WALLET.
+    """
+    try:
+        body = await request.text()
+        signature = request.headers.get("crypto-pay-api-signature")
+        token = os.getenv("CRYPTO_PAY_API_TOKEN", "")
+        
+        if not signature or not token:
+            logging.error("Missing Crypto-Pay signature or token")
+            return web.Response(text="Unauthorized", status=401)
+            
+        # Verify Signature: HMAC-SHA256(SHA256(TOKEN), body)
+        token_hash = hashlib.sha256(token.encode()).digest()
+        expected_sig = hmac.new(token_hash, body.encode(), hashlib.sha256).hexdigest()
+        
+        if signature != expected_sig:
+            logging.error(f"Invalid Crypto-Pay signature. Sig: {signature}, Expected: {expected_sig}")
+            return web.Response(text="Forbidden", status=403)
+            
+        data = json.loads(body)
+        update_type = data.get("update_type")
+        payload = data.get("payload", {})
+        
+        if update_type == "invoice_paid":
+            # Extract order_id from invoice payload
+            # In handle_create_bot_invoice we send: "payload": json.dumps({"order_id": order_id, ...})
+            # Crypto Bot returns it as a string in 'payload'
+            inner_payload = json.loads(payload.get("payload", "{}"))
+            order_id = inner_payload.get("order_id")
+            amount_paid = float(payload.get("amount", 0))
+            asset = payload.get("asset")
+            
+            if order_id and asset == "TON":
+                # 1. Update order status to 'paid'
+                await db.update_order_status(order_id, "paid")
+                logging.info(f"Order {order_id} marked as PAID via Crypto Bot. Amount: {amount_paid} TON")
+                
+                # 2. Trigger Auto-Withdrawal to OWNER_WALLET
+                # We use a spend_id to prevent double withdrawal (using order_id)
+                withdraw_payload = {
+                    "asset": "TON",
+                    "amount": str(amount_paid),
+                    "address": OWNER_WALLET,
+                    "comment": f"Fulfillment for order #{order_id}",
+                    "spend_id": f"withdraw_{order_id}"
+                }
+                headers = {"Crypto-Pay-API-Token": token}
+                async with aiohttp.ClientSession() as session:
+                    async with session.post("https://pay.crypt.bot/api/withdraw", json=withdraw_payload, headers=headers) as resp:
+                        res = await resp.json()
+                        if res.get("ok"):
+                            logging.info(f"Successfully withdrawn {amount_paid} TON to {OWNER_WALLET} for order {order_id}")
+                        else:
+                            logging.error(f"Failed to withdraw for order {order_id}: {res}")
+
+        return web.Response(text="OK")
+    except Exception as e:
+        logging.error(f"CryptoPay Webhook Error: {e}", exc_info=True)
+        return web.Response(text="Internal Error", status=500)
+
+async def handle_xrocket_webhook(request):
+    """
+    xRocket Webhook Handler.
+    Verifies signature and triggers auto-withdrawal to OWNER_WALLET.
+    """
+    try:
+        body = await request.text()
+        signature = request.headers.get("Rocket-Pay-Signature")
+        token = os.getenv("XROCKET_API_TOKEN", "")
+        
+        if not signature or not token:
+            logging.error("Missing xRocket signature or token")
+            return web.Response(text="Unauthorized", status=401)
+            
+        # Verify Signature: HMAC-SHA256(SHA256(TOKEN), body)
+        token_hash = hashlib.sha256(token.encode()).digest()
+        expected_sig = hmac.new(token_hash, body.encode(), hashlib.sha256).hexdigest()
+        
+        if signature != expected_sig:
+            logging.error("Invalid xRocket signature")
+            return web.Response(text="Forbidden", status=403)
+            
+        data = json.loads(body)
+        event_type = data.get("type")
+        payload = data.get("data", {})
+        
+        if event_type == "invoice_paid":
+            # Extract order_id from invoice payload
+            inner_payload = json.loads(payload.get("payload", "{}"))
+            order_id = inner_payload.get("order_id")
+            amount_paid = float(payload.get("amount", 0))
+            currency = payload.get("currency")
+            
+            if order_id and currency == "TON":
+                # 1. Update order status to 'paid'
+                await db.update_order_status(order_id, "paid")
+                logging.info(f"Order {order_id} marked as PAID via xRocket. Amount: {amount_paid} TON")
+                
+                # 2. Trigger Auto-Withdrawal to OWNER_WALLET
+                # xRocket withdrawal API: POST /api/v1/app/withdrawal
+                import uuid
+                withdraw_payload = {
+                    "withdrawalId": str(uuid.uuid4()),
+                    "network": "TON",
+                    "asset": "TONCOIN",
+                    "address": OWNER_WALLET,
+                    "amount": amount_paid
+                }
+                headers = {"Rocket-Pay-Key": token}
+                async with aiohttp.ClientSession() as session:
+                    async with session.post("https://pay.xrocket.tg/api/v1/app/withdrawal", json=withdraw_payload, headers=headers) as resp:
+                        res = await resp.json()
+                        if res.get("success"):
+                            logging.info(f"Successfully withdrawn {amount_paid} TON to {OWNER_WALLET} extra xRocket order {order_id}")
+                        else:
+                            logging.error(f"Failed to withdraw for order {order_id} (xRocket): {res}")
+
+        return web.Response(text="OK")
+    except Exception as e:
+        logging.error(f"xRocket Webhook Error: {e}", exc_info=True)
+        return web.Response(text="Internal Error", status=500)
+
 
 @web.middleware
 async def cors_middleware(request, handler):
@@ -762,7 +1207,7 @@ app.add_routes([
     web.get('/', handle_index),
     web.get('/api/items', handle_live_items),
     web.get('/api/filters', handle_filter_data),
-    web.get('/api/prepare_rent', handle_prepare_rent),
+    web.post('/api/prepare_rent', handle_prepare_rent),  # Changed from get to post
     web.post('/api/submit_tc_link', handle_submit_tc_link),
     web.get('/api/my_orders', handle_get_orders),
     web.post('/api/toggle_notification', handle_toggle_notification),
@@ -773,6 +1218,13 @@ app.add_routes([
     web.post('/api/referral/prepare_share', handle_prepare_referral_share),
     web.get('/api/nft_details', handle_nft_details),
     web.get('/api/user-avatar', handle_user_avatar),
+    web.get('/api/rates', handle_get_rates),
+    web.post('/api/create_fiat_invoice', handle_create_fiat_invoice),
+    web.post('/api/create_bot_invoice', handle_create_bot_invoice),
+    web.get('/api/get_usdt_payload', handle_get_usdt_payload),
+    web.post('/api/webhooks/aaio', handle_aaio_webhook),
+    web.post('/api/webhooks/cryptopay', handle_cryptopay_webhook),
+    web.post('/api/webhooks/xrocket', handle_xrocket_webhook),
 ])
 
 

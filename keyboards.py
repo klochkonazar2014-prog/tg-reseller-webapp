@@ -1,44 +1,75 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 import json
 
-def main_menu(web_app_url, is_admin=False):
-    # МАРКЕТ АРЕНДЫ теперь открывает мини-аппу СРАЗУ
+def lang_selection_keyboard():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="Русский", callback_data="set_lang_ru", icon_custom_emoji_id="5449408995691341691")],
+        [InlineKeyboardButton(text="English", callback_data="set_lang_en", icon_custom_emoji_id="5422520224085720580")]
+    ])
+
+def main_menu(web_app_url, is_admin=False, lang='ru'):
+    texts = {
+        'ru': {
+            'market': "🛍 Маркет аренды",
+            'profile': "👤 Профиль",
+            'history': "📜 История аренды",
+            'info': "ℹ️ Информация",
+            'support': "👨‍💻 Поддержка",
+            'admin': "⚙️ Админ-панель"
+        },
+        'en': {
+            'market': "🛍 Rental Market",
+            'profile': "👤 Profile",
+            'history': "📜 Rental History",
+            'info': "ℹ️ Information",
+            'support': "👨‍💻 Support",
+            'admin': "⚙️ Admin Panel"
+        }
+    }
+    t = texts.get(lang, texts['ru'])
+    
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🛍 Маркет аренды", web_app=WebAppInfo(url=web_app_url), style="primary")],
-        [InlineKeyboardButton(text="👤 Профиль", callback_data="profile"), 
-         InlineKeyboardButton(text="📜 История аренды", callback_data="history")],
-        [InlineKeyboardButton(text="ℹ️ Информация", callback_data="info"),
-         InlineKeyboardButton(text="👨‍💻 Поддержка", callback_data="support")]
+        [InlineKeyboardButton(text=t['market'], web_app=WebAppInfo(url=web_app_url), style="primary")],
+        [InlineKeyboardButton(text=t['profile'], callback_data="profile"), 
+         InlineKeyboardButton(text=t['history'], callback_data="history")],
+        [InlineKeyboardButton(text=t['info'], callback_data="info"),
+         InlineKeyboardButton(text=t['support'], callback_data="support")]
     ])
     if is_admin:
-        keyboard.inline_keyboard.append([InlineKeyboardButton(text="⚙️ Админ-панель", callback_data="admin_panel")])
+        keyboard.inline_keyboard.append([InlineKeyboardButton(text=t['admin'], callback_data="admin_panel")])
     return keyboard
 
-def info_keyboard():
+def info_keyboard(lang='ru'):
+    text = "Назад" if lang == 'ru' else "Back"
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(
-            text="Назад", 
-            callback_data="main_menu",
-            icon_custom_emoji_id="5359511310096672647" # New Back Emoji
-        )]
-    ])
-
-def support_keyboard():
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="👨‍💻 Тех. вопросы", url="https://t.me/Paulie_Gualtiery")],
-        [InlineKeyboardButton(text="💎 Другие вопросы", url="https://t.me/OctoRent_Support")],
-        [InlineKeyboardButton(
-            text="Назад", 
+            text=text, 
             callback_data="main_menu",
             icon_custom_emoji_id="5359511310096672647"
         )]
     ])
 
-def profile_keyboard():
+def support_keyboard(lang='ru'):
+    back_text = "Назад" if lang == 'ru' else "Back"
+    tech_text = "👨‍💻 Тех. вопросы" if lang == 'ru' else "👨‍💻 Tech. Questions"
+    other_text = "💎 Другие вопросы" if lang == 'ru' else "💎 Other Questions"
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🎁 Рефералы", callback_data="referrals")],
+        [InlineKeyboardButton(text=tech_text, url="https://t.me/Paulie_Gualtiery")],
+        [InlineKeyboardButton(text=other_text, url="https://t.me/OctoRent_Support")],
         [InlineKeyboardButton(
-            text="Назад", 
+            text=back_text, 
+            callback_data="main_menu",
+            icon_custom_emoji_id="5359511310096672647"
+        )]
+    ])
+
+def profile_keyboard(lang='ru'):
+    back_text = "Назад" if lang == 'ru' else "Back"
+    ref_text = "🎁 Рефералы" if lang == 'ru' else "🎁 Referrals"
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=ref_text, callback_data="referrals")],
+        [InlineKeyboardButton(
+            text=back_text, 
             callback_data="main_menu",
             icon_custom_emoji_id="5359511310096672647"
         )]

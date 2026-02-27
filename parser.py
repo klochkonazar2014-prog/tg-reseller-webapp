@@ -124,7 +124,7 @@ async def sync_token_page(session, item_type, cursor=None):
     Fetches ONE page (approx 100 items) for item_type using metadata batching.
     Returns: (next_cursor, fetched_count)
     """
-    logging.info(f"--- [ {item_type.upper()} ] Syncing page (cursor={cursor}) ---")
+    # logging.info(f"--- [ {item_type.upper()} ] Syncing page (cursor={cursor}) ---")
     
     endpoint = f"/rent/{item_type}/"
     params = {"cursor": cursor} if cursor else {}
@@ -139,7 +139,7 @@ async def sync_token_page(session, item_type, cursor=None):
     if count == 0:
         return None, 0
         
-    logging.info(f"Fetched {count} items for {item_type}. Processing...")
+    # logging.info(f"Fetched {count} items for {item_type}. Processing...")
 
     # Process items in batches to avoid overwhelming the API/DB
     batch_size = 10
@@ -199,7 +199,7 @@ async def sync_token_page(session, item_type, cursor=None):
 
 async def sync_my_rented(session):
     """Fetches items rented by the bot to track end_time and status"""
-    logging.info("--- [ MY RENTED ] Syncing items ---")
+    # logging.info("--- [ MY RENTED ] Syncing items ---")
     
     endpoint = "/rent/my-rented/"
     data = await fetch_api(session, endpoint)
@@ -236,7 +236,7 @@ async def sync_my_rented(session):
 
 async def discover_rented_items(session, cycle_start_str):
     """Checks items that were 'available' but not updated in this cycle"""
-    logging.info(f"--- [ DISCOVERY ] Checking missing items (since {cycle_start_str}) ---")
+    # logging.info(f"--- [ DISCOVERY ] Checking missing items (since {cycle_start_str}) ---")
     
     async with db.aiosqlite.connect(db.DB_PATH) as conn:
         conn.row_factory = db.aiosqlite.Row
@@ -251,7 +251,7 @@ async def discover_rented_items(session, cycle_start_str):
         logging.info("No missing items to check.")
         return
 
-    logging.info(f"Found {len(missing)} items missing from available list. Checking status...")
+    # logging.info(f"Found {len(missing)} items missing from available list. Checking status...")
     
     for it in missing:
         addr = it['nft_address']
@@ -261,7 +261,7 @@ async def discover_rented_items(session, cycle_start_str):
             continue
             
         status = details.get("status")
-        logging.info(f"Item {it['title']} ({addr[:8]}) status: {status}")
+        # logging.info(f"Item {it['title']} ({addr[:8]}) status: {status}")
         
         if status == 'rented':
             end_time = details.get("status_details", {}).get("end_time")
@@ -278,7 +278,7 @@ async def discover_rented_items(session, cycle_start_str):
                 nft_address=addr,
                 item_type=it['type'],
                 title=it['title'],
-                status='unavailable'
+                status='awaiting_relist'
             )
         # If it's somehow 'for_rent' but we missed it in sync, it will be found in next cycle
         await asyncio.sleep(0.5) # throttle
@@ -406,8 +406,9 @@ async def main_loop():
                 
                 await update_filters_cache(session)
                 
-                elapsed = time.time() - cycle_start_time
-                logging.info(f"Real-time check complete ({elapsed:.2f}s). Sleeping...")
+                # elapsed = time.time() - cycle_start_time
+                # logging.info(f"Real-time check complete ({elapsed:.2f}s). Sleeping...")
+                pass
                 
             except Exception as e:
                 logging.error(f"Monitor error: {e}")

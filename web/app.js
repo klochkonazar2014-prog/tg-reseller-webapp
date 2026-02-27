@@ -1,6 +1,6 @@
 // 🚀 Dynamic Backend Detection
-var BACKEND_URL = "https://octorent.duckdns.org"; // Production VPS URL
-const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.includes('trycloudflare.com');
+var BACKEND_URL = isLocal ? window.location.origin : "https://octorent.duckdns.org";
 
 let isTcModalMandatory = false;
 // Consts
@@ -11,6 +11,7 @@ console.log("Using backend:", BACKEND_URL);
 
 const MY_MARKUP = 0.20;
 const MANIFEST_URL = BACKEND_URL + "/tonconnect-manifest.json";
+let SELECTED_PAY_METHOD = 'TON';
 
 /**
  * 🔒 Secure API fetch wrapper
@@ -258,7 +259,8 @@ const TRANSLATIONS = {
         tut_step_6: "Поздравляем! Ваш актив теперь привязан к OctoRent. Приятного использования! ✨",
         tut_next: "Далее",
         tut_finish: "Удачного пользования!",
-        tut_connect: "Подключить актив"
+        tut_connect: "Подключить актив",
+        expired: "СРОК ИСТЕК"
     },
     en: {
 
@@ -427,7 +429,8 @@ const TRANSLATIONS = {
         error_unknown: "Error: {msg}",
         tut_next: "Next",
         tut_finish: "Happy using!",
-        tut_connect: "Connect Asset"
+        tut_connect: "Connect Asset",
+        expired: "EXPIRED"
     }
 };
 
@@ -2191,8 +2194,6 @@ async function openProductView(item) {
     // Reset banners & countdown
     const banner = document.getElementById('view-status-banner');
     if (banner) { banner.style.display = 'none'; banner.className = 'status-banner'; }
-    const countdownCont = document.getElementById('view-countdown-container');
-    if (countdownCont) countdownCont.style.display = 'none';
 
     // Hide Address
     const addrDom = document.getElementById('view-address');
@@ -2300,65 +2301,8 @@ async function openProductView(item) {
         const rentBtnTextEl = rentBtn.querySelector('#rent-btn-text');
         if (rentBtnTextEl) rentBtnTextEl.textContent = t('rent_button', { amount: '' }).replace('{amount}', '').trim();
 
-        rentBtn.onclick = async () => {
-            // Critical: Open Ton Connect modal WITHIN the product view context
-            if (!tonConnectUI.connected) {
-                await tonConnectUI.openModal();
-                return;
-            }
-
-            // ALERT: Check auto-relist for pre-orders
-            if (item.status === 'rented' && !item.auto_relist) {
-                const confirmed = confirm(t('preorder_warning_no_relist'));
-                if (!confirmed) return;
-            }
-
-            const days = parseInt(document.getElementById('rent-duration-input').value) || 1;
-            const originalHTML = rentBtn.innerHTML;
-            rentBtn.innerHTML = t('loading');
-            rentBtn.disabled = true;
-            try {
-                const userId = tg.initDataUnsafe?.user?.id || 0;
-                const r = await apiFetch(`${BACKEND_URL}/api/prepare_rent?nft_address=${item.nft_address}&days=${days}&user_id=${userId}`);
-                const d = await r.json();
-                if (d.error) throw new Error(d.error);
-                const res = await tonConnectUI.sendTransaction({
-                    validUntil: Math.floor(Date.now() / 1000) + 600,
-                    messages: d.messages
-                });
-
-                if (res) {
-                    await apiFetch(`${BACKEND_URL}/api/mark_rented`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ nft_address: item.nft_address, order_id: d.order_id })
-                    });
-                    closeProductView();
-                    loadLiveItems(true);
-                    openTcModal(d.order_id, true, true);
-                    startPollingOrder(d.order_id);
-                }
-            } catch (e) {
-                console.error("Rent Error:", e);
-                let msg = e.message || "Error";
-
-                // Friendly error mapping
-                if (msg.includes("UserRejectionError") || msg.toLowerCase().includes("rejected")) {
-                    msg = t('error_user_rejected');
-                } else if (msg.toLowerCase().includes("not enough") || msg.toLowerCase().includes("balance") || msg.includes("filter is not a function")) {
-                    // "filter is not a function" often happens when SDK fails to parse state due to empty balance or non-initialized account
-                    msg = t('error_insufficient_funds');
-                } else if (msg.includes("TON_CONNECT_SDK_ERROR")) {
-                    msg = t('error_transaction_failed');
-                } else {
-                    msg = t('error_unknown', { msg: msg });
-                }
-
-                tg.showAlert(msg);
-            } finally {
-                rentBtn.innerHTML = originalHTML;
-                rentBtn.disabled = false;
-            }
+        rentBtn.onclick = () => {
+            openPaymentModal();
         };
     }
 
@@ -2391,22 +2335,27 @@ async function openProductView(item) {
                 }
             }
 
-            // 3. Countdown Logic (Blocky V2)
-            const endTime = details.rent?.ends_at || details.rent_ends_at;
-            if (endTime && (item.status === 'rented' || (myOrder && myOrder.status === 'active'))) {
-                const countdownCont = document.getElementById('view-countdown-container');
-                const timerEl = document.getElementById('view-countdown-timer');
-                if (countdownCont && timerEl) {
-                    countdownCont.style.display = 'block';
-                    startCountdown(parseInt(endTime), timerEl);
-                }
-            } else {
-                const countdownCont = document.getElementById('view-countdown-container');
-                if (countdownCont) countdownCont.style.display = 'none';
-            }
 
             // 4. Check Notification Status
             checkNotificationStatus(item.nft_address);
+
+            // 3. Countdown Logic - Ensure it updates in Product View
+            const endTimePv = details.rent?.ends_at || details.rent_ends_at || item.rent_ends_at;
+            const isRentedPv = item.status === 'rented' || (myOrder && (myOrder.status === 'active' || myOrder.status === 'rented'));
+            const releaseBadgePv = document.getElementById('view-release-badge');
+
+            if (endTimePv && isRentedPv && releaseBadgePv) {
+                const timerId = 'release-timer-' + item.id;
+                let timerEl = document.getElementById(timerId);
+                if (!timerEl) {
+                    releaseBadgePv.innerHTML = `<div id="${timerId}" style="display:block; font-size:16px; font-weight:700; color:#fff; margin-bottom:12px; width: 100%;"></div>`;
+                    timerEl = document.getElementById(timerId);
+                }
+                if (timerEl) {
+                    releaseBadgePv.style.display = 'block';
+                    startCountdown(parseInt(endTimePv), timerEl);
+                }
+            }
 
             // 4. Existing warning logic and attributes
             if (details.rent && details.rent.listed_at) {
@@ -2502,6 +2451,39 @@ function updateTotalPrice() {
     if (usdEl && GLOBAL_TON_PRICE) {
         const totalUsd = (total * GLOBAL_TON_PRICE).toFixed(2);
         usdEl.innerText = `~$${totalUsd}`;
+    }
+
+    // 1. Update prices in payment modal
+    // total = backend rental fee WITH gas markup included
+    const payPriceTon = document.getElementById('pay-price-ton');
+    if (payPriceTon) payPriceTon.innerText = total;
+
+    // Bots: rental fee + 0.1 TON (bot withdrawal commission)
+    const botTotal = (parseFloat(total) + 0.1).toFixed(2);
+    const payPriceCb = document.getElementById('pay-price-cb');
+    const payPriceXr = document.getElementById('pay-price-xr');
+    if (payPriceCb) payPriceCb.innerText = botTotal;
+    if (payPriceXr) payPriceXr.innerText = botTotal;
+
+    const payPriceRub = document.getElementById('pay-price-rub');
+    if (payPriceRub && GLOBAL_TON_PRICE && FIAT_RATES.RUB) {
+        const rubVal = (total * GLOBAL_TON_PRICE * FIAT_RATES.RUB * 1.05).toFixed(0);
+        payPriceRub.innerText = rubVal;
+    }
+
+    // Update Итого based on selected method:
+    // TON = just the rental price (gas already included by backend markup)
+    // Bots = rental price + 0.1 bot commission
+    updateMethodTotal(total);
+
+    // Update summary labels in modal
+    const summaryFee = document.getElementById('pay-summary-fee');
+    const summaryMin = document.getElementById('pay-summary-min');
+    if (summaryFee) {
+        summaryFee.innerText = '~ 0.01 TON';
+    }
+    if (summaryMin) {
+        summaryMin.innerText = '—';
     }
 
     // Обновить текст кнопки с учетом языка и статуса
@@ -3368,3 +3350,295 @@ document.addEventListener('DOMContentLoaded', () => {
 if (document.readyState === "complete" || document.readyState === "interactive") {
     setTimeout(applyTranslations, 1);
 }
+
+// --- Payment Modal Core Functions ---
+
+const FIAT_RATES = { USD: 0, RUB: 0 };
+
+async function fetchFiatRates() {
+    try {
+        const response = await fetch('https://tonapi.io/v2/rates?tokens=ton&currencies=usd,rub');
+        const data = await response.json();
+        if (data && data.rates && data.rates.TON) {
+            FIAT_RATES.USD = parseFloat(data.rates.TON.prices.USD);
+            FIAT_RATES.RUB = parseFloat(data.rates.TON.prices.RUB);
+        }
+    } catch (e) {
+        console.error("Fiat rates error:", e);
+    }
+}
+
+function openPaymentModal() {
+    const modal = document.getElementById('payment-modal');
+    if (!modal) return;
+
+    // Reset view (we only have selection view now since confirmation was removed)
+    const selectionView = document.getElementById('payment-selection-view');
+    if (selectionView) selectionView.style.display = 'block';
+
+    updateTotalPrice(); // Sync all prices
+
+    modal.style.display = 'flex';
+    setTimeout(() => modal.classList.add('active'), 10);
+    tg.HapticFeedback.impactOccurred('light');
+}
+
+function closePaymentModal() {
+    const modal = document.getElementById('payment-modal');
+    if (!modal) return;
+    modal.classList.remove('active');
+    setTimeout(() => modal.style.display = 'none', 300);
+}
+
+function switchPayTab(tab) {
+    document.querySelectorAll('.pay-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.pay-tab-pane').forEach(p => p.classList.remove('active'));
+
+    if (tab === 'crypto') {
+        document.querySelector('.pay-tab:nth-child(1)').classList.add('active');
+        document.getElementById('pane-crypto').classList.add('active');
+        selectPayMethod('TON');
+    } else {
+        document.querySelector('.pay-tab:nth-child(2)').classList.add('active');
+        document.getElementById('pane-card').classList.add('active');
+        selectPayMethod('RUB');
+    }
+}
+
+function selectPayMethod(method) {
+    SELECTED_PAY_METHOD = method;
+    document.querySelectorAll('.pay-method-card').forEach(card => {
+        card.classList.remove('active');
+        if (card.getAttribute('onclick')?.includes(`'${method}'`)) {
+            card.classList.add('active');
+        }
+    });
+    // Update total price when method changes
+    if (CURRENT_PAYMENT_ITEM) {
+        updateTotalPrice();
+    }
+}
+
+/**
+ * Итого для выбранного метода оплаты.
+ * total_price с бэкенда уже включает 0.2 TON газ (см. create_rental_order: +0.2).
+ * TON:        total_price  (0.2 уже внутри)
+ * CryptoBot:  (total_price + 0.1) * 1.03  (бот фи + 3% комиссия CryptoBot)
+ */
+function updateMethodTotal(baseTotal) {
+    const totalAmountEl = document.getElementById('pay-total-amount');
+    if (!totalAmountEl) return;
+    const base = parseFloat(baseTotal) || 0;
+    let total;
+    if (SELECTED_PAY_METHOD === 'CRYPTO_BOT' || SELECTED_PAY_METHOD === 'XROCKET') {
+        // CryptoBot: rental + 0.2 gas + 0.1 bot fee, then * 1.03 (3% CB commission)
+        total = ((base + 0.2 + 0.1) * 1.03).toFixed(2);
+    } else {
+        // TON: rental + 0.2 TON gas
+        total = (base + 0.2).toFixed(2);
+    }
+    totalAmountEl.innerText = total;
+}
+
+async function handleContinuePayment() {
+    const method = SELECTED_PAY_METHOD;
+    console.log("handleContinuePayment for method:", method);
+
+    tg.HapticFeedback.impactOccurred('medium');
+
+    if (method === 'TON') {
+        if (!tonConnectUI.connected) {
+            tonConnectUI.connectWallet().catch(e => console.error(e));
+            return;
+        }
+        await handleTonRent();
+    } else if (method === 'USDT') {
+        await handleUsdtRent();
+    } else if (method === 'CRYPTO_BOT' || method === 'XROCKET') {
+        await handleBotRent(method);
+    } else if (method === 'RUB') {
+        await handleRubRent();
+    } else {
+        showToast("Выберите способ оплаты");
+    }
+}
+
+function handleChangeWallet() {
+    tonConnectUI.disconnect().then(() => {
+        tonConnectUI.connectWallet();
+    });
+}
+
+function showBlockchainFeeDetails(e) {
+    if (e) e.stopPropagation();
+    const modal = document.getElementById('fee-details-modal');
+    if (!modal) return;
+
+    const body = document.getElementById('fee-details-body');
+    body.innerHTML = `
+        <div style="font-size: 14px; line-height: 1.6; color: #fff;">
+            <p style="color: #8b9bb4;">Для активации смарт-контракта необходимо отправить <b>0.2 TON</b>, остаток которых (<b>~0.14 TON</b>) будет возвращен вам автоматически после завершения срока аренды.</p>
+            
+            <p style="margin-top: 14px;"><b>Если оплата через CryptoBot / xRocket:</b></p>
+            <p style="color: #8b9bb4;">Необходимо добавить <b>0.1 TON</b> — это комиссия платежных ботов за вывод средств на внешний кошелек.</p>
+            
+            <p style="margin-top: 14px;"><b>Зачем сервису выводить деньги на внешний кошелек?</b></p>
+            <p style="color: #8b9bb4;">Это необходимо для прямого взаимодействия со смарт-контрактом Fragment, так как внутренние кошельки ботов не поддерживают выполнение сложных транзакций с контрактами.</p>
+            
+            <p style="margin-top: 14px;"><b>Как рассчитывается итоговая цена:</b></p>
+            <ul style="color: #8b9bb4; padding-left: 20px; margin-top: 6px;">
+                <li><b>TON Wallet:</b> Цена товара + комиссия сети (0.2 TON).</li>
+                <li><b>Боты (CryptoBot/xRocket):</b> Цена + 0.2 сеть + 0.1 вывод.</li>
+            </ul>
+        </div>
+    `;
+
+    modal.style.display = 'flex';
+}
+
+function closeBlockchainFeeDetails() {
+    const modal = document.getElementById('fee-details-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+async function handleBotRent(gateway) {
+    const loadingToast = showToast("Создаём инвойс...");
+    try {
+        const dur = parseInt(document.getElementById('rent-duration-input').value);
+        const resp = await fetch(`${BACKEND_URL}/api/create_bot_invoice`, {
+            method: 'POST',
+            body: JSON.stringify({
+                nft_address: CURRENT_PAYMENT_ITEM.nft_address,
+                days: dur,
+                gateway: gateway
+            }),
+            headers: {
+                'Content-Type': 'application/json',
+                'X-TG-Data': Telegram.WebApp.initData
+            }
+        });
+        const res = await resp.json();
+        console.log('[handleBotRent] response:', JSON.stringify(res));
+        if (res.payment_url) {
+            // Use openTelegramLink to open bot invoice as in-app mini-app overlay
+            tg.openTelegramLink(res.payment_url);
+            closePaymentModal();
+            showToast("Инвойс создан! Оплатите в " + (gateway === 'CRYPTO_BOT' ? 'CryptoBot' : 'xRocket'));
+        } else {
+            showToast((res.error || "Ошибка") + " (код: " + (resp.status || '?') + ")");
+        }
+    } catch (e) {
+        console.error("Bot rent error:", e);
+        showToast("Ошибка сервера: " + e.message);
+    }
+}
+
+async function handleTonRent() {
+    try {
+        // Check wallet connection - correct property is .account not .connected
+        if (!tonConnectUI || !tonConnectUI.account) {
+            tonConnectUI.openModal();
+            showToast("Подключите TON кошелёк для оплаты");
+            return;
+        }
+        const dur = parseInt(document.getElementById('rent-duration-input').value);
+        showToast("Готовим транзакцию...");
+        const resp = await fetch(`${BACKEND_URL}/api/prepare_rent`, {
+            method: 'POST',
+            body: JSON.stringify({ nft_address: CURRENT_PAYMENT_ITEM.nft_address, days: dur }),
+            headers: {
+                'Content-Type': 'application/json',
+                'X-TG-Data': window.Telegram.WebApp.initData
+            }
+        });
+        const res = await resp.json();
+        if (res.status === 'ok') {
+            const nanoTonAmount = Math.round(res.total_price * 1e9).toString();
+            const msg = {
+                address: res.messages && res.messages[0] ? res.messages[0].address : "UQAotn3cT26kUKW5wSpP9dYKxwEQQ0qffDB24HGzuBrJ5PFB",
+                amount: nanoTonAmount
+            };
+
+            if (res.messages && res.messages[0] && res.messages[0].payload) {
+                msg.payload = res.messages[0].payload;
+            }
+
+            const transaction = {
+                validUntil: Math.floor(Date.now() / 1000) + 600,
+                messages: [msg]
+            };
+            console.log("Preparing TON transaction:", transaction);
+            await tonConnectUI.sendTransaction(transaction);
+            closePaymentModal();
+            showToast(t('payment_sent'));
+        } else {
+            showToast(res.error || "Ошибка подготовки платежа");
+        }
+    } catch (e) {
+        console.error(e);
+        if (e && e.message !== 'Reject request') {
+            showToast("Ошибка при отправке транзакции");
+        }
+    }
+}
+
+async function handleUsdtRent() {
+    try {
+        const dur = parseInt(document.getElementById('rent-duration-input').value);
+        const amountUsdtRaw = (parseFloat(document.getElementById('pay-price-usdt').innerText) * 1e6).toFixed(0);
+
+        const resp = await fetch(`${BACKEND_URL}/api/prepare_rent`, {
+            method: 'POST',
+            body: JSON.stringify({ nft_address: CURRENT_PAYMENT_ITEM.nft_address, days: dur }),
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const orderRes = await resp.json();
+
+        const payloadResp = await fetch(`${BACKEND_URL}/api/get_usdt_payload?order_id=${orderRes.order_id}&amount=${amountUsdtRaw}`);
+        const payloadData = await payloadResp.json();
+
+        const transaction = {
+            validUntil: Math.floor(Date.now() / 1000) + 600,
+            messages: [{
+                address: USDT_JETTON_ADDRESS,
+                amount: "50000000", // 0.05 TON for gas
+                payload: payloadData.payload
+            }]
+        };
+        await tonConnectUI.sendTransaction(transaction);
+        closePaymentModal();
+        showToast(t('payment_sent'));
+    } catch (e) { console.error(e); }
+}
+
+async function handleRubRent() {
+    try {
+        const dur = parseInt(document.getElementById('rent-duration-input').value);
+        const resp = await fetch(`${BACKEND_URL}/api/create_fiat_invoice`, {
+            method: 'POST',
+            body: JSON.stringify({
+                nft_address: CURRENT_PAYMENT_ITEM.nft_address,
+                days: dur,
+                gateway: 'aaio',
+                currency: 'RUB'
+            }),
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const res = await resp.json();
+        if (res.payment_url) {
+            tg.openTelegramLink(res.payment_url);
+            closePaymentModal();
+        }
+    } catch (e) { console.error(e); }
+}
+
+
+// Map globals
+window.openPaymentModal = openPaymentModal;
+window.closePaymentModal = closePaymentModal;
+window.switchPayTab = switchPayTab;
+window.selectPayMethod = selectPayMethod;
+window.handleContinuePayment = handleContinuePayment;
+window.handleChangeWallet = handleChangeWallet;
+window.showBlockchainFeeDetails = showBlockchainFeeDetails;
+window.closeBlockchainFeeDetails = closeBlockchainFeeDetails;

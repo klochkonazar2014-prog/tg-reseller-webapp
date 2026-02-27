@@ -13,6 +13,7 @@ async def init_db():
                 user_id INTEGER PRIMARY KEY,
                 username TEXT,
                 full_name TEXT,
+                language TEXT DEFAULT 'ru',
                 balance REAL DEFAULT 0,
                 total_spent REAL DEFAULT 0,
                 is_admin INTEGER DEFAULT 0,
@@ -56,6 +57,8 @@ async def init_db():
                 await db.execute("ALTER TABLE users ADD COLUMN username TEXT")
             if 'full_name' not in cols:
                 await db.execute("ALTER TABLE users ADD COLUMN full_name TEXT")
+            if 'language' not in cols:
+                await db.execute("ALTER TABLE users ADD COLUMN language TEXT DEFAULT 'ru'")
 
         await db.commit()
         await db.execute("""
@@ -79,6 +82,18 @@ async def init_db():
                 await db.execute("ALTER TABLE orders ADD COLUMN tx_hash TEXT")
             if 'is_preorder' not in cols:
                 await db.execute("ALTER TABLE orders ADD COLUMN is_preorder INTEGER DEFAULT 0")
+            if 'refund_tx_hash' not in cols:
+                await db.execute("ALTER TABLE orders ADD COLUMN refund_tx_hash TEXT")
+            if 'user_wallet' not in cols:
+                await db.execute("ALTER TABLE orders ADD COLUMN user_wallet TEXT")
+            if 'currency' not in cols:
+                await db.execute("ALTER TABLE orders ADD COLUMN currency TEXT DEFAULT 'TON'")
+            if 'payment_gateway' not in cols:
+                await db.execute("ALTER TABLE orders ADD COLUMN payment_gateway TEXT")
+            if 'fiat_amount' not in cols:
+                await db.execute("ALTER TABLE orders ADD COLUMN fiat_amount REAL")
+            if 'external_id' not in cols:
+                await db.execute("ALTER TABLE orders ADD COLUMN external_id TEXT")
 
         await db.commit()
 
@@ -151,6 +166,26 @@ async def add_user(user_id, username=None, full_name=None):
             (user_id, username, full_name)
         )
         await db.commit()
+
+async def set_user_language(user_id, lang):
+    async with aiosqlite.connect(DB_PATH, timeout=30) as db:
+        await db.execute("PRAGMA journal_mode=WAL")
+        await db.execute("UPDATE users SET language = ? WHERE user_id = ?", (lang, user_id))
+        await db.commit()
+
+async def user_exists(user_id):
+    async with aiosqlite.connect(DB_PATH, timeout=30) as db:
+        await db.execute("PRAGMA journal_mode=WAL")
+        async with db.execute("SELECT 1 FROM users WHERE user_id = ?", (user_id,)) as cursor:
+            row = await cursor.fetchone()
+            return row is not None
+
+async def get_user_language(user_id):
+    async with aiosqlite.connect(DB_PATH, timeout=30) as db:
+        await db.execute("PRAGMA journal_mode=WAL")
+        async with db.execute("SELECT language FROM users WHERE user_id = ?", (user_id,)) as cursor:
+            row = await cursor.fetchone()
+            return row[0] if row else 'ru'
 
 async def get_items_by_type(item_type):
     async with aiosqlite.connect(DB_PATH, timeout=30) as db:
@@ -247,7 +282,7 @@ async def sync_item(nft_address, item_type, title, original_price=None, price_pe
 async def mark_all_unavailable():
     async with aiosqlite.connect(DB_PATH, timeout=30) as db:
         await db.execute("PRAGMA journal_mode=WAL")
-        await db.execute("UPDATE items SET status = 'unavailable'")
+        await db.execute("UPDATE items SET status = 'awaiting_relist'")
         await db.commit()
 
 async def create_order(user_id, nft_address, nft_name, days, total_price, is_preorder=0):
@@ -261,7 +296,7 @@ async def create_order(user_id, nft_address, nft_name, days, total_price, is_pre
         await db.commit()
         return order_id
 
-async def update_order_status(order_id, status, tc_link=None, tx_hash=None):
+async def update_order_status(order_id, status, tc_link=None, tx_hash=None, user_wallet=None, refund_tx_hash=None):
     async with aiosqlite.connect(DB_PATH, timeout=30) as db:
         await db.execute("PRAGMA journal_mode=WAL")
         
@@ -279,6 +314,14 @@ async def update_order_status(order_id, status, tc_link=None, tx_hash=None):
         if tx_hash is not None:
             updates.append("tx_hash = ?")
             params.append(tx_hash)
+
+        if user_wallet is not None:
+            updates.append("user_wallet = ?")
+            params.append(user_wallet)
+
+        if refund_tx_hash is not None:
+            updates.append("refund_tx_hash = ?")
+            params.append(refund_tx_hash)
             
         if not updates:
             return

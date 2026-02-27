@@ -36,7 +36,7 @@ logging.basicConfig(
 )
 logging.info("Bot starting...")
 
-load_dotenv()
+load_dotenv(override=True)
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_ID = int(os.getenv("ADMIN_ID", 0))
 WEB_APP_URL = os.getenv("WEB_APP_URL") or os.getenv("BACKEND_URL")
@@ -252,19 +252,55 @@ async def start_cmd(message: Message, command: CommandObject):
                 await message.answer("❌ <b>Товар не найден.</b>", parse_mode="HTML")
                 return
 
-    await db.add_user(message.from_user.id, message.from_user.username, message.from_user.full_name)
-    await message.answer(
-        "💎 <b>LIVE NFT Rental Market</b>\n\nДанные подгружаются в реальном времени напрямую с маркетплейса.",
-        reply_markup=kb.main_menu(WEB_APP_URL, message.from_user.id == ADMIN_ID),
+    is_new = not await db.user_exists(user_id)
+    await db.add_user(user_id, username, full_name)
+    
+    if is_new:
+        await message.answer(
+            "<tg-emoji emoji-id='5447410659077661506'>❓</tg-emoji> Выберете язык / Pick up language",
+            reply_markup=kb.lang_selection_keyboard(),
+            parse_mode="HTML"
+        )
+
+    if not args and not is_new:
+        lang = await db.get_user_language(user_id)
+        msg_text = "💎 <b>LIVE NFT Rental Market</b>\n\nДанные подгружаются в реальном времени напрямую с маркетплейса."
+        if lang == 'en':
+            msg_text = "💎 <b>LIVE NFT Rental Market</b>\n\nData is loaded in real-time directly from the marketplace."
+            
+        await message.answer(
+            msg_text,
+            reply_markup=kb.main_menu(WEB_APP_URL, message.from_user.id == ADMIN_ID, lang=lang),
+            parse_mode="HTML"
+        )
+
+
+@dp.callback_query(F.data.startswith("set_lang_"))
+async def set_lang_callback(callback: CallbackQuery):
+    lang = callback.data.split("_")[-1]
+    await db.set_user_language(callback.from_user.id, lang)
+    
+    msg_text = "💎 <b>LIVE NFT Rental Market</b>\n\nДанные подгружаются в реальном времени напрямую с маркетплейса."
+    if lang == 'en':
+        msg_text = "💎 <b>LIVE NFT Rental Market</b>\n\nData is loaded in real-time directly from the marketplace."
+    
+    await callback.message.edit_text(
+        msg_text,
+        reply_markup=kb.main_menu(WEB_APP_URL, callback.from_user.id == ADMIN_ID, lang=lang),
         parse_mode="HTML"
     )
-
+    await callback.answer("Русский язык выбран" if lang == 'ru' else "English language selected")
 
 @dp.callback_query(F.data == "main_menu")
 async def back_to_main_menu(callback: CallbackQuery):
+    lang = await db.get_user_language(callback.from_user.id)
+    msg_text = "💎 <b>LIVE NFT Rental Market</b>\n\nДанные подгружаются в реальном времени напрямую с маркетплейса."
+    if lang == 'en':
+        msg_text = "💎 <b>LIVE NFT Rental Market</b>\n\nData is loaded in real-time directly from the marketplace."
+
     await callback.message.edit_text(
-        "💎 <b>LIVE NFT Rental Market</b>\n\nДанные подгружаются в реальном времени напрямую с маркетплейса.",
-        reply_markup=kb.main_menu(WEB_APP_URL, callback.from_user.id == ADMIN_ID),
+        msg_text,
+        reply_markup=kb.main_menu(WEB_APP_URL, callback.from_user.id == ADMIN_ID, lang=lang),
         parse_mode="HTML"
     )
 
@@ -296,16 +332,26 @@ async def profile_details(callback: CallbackQuery):
     username = callback.from_user.username or callback.from_user.full_name
     
     # Компактный профиль без баланса с новыми ID
-    text = (
-        f"<tg-emoji emoji-id='5116582462276764538'>👤</tg-emoji> <b>Ваш профиль:</b>\n\n"
-        f"<tg-emoji emoji-id='5460795800101594035'>📝</tg-emoji> <b>Имя:</b> {username}\n"
-        f"<tg-emoji emoji-id='5447644880824181073'>🆔</tg-emoji> <b>ID:</b> <code>{user_id}</code>\n\n"
-        "✨ <i>Используйте маркет для аренды NFT и номеров.</i>"
-    )
+    lang = await db.get_user_language(user_id)
+    
+    if lang == 'ru':
+        text = (
+            f"<tg-emoji emoji-id='5116582462276764538'>👤</tg-emoji> <b>Ваш профиль:</b>\n\n"
+            f"<tg-emoji emoji-id='5460795800101594035'>📝</tg-emoji> <b>Имя:</b> {username}\n"
+            f"<tg-emoji emoji-id='5447644880824181073'>🆔</tg-emoji> <b>ID:</b> <code>{user_id}</code>\n\n"
+            "✨ <i>Используйте маркет для аренды NFT и номеров.</i>"
+        )
+    else:
+        text = (
+            f"<tg-emoji emoji-id='5116582462276764538'>👤</tg-emoji> <b>Your Profile:</b>\n\n"
+            f"<tg-emoji emoji-id='5460795800101594035'>📝</tg-emoji> <b>Name:</b> {username}\n"
+            f"<tg-emoji emoji-id='5447644880824181073'>🆔</tg-emoji> <b>ID:</b> <code>{user_id}</code>\n\n"
+            "✨ <i>Use the market to rent NFTs and numbers.</i>"
+        )
     
     await callback.message.edit_text(
         text,
-        reply_markup=kb.profile_keyboard(),
+        reply_markup=kb.profile_keyboard(lang=lang),
         parse_mode="HTML"
     )
 
@@ -568,7 +614,6 @@ async def view_item_live(callback: CallbackQuery):
 async def inline_handler(query: InlineQuery):
     try:
         text = query.query.strip().lower()
-        logging.info(f"!!! DEBUG INLINE !!! Query: '{text}' from user {query.from_user.id}")
         user_id = query.from_user.id
         
         # 🔄 RE-READ ENV: Force override to catch tunnel URL updates
@@ -588,7 +633,6 @@ async def inline_handler(query: InlineQuery):
             # Fallback thumbnail if tunnel is slow to load
             stable_thumb = "https://ton.org/download/ton_symbol.png"
             
-            logging.info(f"!!! INLINE REF !!! Query='{text}' ID={res_id} Thumb={thumb_url}")
 
             # 🛠 ARTICLE IS MORE ROBUST: Less likely to be ignored if image fails to load
             share_result = InlineQueryResultArticle(
@@ -625,7 +669,6 @@ async def inline_handler(query: InlineQuery):
             results = []
 
         items = await db.search_items_inline(text, limit=30)
-        logging.info(f"DEBUG DB: Search for '{text}' found {len(items)} items")
         
         for item in items:
             try:
@@ -698,12 +741,36 @@ async def inline_handler(query: InlineQuery):
                 item_type_label = "Gift" if is_gift else item['type'].capitalize()
                 
                 # Caption shown under the photo in chat
+                time_info = ""
+                # Use ['column'] instead of .get() as sqlite3.Row doesn't support .get()
+                rent_ends = None
+                try: rent_ends = item['rent_ends_at']
+                except: pass
+
+                if item['status'] == 'rented' and rent_ends:
+                    try:
+                        rem = int(rent_ends) - int(time.time())
+                        if rem > 0:
+                            days = rem // 86400
+                            hours = (rem % 86400) // 3600
+                            mins = (rem % 3600) // 60
+                            
+                            t_str = f"{hours}ч {mins}м"
+                            if days > 0: t_str = f"{days}д {t_str}"
+                            
+                            time_info = f"⏳ <b>Осталось:</b> <code>{t_str}</code>\n"
+                        else:
+                            time_info = f"⌛️ <b>Аренда завершена</b>\n"
+                    except: pass
+
                 caption_text = (
                     f"{title_prefix} <b>{item_title}</b>\n"
-                    f"────────────────────\n"
-                    f"<b>Тип:</b> <code>{item_type_label}</code>\n"
-                    f"<b>Цена:</b> <code>{price_rounded} TON/day</code>\n\n"
-                    f"⚡️ <i>Доступно для аренды в OctoRent</i>"
+                    f"━━━━━━━━━━━━━━━━━━━━\n"
+                    f"📁 <b>Тип:</b> <code>{item_type_label}</code>\n"
+                    f"💰 <b>Цена:</b> <code>{price_rounded} TON/день</code>\n"
+                    f"{time_info}"
+                    f"━━━━━━━━━━━━━━━━━━━━\n"
+                    f"✨ <i>OctoRent— Аренда NFT в один клик</i>"
                 )
 
                 res_id = f"item_{item['id']}"

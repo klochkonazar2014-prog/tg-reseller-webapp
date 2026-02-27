@@ -8,7 +8,8 @@ function startCountdown(endTime, elements, isMini = false) {
 
         if (diff <= 0) {
             targets.forEach(el => {
-                el.innerHTML = `<span style="color:#FF3B30; font-weight:800;">EXPIRED</span>`;
+                const expiredText = typeof t === 'function' ? t('expired') : 'EXPIRED';
+                el.innerHTML = `<span style="color:#FF3B30; font-weight:800;">${expiredText}</span>`;
             });
             return false;
         }

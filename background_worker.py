@@ -15,6 +15,10 @@ if sys.platform == "win32":
 
 import database as db
 import aiosqlite
+import binascii
+from tonutils.client import ToncenterV2Client
+from tonutils.wallet import WalletV4R2, WalletV5R1
+from tonutils.utils import begin_cell
 
 # Configuration
 load_dotenv()
@@ -32,6 +36,11 @@ LOG_FORMAT = "%(asctime)s [%(levelname)s] %(message)s"
 logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
 STATE_FILE = "background_state.json"
 SYNC_INTERVAL = 3600  # 1 hour sleep after full sync
+
+OWNER_SEED = os.getenv("OWNER_SEED")
+OWNER_HEX_KEY = os.getenv("OWNER_HEX_KEY")
+OWNER_WALLET_ADDR = os.getenv("OWNER_WALLET")
+TONCENTER_API_KEY = os.getenv("TONCENTER_API_KEY")
 
 def get_token():
     import random
@@ -199,12 +208,13 @@ async def refresh_all_rented_items(session):
                      title=item['title'], 
                      status='available'
                 )
-            elif status == 'not_for_sale' or status == 'expired':
+            elif status == 'not_for_sale' or status == 'expired' or status == 'available': 
+                # If API says available/not_for_sale/expired but not 'for_rent', it means it's not currently listed for rent
                 await db.sync_item(
                      nft_address=item['nft_address'], 
                      item_type=item['type'], 
                      title=item['title'], 
-                     status='unavailable'
+                     status='awaiting_relist'
                 )
         
         processed += len(batch)
@@ -266,16 +276,109 @@ async def run_history_sync(session):
              logging.error(f"[BG-History] Critical Loop Error: {e}")
              await asyncio.sleep(60)
 
-async def run_rented_refresh(session):
-    logging.info("[BG-Rented] Starting Rented Item Refresh Loop")
+             await asyncio.sleep(60)
+
+async def run_refund_worker():
+    """Фоновая задача для возврата сдачи (0.14 TON) после окончания аренды"""
+    logging.info("[BG-Refund] Starting Refund Worker...")
+    
+    client = ToncenterV2Client(base_url="https://toncenter.com", api_key=TONCENTER_API_KEY)
+    
+    # Инициализация кошелька — HEX ключ имеет приоритет над seed-фразой
+    try:
+        if OWNER_HEX_KEY:
+            full_key = binascii.unhexlify(OWNER_HEX_KEY)
+            if OWNER_WALLET_ADDR and not OWNER_WALLET_ADDR.startswith("UQA"):
+                wallet = WalletV5R1(client, private_key=full_key[:32], public_key=full_key[32:], wallet_id=2147483409)
+            else:
+                # WalletV4R2 from hex key
+                from tonutils.wallet import WalletV4R2 as _W4
+                wallet = _W4(client, private_key=full_key[:32], public_key=full_key[32:])
+        elif OWNER_SEED:
+            seed_list = OWNER_SEED.strip().split()
+            if OWNER_WALLET_ADDR and (OWNER_WALLET_ADDR.startswith("UQB") or OWNER_WALLET_ADDR.startswith("EQB")):
+                wallet, _, _, _ = WalletV5R1.from_mnemonic(client, seed_list, wallet_id=2147483409)
+            else:
+                wallet, _, _, _ = WalletV4R2.from_mnemonic(client, seed_list)
+        else:
+            logging.error("[BG-Refund] No wallet credentials (OWNER_HEX_KEY or OWNER_SEED) found. Refund worker disabled.")
+            return
+    except Exception as e:
+        logging.error(f"[BG-Refund] Wallet init failed: {e}")
+        return
+
     while True:
         try:
-             await refresh_all_rented_items(session)
-             logging.info("[BG-Rented] Cycle done. Sleeping 5 minutes...")
-             await asyncio.sleep(300) # Check every 5 minutes
+            # Ищем заказы, которые перешли в статус 'expired' (или арендованный товар стал 'available'), 
+            # где есть кошелек пользователя и нет хеша возврата.
+            # Мы также сами будем помечать заказы как expired если видим что товар освободился.
+            
+            async with aiosqlite.connect(db.DB_PATH, timeout=60.0) as conn:
+                conn.row_factory = aiosqlite.Row
+                # 1. Сначала "дожимаем" статус заказов: если товар снова available, а последний заказ по нему 'active' или 'rented' -> mark expired
+                query_check = """
+                    SELECT o.id, o.nft_address 
+                    FROM orders o
+                    JOIN items i ON o.nft_address = i.nft_address
+                    WHERE o.status IN ('rented', 'active') AND i.status = 'available'
+                """
+                async with conn.execute(query_check) as cursor:
+                    to_expire = await cursor.fetchall()
+                
+                for od in to_expire:
+                    logging.info(f"[BG-Refund] Marking order #{od['id']} as expired because NFT {od['nft_address'][:8]} is available")
+                    await conn.execute("UPDATE orders SET status = 'expired' WHERE id = ?", (od['id'],))
+                await conn.commit()
+
+                # 2. Теперь ищем тех, кому нужно вернуть сдачу
+                query_refund = "SELECT * FROM orders WHERE status = 'expired' AND user_wallet IS NOT NULL AND refund_tx_hash IS NULL LIMIT 5"
+                async with conn.execute(query_refund) as cursor:
+                    pending_refunds = await cursor.fetchall()
+
+            for order in pending_refunds:
+                try:
+                    dest_wallet = order['user_wallet']
+                    if not dest_wallet or dest_wallet == "Unknown":
+                        continue
+                        
+                    logging.info(f"[BG-Refund] Sending 0.14 TON refund to {dest_wallet} for order #{order['id']}")
+                    
+                    current_seqno = await wallet.get_seqno(client, wallet.address)
+                    refund_memo = "Спасибо что арендуете у нас с любовью Octorent"
+                    body_cell = begin_cell().store_uint(0, 32).store_string(refund_memo).end_cell()
+                    
+                    await wallet.transfer(
+                        destination=dest_wallet,
+                        amount=0.14,
+                        body=body_cell,
+                        seqno=current_seqno
+                    )
+                    
+                    # Ждем подтверждения
+                    success = False
+                    for _ in range(6):
+                        await asyncio.sleep(10)
+                        if await wallet.get_seqno(client, wallet.address) > current_seqno:
+                            success = True
+                            break
+                    
+                    if success:
+                        # Получаем хеш последней транзакции (опционально, но полезно)
+                        # Для упрощения просто помечаем что ок. В tonutils хеш возвращается transfer? Нет.
+                        await db.update_order_status(order['id'], 'expired', refund_tx_hash='SENT')
+                        logging.info(f"[BG-Refund] Refund for #{order['id']} completed")
+                    else:
+                        logging.warning(f"[BG-Refund] Refund for #{order['id']} sent but seqno didn't increase yet.")
+                        await db.update_order_status(order['id'], 'expired', refund_tx_hash='PENDING_CONFIRM')
+
+                except Exception as ex:
+                    logging.error(f"[BG-Refund] Error processing refund for order #{order['id']}: {ex}")
+            
+            await asyncio.sleep(60) # Проверка раз в минуту
+            
         except Exception as e:
-             logging.error(f"[BG-Rented] Error: {e}")
-             await asyncio.sleep(60)
+            logging.error(f"[BG-Refund] Global error: {e}")
+            await asyncio.sleep(60)
 
 async def main_loop():
     await db.init_db()
@@ -284,7 +387,7 @@ async def main_loop():
     async with aiohttp.ClientSession() as session:
         await asyncio.gather(
             run_history_sync(session),
-            run_rented_refresh(session)
+            # run_refund_worker() # Disabled for local testing by user request
         )
 
 
