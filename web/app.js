@@ -3551,7 +3551,17 @@ async function handleTonRent() {
                 'X-TG-Data': window.Telegram.WebApp.initData
             }
         });
-        const res = await resp.json();
+
+        const rawText = await resp.text();
+        let res;
+        try {
+            res = JSON.parse(rawText);
+        } catch (parseErr) {
+            console.error("Failed to parse JSON. Raw response from server was:", rawText);
+            showToast("Server returned invalid data (check console)");
+            return;
+        }
+
         if (res.status === 'ok') {
             const nanoTonAmount = Math.round(res.total_price * 1e9).toString();
             const msg = {
