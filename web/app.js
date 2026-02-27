@@ -2493,17 +2493,10 @@ function updateTotalPrice() {
     }
 
     // Обновить текст кнопки с учетом языка и статуса
-    const rentBtn = document.getElementById('main-rent-action-btn');
-    if (rentBtn) {
+    const rentBtnTextEl = document.getElementById('rent-btn-text');
+    if (rentBtnTextEl) {
         const isRented = CURRENT_PAYMENT_ITEM && CURRENT_PAYMENT_ITEM.status === 'rented';
-        const btnLabel = isRented ? t('preorder_for') : t('rent_for');
-        const priceSpanEl = document.getElementById('rent-btn-price');
-        const priceVal = priceSpanEl ? priceSpanEl.innerText : '';
-        // Clear only text nodes, keep child elements (like price span, svg)
-        Array.from(rentBtn.childNodes)
-            .filter(n => n.nodeType === Node.TEXT_NODE)
-            .forEach(n => n.remove());
-        rentBtn.insertBefore(document.createTextNode(' ' + btnLabel + ' '), rentBtn.firstChild);
+        rentBtnTextEl.innerText = isRented ? t('preorder_for') : t('rent_for');
     }
 }
 
@@ -3375,18 +3368,32 @@ async function fetchFiatRates() {
 }
 
 function openPaymentModal() {
-    const modal = document.getElementById('payment-modal');
-    if (!modal) return;
+    try {
+        const modal = document.getElementById('payment-modal');
+        if (!modal) {
+            console.error("Payment modal element not found!");
+            return;
+        }
 
-    // Reset view (we only have selection view now since confirmation was removed)
-    const selectionView = document.getElementById('payment-selection-view');
-    if (selectionView) selectionView.style.display = 'block';
+        // Enforce high z-index so it appears above the product view overlay
+        modal.style.zIndex = "2000";
 
-    updateTotalPrice(); // Sync all prices
+        // Reset view (we only have selection view now since confirmation was removed)
+        const selectionView = document.getElementById('payment-selection-view');
+        if (selectionView) selectionView.style.display = 'block';
 
-    modal.style.display = 'flex';
-    setTimeout(() => modal.classList.add('active'), 10);
-    tg.HapticFeedback.impactOccurred('light');
+        updateTotalPrice(); // Sync all prices
+
+        modal.style.display = 'flex';
+        setTimeout(() => modal.classList.add('active'), 10);
+
+        if (tg && tg.HapticFeedback) {
+            tg.HapticFeedback.impactOccurred('light');
+        }
+    } catch (err) {
+        console.error("Critical error opening payment modal:", err);
+        showToast("Ошибка при открытии окна оплаты");
+    }
 }
 
 function closePaymentModal() {
