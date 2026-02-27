@@ -2472,7 +2472,7 @@ function updateTotalPrice() {
     if (payPriceXr) payPriceXr.innerText = botTotal;
 
     const payPriceRub = document.getElementById('pay-price-rub');
-    if (payPriceRub && GLOBAL_TON_PRICE && FIAT_RATES.RUB) {
+    if (payPriceRub && GLOBAL_TON_PRICE && typeof FIAT_RATES !== 'undefined' && FIAT_RATES.RUB) {
         const rubVal = (total * GLOBAL_TON_PRICE * FIAT_RATES.RUB * 1.05).toFixed(0);
         payPriceRub.innerText = rubVal;
     }
