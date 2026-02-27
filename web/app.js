@@ -2312,10 +2312,16 @@ async function openProductView(item) {
     if (item && item.nft_address) {
         const userId = tg.initDataUnsafe?.user?.id || 0;
 
+        const parseJsonSafe = async (r) => {
+            const raw = await r.text();
+            try { return JSON.parse(raw); }
+            catch { console.error("API Error Response:", raw); throw new Error("Server returned invalid JSON"); }
+        };
+
         // Parallel fetch for details and user order status
         Promise.all([
-            apiFetch(`${BACKEND_URL}/api/nft_details?nft_address=${item.nft_address}`).then(r => r.json()),
-            apiFetch(`${BACKEND_URL}/api/my_orders?user_id=${userId}`).then(r => r.json())
+            apiFetch(`${BACKEND_URL}/api/nft_details?nft_address=${item.nft_address}`).then(parseJsonSafe),
+            apiFetch(`${BACKEND_URL}/api/my_orders?user_id=${userId}`).then(parseJsonSafe)
         ]).then(([details, myOrders]) => {
             const myOrder = myOrders.find(o => o.nft_address === item.nft_address && (o.status === 'rented' || o.status === 'active' || o.status === 'paid'));
 
