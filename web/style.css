@@ -3589,13 +3589,37 @@ body.hide-filters .header-column {
 }
 
 .bottom-sheet-header {
-    padding: 6px 16px;
-    /* Optimized for swipe gesture and compact look */
-    text-align: center;
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     border-bottom: none !important;
-    /* Removed line under "Выберите способ оплаты" */
     touch-action: none;
-    /* Crucial for swipe gesture to prevent scroll interference */
+}
+
+.close-sheet-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    transition: all 0.2s;
+}
+
+.close-sheet-btn:active {
+    transform: scale(0.9);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Fragment Bonding persistence */
+#tc-modal.mandatory #tc-modal-close-btn {
+    display: none !important;
+}
+
+#tc-modal-overlay.mandatory {
+    pointer-events: none !important;
 }
 
 .bottom-sheet-dash {

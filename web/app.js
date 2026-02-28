@@ -2704,10 +2704,23 @@ function copyText(text, event) {
 function openTcModal(orderId, isPolling = false, isMandatory = false) {
     isTcModalMandatory = isMandatory;
     const closeBtn = document.getElementById('tc-modal-close-btn');
+    const modal = document.getElementById('tc-modal');
+    const overlay = document.getElementById('tc-modal-overlay');
+
     if (closeBtn) closeBtn.style.display = isMandatory ? 'none' : 'block';
+
+    // Apply mandatory class for CSS (to hide close button and disable overlay click)
+    if (isMandatory) {
+        modal.classList.add('mandatory');
+        overlay.classList.add('mandatory');
+    } else {
+        modal.classList.remove('mandatory');
+        overlay.classList.remove('mandatory');
+    }
+
     document.getElementById('tc-current-order-id').value = orderId;
-    document.getElementById('tc-modal-overlay').classList.add('active');
-    document.getElementById('tc-modal').classList.add('active');
+    overlay.classList.add('active');
+    modal.classList.add('active');
 
     if (isPolling) {
         renderPolling();
@@ -2915,6 +2928,7 @@ function closeLightbox() {
 }
 
 function closeTcModal() {
+    if (isTcModalMandatory) return; // Prevent closing if mandatory
     if (progressTimer) clearInterval(progressTimer);
     document.getElementById('tc-modal-overlay').classList.remove('active');
     document.getElementById('tc-modal').classList.remove('active');
@@ -3488,8 +3502,8 @@ function updateMethodTotal(baseTotal) {
     if (!totalAmountEl) return;
     const base = parseFloat(baseTotal) || 0;
     let total;
-    if (SELECTED_PAY_METHOD === 'CRYPTO_BOT' || SELECTED_PAY_METHOD === 'XROCKET') {
-        // CryptoBot: rental + 0.2 gas + 0.1 bot fee, then * 1.03 (3% CB commission)
+    if (SELECTED_PAY_METHOD === 'XROCKET') {
+        // xRocket: rental + 0.2 gas + 0.1 bot fee, then * 1.03 (3% commission)
         total = ((base + 0.2 + 0.1) * 1.03).toFixed(2);
     } else {
         // TON: rental + 0.2 TON gas
@@ -3512,7 +3526,7 @@ async function handleContinuePayment() {
         await handleTonRent();
     } else if (method === 'USDT') {
         await handleUsdtRent();
-    } else if (method === 'CRYPTO_BOT' || method === 'XROCKET') {
+    } else if (method === 'XROCKET') {
         await handleBotRent(method);
     } else if (method === 'RUB') {
         await handleRubRent();
@@ -3537,8 +3551,8 @@ function showBlockchainFeeDetails(e) {
         <div style="font-size: 14px; line-height: 1.6; color: #fff;">
             <p style="color: #8b9bb4;">Для активации смарт-контракта необходимо отправить <b>0.2 TON</b>, остаток которых (<b>~0.14 TON</b>) будет возвращен вам автоматически после завершения срока аренды.</p>
             
-            <p style="margin-top: 14px;"><b>Если оплата через CryptoBot / xRocket:</b></p>
-            <p style="color: #8b9bb4;">Необходимо добавить <b>0.1 TON</b> — это комиссия платежных ботов за вывод средств на внешний кошелек.</p>
+            <p style="margin-top: 14px;"><b>Если оплата через xRocket:</b></p>
+            <p style="color: #8b9bb4;">Необходимо добавить <b>0.1 TON</b> — это комиссия платежного бота за вывод средств на внешний кошелек.</p>
             
             <p style="margin-top: 14px;"><b>Зачем сервису выводить деньги на внешний кошелек?</b></p>
             <p style="color: #8b9bb4;">Это необходимо для прямого взаимодействия со смарт-контрактом Fragment, так как внутренние кошельки ботов не поддерживают выполнение сложных транзакций с контрактами.</p>
@@ -3546,7 +3560,7 @@ function showBlockchainFeeDetails(e) {
             <p style="margin-top: 14px;"><b>Как рассчитывается итоговая цена:</b></p>
             <ul style="color: #8b9bb4; padding-left: 20px; margin-top: 6px;">
                 <li><b>TON Wallet:</b> Цена товара + комиссия сети (0.2 TON).</li>
-                <li><b>Боты (CryptoBot/xRocket):</b> Цена + 0.2 сеть + 0.1 вывод.</li>
+                <li><b>xRocket:</b> Цена + 0.2 сеть + 0.1 вывод.</li>
             </ul>
         </div>
     `;
@@ -3581,7 +3595,7 @@ async function handleBotRent(gateway) {
             // Use openTelegramLink to open bot invoice as in-app mini-app overlay
             tg.openTelegramLink(res.payment_url);
             closePaymentModal();
-            showToast("Инвойс создан! Оплатите в " + (gateway === 'CRYPTO_BOT' ? 'CryptoBot' : 'xRocket'));
+            showToast("Инвойс создан! Оплатите в xRocket");
         } else {
             showToast((res.error || "Ошибка") + " (код: " + (resp.status || '?') + ")");
         }
@@ -3677,7 +3691,7 @@ async function handleRubRent() {
             body: JSON.stringify({
                 nft_address: CURRENT_PAYMENT_ITEM.nft_address,
                 days: dur,
-                gateway: 'aaio',
+                gateway: 'freekassa',
                 currency: 'RUB'
             }),
             headers: { 'Content-Type': 'application/json' }

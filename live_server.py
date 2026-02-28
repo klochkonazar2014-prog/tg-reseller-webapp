@@ -362,12 +362,12 @@ async def handle_get_rates(request):
     return web.json_response(rates)
 
 async def handle_create_fiat_invoice(request):
-    """Creates a fiat invoice via AAIO or CryptoPay"""
+    """Creates a fiat invoice via FreeKassa"""
     try:
         data = await request.json()
         nft_address = data.get('nft_address')
         days = int(data.get('days', 1))
-        method = data.get('gateway') # 'aaio' or 'cryptopay'
+        method = data.get('gateway') # 'freekassa'
         currency = data.get('currency') # 'RUB' or 'USD'
         
         user_id = get_authenticated_user_id(request)
@@ -389,23 +389,17 @@ async def handle_create_fiat_invoice(request):
         payment_url = ""
         external_id = ""
         
-        if method == 'aaio':
-            AAIO_MERCHANT_ID = os.getenv("AAIO_MERCHANT_ID", "YOUR_AAIO_MERCHANT_ID")
-            AAIO_SECRET_1 = os.getenv("AAIO_SECRET_1", "YOUR_AAIO_SECRET_1")
-            external_id = f"order_{order_id}_{int(asyncio.get_event_loop().time())}"
+        if method == 'freekassa':
+            FK_MERCHANT_ID = os.getenv("FREEKASSA_MERCHANT_ID", "")
+            FK_SECRET_1 = os.getenv("FREEKASSA_SECRET_1", "")
+            external_id = f"o_{order_id}_{int(asyncio.get_event_loop().time())}"
             
-            # Signature for invoice: merchant_id:amount:currency:secret:order_id
-            sign_str = f"{AAIO_MERCHANT_ID}:{fiat_amount}:{currency}:{AAIO_SECRET_1}:{external_id}"
-            sign = hashlib.sha256(sign_str.encode()).hexdigest()
+            # Signature 1 (MD5): merchant_id:amount:secret1:currency:order_id
+            sign_str = f"{FK_MERCHANT_ID}:{fiat_amount}:{FK_SECRET_1}:{currency}:{external_id}"
+            sign = hashlib.md5(sign_str.encode()).hexdigest()
             
-            payment_url = f"https://aaio.io/merchant/pay?merchant_id={AAIO_MERCHANT_ID}&amount={fiat_amount}&currency={currency}&order_id={external_id}&sign={sign}"
-            
-        elif method == 'cryptopay':
-            CRYPTO_PAY_TOKEN = os.getenv("CRYPTO_PAY_API_TOKEN", "YOUR_CRYPTO_PAY_TOKEN")
-            # For CryptoPay via @CryptoBot, we usually use their API to create an invoice
-            # This is a placeholder direct link, real implementation should call their API
-            payment_url = f"https://t.me/CryptoBot?start=pay_order_{order_id}" 
-            external_id = f"cp_{order_id}"
+            payment_url = f"https://pay.fk.money/?m={FK_MERCHANT_ID}&oa={fiat_amount}&o={external_id}&s={sign}&currency={currency}&lang=ru"
+
 
         # Update order with fiat info
         async with db.aiosqlite.connect(db.DB_PATH) as conn:
@@ -487,34 +481,41 @@ async def handle_get_usdt_payload(request):
         logging.error(f"Error generating USDT payload: {e}")
         return web.json_response({"error": str(e)}, status=500)
 
-async def handle_aaio_webhook(request):
-    """AAIO Webhook Handler"""
+async def handle_freekassa_webhook(request):
+    """FreeKassa Webhook Handler (Result URL)"""
     try:
         data = await request.post()
-        merchant_id = data.get('merchant_id')
-        amount = data.get('amount')
-        external_id = data.get('order_id')
-        sign = data.get('sign')
+        merchant_id = data.get("MERCHANT_ID")
+        amount = data.get("AMOUNT")
+        external_id = data.get("MERCHANT_ORDER_ID")
+        received_sign = data.get("SIGN")
         
-        # Verify Signature (Simplified)
-        AAIO_SECRET_2 = os.getenv("AAIO_SECRET_2")
-        check_sign = hashlib.sha256(f"{merchant_id}:{amount}:{external_id}:{AAIO_SECRET_2}".encode()).hexdigest()
+        FK_SECRET_2 = os.getenv("FREEKASSA_SECRET_2", "")
         
-        if sign != check_sign:
-            logging.warning(f"Invalid AAIO signature for order {external_id}")
-            return web.Response(text="invalid_sign", status=400)
+        # Signature 2 (MD5): MERCHANT_ID:AMOUNT:SECRET_WORD_2:MERCHANT_ORDER_ID
+        sign_str = f"{merchant_id}:{amount}:{FK_SECRET_2}:{external_id}"
+        expected_sign = hashlib.md5(sign_str.encode()).hexdigest()
+        
+        if received_sign != expected_sign:
+            logging.warning(f"Invalid FreeKassa signature for order {external_id}")
+            return web.Response(text="Wrong sign", status=400)
             
-        # Extract order_id from external_id
-        order_id = int(external_id.split('_')[1])
+        # Parse order_id from external_id (format: o_{id}_{ts})
+        try:
+            order_id = int(external_id.split('_')[1])
+        except:
+            logging.error(f"Failed to parse order_id from {external_id}")
+            return web.Response(text="Bad order id", status=400)
+            
+        # Update order status to 'paid'
+        await db.update_order_status(order_id, "paid")
+        logging.info(f"Order {order_id} marked as PAID via FreeKassa")
         
-        # Mark as paid
-        await db.update_order_status(order_id, 'paid')
-        logging.info(f"Order {order_id} marked as PAID via AAIO")
-        
-        return web.Response(text="OK")
+        return web.Response(text="YES")
     except Exception as e:
-        logging.error(f"AAIO Webhook Error: {e}")
-        return web.Response(text="error", status=500)
+        logging.error(f"FreeKassa Webhook Error: {e}")
+        return web.Response(text="Error", status=500)
+
 
 async def handle_cryptopay_webhook(request):
     """CryptoPay (@CryptoBot) Webhook Handler"""
@@ -967,7 +968,7 @@ async def handle_create_bot_invoice(request):
             
         nft_address = data.get("nft_address")
         days = int(data.get("days", 1))
-        gateway = data.get("gateway") # 'CRYPTO_BOT' or 'XROCKET'
+        gateway = data.get("gateway") # e.g. 'XROCKET'
         
         # Use existing helper to create order and get TON price with markup
         res, err = await create_rental_order(user_id, nft_address, days)
@@ -983,26 +984,7 @@ async def handle_create_bot_invoice(request):
         payment_url = None
         external_id = None
         
-        if gateway == 'CRYPTO_BOT':
-            token = os.getenv("CRYPTO_PAY_API_TOKEN")
-            if not token: return web.json_response({"error": "Crypto Bot token not set"}, status=500)
-            
-            headers = {"Crypto-Pay-API-Token": token}
-            payload = {
-                "asset": "TON",
-                "amount": str(amount_with_fee),
-                "description": f"Rent NFT: {item['title']} for {days} days",
-                "payload": json.dumps({"order_id": order_id, "user_id": user_id}),
-                "expires_in": 3600
-            }
-            async with aiohttp.ClientSession() as session:
-                async with session.post("https://pay.crypt.bot/api/createInvoice", json=payload, headers=headers) as resp:
-                    res_bot = await resp.json()
-                    if res_bot.get("ok"):
-                        payment_url = res_bot["result"]["pay_url"]
-                        external_id = str(res_bot["result"]["invoice_id"])
-                        
-        elif gateway == 'XROCKET':
+        if gateway == 'XROCKET':
             token = os.getenv("XROCKET_API_TOKEN", "")
             if not token: return web.json_response({"error": "xRocket token not set"}, status=500)
             
@@ -1019,7 +1001,7 @@ async def handle_create_bot_invoice(request):
                 "callbackUrl": f"{os.getenv('WEB_APP_URL', '')}/api/webhooks/xrocket"
             }
             async with aiohttp.ClientSession() as session:
-                async with session.post("https://pay.xrocket.tg/api/v1/tg-invoices", json=payload, headers=headers) as resp:
+                async with session.post("https://pay.xrocket.tg/tg-invoices", json=payload, headers=headers) as resp:
                     res_bot = await resp.json()
                     if res_bot.get("success"):
                         payment_url = res_bot["data"]["link"]
@@ -1045,72 +1027,11 @@ async def handle_create_bot_invoice(request):
         logging.error(f"Error creating bot invoice: {e}")
         return web.json_response({"error": str(e)}, status=500)
 
-async def handle_aaio_webhook(request):
-    # Stub for AAIO payment confirmation
+async def handle_freekassa_webhook(request):
+    # Stub for FreeKassa payment confirmation
     return web.Response(text="ok")
 
-async def handle_cryptopay_webhook(request):
-    """
-    CryptoPay (@CryptoBot) Webhook Handler.
-    Verifies signature and triggers auto-withdrawal to OWNER_WALLET.
-    """
-    try:
-        body = await request.text()
-        signature = request.headers.get("crypto-pay-api-signature")
-        token = os.getenv("CRYPTO_PAY_API_TOKEN", "")
-        
-        if not signature or not token:
-            logging.error("Missing Crypto-Pay signature or token")
-            return web.Response(text="Unauthorized", status=401)
-            
-        # Verify Signature: HMAC-SHA256(SHA256(TOKEN), body)
-        token_hash = hashlib.sha256(token.encode()).digest()
-        expected_sig = hmac.new(token_hash, body.encode(), hashlib.sha256).hexdigest()
-        
-        if signature != expected_sig:
-            logging.error(f"Invalid Crypto-Pay signature. Sig: {signature}, Expected: {expected_sig}")
-            return web.Response(text="Forbidden", status=403)
-            
-        data = json.loads(body)
-        update_type = data.get("update_type")
-        payload = data.get("payload", {})
-        
-        if update_type == "invoice_paid":
-            # Extract order_id from invoice payload
-            # In handle_create_bot_invoice we send: "payload": json.dumps({"order_id": order_id, ...})
-            # Crypto Bot returns it as a string in 'payload'
-            inner_payload = json.loads(payload.get("payload", "{}"))
-            order_id = inner_payload.get("order_id")
-            amount_paid = float(payload.get("amount", 0))
-            asset = payload.get("asset")
-            
-            if order_id and asset == "TON":
-                # 1. Update order status to 'paid'
-                await db.update_order_status(order_id, "paid")
-                logging.info(f"Order {order_id} marked as PAID via Crypto Bot. Amount: {amount_paid} TON")
-                
-                # 2. Trigger Auto-Withdrawal to OWNER_WALLET
-                # We use a spend_id to prevent double withdrawal (using order_id)
-                withdraw_payload = {
-                    "asset": "TON",
-                    "amount": str(amount_paid),
-                    "address": OWNER_WALLET,
-                    "comment": f"Fulfillment for order #{order_id}",
-                    "spend_id": f"withdraw_{order_id}"
-                }
-                headers = {"Crypto-Pay-API-Token": token}
-                async with aiohttp.ClientSession() as session:
-                    async with session.post("https://pay.crypt.bot/api/withdraw", json=withdraw_payload, headers=headers) as resp:
-                        res = await resp.json()
-                        if res.get("ok"):
-                            logging.info(f"Successfully withdrawn {amount_paid} TON to {OWNER_WALLET} for order {order_id}")
-                        else:
-                            logging.error(f"Failed to withdraw for order {order_id}: {res}")
 
-        return web.Response(text="OK")
-    except Exception as e:
-        logging.error(f"CryptoPay Webhook Error: {e}", exc_info=True)
-        return web.Response(text="Internal Error", status=500)
 
 async def handle_xrocket_webhook(request):
     """
@@ -1212,8 +1133,8 @@ app.add_routes([
     web.post('/api/create_fiat_invoice', handle_create_fiat_invoice),
     web.post('/api/create_bot_invoice', handle_create_bot_invoice),
     web.get('/api/get_usdt_payload', handle_get_usdt_payload),
-    web.post('/api/webhooks/aaio', handle_aaio_webhook),
-    web.post('/api/webhooks/cryptopay', handle_cryptopay_webhook),
+    web.post('/api/webhooks/freekassa', handle_freekassa_webhook),
+
     web.post('/api/webhooks/xrocket', handle_xrocket_webhook),
 ])
 
