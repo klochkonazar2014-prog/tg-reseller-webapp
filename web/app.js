@@ -3405,6 +3405,10 @@ function initModalSwipeClose(modal) {
     const header = modal.querySelector('.bottom-sheet-header');
     if (!content || !header) return;
 
+    // Prevent multiple attachments
+    if (header.dataset.swipeInitialized) return;
+    header.dataset.swipeInitialized = "true";
+
     let startY = 0;
     let currentY = 0;
     let isDragging = false;
@@ -3412,7 +3416,7 @@ function initModalSwipeClose(modal) {
     const onTouchStart = (e) => {
         startY = e.touches[0].clientY;
         isDragging = true;
-        content.style.transition = 'none'; // Disable transition for direct drag
+        content.style.transition = 'none';
     };
 
     const onTouchMove = (e) => {
@@ -3420,6 +3424,7 @@ function initModalSwipeClose(modal) {
         currentY = e.touches[0].clientY;
         const diff = currentY - startY;
         if (diff > 0) {
+            // Add a bit of resistance/limit if needed, but diff is fine
             content.style.transform = `translateY(${diff}px)`;
         }
     };
@@ -3430,14 +3435,13 @@ function initModalSwipeClose(modal) {
         content.style.transition = 'transform 0.3s cubic-bezier(0.19, 1, 0.22, 1)';
         const diff = currentY - startY;
 
-        if (diff > 150) { // Threshold to close
+        if (diff > 100) { // Lower threshold for better UX
             closePaymentModal();
         } else {
             content.style.transform = 'translateY(0)';
         }
     };
 
-    // Attach to header or the "dash" specifically if desired, but header is usually better for UX
     header.addEventListener('touchstart', onTouchStart, { passive: true });
     header.addEventListener('touchmove', onTouchMove, { passive: true });
     header.addEventListener('touchend', onTouchEnd);

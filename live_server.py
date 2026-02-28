@@ -319,15 +319,9 @@ async def create_rental_order(user_id, nft_address, days):
     }, None
 
 async def handle_prepare_rent(request):
-    try:
-        data = await request.json()
-    except Exception:
-        data = dict(request.query)
-
-    nft_address = data.get("nft_address")
-    days = int(data.get("days", 1))
+    nft_address = request.query.get("nft_address")
+    days = int(request.query.get("days", 1))
     user_id = get_authenticated_user_id(request)
-    
     if not user_id:
         return web.json_response({"error": "Unauthorized"}, status=401)
     
@@ -338,14 +332,10 @@ async def handle_prepare_rent(request):
     total_final = res['total_price']
     
     import base64
-    safe_addr = str(nft_address) if nft_address else "unknown"
-    memo_text = f"order:{order_id} | nft:{safe_addr[:12]}..."
+    memo_text = f"order:{order_id} | nft:{nft_address[:12]}..."
     payload = base64.b64encode(begin_cell().store_uint(0, 32).store_string(memo_text).end_cell().to_boc(False)).decode('utf-8')
     
-    # Send what app.js expects: status="ok", total_price=X
     return web.json_response({
-        "status": "ok",
-        "total_price": total_final,
         "messages": [{"address": OWNER_WALLET, "amount": str(int(total_final * 1e9)), "payload": payload}],
         "order_id": order_id
     })
@@ -997,13 +987,10 @@ async def handle_create_bot_invoice(request):
             token = os.getenv("CRYPTO_PAY_API_TOKEN")
             if not token: return web.json_response({"error": "Crypto Bot token not set"}, status=500)
             
-            # Crypto Bot: base + 0.1 gas + 3% gateway fee
-            final_amount = round((total_ton + 0.1) * 1.03, 2)
-            
             headers = {"Crypto-Pay-API-Token": token}
             payload = {
                 "asset": "TON",
-                "amount": str(final_amount),
+                "amount": str(amount_with_fee),
                 "description": f"Rent NFT: {item['title']} for {days} days",
                 "payload": json.dumps({"order_id": order_id, "user_id": user_id}),
                 "expires_in": 3600
@@ -1019,12 +1006,9 @@ async def handle_create_bot_invoice(request):
             token = os.getenv("XROCKET_API_TOKEN", "")
             if not token: return web.json_response({"error": "xRocket token not set"}, status=500)
             
-            # xRocket: base + 0.1 gas + 1.5% gateway fee
-            final_amount = round((total_ton + 0.1) * 1.015, 2)
-            
             headers = {"Rocket-Pay-Key": token}
             payload = {
-                "amount": final_amount,
+                "amount": amount_with_fee,
                 "currency": "TON",
                 "description": f"Rent NFT: {item['title']} for {days} days",
                 "hiddenMessage": "Thank you for your order!",
@@ -1207,7 +1191,7 @@ app.add_routes([
     web.get('/', handle_index),
     web.get('/api/items', handle_live_items),
     web.get('/api/filters', handle_filter_data),
-    web.post('/api/prepare_rent', handle_prepare_rent),  # Changed from get to post
+    web.get('/api/prepare_rent', handle_prepare_rent),
     web.post('/api/submit_tc_link', handle_submit_tc_link),
     web.get('/api/my_orders', handle_get_orders),
     web.post('/api/toggle_notification', handle_toggle_notification),

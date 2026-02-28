@@ -210,13 +210,17 @@ body {
     color: #fff;
 }
 
-.pay-tab.active {
-    color: #fff;
-}
-
-/* Remove underline as requested */
+/* Restored underline as requested */
 .pay-tab.active::after {
-    display: none !important;
+    content: '' !important;
+    position: absolute !important;
+    bottom: -1px !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 2px !important;
+    background: #0088cc !important;
+    border-radius: 2px !important;
+    display: block !important;
 }
 
 .pay-tab-pane {
@@ -3583,7 +3587,10 @@ body.hide-filters .header-column {
     padding: 10px 16px;
     /* Reduced vertical padding */
     text-align: center;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    border-bottom: none !important;
+    /* Removed line under "Выберите способ оплаты" */
+    touch-action: none;
+    /* Crucial for swipe gesture to prevent scroll interference */
 }
 
 .bottom-sheet-dash {
