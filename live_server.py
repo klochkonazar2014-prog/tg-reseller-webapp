@@ -993,8 +993,9 @@ async def handle_create_bot_invoice(request):
             
             headers = {"Rocket-Pay-Key": token}
             payload = {
-                "amount": str(final_amount),
-                "currency": "TON",
+                "amount": final_amount,
+                "numPayments": 1,
+                "currency": "TONCOIN",
                 "description": f"Rent NFT: {item['title']} for {days} days",
                 "hiddenMessage": "Thank you for your order!",
                 "payload": json.dumps({"order_id": order_id, "user_id": user_id}),
@@ -1066,7 +1067,7 @@ async def handle_xrocket_webhook(request):
             amount_paid = float(payload.get("amount", 0))
             currency = payload.get("currency")
             
-            if order_id and currency == "TON":
+            if order_id and (currency == "TON" or currency == "TONCOIN"):
                 # 1. Update order status to 'paid'
                 await db.update_order_status(order_id, "paid")
                 logging.info(f"Order {order_id} marked as PAID via xRocket. Amount: {amount_paid} TON")
