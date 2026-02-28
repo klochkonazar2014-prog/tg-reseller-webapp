@@ -3368,30 +3368,43 @@ async function fetchFiatRates() {
 }
 
 function openPaymentModal() {
+    console.log("[PAYMENT] Initializing payment modal...");
     try {
         const modal = document.getElementById('payment-modal');
         if (!modal) {
-            console.error("Payment modal element not found!");
+            console.error("[PAYMENT] Payment modal element not found!");
             return;
         }
 
-        // Enforce high z-index so it appears above the product view overlay
-        modal.style.zIndex = "2000";
+        console.log("[PAYMENT] Found modal. Forcing visibility...");
+        // Enforce extreme z-index to stay above product view (2000) and other layers
+        modal.style.zIndex = "21000";
+        modal.style.display = 'flex';
+        modal.style.visibility = 'visible';
+        modal.style.opacity = '1';
 
         // Reset view (we only have selection view now since confirmation was removed)
         const selectionView = document.getElementById('payment-selection-view');
-        if (selectionView) selectionView.style.display = 'block';
+        if (selectionView) {
+            console.log("[PAYMENT] Showing selection view...");
+            selectionView.style.display = 'block';
+        }
 
+        console.log("[PAYMENT] Calling updateTotalPrice...");
         updateTotalPrice(); // Sync all prices
 
-        modal.style.display = 'flex';
-        setTimeout(() => modal.classList.add('active'), 10);
+        console.log("[PAYMENT] Adding 'active' class for transitions...");
+        setTimeout(() => {
+            modal.classList.add('active');
+            console.log("[PAYMENT] Modal should be fully visible now.");
+        }, 10);
 
         if (tg && tg.HapticFeedback) {
+            console.log("[PAYMENT] Triggering haptic feedback...");
             tg.HapticFeedback.impactOccurred('light');
         }
     } catch (err) {
-        console.error("Critical error opening payment modal:", err);
+        console.error("[PAYMENT] Critical error opening payment modal:", err);
         showToast("Ошибка при открытии окна оплаты");
     }
 }
