@@ -29,7 +29,7 @@ def main_menu(web_app_url, is_admin=False, lang='ru'):
     t = texts.get(lang, texts['ru'])
     
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text=t['market'], web_app=WebAppInfo(url=f"{web_app_url}?v=280220261"), style="primary")],
+        [InlineKeyboardButton(text=t['market'], web_app=WebAppInfo(url=web_app_url), style="primary")],
         [InlineKeyboardButton(text=t['profile'], callback_data="profile"), 
          InlineKeyboardButton(text=t['history'], callback_data="history")],
         [InlineKeyboardButton(text=t['info'], callback_data="info"),
@@ -120,8 +120,7 @@ def item_action_keyboard(item, web_app_url, owner_wallet):
     
     encoded_title = item['title'].replace(" ", "%20")
     url = (
-        f"{web_app_url}?v=280220261"
-        f"&nft_address={item['nft_address']}"
+        f"{web_app_url}?nft_address={item['nft_address']}"
         f"&title={encoded_title}"
         f"&markup={markup}"
         f"&owner_wallet={owner_wallet}"
@@ -197,7 +196,7 @@ def history_keyboard(orders, web_app_url, page=0):
     # 4. Кнопка подключения к Fragment (только если rented)
     if status == 'rented':
         sep = "&" if "?" in web_app_url else "?"
-        connect_url = f"{web_app_url}{sep}v=280220261&order_id={order['id']}&action=connect"
+        connect_url = f"{web_app_url}{sep}order_id={order['id']}&action=connect"
         keyboard.inline_keyboard.append([
             InlineKeyboardButton(text="🔗 Подключить к Fragment", web_app=WebAppInfo(url=connect_url))
         ])

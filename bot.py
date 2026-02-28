@@ -239,7 +239,7 @@ async def start_cmd(message: Message, command: CommandObject):
                 # Robust URL joining
                 base_url = WEB_APP_URL
                 sep = "&" if "?" in base_url else "?"
-                wapp_url = f"{base_url}{sep}v=280220261&nft_address={encoded_addr}"
+                wapp_url = f"{base_url}{sep}nft_address={encoded_addr}"
                 
                 kb_obj = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text=button_label, web_app=WebAppInfo(url=wapp_url))]])
                 
@@ -899,14 +899,13 @@ async def main():
         try:
             # Note: Bot API 9.4 allows custom emoji on menu buttons if bot owner has Premium
             # We use a dynamic label to bust client-side cache
-            safe_url = f"{WEB_APP_URL}?v=280220261" if "?" not in WEB_APP_URL else f"{WEB_APP_URL}&v=280220261"
             await bot.set_chat_menu_button(
                 menu_button=MenuButtonWebApp(
                     text="🛍 Market", 
-                    web_app=WebAppInfo(url=safe_url)
+                    web_app=WebAppInfo(url=WEB_APP_URL)
                 )
             )
-            logging.info(f"✅ Menu Button updated: {safe_url}")
+            logging.info(f"✅ Menu Button updated: {WEB_APP_URL}")
         except Exception as e:
             logging.error(f"❌ Failed to set menu button: {e}")
 
@@ -919,9 +918,8 @@ async def main():
     if ADMIN_ID:
         try:
             # API 9.4 allows richer text and custom emojis in messages
-            safe_url = f"{WEB_APP_URL}?v=280220261" if "?" not in WEB_APP_URL else f"{WEB_APP_URL}&v=280220261"
             kb_admin = InlineKeyboardMarkup(inline_keyboard=[
-                [InlineKeyboardButton(text="🛍 Open Market", web_app=WebAppInfo(url=safe_url))]
+                [InlineKeyboardButton(text="🛍 Open Market", web_app=WebAppInfo(url=WEB_APP_URL))]
             ])
             await bot.send_message(ADMIN_ID, "🚀 **OctoRent Bot Online!**\n\nСистема запущена и отслеживает новые лоты.", reply_markup=kb_admin)
         except Exception as e:

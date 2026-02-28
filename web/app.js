@@ -2312,16 +2312,10 @@ async function openProductView(item) {
     if (item && item.nft_address) {
         const userId = tg.initDataUnsafe?.user?.id || 0;
 
-        const parseJsonSafe = async (r) => {
-            const raw = await r.text();
-            try { return JSON.parse(raw); }
-            catch { console.error("API Error Response:", raw); throw new Error("Server returned invalid JSON"); }
-        };
-
         // Parallel fetch for details and user order status
         Promise.all([
-            apiFetch(`${BACKEND_URL}/api/nft_details?nft_address=${item.nft_address}`).then(parseJsonSafe),
-            apiFetch(`${BACKEND_URL}/api/my_orders?user_id=${userId}`).then(parseJsonSafe)
+            apiFetch(`${BACKEND_URL}/api/nft_details?nft_address=${item.nft_address}`).then(r => r.json()),
+            apiFetch(`${BACKEND_URL}/api/my_orders?user_id=${userId}`).then(r => r.json())
         ]).then(([details, myOrders]) => {
             const myOrder = myOrders.find(o => o.nft_address === item.nft_address && (o.status === 'rented' || o.status === 'active' || o.status === 'paid'));
 
@@ -2472,7 +2466,7 @@ function updateTotalPrice() {
     if (payPriceXr) payPriceXr.innerText = botTotal;
 
     const payPriceRub = document.getElementById('pay-price-rub');
-    if (payPriceRub && GLOBAL_TON_PRICE && typeof FIAT_RATES !== 'undefined' && FIAT_RATES.RUB) {
+    if (payPriceRub && GLOBAL_TON_PRICE && FIAT_RATES.RUB) {
         const rubVal = (total * GLOBAL_TON_PRICE * FIAT_RATES.RUB * 1.05).toFixed(0);
         payPriceRub.innerText = rubVal;
     }
@@ -2493,10 +2487,17 @@ function updateTotalPrice() {
     }
 
     // Обновить текст кнопки с учетом языка и статуса
-    const rentBtnTextEl = document.getElementById('rent-btn-text');
-    if (rentBtnTextEl) {
+    const rentBtn = document.getElementById('main-rent-action-btn');
+    if (rentBtn) {
         const isRented = CURRENT_PAYMENT_ITEM && CURRENT_PAYMENT_ITEM.status === 'rented';
-        rentBtnTextEl.innerText = isRented ? t('preorder_for') : t('rent_for');
+        const btnLabel = isRented ? t('preorder_for') : t('rent_for');
+        const priceSpanEl = document.getElementById('rent-btn-price');
+        const priceVal = priceSpanEl ? priceSpanEl.innerText : '';
+        // Clear only text nodes, keep child elements (like price span, svg)
+        Array.from(rentBtn.childNodes)
+            .filter(n => n.nodeType === Node.TEXT_NODE)
+            .forEach(n => n.remove());
+        rentBtn.insertBefore(document.createTextNode(' ' + btnLabel + ' '), rentBtn.firstChild);
     }
 }
 
@@ -3368,45 +3369,18 @@ async function fetchFiatRates() {
 }
 
 function openPaymentModal() {
-    console.log("[PAYMENT] Initializing payment modal...");
-    try {
-        const modal = document.getElementById('payment-modal');
-        if (!modal) {
-            console.error("[PAYMENT] Payment modal element not found!");
-            return;
-        }
+    const modal = document.getElementById('payment-modal');
+    if (!modal) return;
 
-        console.log("[PAYMENT] Found modal. Forcing visibility...");
-        // Enforce extreme z-index to stay above product view (2000) and other layers
-        modal.style.zIndex = "21000";
-        modal.style.display = 'flex';
-        modal.style.visibility = 'visible';
-        modal.style.opacity = '1';
+    // Reset view (we only have selection view now since confirmation was removed)
+    const selectionView = document.getElementById('payment-selection-view');
+    if (selectionView) selectionView.style.display = 'block';
 
-        // Reset view (we only have selection view now since confirmation was removed)
-        const selectionView = document.getElementById('payment-selection-view');
-        if (selectionView) {
-            console.log("[PAYMENT] Showing selection view...");
-            selectionView.style.display = 'block';
-        }
+    updateTotalPrice(); // Sync all prices
 
-        console.log("[PAYMENT] Calling updateTotalPrice...");
-        updateTotalPrice(); // Sync all prices
-
-        console.log("[PAYMENT] Adding 'active' class for transitions...");
-        setTimeout(() => {
-            modal.classList.add('active');
-            console.log("[PAYMENT] Modal should be fully visible now.");
-        }, 10);
-
-        if (tg && tg.HapticFeedback) {
-            console.log("[PAYMENT] Triggering haptic feedback...");
-            tg.HapticFeedback.impactOccurred('light');
-        }
-    } catch (err) {
-        console.error("[PAYMENT] Critical error opening payment modal:", err);
-        showToast("Ошибка при открытии окна оплаты");
-    }
+    modal.style.display = 'flex';
+    setTimeout(() => modal.classList.add('active'), 10);
+    tg.HapticFeedback.impactOccurred('light');
 }
 
 function closePaymentModal() {
@@ -3577,17 +3551,7 @@ async function handleTonRent() {
                 'X-TG-Data': window.Telegram.WebApp.initData
             }
         });
-
-        const rawText = await resp.text();
-        let res;
-        try {
-            res = JSON.parse(rawText);
-        } catch (parseErr) {
-            console.error("Failed to parse JSON. Raw response from server was:", rawText);
-            showToast("Server returned invalid data (check console)");
-            return;
-        }
-
+        const res = await resp.json();
         if (res.status === 'ok') {
             const nanoTonAmount = Math.round(res.total_price * 1e9).toString();
             const msg = {
