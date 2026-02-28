@@ -1002,18 +1002,17 @@ async def handle_create_bot_invoice(request):
                         payment_url = res_bot["result"]["pay_url"]
                         external_id = str(res_bot["result"]["invoice_id"])
                         
-        elif gateway == 'XROCKET':
-            token = os.getenv("XROCKET_API_TOKEN", "")
-            if not token: return web.json_response({"error": "xRocket token not set"}, status=500)
+            # xRocket: base + 0.1 gas + 1.5% gateway fee
+            final_amount = round((total_ton + 0.1) * 1.015, 2)
             
             headers = {"Rocket-Pay-Key": token}
             payload = {
-                "amount": amount_with_fee,
+                "amount": str(final_amount),
                 "currency": "TON",
                 "description": f"Rent NFT: {item['title']} for {days} days",
                 "hiddenMessage": "Thank you for your order!",
                 "payload": json.dumps({"order_id": order_id, "user_id": user_id}),
-                "callbackUrl": f"{WEB_APP_URL}/api/webhooks/xrocket"
+                "callbackUrl": f"{os.getenv('WEB_APP_URL', '')}/api/webhooks/xrocket"
             }
             async with aiohttp.ClientSession() as session:
                 async with session.post("https://pay.xrocket.tg/api/v1/tg-invoices", json=payload, headers=headers) as resp:
@@ -1021,6 +1020,9 @@ async def handle_create_bot_invoice(request):
                     if res_bot.get("success"):
                         payment_url = res_bot["data"]["link"]
                         external_id = str(res_bot["data"]["id"])
+                    else:
+                        logging.error(f"[xRocket] Failed to create invoice: {res_bot}")
+                        return web.json_response({"error": f"xRocket error: {res_bot.get('message', 'Unknown')}"}, status=400)
 
         if payment_url:
             # Update order with gateway and external ID

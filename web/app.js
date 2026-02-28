@@ -3435,7 +3435,8 @@ function initModalSwipeClose(modal) {
         content.style.transition = 'transform 0.3s cubic-bezier(0.19, 1, 0.22, 1)';
         const diff = currentY - startY;
 
-        if (diff > 100) { // Lower threshold for better UX
+        if (diff > 80) { // Even lower threshold for "easy" closing
+            tg.HapticFeedback.impactOccurred('light');
             closePaymentModal();
         } else {
             content.style.transform = 'translateY(0)';
