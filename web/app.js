@@ -3374,20 +3374,73 @@ function openPaymentModal() {
 
     // Reset view (we only have selection view now since confirmation was removed)
     const selectionView = document.getElementById('payment-selection-view');
-    if (selectionView) selectionView.style.display = 'block';
+    if (selectionView) {
+        selectionView.style.display = 'block';
+        selectionView.style.transform = 'translateY(0)'; // Reset drag if any
+    }
 
     updateTotalPrice(); // Sync all prices
 
     modal.style.display = 'flex';
     setTimeout(() => modal.classList.add('active'), 10);
     tg.HapticFeedback.impactOccurred('light');
+
+    // Add Swipe down to close logic
+    initModalSwipeClose(modal);
 }
 
 function closePaymentModal() {
     const modal = document.getElementById('payment-modal');
     if (!modal) return;
     modal.classList.remove('active');
-    setTimeout(() => modal.style.display = 'none', 300);
+    setTimeout(() => {
+        modal.style.display = 'none';
+        const content = modal.querySelector('.bottom-sheet-content');
+        if (content) content.style.transform = ''; // Clear drag transform
+    }, 300);
+}
+
+function initModalSwipeClose(modal) {
+    const content = modal.querySelector('.bottom-sheet-content');
+    const header = modal.querySelector('.bottom-sheet-header');
+    if (!content || !header) return;
+
+    let startY = 0;
+    let currentY = 0;
+    let isDragging = false;
+
+    const onTouchStart = (e) => {
+        startY = e.touches[0].clientY;
+        isDragging = true;
+        content.style.transition = 'none'; // Disable transition for direct drag
+    };
+
+    const onTouchMove = (e) => {
+        if (!isDragging) return;
+        currentY = e.touches[0].clientY;
+        const diff = currentY - startY;
+        if (diff > 0) {
+            content.style.transform = `translateY(${diff}px)`;
+        }
+    };
+
+    const onTouchEnd = () => {
+        if (!isDragging) return;
+        isDragging = false;
+        content.style.transition = 'transform 0.3s cubic-bezier(0.19, 1, 0.22, 1)';
+        const diff = currentY - startY;
+
+        if (diff > 150) { // Threshold to close
+            closePaymentModal();
+        } else {
+            content.style.transform = 'translateY(0)';
+        }
+    };
+
+    // Attach to header or the "dash" specifically if desired, but header is usually better for UX
+    header.addEventListener('touchstart', onTouchStart, { passive: true });
+    header.addEventListener('touchmove', onTouchMove, { passive: true });
+    header.addEventListener('touchend', onTouchEnd);
 }
 
 function switchPayTab(tab) {
