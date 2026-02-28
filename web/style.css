@@ -184,12 +184,15 @@ body {
 }
 
 /* Payment Selection Modal Styles */
+/* Payment Selection Modal Styles */
 .payment-tabs {
-    display: flex;
-    gap: 24px;
-    padding: 10px 24px 16px;
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 24px !important;
+    padding: 10px 24px 16px !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     margin-bottom: 20px;
+    width: 100%;
 }
 
 .pay-tab {
@@ -200,6 +203,7 @@ body {
     cursor: pointer;
     transition: all 0.2s ease;
     position: relative;
+    white-space: nowrap;
 }
 
 .pay-tab.active {
@@ -217,12 +221,6 @@ body {
     border-radius: 2px;
 }
 
-/* Remove line under payment header as requested */
-#payment-selection-view .bottom-sheet-header {
-    border-bottom: none !important;
-    margin-bottom: 0;
-}
-
 .pay-tab-pane {
     display: none;
 }
@@ -234,13 +232,14 @@ body {
 }
 
 .pay-method-card {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 14px 16px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 18px;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 14px !important;
+    padding: 14px 16px !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    border-radius: 18px !important;
     cursor: pointer;
     transition: all 0.2s ease;
     margin-bottom: 10px;
@@ -252,86 +251,8 @@ body {
 }
 
 .pay-method-card.active {
-    background: rgba(0, 136, 204, 0.1);
-    border-color: rgba(0, 136, 204, 0.4);
-}
-
-.pay-method-badge {
-    position: absolute;
-    top: 8px;
-    right: 10px;
-    font-size: 9px;
-    font-weight: 800;
-    color: #26D07C;
-    background: rgba(38, 208, 124, 0.1);
-    border: 1px solid rgba(38, 208, 124, 0.3);
-    padding: 3px 8px;
-    border-radius: 6px;
-    text-transform: none;
-    z-index: 10;
-    white-space: nowrap;
-}
-
-.pm-info {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-}
-
-/* Top row inside pm-info: name + badge */
-.pm-header {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-bottom: 2px;
-}
-
-/* Bottom row inside pm-info: description + price */
-.pm-row-bottom {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-}
-
-.pm-name {
-    font-weight: 800;
-    font-size: 15px;
-    color: #fff;
-    white-space: nowrap;
-}
-
-.pm-desc {
-    font-size: 11px;
-    color: #8E8E93;
-}
-
-.pm-price {
-    font-weight: 800;
-    font-size: 15px;
-    color: #fff;
-    text-align: right;
-    white-space: nowrap;
-    flex-shrink: 0;
-}
-
-.pay-method-badge {
-    display: inline-block;
-    font-size: 8px;
-    font-weight: 800;
-    color: #26D07C;
-    background: rgba(38, 208, 124, 0.1);
-    border: 1px solid rgba(38, 208, 124, 0.3);
-    padding: 2px 6px;
-    border-radius: 5px;
-    white-space: nowrap;
-    flex-shrink: 0;
-    /* Not absolute anymore - inline with name */
-    position: static;
-    top: auto;
-    right: auto;
-    z-index: auto;
+    background: rgba(0, 136, 204, 0.1) !important;
+    border-color: rgba(0, 136, 204, 0.4) !important;
 }
 
 .pm-check {
@@ -342,6 +263,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
 }
 
 .pay-method-card.active .pm-check {
@@ -356,11 +278,75 @@ body {
     font-weight: 900;
 }
 
+.pm-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: 2px;
+}
+
+.pm-header {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 8px !important;
+    justify-content: flex-start !important;
+}
+
+.pm-name {
+    font-weight: 800;
+    font-size: 15px;
+    color: #fff;
+    white-space: nowrap;
+}
+
+.pay-method-badge {
+    display: inline-block;
+    font-size: 9px;
+    font-weight: 800;
+    color: #26D07C;
+    background: rgba(38, 208, 124, 0.1);
+    border: 1px solid rgba(38, 208, 124, 0.3);
+    padding: 2px 8px;
+    border-radius: 6px;
+    white-space: nowrap;
+    line-height: 1;
+}
+
+.pm-row-bottom {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 10px !important;
+}
+
+.pm-desc {
+    font-size: 11px;
+    color: #8E8E93;
+    line-height: 1.2;
+}
+
+.pm-price {
+    font-weight: 800;
+    font-size: 15px;
+    color: #fff;
+    text-align: right;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* Redundant badge fix */
+#payment-modal .pay-method-badge {
+    position: static !important;
+}
+
 /* Total Price Row Style */
 .payment-total-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
     padding: 20px 0;
     margin-top: 10px;
 }
@@ -369,7 +355,6 @@ body {
     font-size: 18px;
     font-weight: 800;
     color: #fff;
-    flex-shrink: 0;
 }
 
 .ptr-value-wrapper {
@@ -385,8 +370,8 @@ body {
 }
 
 .ptr-info-btn {
-    width: 38px;
-    height: 38px;
+    width: 34px;
+    height: 34px;
     background: #0088cc;
     border-radius: 10px;
     display: flex;
