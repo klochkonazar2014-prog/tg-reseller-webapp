@@ -985,7 +985,8 @@ body {
     justify-content: center;
     /* Changed from flex-end to center to lift elements */
     z-index: 999;
-    height: calc(125px + var(--safe-area-bottom));
+    height: calc(110px + var(--safe-area-bottom));
+    /* Reduced from 125px */
     transition: height 0.3s ease;
 }
 
@@ -998,11 +999,13 @@ body {
 }
 
 .bottom-nav.profile-mode {
-    height: calc(75px + var(--safe-area-bottom));
+    height: calc(65px + var(--safe-area-bottom));
+    /* Reduced from 75px */
 }
 
 .bottom-nav.friends-mode {
-    height: calc(80px + var(--safe-area-bottom));
+    height: calc(70px + var(--safe-area-bottom));
+    /* Reduced from 80px */
 }
 
 .bottom-nav.profile-mode .nav-items-row {
@@ -1123,6 +1126,8 @@ body {
     position: sticky;
     top: 0;
     z-index: 1001;
+    padding: 8px 16px !important;
+    /* Reduced vertical padding */
 }
 
 .notify-btn {
@@ -3584,8 +3589,8 @@ body.hide-filters .header-column {
 }
 
 .bottom-sheet-header {
-    padding: 10px 16px;
-    /* Reduced vertical padding */
+    padding: 6px 16px;
+    /* Optimized for swipe gesture and compact look */
     text-align: center;
     border-bottom: none !important;
     /* Removed line under "Выберите способ оплаты" */

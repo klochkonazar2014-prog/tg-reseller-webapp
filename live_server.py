@@ -1002,6 +1002,10 @@ async def handle_create_bot_invoice(request):
                         payment_url = res_bot["result"]["pay_url"]
                         external_id = str(res_bot["result"]["invoice_id"])
                         
+        elif gateway == 'XROCKET':
+            token = os.getenv("XROCKET_API_TOKEN", "")
+            if not token: return web.json_response({"error": "xRocket token not set"}, status=500)
+            
             # xRocket: base + 0.1 gas + 1.5% gateway fee
             final_amount = round((total_ton + 0.1) * 1.015, 2)
             
