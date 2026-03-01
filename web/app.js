@@ -2317,6 +2317,7 @@ async function openProductView(item) {
             apiFetch(`${BACKEND_URL}/api/nft_details?nft_address=${item.nft_address}`).then(r => r.json()),
             apiFetch(`${BACKEND_URL}/api/my_orders?user_id=${userId}`).then(r => r.json())
         ]).then(([details, myOrders]) => {
+            if (!Array.isArray(myOrders)) myOrders = [];
             const myOrder = myOrders.find(o => o.nft_address === item.nft_address && (o.status === 'rented' || o.status === 'active' || o.status === 'paid'));
 
             // 1. Status Banner Logic
