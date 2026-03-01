@@ -1079,7 +1079,12 @@ function showHelp(amount) {
 
     title.innerText = t('what_is_this');
     body.innerHTML = `
-        <div style="font-weight:700; color:#fff; margin-bottom:10px;">${t('you_will_send', { amount: amount })}</div>
+        <div style="font-size: 14px; line-height: 1.6; color: rgba(255,255,255,0.9);">
+            Вы дополнительно прикрепляете <b>0.2 TON</b> для обработки транзакции (это обязательное требование смарт-контрактов для оплаты газа).
+            <br><br>
+            ✅ <b>Возврат работает автоматически:</b><br>
+            Смарт-контракт заберет только фактическую комиссию сети. <b>Весь неиспользованный остаток (как правило, около 0.14 TON) моментально и автоматически возвращается обратно на ваш кошелек!</b>
+        </div>
     `;
 
     const modal = document.getElementById('help-modal');

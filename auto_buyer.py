@@ -265,11 +265,18 @@ async def process_payment(order):
             processing_orders.remove(order_id)
             logging.info(f"🔓 Блокировка снята для заказа #{order_id}")
 
-    # 5. ТЕПЕРЬ МЕНЯЕМ СТАТУС НА 'rented' (теперь пользователь может отправить ссылку)
+    # 5. ТЕПЕРЬ МЕНЯЕМ СТАТУС НА 'rented' И НАЗНАЧАЕМ ВРЕМЯ ВОЗВРАТА
+    import time
+    rent_ends_at = int(time.time()) + (order['days'] * 86400)
+    refund_scheduled_at = rent_ends_at + 3600 # +1 hour for MarketApp to return funds
+
     async with db.aiosqlite.connect(db.DB_PATH) as conn:
-        await conn.execute("UPDATE orders SET status = 'rented' WHERE id = ?", (order_id,))
+        await conn.execute(
+            "UPDATE orders SET status = 'rented', refund_scheduled_at = ?, refund_status = 'pending', refund_amount = 0.14 WHERE id = ?", 
+            (refund_scheduled_at, order_id)
+        )
         await conn.commit()
-    logging.info(f"🔒 Транзакция выполнена, статус изменен на 'rented' для #{order_id}")
+    logging.info(f"🔒 Транзакция выполнена, статус изменен на 'rented' для #{order_id} (возврат запланирован на {refund_scheduled_at})")
 
     # 6. ЕСЛИ ССЫЛКА УЖЕ ЕСТЬ В БД (пользователь ввел заранее), ПРИВЯЗЫВАЕМ ЕЁ
     current_order = await db.get_order_by_id(order_id)

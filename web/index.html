@@ -258,12 +258,14 @@
     <!-- Help Bottom Sheet (Pretty Drawer) -->
     <div id="help-modal" class="bottom-sheet">
         <div class="bottom-sheet-backdrop" onclick="closeHelp()"></div>
-        <div class="bottom-sheet-content">
-            <div class="bottom-sheet-header">
-                <div class="bottom-sheet-dash"></div>
-                <h3 id="help-title" style="margin:0; font-weight:800;">Help</h3>
+        <div class="bottom-sheet-content" style="border-radius: 20px 20px 0 0;">
+            <div class="bottom-sheet-header"
+                style="display: flex; justify-content: space-between; align-items: center; padding: 12px 20px;">
+                <h3 id="help-title" style="margin: 0; font-size: 18px; font-weight: 800;">Что это значит?</h3>
+                <button class="close-sheet-btn" onclick="closeHelp()"
+                    style="background:none; border:none; color:#8b9bb4; font-size:24px; padding:0; cursor:pointer;">✕</button>
             </div>
-            <div id="help-body" class="bottom-sheet-body">
+            <div id="help-body" class="bottom-sheet-body" style="padding: 0 20px 20px;">
                 <!-- Content handled by showHelp() in app.js -->
             </div>
         </div>
@@ -714,10 +716,13 @@
     <!-- Wallet Management Drawer -->
     <div id="wallet-drawer" class="bottom-sheet" style="display: none;">
         <div class="bottom-sheet-backdrop" onclick="closeWalletDrawer()"></div>
-        <div class="bottom-sheet-content">
-            <div class="bottom-sheet-header">
-                <div class="bottom-sheet-dash"></div>
-                <h3 id="wallet-drawer-title" data-i18n="wallet_drawer_title">Управление кошельком</h3>
+        <div class="bottom-sheet-content" style="border-radius: 20px 20px 0 0;">
+            <div class="bottom-sheet-header"
+                style="display: flex; justify-content: space-between; align-items: center; padding: 12px 20px;">
+                <h3 id="wallet-drawer-title" data-i18n="wallet_drawer_title"
+                    style="margin: 0; font-size: 18px; font-weight: 800;">Управление кошельком</h3>
+                <button class="close-sheet-btn" onclick="closeWalletDrawer()"
+                    style="background:none; border:none; color:#8b9bb4; font-size:24px; padding:0; cursor:pointer;">✕</button>
             </div>
             <div class="bottom-sheet-list">
                 <div class="drawer-item" onclick="copyWalletAddress()">
@@ -756,8 +761,6 @@
                     <button class="close-sheet-btn" onclick="closePaymentModal()"
                         style="background:none; border:none; color:#8b9bb4; font-size:24px; padding:0; cursor:pointer;">✕</button>
                 </div>
-                <!-- Drag dash moved or removed as per request for title/X layout -->
-                <div class="bottom-sheet-dash" style="margin-bottom: 8px;"></div>
 
                 <div class="payment-tabs">
                     <div class="pay-tab active" onclick="switchPayTab('crypto')">Криптой</div>
@@ -862,7 +865,7 @@
     </div>
     </div>
     <script src="timer_helper.js?v=2"></script>
-    <script src="app.js?v=1772338002"></script>
+    <script src="app.js?v=1772338003"></script>
 </body>
 
 </html>

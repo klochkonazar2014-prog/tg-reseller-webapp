@@ -60,7 +60,6 @@ async def init_db():
             if 'language' not in cols:
                 await db.execute("ALTER TABLE users ADD COLUMN language TEXT DEFAULT 'ru'")
 
-        await db.commit()
         await db.execute("""
             CREATE TABLE IF NOT EXISTS orders (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -73,7 +72,10 @@ async def init_db():
                 tc_link TEXT, -- Ссылка tc:// с Фрагмента
                 tx_hash TEXT, -- Хеш транзакции оплаты
                 is_preorder INTEGER DEFAULT 0, -- 1 if item was rented when order was created
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                refund_amount REAL DEFAULT 0.14,
+                refund_scheduled_at INTEGER,
+                refund_status TEXT DEFAULT 'pending'
             )
         """)
         async with db.execute("PRAGMA table_info(orders)") as cursor:
@@ -98,6 +100,12 @@ async def init_db():
                 await db.execute("ALTER TABLE orders ADD COLUMN referral_commission REAL DEFAULT 0")
             if 'is_referral_paid' not in cols:
                 await db.execute("ALTER TABLE orders ADD COLUMN is_referral_paid INTEGER DEFAULT 0")
+            if 'refund_amount' not in cols:
+                await db.execute("ALTER TABLE orders ADD COLUMN refund_amount REAL DEFAULT 0.14")
+            if 'refund_scheduled_at' not in cols:
+                await db.execute("ALTER TABLE orders ADD COLUMN refund_scheduled_at INTEGER")
+            if 'refund_status' not in cols:
+                await db.execute("ALTER TABLE orders ADD COLUMN refund_status TEXT DEFAULT 'pending'")
 
         await db.commit()
 

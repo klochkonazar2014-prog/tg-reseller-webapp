@@ -330,51 +330,93 @@ async def run_refund_worker():
                     await conn.execute("UPDATE orders SET status = 'expired' WHERE id = ?", (od['id'],))
                 await conn.commit()
 
-                # 2. Теперь ищем тех, кому нужно вернуть сдачу
-                query_refund = "SELECT * FROM orders WHERE status = 'expired' AND user_wallet IS NOT NULL AND refund_tx_hash IS NULL LIMIT 5"
+                # 2. Теперь ищем тех, кому нужно вернуть сдачу по новому расписанию
+                query_refund = "SELECT * FROM orders WHERE refund_status = 'pending' AND refund_scheduled_at <= strftime('%s', 'now') LIMIT 10"
                 async with conn.execute(query_refund) as cursor:
                     pending_refunds = await cursor.fetchall()
 
             for order in pending_refunds:
                 try:
-                    dest_wallet = order['user_wallet']
-                    if not dest_wallet or dest_wallet == "Unknown":
+                    user_id = order['user_id']
+                    payment_gateway = order['payment_gateway'] if 'payment_gateway' in order.keys() else None
+                    refund_amount = order['refund_amount'] if 'refund_amount' in order.keys() else 0.14
+                    
+                    if payment_gateway == 'xrocket':
+                        # xRocket API transfer
+                        XROCKET_KEY = os.getenv("XROCKET_API_KEY", "")
+                        if not XROCKET_KEY:
+                            logging.error("[BG-Refund] XROCKET_API_KEY is missing for refunding order #{order['id']}")
+                            continue
+                            
+                        headers = {
+                            "Rocket-Pay-Key": XROCKET_KEY,
+                            "Content-Type": "application/json"
+                        }
+                        payload = {
+                            "tgUserId": user_id,
+                            "currency": "TONCOIN",
+                            "amount": refund_amount,
+                            "transferId": f"refund_o{order['id']}", 
+                            "description": "Спасибо, что арендуете у нас! С любовью, OctoRent"
+                        }
+                        
+                        url = "https://pay.ton-rocket.com/app/transfer"
+                        async with aiohttp.ClientSession() as session:
+                            async with session.post(url, headers=headers, json=payload, timeout=15) as r:
+                                data = await r.json()
+                                if data.get('success'):
+                                    logging.info(f"[BG-Refund] xRocket refund {refund_amount} TON sent to {user_id} for #{order['id']}")
+                                    async with aiosqlite.connect(db.DB_PATH) as c:
+                                        await c.execute("UPDATE orders SET refund_status = 'processed' WHERE id = ?", (order['id'],))
+                                        await c.commit()
+                                else:
+                                    logging.error(f"[BG-Refund] xRocket transfer failed for #{order['id']}: {data}")
+                                    
+                    elif payment_gateway == 'freekassa':
+                        logging.info(f"[BG-Refund] Skipping Freekassa refund for order #{order['id']} (Pending decision)")
                         continue
                         
-                    logging.info(f"[BG-Refund] Sending 0.14 TON refund to {dest_wallet} for order #{order['id']}")
-                    
-                    current_seqno = await wallet.get_seqno(client, wallet.address)
-                    refund_memo = "Спасибо что арендуете у нас с любовью Octorent"
-                    body_cell = begin_cell().store_uint(0, 32).store_string(refund_memo).end_cell()
-                    
-                    await wallet.transfer(
-                        destination=dest_wallet,
-                        amount=0.14,
-                        body=body_cell,
-                        seqno=current_seqno
-                    )
-                    
-                    # Ждем подтверждения
-                    success = False
-                    for _ in range(6):
-                        await asyncio.sleep(10)
-                        if await wallet.get_seqno(client, wallet.address) > current_seqno:
-                            success = True
-                            break
-                    
-                    if success:
-                        # Получаем хеш последней транзакции (опционально, но полезно)
-                        # Для упрощения просто помечаем что ок. В tonutils хеш возвращается transfer? Нет.
-                        await db.update_order_status(order['id'], 'expired', refund_tx_hash='SENT')
-                        logging.info(f"[BG-Refund] Refund for #{order['id']} completed")
                     else:
-                        logging.warning(f"[BG-Refund] Refund for #{order['id']} sent but seqno didn't increase yet.")
-                        await db.update_order_status(order['id'], 'expired', refund_tx_hash='PENDING_CONFIRM')
+                        # TonConnect (or generic crypto)
+                        dest_wallet = order['user_wallet'] if 'user_wallet' in order.keys() else None
+                        if not dest_wallet or dest_wallet == "Unknown":
+                            logging.warning(f"[BG-Refund] No user_wallet found for order #{order['id']}, skipping TonConnect refund")
+                            continue
+                            
+                        logging.info(f"[BG-Refund] Sending {refund_amount} TON refund to {dest_wallet} for order #{order['id']}")
+                        
+                        current_seqno = await wallet.get_seqno(client, wallet.address)
+                        refund_memo = "Спасибо, что арендуете у нас! С любовью, OctoRent"
+                        body_cell = begin_cell().store_uint(0, 32).store_string(refund_memo).end_cell()
+                        
+                        await wallet.transfer(
+                            destination=dest_wallet,
+                            amount=refund_amount,
+                            body=body_cell,
+                            seqno=current_seqno
+                        )
+                        
+                        success = False
+                        for _ in range(6):
+                            await asyncio.sleep(10)
+                            if await wallet.get_seqno(client, wallet.address) > current_seqno:
+                                success = True
+                                break
+                        
+                        if success:
+                            async with aiosqlite.connect(db.DB_PATH) as c:
+                                await c.execute("UPDATE orders SET refund_status = 'processed' WHERE id = ?", (order['id'],))
+                                await c.commit()
+                            logging.info(f"[BG-Refund] Crypto refund for #{order['id']} completed")
+                        else:
+                            logging.warning(f"[BG-Refund] Crypto refund for #{order['id']} sent but seqno didn't increase yet.")
 
                 except Exception as ex:
                     logging.error(f"[BG-Refund] Error processing refund for order #{order['id']}: {ex}")
             
-            await asyncio.sleep(60) # Проверка раз в минуту
+            # Polling interval is 15 minutes
+            await asyncio.sleep(900)
+
             
         except Exception as e:
             logging.error(f"[BG-Refund] Global error: {e}")
@@ -387,7 +429,7 @@ async def main_loop():
     async with aiohttp.ClientSession() as session:
         await asyncio.gather(
             run_history_sync(session),
-            # run_refund_worker() # Disabled for local testing by user request
+            run_refund_worker() # Enabled to process delayed refunds automatically
         )
 
 
