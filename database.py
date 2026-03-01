@@ -177,6 +177,15 @@ async def set_user_language(user_id, lang):
         await db.execute("UPDATE users SET language = ? WHERE user_id = ?", (lang, user_id))
         await db.commit()
 
+async def get_referrer_id(user_id):
+    async with aiosqlite.connect(DB_PATH, timeout=30) as db:
+        await db.execute("PRAGMA journal_mode=WAL")
+        async with db.execute("SELECT referrer_id FROM referrals WHERE referred_id = ?", (user_id,)) as cursor:
+            row = await cursor.fetchone()
+            if row:
+                return row[0]
+            return None
+
 async def user_exists(user_id):
     async with aiosqlite.connect(DB_PATH, timeout=30) as db:
         await db.execute("PRAGMA journal_mode=WAL")
