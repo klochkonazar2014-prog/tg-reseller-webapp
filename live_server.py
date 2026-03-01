@@ -213,11 +213,11 @@ async def handle_live_items(request):
                         if int(f_gift_num) != nft_num: continue
                     except: pass
                 
-                # Apply price filters
-                price = float(r['price_per_day'])
+                # Apply price filters safely to prevent float(None) errors for some items
+                price = float(r['price_per_day'] or 0.0)
                 # Display price WITHOUT network expense
                 if "Lol Pop #124946" in (title or ""):
-                    price = float(r['original_price']) # Shows exactly 0.01
+                    price = float(r['original_price'] or 0.0) # Shows exactly 0.01
 
                 filtered_items.append({
                     "id": r['id'],
@@ -296,22 +296,19 @@ async def create_rental_order(user_id, nft_address, days):
         logging.info(f"Applying special logic for test NFT: {item['title']}")
     else:
         total_base = round((item['original_price'] + markup) * days + 0.2, 2)
+    # Calculate referral commission before creating order
+    referral_commission = 0.0
+    referrer_id = await db.get_referrer_id(user_id)
+    if referrer_id and markup > 0:
+        referral_commission = max(0.0, round(markup * days * 0.25, 4))
     
-    order_id = await db.create_order(user_id, nft_address, item['title'], days, total_base, is_preorder=is_preorder)
+    order_id = await db.create_order(user_id, nft_address, item['title'], days, total_base, is_preorder=is_preorder, referral_commission=referral_commission)
     # Add unique fractional part to avoid collision in simple transfers
     total_final = round(total_base + (order_id % 500) / 10000, 4)
     
     async with db.aiosqlite.connect(db.DB_PATH) as conn:
         await conn.execute("UPDATE orders SET total_price = ?, status = 'pending_payment' WHERE id = ?", (total_final, order_id))
         await conn.commit()
-    
-    # Referral Logic
-    referrer_id = await db.get_referrer_id(user_id)
-    if referrer_id and markup > 0:
-        referral_commission = round(markup * days * 0.25, 4)
-        if referral_commission > 0:
-            await db.add_referral_earning(referrer_id, order_id, referral_commission)
-            
     return {
         "order_id": order_id,
         "total_price": total_final,
@@ -319,8 +316,15 @@ async def create_rental_order(user_id, nft_address, days):
     }, None
 
 async def handle_prepare_rent(request):
-    nft_address = request.query.get("nft_address")
-    days = int(request.query.get("days", 1))
+    try:
+        data = await request.json()
+        nft_address = data.get("nft_address")
+        days = int(data.get("days", 1))
+    except:
+        # Fallback to query params for compatibility or if JSON parsing fails
+        nft_address = request.query.get("nft_address")
+        days = int(request.query.get("days", 1))
+
     user_id = get_authenticated_user_id(request)
     if not user_id:
         return web.json_response({"error": "Unauthorized"}, status=401)
@@ -1119,7 +1123,7 @@ app.add_routes([
     web.get('/', handle_index),
     web.get('/api/items', handle_live_items),
     web.get('/api/filters', handle_filter_data),
-    web.get('/api/prepare_rent', handle_prepare_rent),
+    web.post('/api/prepare_rent', handle_prepare_rent),
     web.post('/api/submit_tc_link', handle_submit_tc_link),
     web.get('/api/my_orders', handle_get_orders),
     web.post('/api/toggle_notification', handle_toggle_notification),

@@ -94,6 +94,10 @@ async def init_db():
                 await db.execute("ALTER TABLE orders ADD COLUMN fiat_amount REAL")
             if 'external_id' not in cols:
                 await db.execute("ALTER TABLE orders ADD COLUMN external_id TEXT")
+            if 'referral_commission' not in cols:
+                await db.execute("ALTER TABLE orders ADD COLUMN referral_commission REAL DEFAULT 0")
+            if 'is_referral_paid' not in cols:
+                await db.execute("ALTER TABLE orders ADD COLUMN is_referral_paid INTEGER DEFAULT 0")
 
         await db.commit()
 
@@ -285,12 +289,12 @@ async def mark_all_unavailable():
         await db.execute("UPDATE items SET status = 'awaiting_relist'")
         await db.commit()
 
-async def create_order(user_id, nft_address, nft_name, days, total_price, is_preorder=0):
+async def create_order(user_id, nft_address, nft_name, days, total_price, is_preorder=0, referral_commission=0.0):
     async with aiosqlite.connect(DB_PATH, timeout=30) as db:
         await db.execute("PRAGMA journal_mode=WAL")
         cursor = await db.execute(
-            "INSERT INTO orders (user_id, nft_address, nft_name, days, total_price, is_preorder) VALUES (?, ?, ?, ?, ?, ?)",
-            (user_id, nft_address, nft_name, days, total_price, is_preorder)
+            "INSERT INTO orders (user_id, nft_address, nft_name, days, total_price, is_preorder, referral_commission) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (user_id, nft_address, nft_name, days, total_price, is_preorder, referral_commission)
         )
         order_id = cursor.lastrowid
         await db.commit()
@@ -330,6 +334,29 @@ async def update_order_status(order_id, status, tc_link=None, tx_hash=None, user
         params.append(order_id)
         
         await db.execute(query, tuple(params))
+        
+        # Award referral commission securely only when payment is complete
+        if status in ('paid', 'rented'):
+            async with db.execute("SELECT user_id, referral_commission, is_referral_paid FROM orders WHERE id = ?", (order_id,)) as cursor:
+                o_row = await cursor.fetchone()
+                if o_row and o_row[2] == 0 and o_row[1] > 0:
+                    comm = o_row[1]
+                    uid = o_row[0]
+                    async with db.execute("SELECT referrer_id FROM referrals WHERE referred_id = ?", (uid,)) as ref_cursor:
+                        ref_row = await ref_cursor.fetchone()
+                        if ref_row:
+                            referrer_id = ref_row[0]
+                            # Payout the commission
+                            await db.execute("INSERT INTO referral_earnings (referrer_id, order_id, amount) VALUES (?, ?, ?)", (referrer_id, order_id, comm))
+                            await db.execute("INSERT OR IGNORE INTO referral_balance (user_id) VALUES (?)", (referrer_id,))
+                            await db.execute(
+                                """UPDATE referral_balance 
+                                   SET balance = balance + ?, total_earned = total_earned + ?, last_updated = CURRENT_TIMESTAMP
+                                   WHERE user_id = ?""", (comm, comm, referrer_id)
+                            )
+                            # Flag as paid to avoid abuse
+                            await db.execute("UPDATE orders SET is_referral_paid = 1 WHERE id = ?", (order_id,))
+        
         await db.commit()
 
 async def get_user_orders(user_id):
