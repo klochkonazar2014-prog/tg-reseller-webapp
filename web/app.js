@@ -3625,20 +3625,10 @@ async function handleTonRent() {
             }
         });
         const res = await resp.json();
-        if (res.status === 'ok') {
-            const nanoTonAmount = Math.round(res.total_price * 1e9).toString();
-            const msg = {
-                address: res.messages && res.messages[0] ? res.messages[0].address : "UQAotn3cT26kUKW5wSpP9dYKxwEQQ0qffDB24HGzuBrJ5PFB",
-                amount: nanoTonAmount
-            };
-
-            if (res.messages && res.messages[0] && res.messages[0].payload) {
-                msg.payload = res.messages[0].payload;
-            }
-
+        if (res.messages && res.messages.length > 0) {
             const transaction = {
                 validUntil: Math.floor(Date.now() / 1000) + 600,
-                messages: [msg]
+                messages: res.messages
             };
             console.log("Preparing TON transaction:", transaction);
             await tonConnectUI.sendTransaction(transaction);
