@@ -1588,25 +1588,41 @@ function initFilterLists() {
             sInput.disabled = false;
             sInput.placeholder = t('search_filter_hint', { label: m.label });
 
-            // If multiple collections, show sub-accordions
-            selectedNFT.forEach(col => {
+            if (selectedNFT.length === 1) {
+                // SINGLE: Flat list
+                const col = selectedNFT[0];
                 const list = (ATTR_STATS.model && ATTR_STATS.model[col]) || [];
                 const filtered = list.filter(it => it.name.toLowerCase().includes(sVal) && !it.name.toLowerCase().includes('phantom'));
 
-                if (filtered.length > 0) {
-                    const subId = `model-sub-${col.replace(/\s+/g, '-')}`;
-
-                    // Auto-expand if ANY models are selected in this specific collection
-                    const hasSelectedInCol = ACTIVE_FILTERS.model.some(selName => list.some(it => it.name === selName));
-
-                    const subCont = addFilterSubAccordion(cont, col, subId, hasSelectedInCol);
-
-                    filtered.sort((a, b) => a.name.localeCompare(b.name)).forEach(item => {
-                        let icon = getTelegifterUrl('model', item.name, col);
-                        addFilterItem(subCont, item.name, item.name, 'model', ACTIVE_FILTERS.model.includes(item.name), icon, col, item.image);
-                    });
+                if (!sVal || t('select_all').toLowerCase().includes(sVal)) {
+                    addFilterItem(cont, t('select_all'), "all", 'model', ACTIVE_FILTERS.model.length === 0);
                 }
-            });
+
+                filtered.sort((a, b) => a.name.localeCompare(b.name)).forEach(item => {
+                    let icon = getTelegifterUrl('model', item.name, col);
+                    addFilterItem(cont, item.name, item.name, 'model', ACTIVE_FILTERS.model.includes(item.name), icon, col, item.image);
+                });
+            } else {
+                // MULTIPLE: Nested sub-accordions
+                selectedNFT.forEach(col => {
+                    const list = (ATTR_STATS.model && ATTR_STATS.model[col]) || [];
+                    const filtered = list.filter(it => it.name.toLowerCase().includes(sVal) && !it.name.toLowerCase().includes('phantom'));
+
+                    if (filtered.length > 0) {
+                        const subId = `model-sub-${col.replace(/\s+/g, '-')}`;
+
+                        // Auto-expand if ANY models are selected in this specific collection
+                        const hasSelectedInCol = ACTIVE_FILTERS.model.some(selName => list.some(it => it.name === selName));
+
+                        const subCont = addFilterSubAccordion(cont, col, subId, hasSelectedInCol);
+
+                        filtered.sort((a, b) => a.name.localeCompare(b.name)).forEach(item => {
+                            let icon = getTelegifterUrl('model', item.name, col);
+                            addFilterItem(subCont, item.name, item.name, 'model', ACTIVE_FILTERS.model.includes(item.name), icon, col, item.image);
+                        });
+                    }
+                });
+            }
             return; // Models handled specially
         } else {
             // BG & SYMBOLS: Global selection allowed (they are grouped under "ALL" in loadFilterData)
@@ -1667,6 +1683,30 @@ function addFilterSubAccordion(container, title, subId, autoExpand = false) {
     const content = document.createElement('div');
     content.id = subId;
     content.className = `sub-accordion-content ${autoExpand ? 'active' : ''}`;
+
+    // ADD SUB-SEARCH
+    const searchWrapper = document.createElement('div');
+    searchWrapper.className = 'filter-sub-search-wrapper';
+    searchWrapper.onclick = (e) => e.stopPropagation(); // Don't trigger accordion toggle
+
+    const searchInput = document.createElement('input');
+    searchInput.type = 'text';
+    searchInput.className = 'filter-sub-search-input';
+    searchInput.placeholder = t('search_model');
+
+    searchInput.oninput = (e) => {
+        const val = e.target.value.toLowerCase();
+        const rows = content.querySelectorAll('.filter-list-row');
+        rows.forEach(row => {
+            const label = row.querySelector('.filter-label');
+            if (!label) return;
+            const text = label.innerText.toLowerCase();
+            row.style.display = text.includes(val) || text === t('select_all').toLowerCase() ? 'flex' : 'none';
+        });
+    };
+
+    searchWrapper.appendChild(searchInput);
+    content.appendChild(searchWrapper);
 
     header.onclick = () => {
         header.classList.toggle('active');
