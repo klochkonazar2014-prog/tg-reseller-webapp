@@ -3607,17 +3607,24 @@ body.hide-filters .header-column {
 }
 
 .rent-duration-input {
-    flex: 1;
+    flex: 2;
     background: transparent !important;
     border: none !important;
     color: white !important;
     font-size: 19px !important;
     font-weight: 700 !important;
     text-align: center !important;
-    width: 65px !important;
+    width: 80px !important;
     padding: 0 !important;
     margin: 0 !important;
     height: 100%;
+    -moz-appearance: textfield;
+}
+
+.rent-duration-input::-webkit-outer-spin-button,
+.rent-duration-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
 }
 
 .main-rent-btn {

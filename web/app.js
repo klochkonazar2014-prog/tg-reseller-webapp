@@ -2465,6 +2465,42 @@ async function openProductView(item) {
     }
 }
 
+function onDurationInput(el) {
+    if (!CURRENT_PAYMENT_ITEM) return;
+
+    const minDays = Math.floor((CURRENT_PAYMENT_ITEM.min_duration || 86400) / 86400);
+    const maxDays = Math.floor((CURRENT_PAYMENT_ITEM.max_duration || 2592000) / 86400);
+
+    let val = parseInt(el.value);
+
+    // If user deleted everything, don't force reset yet to allow typing
+    if (el.value === '') {
+        updateTotalPrice();
+        return;
+    }
+
+    if (val > maxDays) {
+        el.value = maxDays;
+    }
+    // We don't force minDays onInput because it would prevent user from deleting digits 
+    // to type a new number (e.g. going from 15 to 2). We handle min on onChange.
+
+    updateTotalPrice();
+}
+
+function onDurationChange(el) {
+    if (!CURRENT_PAYMENT_ITEM) return;
+    const minDays = Math.floor((CURRENT_PAYMENT_ITEM.min_duration || 86400) / 86400);
+    const maxDays = Math.floor((CURRENT_PAYMENT_ITEM.max_duration || 2592000) / 86400);
+    let val = parseInt(el.value);
+
+    if (isNaN(val) || val < minDays) val = minDays;
+    if (val > maxDays) val = maxDays;
+
+    el.value = val;
+    updateTotalPrice();
+}
+
 function adjustDuration(delta) {
     if (!CURRENT_PAYMENT_ITEM) return;
 
