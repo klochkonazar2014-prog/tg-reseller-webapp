@@ -88,7 +88,6 @@ const isBadUrl = (url) => {
 
 const TRANSLATIONS = {
     ru: {
-
         profile_fragment: "Подключить актив к Fragment",
         price_per_day: "Цена за день",
         period: "Период (Дни)",
@@ -101,8 +100,8 @@ const TRANSLATIONS = {
         filters_symbol: "Символ",
         filters_title: "Фильтры",
         filter_gift_number: "Номер подарка",
-        filter_gift_placeholder: "Например: 123",
-        filter_sort_by: "Сортировать по",
+        filter_gift_placeholder: "например, 123",
+        filter_sort_by: "Сортировка",
         filter_price: "Цена",
         filter_price_from: "От",
         filter_price_to: "До",
@@ -113,29 +112,33 @@ const TRANSLATIONS = {
         filter_reset: "Очистить все",
         filter_apply: "Показать результаты",
         loader_market: "Загрузка данных рынка...",
-        loader_moving: "Перемещаемся в арендный каталог...",
+        loader_moving: "Переход в каталог аренды...",
         profile_wallet_title: "Кошелек",
         profile_connect_wallet: "Подключить кошелек",
         profile_settings_title: "Настройки и поддержка",
         profile_history: "История аренды",
         profile_support: "Поддержка и FAQ",
-        profile_lang: "Language / Язык",
+        profile_lang: "Язык / Language",
         mode_toggle_rent: "Каталог арендованных товаров",
+        mode_rent_btn: "Каталог арендованных товаров",
+        mode_shop_btn: "Каталог доступных для аренды товаров",
+        loading_to_rent: "Загрузка каталога арендованных товаров...",
+        loading_to_shop: "Загрузка каталога доступных для аренды товаров...",
         nav_gifts: "Подарки",
         nav_usernames: "Ники",
         nav_numbers: "Номера",
         nav_friends: "Друзья",
         nav_profile: "Профиль",
         friends_balance: "Доступный баланс",
-        friends_withdraw: "Вывести средства",
+        friends_withdraw: "Вывести",
         friends_invite: "Пригласить друзей",
-        friends_bonus_text: "За каждую аренду твоего друга мы выплачиваем тебе бонус <b>25%</b>! 💸",
-        friends_how_much: "Сколько это?",
+        friends_bonus_text: "Мы платим вам бонус <b>25%</b> за каждую аренду вашего друга! 💸",
+        friends_how_much: "Как это работает?",
         friends_list_title: "Мои друзья",
         friends_empty_1: "У вас пока нет друзей в системе.",
         friends_empty_2: "Поделитесь ссылкой, чтобы начать зарабатывать!",
         earnings_title: "Бонусная программа",
-        earnings_desc: 'За каждую аренду твоего друга мы выплачиваем тебе бонус — <b style="color: #fff;">25%</b> от суммы нашей комиссии! 💸',
+        earnings_desc: 'Мы платим вам бонус за каждую аренду вашего друга — <b style="color: #fff;">25%</b> от нашей комиссии! 💸',
         earnings_th_price: "Цена аренды",
         earnings_th_income: "Ваш доход",
         earnings_footer: "Рекомендуй OctoRent друзьям и получай пассивный доход <b>25%</b> с каждой их аренды!",
@@ -144,7 +147,6 @@ const TRANSLATIONS = {
         wallet_drawer_title: "Управление кошельком",
         copy_address: "Копировать адрес",
         disconnect_wallet: "Отключить кошелек",
-
         gifts: "Подарки",
         usernames: "Ники",
         numbers: "Номера",
@@ -153,9 +155,6 @@ const TRANSLATIONS = {
         search: "Поиск",
         no_items: "Ничего не найдено",
         reset_filters: "Попробуйте сбросить фильтры",
-        price_per_day: "Цена в день",
-        period: "Срок (дни)",
-        discount: "Скидка",
         days: "Дни",
         rent: "Арендовать",
         rent_days: "Аренда на {min}–{max} дн.",
@@ -176,7 +175,6 @@ const TRANSLATIONS = {
         settings_support: "Настройки и поддержка",
         profile_settings: "Настройки и поддержка",
         rental_history: "История аренды",
-        profile_history: "История аренды",
         support_faq: "Поддержка и FAQ",
         profile_support: "Поддержка и FAQ",
         wallet_mgmt: "Управление кошельком",
@@ -187,7 +185,6 @@ const TRANSLATIONS = {
         details: "Детали",
         owner: "Владелец",
         address: "Адрес",
-        auto_relist: "Авто-перевыставление",
         auto_relist_desc: "Этот NFT будет автоматически доступен для аренды после окончания срока.",
         rent_button: "Арендовать за {amount}",
         rent_for: "Арендовать за",
@@ -209,9 +206,6 @@ const TRANSLATIONS = {
         just_now: "Только что",
         hours_ago: "ч. назад",
         what_is_this_long: "Вы отправляете небольшую сумму TON для покрытия комиссии сети и работы сервиса. Остаток будет возвращен вам автоматически.",
-        wallet_mgmt: "Управление кошельком",
-        copy_address: "Копировать адрес",
-        disconnect_wallet: "Отключить кошелек",
         all: "Все",
         select_all: "Выбрать все",
         select_collection_first: "Выберите NFT коллекцию, чтобы увидеть список моделей.",
@@ -224,11 +218,10 @@ const TRANSLATIONS = {
         sort_model_rare: "Редкость модели",
         sort_bg_rare: "Редкость фона",
         sort_symbol_rare: "Редкость символа",
-        error_insufficient_funds: "Недостаточно средств на кошельке для совершения транзакции.",
+        error_insufficient_funds: "Недостаточно средств на кошельке (нужно +~0.25 TON на комиссию).",
         available_from: "Освободится",
         preorder_warning_no_relist: "Внимание: у этого NFT выключен авто-перевыставление. Предзаказ может не сработать, если владелец не выставит его вручную.",
         error_user_rejected: "Транзакция отменена в кошельке.",
-        error_insufficient_funds: "Недостаточно средств на кошельке (нужно +~0.25 TON на комиссию).",
         error_sdk_init_failed: "Ошибка связи с кошельком. Попробуйте обновить страницу.",
         error_transaction_failed: "Транзакция не удалась. Проверьте баланс и попробуйте снова.",
         error_unknown: "Ошибка: {msg}",
@@ -248,8 +241,6 @@ const TRANSLATIONS = {
         days_label: "Дни",
         day_label: "День",
         days_2_4: "Дня",
-
-        // --- TC Tutorial ---
         tut_step_1: "Перейдите на сайт <a href='#' onclick='copyText(\"fragment.com\", event)' class='copy-link'>fragment.com</a>",
         tut_step_2: "Нажмите на кнопку <b>Connect Ton</b>",
         tut_step_3: "Нажмите на значок <b>копирования</b>, чтобы скопировать ссылку на подключение кошелька, где хранится актив.",
@@ -260,7 +251,61 @@ const TRANSLATIONS = {
         tut_next: "Далее",
         tut_finish: "Удачного пользования!",
         tut_connect: "Подключить актив",
-        expired: "СРОК ИСТЕК"
+        expired: "СРОК ИСТЕК",
+        days_short: "дн",
+        pay_method_title: "Выберите способ оплаты",
+        pay_crypto: "Криптой",
+        pay_card: "Картой",
+        pay_ton_desc: "Нативная валюта сети TON",
+        pay_xr_badge: "комиссия за вывод 0.1 TON",
+        pay_xr_desc: "Оплата TON через xRocket",
+        pay_card_warn_title: "Временно недоступно",
+        pay_card_warn_desc: "Оплата картой будет доступна примерно через 72 часа (идет активация кассы FreeKassa).",
+        pay_card_name: "Карта РФ / СБП",
+        pay_card_desc: "Оплата в рублях (активация...)",
+        total: "Итого:",
+        pay_action: "Оплатить",
+        fee_modal_title: "О комиссии сети",
+        got_it: "Понятно",
+        ton_native_desc: "Нативная валюта сети TON",
+        withdrawal_fee_01: "комиссия за вывод 0.1 ТОН",
+        xrocket_payment_desc: "Оплата тоном через xRocket",
+        new_referral: "Новый реферал",
+        profit_label: "прибыль",
+        zero_rentals: "0 аренд",
+        status_active: "Активен",
+        status_processing: "Обработка...",
+        loading_item: "Загрузка товара...",
+        ready: "Готово!",
+        server_timeout: "Таймаут сервера",
+        error: "Ошибка",
+        withdraw_success: "Вывод успешно запрошен!",
+        withdraw_min_error: "Минимальный баланс на вывод 0.1 TON",
+        connection_error: "Ошибка соединения",
+        invoice_created: "Инвойс создан! Оплатите в xRocket",
+        connect_wallet_toast: "Подключите TON кошелёк для оплаты",
+        preparing_tx: "Готовим транзакцию...",
+        prepare_payment_error: "Ошибка подготовки платежа",
+        tx_send_error: "Ошибка при отправке транзакции",
+        history_empty_desc: "У вас пока нет активных или прошлых аренд",
+        help_main_desc: "Для активации <b>смарт-контрактов для оплаты комисии блокчейна</b> необходимо отправить <b>0.2 TON</b>, остаток которых (<b>~0.14 TON</b>) будет возвращен вам автоматически после завершения срока аренды.",
+        help_refund_info: "<b>Возврат работает автоматически:</b><br>Смарт-контракт заберет только фактическую комиссию сети. Весь неиспользованный остаток моментально и автоматически возвращается на ваш кошелек!",
+        fee_ton_desc: "Сеть TON взимает небольшую оплату за каждую транзакцию.",
+        fee_xrocket_title: "Если оплата через xRocket:",
+        fee_xrocket_desc: "Необходимо добавить <b>0.1 TON</b> — это комиссия платежного бота за вывод средств на внешний кошелек.",
+        fee_why_external_title: "Зачем сервису выводить деньги на внешний кошелек?",
+        fee_why_external_desc: "Это необходимо для прямого взаимодействия со смарт-контрактом Fragment, так как внутренние кошельки ботов не поддерживают выполнение сложных транзакций с контрактами.",
+        fee_calc_title: "Как рассчитывается итоговая цена:",
+        fee_calc_ton: "<b>TON Wallet:</b> Цена товара + комиссия сети (0.2 TON).",
+        fee_calc_xrocket: "<b>xRocket:</b> Цена + 0.2 сеть + 0.1 вывод.",
+        continue_btn: "Продолжить",
+        confirm_btn: "Подтвердить",
+        days_short: "дн.",
+        status_paid: "Оплачено",
+        you_will_send_short: "(Дополнительно вам потребуется отправить 0.2 TON для обработки транзакции. Оставшаяся сумма будет вам возвращена.)",
+        listing_warning_title: "Этот подарок был выставлен на аренду менее 24 часов назад.",
+        listed_at: "Выставлен:",
+        legal_info: "Правовая информация (Оферта, Реквизиты)"
     },
     en: {
 
@@ -332,15 +377,12 @@ const TRANSLATIONS = {
         search: "Search",
         no_items: "Nothing found",
         reset_filters: "Try resetting filters",
-        price_per_day: "Price per day",
-        period: "Period (Days)",
-        discount: "Discount",
         days: "Days",
         rent: "Rent",
         rent_days: "Rent for {min}–{max} days",
         per_day: "Per day",
         min_price: "Min. price",
-        you_will_send: "You will additionally send {amount} TON to process the transaction. Remain TON will be returned to you.",
+        you_will_send: "You will additionally send {amount} TON to process the transaction. Remaining TON will be returned to you.",
         processing: "Connecting...",
         success_tc: "Success! Now go back to Fragment and click Display in Telegram.",
         tc_link_placeholder: "Paste tc:// link from Fragment",
@@ -353,18 +395,23 @@ const TRANSLATIONS = {
         lang_en: "English",
         what_is_this: "What does this mean?",
         settings_support: "Settings & Support",
+        profile_settings: "Settings & Support",
         rental_history: "Rental History",
+        profile_history: "Rental History",
         support_faq: "Support & FAQ",
+        profile_support: "Support & FAQ",
         wallet_mgmt: "Wallet Management",
+        profile_wallet: "Wallet",
         connect_wallet: "Connect",
         connect_wallet_full: "Connect Wallet",
         connected: "Connected",
         details: "Details",
         owner: "Owner",
         address: "Address",
-        auto_relist: "Auto re-list",
         auto_relist_desc: "This NFT will be available for rent automatically after the period ends.",
         rent_button: "Rent for {amount}",
+        rent_for: "Rent for",
+        preorder_for: "Pre-order for",
         loading: "Loading...",
         filters: "Filters",
         gift_number: "Gift Number",
@@ -394,11 +441,13 @@ const TRANSLATIONS = {
         sort_model_rare: "Model Rarity",
         sort_bg_rare: "Backdrop Rarity",
         sort_symbol_rare: "Symbol Rarity",
-        error_insufficient_funds: "Not enough funds in your wallet to complete the transaction.",
+        error_insufficient_funds: "Insufficient funds (need +~0.25 TON for fees).",
         available_from: "Available from",
-        preorder: "Pre-order",
-        preorder_for: "Pre-order",
-        rented_tab: "Rented",
+        preorder_warning_no_relist: "Warning: this NFT has auto-relist disabled. Pre-order might not work if the owner doesn't list it manually.",
+        error_user_rejected: "Transaction rejected in wallet.",
+        error_sdk_init_failed: "Wallet connection error. Please refresh the page.",
+        error_transaction_failed: "Transaction failed. Please check your balance.",
+        error_unknown: "Error: {msg}",
         auto_relist_label: "Auto-relist",
         yes: "Yes",
         no: "No",
@@ -410,8 +459,6 @@ const TRANSLATIONS = {
         days_label: "Days",
         day_label: "Day",
         days_2_4: "Days",
-
-        // --- TC Tutorial ---
         tut_step_1: "Go to <a href='#' onclick='copyText(\"fragment.com\", event)' class='copy-link'>fragment.com</a>",
         tut_step_2: "Click <b>Connect Ton</b>",
         tut_step_3: "Click the <b>copy icon</b> to copy the connection link for the wallet where the asset is stored.",
@@ -419,18 +466,69 @@ const TRANSLATIONS = {
         tut_step_4: "After connecting, click your <b>wallet address</b>, then <b>My Assets</b> and go to the category of your asset (NFT, Number, or Username).",
         tut_step_5: "Choose where you want the asset to be displayed and click <b>Save</b>.",
         tut_step_6: "Congratulations! Your asset is now linked to OctoRent. Enjoy! ✨",
-        rent_for: "Rent for",
-        preorder_for: "Pre-order for",
-        auto_relist_label: "Auto-relist",
-        error_user_rejected: "Transaction rejected in wallet.",
-        error_insufficient_funds: "Insufficient funds (need +~0.25 TON for fees).",
-        error_sdk_init_failed: "Wallet connection error. Please refresh the page.",
-        error_transaction_failed: "Transaction failed. Please check your balance.",
-        error_unknown: "Error: {msg}",
         tut_next: "Next",
         tut_finish: "Happy using!",
         tut_connect: "Connect Asset",
-        expired: "EXPIRED"
+        expired: "EXPIRED",
+        temporarily_unavailable: "Temporarily unavailable",
+        card_payment_notice: "Card payment will be available in about 72 hours (FreeKassa activation in progress).",
+        card_rf_sbp: "Russian Card / SBP",
+        ruble_payment_activation: "RUB Payment (activating...)",
+        total_label: "Total:",
+        pay_action: "Pay",
+        fee_modal_title: "About network fee",
+        got_it: "Got it",
+        ton_native_desc: "Native TON network currency",
+        withdrawal_fee_01: "withdrawal fee 0.1 TON",
+        xrocket_payment_desc: "Pay TON via xRocket",
+        new_referral: "New referral",
+        profit_label: "profit",
+        zero_rentals: "0 rentals",
+        status_active: "Active",
+        status_processing: "Processing...",
+        loading_item: "Loading item...",
+        ready: "Ready!",
+        server_timeout: "Server timeout",
+        error: "Error",
+        withdraw_success: "Withdrawal requested!",
+        withdraw_min_error: "Minimum balance 0.1 TON",
+        connection_error: "Connection error",
+        invoice_created: "Invoice created!",
+        connect_wallet_toast: "Connect TON wallet to pay",
+        preparing_tx: "Preparing transaction...",
+        prepare_payment_error: "Payment prep error",
+        tx_send_error: "Transaction error",
+        history_empty_desc: "You have no active or past rentals yet",
+        help_main_desc: "To activate <b>smart contracts for blockchain fee payment</b>, you need to send <b>0.2 TON</b>, the remainder of which (<b>~0.14 TON</b>) will be returned to you automatically after the rental period ends.",
+        help_refund_info: "<b>Refund works automatically:</b><br>The smart contract will only take the actual network fee. All unused balance is instantly and automatically returned to your wallet!",
+        fee_ton_desc: "The TON network charges a small fee for each transaction.",
+        fee_xrocket_title: "If paying via xRocket:",
+        fee_xrocket_desc: "You must add <b>0.1 TON</b> — this is the payment bot's fee for withdrawing funds to an external wallet.",
+        fee_why_external_title: "Why does the service withdraw to an external wallet?",
+        fee_why_external_desc: "This is necessary for direct interaction with the Fragment smart contract, as internal bot wallets do not support complex contract transactions.",
+        fee_calc_title: "How total price is calculated:",
+        fee_calc_ton: "<b>TON Wallet:</b> Item price + network fee (0.2 TON).",
+        expired: "EXPIRED",
+        continue_btn: "Continue",
+        confirm_btn: "Confirm",
+        days_short: "days",
+        status_paid: "Paid",
+        pay_method_title: "Select Payment Method",
+        pay_crypto: "Crypto",
+        pay_card: "Card",
+        pay_ton_desc: "Native TON network currency",
+        pay_xr_badge: "withdrawal fee 0.1 TON",
+        pay_xr_desc: "Pay TON via xRocket",
+        pay_card_warn_title: "Temporarily unavailable",
+        pay_card_warn_desc: "Card payment will be available in ~72 hours (FreeKassa activation in progress).",
+        pay_card_name: "RU Card / SBP",
+        pay_card_desc: "Payment in RUB (activation...)",
+        total: "Total:",
+        pay_action: "Pay Now",
+        you_will_send_short: "(Additionally, you will need to send 0.2 TON to process the transaction. The remaining amount will be returned to you.)",
+        listing_warning_title: "This gift was listed for rent less than 24 hours ago.",
+        listed_at: "Listed at:",
+        legal_info: "Legal Information (Offer, Details)"
     }
 };
 
@@ -442,6 +540,7 @@ function t(key, data = {}) {
     }
     return text;
 }
+
 const copyToClipboard = (text) => {
     if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(text).then(() => {
@@ -633,47 +732,21 @@ let ACTIVE_FILTERS = {
 
 
 
-function updateUILanguage() {
-    const map = {
-        'search-input': t('search'),
-        'nav-label-gifts': t('gifts'),
-        'nav-label-usernames': t('usernames'),
-        'nav-label-numbers': t('numbers'),
-        'nav-label-profile': t('profile'),
-        'view-label-wallet-mgmt': t('wallet_mgmt'),
-        'view-label-settings-support': t('settings_support'),
-        'view-label-history': t('rental_history'),
-        'view-label-support': t('support_faq'),
-        'view-label-lang': t('language_selector'),
-        'blue-wallet-text': t('connect_wallet'),
-        'header-wallet-connect-text': t('connect_wallet'),
-        'mrkt-label-filters': t('filters'),
-        'mrkt-label-gift-number': t('gift_number'),
-        'mrkt-label-sort': t('sort_by'),
-        'mrkt-label-price': t('price'),
-        'mrkt-btn-reset': t('clear_all'),
-        'mrkt-btn-apply': t('show_results'),
-        'fee-notice-text': t('what_is_this_long'),
-        'fee-what-mean': t('what_is_this'),
-        'details-tab': t('details'),
-        'listing-what-mean': t('what_is_this'),
-        'view-owner-label': t('owner'),
-        'view-address-label': t('address'),
-        'view-storage-label': "Storage",
-        'filter-gift-number': t('gift_number'),
-        'filter-price-from': t('from'),
-        'filter-price-to': t('to'),
-        'filter-search-nft': t('search_hint'),
-        'filter-search-model': t('search_hint'),
-        'filter-search-bg': t('search_hint'),
-        'filter-search-symbol': t('search_hint')
-    };
-    for (const [id, val] of Object.entries(map)) {
-        const el = document.getElementById(id);
-        if (el) {
-            if (el.tagName === 'INPUT') el.placeholder = val;
-            else el.innerText = val;
+function applyTranslations() {
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        const translated = t(key);
+        if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+            el.placeholder = translated;
+        } else {
+            el.innerHTML = translated;
         }
+    });
+
+    // Update specific dynamic elements if needed
+    const langSwitchText = document.getElementById('view-label-lang-current');
+    if (langSwitchText) {
+        langSwitchText.innerText = (CURRENT_LANG === 'ru' ? 'RU' : 'EN');
     }
 }
 
@@ -685,7 +758,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             tg.expand();
             tg.MainButton.hide();
         }
-        updateUILanguage();
+        applyTranslations();
 
         // ⏳ Failsafe: Hide loader after 5s no matter what
         setTimeout(() => {
@@ -934,10 +1007,10 @@ async function loadFriendsData() {
                          onerror="this.src='${fallbackUrl}'">
                     <div style="flex: 1; margin-left: 12px;">
                         <div style="font-weight: 700; font-size: 15px;">${name}</div>
-                        ${profit === 0 ? `<div style="font-size: 11px; color: #8b9bb4;">Новый реферал</div>` : ''}
+                        ${profit === 0 ? `<div style="font-size: 11px; color: #8b9bb4;">${t('new_referral')}</div>` : ''}
                     </div>
                     <div style="text-align: right;">
-                        ${profit > 0 ? `<div style="font-weight: 800; font-size: 14px; color: #0088cc;">+${profit.toFixed(4)} TON</div><div style="font-size: 11px; color: #8b9bb4; opacity: 0.6;">прибыль</div>` : `<div style="font-size: 12px; color: #8b9bb4;">0 аренд</div>`}
+                        ${profit > 0 ? `<div style="font-weight: 800; font-size: 14px; color: #0088cc;">+${profit.toFixed(4)} TON</div><div style="font-size: 11px; color: #8b9bb4; opacity: 0.6;">${t('profit_label')}</div>` : `<div style="font-size: 12px; color: #8b9bb4;">${t('zero_rentals')}</div>`}
                     </div>
                 </div>
             `;
@@ -1045,13 +1118,13 @@ async function handleReferralWithdraw() {
         });
         const data = await res.json();
         if (data.status === 'ok') {
-            showToast("Вывод успешно запрошен!");
+            showToast(t('withdraw_success'));
             loadFriendsData();
         } else {
-            showToast("Минимальный баланс на вывод 0.1 TON");
+            showToast(t('withdraw_min_error'));
         }
     } catch (e) {
-        showToast("Ошибка соединения");
+        showToast(t('connection_error'));
     } finally {
         setTimeout(() => {
             IS_WITHDRAWING = false;
@@ -1068,24 +1141,36 @@ async function handleReferralWithdraw() {
 
 
 // --- Help Modal Logic ---
-function showHelp(amount) {
+function showHelp(type) {
     const title = document.getElementById('help-title');
     const body = document.getElementById('help-body');
     const modal = document.getElementById('help-modal');
 
     if (title) title.innerText = t('what_is_this');
     if (body) {
-        body.innerHTML = `
-            <div style="font-size: 14px; line-height: 1.6; color: #fff;">
-                Для активации <b>смарт-контрактов для оплаты комисии блокчейна</b> необходимо отправить <b>0.2 TON</b>, остаток которых (<b>~0.14 TON</b>) будет возвращен вам автоматически после завершения срока аренды.
-                <br><br>
-                <div style="display: flex; gap: 8px; align-items: flex-start; background: rgba(52, 199, 89, 0.1); padding: 12px; border-radius: 12px; border: 1px solid rgba(52, 199, 89, 0.2);">
-                    <span style="font-size: 18px;">✅</span>
-                    <span style="color: #fff; font-size: 13px;"><b>Возврат работает автоматически:</b><br>
-                    Смарт-контракт заберет только фактическую комиссию сети. Весь неиспользованный остаток моментально и автоматически возвращается на ваш кошелек!</span>
+        if (type === 'listing') {
+            body.innerHTML = `
+                <div style="font-size: 15px; line-height: 1.6; color: rgba(255,255,255,0.85); text-align: left;">
+                    ${t('preorder_warning_no_relist')}
                 </div>
-            </div>
-        `;
+            `;
+        } else {
+            // Default "fee" help
+            body.innerHTML = `
+                <div style="font-size: 15px; line-height: 1.6; color: rgba(255,255,255,0.85); text-align: left;">
+                    ${t('help_main_desc')}
+                    <br><br>
+                    <div style="display: flex; gap: 12px; align-items: flex-start; background: rgba(52, 199, 89, 0.1); padding: 14px; border-radius: 14px; border: 1px solid rgba(52, 199, 89, 0.2);">
+                        <div style="background: rgba(52, 199, 89, 0.2); width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px;">
+                            <span style="font-size: 14px;">✅</span>
+                        </div>
+                        <span style="color: #fff; font-size: 14px; line-height: 1.5;">
+                            ${t('help_refund_info')}
+                        </span>
+                    </div>
+                </div>
+            `;
+        }
     }
 
     if (modal) {
@@ -1096,7 +1181,10 @@ function showHelp(amount) {
 
 function closeHelp() {
     const modal = document.getElementById('help-modal');
-    if (modal) modal.classList.remove('active');
+    if (modal) {
+        modal.classList.remove('active');
+        setTimeout(() => modal.style.display = 'none', 300);
+    }
 }
 
 function closeTcModal() {
@@ -3267,9 +3355,16 @@ function selectLanguage(lang) {
     pendingLang = lang;
     const checkRu = document.getElementById('check-ru');
     const checkEn = document.getElementById('check-en');
+    const confirmBtn = document.getElementById('confirm-lang-btn');
 
     if (checkRu) checkRu.style.display = (lang === 'ru') ? 'block' : 'none';
     if (checkEn) checkEn.style.display = (lang === 'en') ? 'block' : 'none';
+
+    if (confirmBtn) {
+        // Use t() but we need to explicitly pass the lang because CURRENT_LANG hasn't changed yet
+        const btnText = (lang === 'ru') ? TRANSLATIONS.ru.continue_btn : TRANSLATIONS.en.continue_btn;
+        confirmBtn.innerText = btnText;
+    }
 
     if (tg && tg.HapticFeedback) {
         tg.HapticFeedback.impactOccurred('light');
@@ -3625,34 +3720,40 @@ function handleChangeWallet() {
 
 function showBlockchainFeeDetails(e) {
     if (e) e.stopPropagation();
-    const modal = document.getElementById('fee-details-modal');
+    const modal = document.getElementById('help-modal');
     if (!modal) return;
 
-    const body = document.getElementById('fee-details-body');
-    body.innerHTML = `
-        <div style="font-size: 14px; line-height: 1.6; color: #fff;">
-            <p style="color: #8b9bb4;">Для обработки транзакции необходимо отправить <b>0.2 TON</b>, остаток которых (<b>~0.14 TON</b>) будет возвращен вам автоматически после завершения срока аренды.</p>
-            
-            <p style="margin-top: 14px;"><b>Если оплата через xRocket:</b></p>
-            <p style="color: #8b9bb4;">Необходимо добавить <b>0.1 TON</b> — это комиссия платежного бота за вывод средств на внешний кошелек.</p>
-            
-            <p style="margin-top: 14px;"><b>Зачем сервису выводить деньги на внешний кошелек?</b></p>
-            <p style="color: #8b9bb4;">Это необходимо для прямого взаимодействия со смарт-контрактом Fragment, так как внутренние кошельки ботов не поддерживают выполнение сложных транзакций с контрактами.</p>
-            
-            <p style="margin-top: 14px;"><b>Как рассчитывается итоговая цена:</b></p>
-            <ul style="color: #8b9bb4; padding-left: 20px; margin-top: 6px;">
-                <li><b>TON Wallet:</b> Цена товара + комиссия сети (0.2 TON).</li>
-                <li><b>xRocket:</b> Цена + 0.2 сеть + 0.1 вывод.</li>
-            </ul>
-        </div>
-    `;
+    const title = document.getElementById('help-title');
+    const body = document.getElementById('help-body');
+
+    if (title) title.innerText = t('fee_modal_title');
+
+    if (body) {
+        body.innerHTML = `
+            <div style="font-size: 14px; line-height: 1.6; color: #fff;">
+                <p style="color: #8b9bb4;">${t('fee_ton_desc')} ${t('help_main_desc')}</p>
+                
+                <p style="margin-top: 14px;"><b>${t('fee_xrocket_title')}</b></p>
+                <p style="color: #8b9bb4;">${t('fee_xrocket_desc')}</p>
+                
+                <p style="margin-top: 14px;"><b>${t('fee_why_external_title')}</b></p>
+                <p style="color: #8b9bb4;">${t('fee_why_external_desc')}</p>
+                
+                <p style="margin-top: 14px;"><b>${t('fee_calc_title')}</b></p>
+                <ul style="color: #8b9bb4; padding-left: 20px; margin-top: 6px;">
+                    <li>${t('fee_calc_ton')}</li>
+                    <li>${t('fee_calc_xrocket')}</li>
+                </ul>
+            </div>
+        `;
+    }
 
     modal.style.display = 'flex';
+    setTimeout(() => modal.classList.add('active'), 10);
 }
 
 function closeBlockchainFeeDetails() {
-    const modal = document.getElementById('fee-details-modal');
-    if (modal) modal.style.display = 'none';
+    closeHelp();
 }
 
 async function handleBotRent(gateway) {
