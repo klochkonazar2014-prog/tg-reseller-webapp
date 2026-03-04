@@ -2529,11 +2529,15 @@ function updateTotalPrice() {
     if (!CURRENT_PAYMENT_ITEM) return;
     const input = document.getElementById('rent-duration-input');
     const minDays = Math.floor((CURRENT_PAYMENT_ITEM.min_duration || 86400) / 86400);
-    let dur = parseInt(input.value) || minDays;
-    if (dur < minDays) {
-        dur = minDays;
-        input.value = minDays;
-    }
+    const maxDays = Math.floor((CURRENT_PAYMENT_ITEM.max_duration || 2592000) / 86400);
+
+    let rawVal = parseInt(input.value);
+    let dur = rawVal;
+
+    // For price calculation, we use clamped values, but we DON'T update input.value here
+    if (isNaN(dur) || dur < minDays) dur = minDays;
+    if (dur > maxDays) dur = maxDays;
+
     // Backend price already includes markup, so just multiply by duration
     let dp = parseFloat(CURRENT_PAYMENT_ITEM.price_per_day);
     // If invalid, try to calc from total, otherwise trust the value (even if 0, though DB has >0)

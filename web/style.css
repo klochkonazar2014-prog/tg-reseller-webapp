@@ -3588,7 +3588,8 @@ body.hide-filters .header-column {
     align-items: center;
     background: rgba(255, 255, 255, 0.08);
     border-radius: 16px;
-    width: 150px;
+    width: 160px;
+    min-width: 160px;
     overflow: hidden;
     height: 52px;
 }
@@ -3607,14 +3608,13 @@ body.hide-filters .header-column {
 }
 
 .rent-duration-input {
-    flex: 2;
+    flex: 1.5;
     background: transparent !important;
     border: none !important;
     color: white !important;
     font-size: 19px !important;
     font-weight: 700 !important;
     text-align: center !important;
-    width: 80px !important;
     padding: 0 !important;
     margin: 0 !important;
     height: 100%;
