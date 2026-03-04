@@ -1750,23 +1750,24 @@ body {
 
 .pricing-grid {
     display: grid;
-    grid-template-columns: repeat(3, 120px);
-    gap: 8px;
-    margin-bottom: 12px;
-    justify-content: center;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
 }
 
 .pricing-label {
-    font-size: 13px;
-    color: #8b9bb4;
+    font-size: 11px;
+    color: #8794a1;
     font-weight: 600;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
+    text-align: center;
 }
 
 .pricing-value {
     font-size: 18px;
     font-weight: 800;
     color: #fff;
+    text-align: center;
 }
 
 .auto-relist-note {

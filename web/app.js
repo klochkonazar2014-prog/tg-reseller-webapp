@@ -209,6 +209,7 @@ const TRANSLATIONS = {
         just_now: "Только что",
         hours_ago: "ч. назад",
         what_is_this_long: "Вы отправляете небольшую сумму TON для покрытия комиссии сети и работы сервиса. Остаток будет возвращен вам автоматически.",
+        fee_notice_text: "Вы отправляете небольшую сумму TON для покрытия комиссии сети и работы сервиса. Остаток будет возвращен вам автоматически.",
         wallet_mgmt: "Управление кошельком",
         copy_address: "Копировать адрес",
         disconnect_wallet: "Отключить кошелек",
@@ -430,7 +431,8 @@ const TRANSLATIONS = {
         tut_next: "Next",
         tut_finish: "Happy using!",
         tut_connect: "Connect Asset",
-        expired: "EXPIRED"
+        expired: "EXPIRED",
+        fee_notice_text: "You are sending a small amount of TON to cover network fees and service operation. The remainder will be returned to you automatically."
     }
 };
 
@@ -2283,7 +2285,7 @@ async function openProductView(item) {
     const pricingCard = document.querySelector('.pricing-card');
     if (pricingCard) {
         pricingCard.innerHTML = `
-                <div class="pricing-grid" style="display: grid; grid-template-columns: 120px 120px 120px; gap: 8px; justify-content: center;">
+                <div class="pricing-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; justify-content: center;">
                     <div>
                         <div id="view-label-price" class="pricing-label" style="font-size: 11px; color:#8794a1; font-weight:600; margin-bottom:4px;" data-i18n="price_per_day">${t('price_per_day')}</div>
                         <div class="pricing-value">
@@ -2312,10 +2314,10 @@ async function openProductView(item) {
     let feeNotice = document.querySelector('.fee-notice-box');
     if (feeNotice) {
         feeNotice.style.display = 'block';
-        feeNotice.style.width = '120px';
+        feeNotice.style.width = '100%';
         feeNotice.style.boxSizing = 'border-box';
         feeNotice.innerHTML = `
-                <span><span id="fee-notice-text">${t('fee_notice_text') || 'Вы отправляете небольшую сумму TON для покрытия комиссии сети и работы сервиса. Остаток будет возвращен вам автоматически.'}</span>
+                <span><span id="fee-notice-text">${t('fee_notice_text')}</span>
                     <a href="javascript:void(0)" onclick="showHelp('fee')" style="color: #0088cc; text-decoration: none;" id="fee-what-mean" data-i18n="what_is_this">${t('what_is_this')}</a></span>`;
     }
 
