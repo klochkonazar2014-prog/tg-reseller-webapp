@@ -202,27 +202,26 @@
                     <button class="step-plus" onclick="adjustDuration(1)">+</button>
                 </div>
                 <button id="main-rent-action-btn" class="main-rent-btn" style="flex: 1;" onclick="openPaymentModal()">
-                    <span data-i18n="rent_for">Арендовать за</span> <span id="rent-btn-price"
-                        class="icon-ton">0.00</span>
+                    Арендовать за <span id="rent-btn-price" class="icon-ton">0.00</span>
                 </button>
             </div>
 
             <div class="fee-notice-box"
                 style="margin-top: 16px; background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 12px; font-size: 11px; color: #8794a1;">
-                <span><span id="fee-notice-text" data-i18n="you_will_send_short">(Дополнительно вам потребуется
-                        отправить 0.2 TON для обработки транзакции. Оставшаяся сумма будет вам возвращена.)</span>
+                <span><span id="fee-notice-text">(Дополнительно вам потребуется отправить 0.2 тонны для обработки
+                        транзакции. Оставшаяся тонна будет вам возвращена.</span>
                     <a href="javascript:void(0)" onclick="showHelp('fee')"
-                        style="color: #0088cc; text-decoration: none;" id="fee-what-mean" data-i18n="what_is_this">Что
-                        это значит?</a></span>
+                        style="color: #0088cc; text-decoration: none;" id="fee-what-mean">Что это значит?</a>)</span>
             </div>
 
             <div id="listing-warning-box"
                 style="display: none; margin-top: 16px; background: rgba(255, 149, 0, 0.1); border: 1px solid rgba(255, 149, 0, 0.2); border-radius: 12px; padding: 12px; font-size: 11px; color: #FF9500;">
-                <div style="font-weight: 700; margin-bottom: 2px;" data-i18n="listing_warning_title">This gift was
-                    listed for rent less than 24 hours ago.</div>
-                <div><span data-i18n="listed_at">Listed at:</span> <span id="view-listed-time">...</span> <a
-                        href="javascript:void(0)" onclick="showHelp('listing')"
-                        style="color: #FF9500; text-decoration: underline;" data-i18n="what_is_this">What does it
+                <div style="font-weight: 700; margin-bottom: 2px;">This gift was listed for rent less than 24 hours
+                    ago.
+                </div>
+                <div>Listed at: <span id="view-listed-time">...</span> <a href="javascript:void(0)"
+                        onclick="showHelp('listing')" style="color: #FF9500; text-decoration: underline;">What does
+                        it
                         mean?</a></div>
             </div>
 
@@ -230,8 +229,7 @@
             <div id="view-properties-tabs" class="properties-tabs"
                 style="margin-top: 24px; border-bottom: 2px solid rgba(255,255,255,0.05); display: flex; gap: 20px;">
                 <div class="tab-item active" id="details-tab"
-                    style="color: #fff; font-weight: 700; font-size: 14px; padding-bottom: 8px; border-bottom: 2px solid var(--accent-blue); cursor: pointer;"
-                    data-i18n="details">
+                    style="color: #fff; font-weight: 700; font-size: 14px; padding-bottom: 8px; border-bottom: 2px solid var(--accent-blue); cursor: pointer;">
                     Details</div>
             </div>
 
@@ -247,8 +245,7 @@
     <div id="tc-modal" class="filter-panel"
         style="height: auto; max-height: 90vh; bottom: 0; border-radius: 28px 28px 0 0;">
         <div class="modal-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding: 20px 24px;">
-            <h3 style="font-size: 18px; font-weight: 800; color: #fff;" data-i18n="connect_to_fragment">Подключить
-                Fragment</h3>
+            <h3 style="font-size: 18px; font-weight: 800; color: #fff;">Подключить Fragment</h3>
             <button id="tc-modal-close-btn" onclick="closeTcModal()"
                 style="background:none; border:none; color:#8b9bb4; font-size:24px; cursor: pointer;">✕</button>
         </div>
@@ -258,6 +255,21 @@
         <input type="hidden" id="tc-current-order-id">
     </div>
 
+    <!-- Help Bottom Sheet (Pretty Drawer) -->
+    <div id="help-modal" class="bottom-sheet">
+        <div class="bottom-sheet-backdrop" onclick="closeHelp()"></div>
+        <div class="bottom-sheet-content" style="border-radius: 20px 20px 0 0;">
+            <div class="bottom-sheet-header"
+                style="display: flex; justify-content: space-between; align-items: center; padding: 12px 20px;">
+                <h3 id="help-title" style="margin: 0; font-size: 18px; font-weight: 800;">Что это значит?</h3>
+                <button class="close-sheet-btn" onclick="closeHelp()"
+                    style="background:none; border:none; color:#8b9bb4; font-size:24px; padding:0; cursor:pointer;">✕</button>
+            </div>
+            <div id="help-body" class="bottom-sheet-body" style="padding: 0 20px 20px;">
+                <!-- Content handled by showHelp() in app.js -->
+            </div>
+        </div>
+    </div>
 
     <!-- Premium Loading Screen -->
     <div id="loading-screen">
@@ -368,7 +380,7 @@
 
 
             <div class="filter-accordion" onclick="toggleAccordion('nft-acc', this)">
-                <span data-i18n="filters_nft">NFT</span>
+                <span>NFT</span>
                 <div class="filter-accordion-arrow">▼</div>
             </div>
             <div id="nft-acc" class="accordion-content">
@@ -380,7 +392,7 @@
             </div>
 
             <div class="filter-accordion" onclick="toggleAccordion('model-acc', this)">
-                <span data-i18n="filters_model">Модель</span>
+                <span>Модель</span>
                 <div class="filter-accordion-arrow">▼</div>
             </div>
             <div id="model-acc" class="accordion-content">
@@ -392,7 +404,7 @@
             </div>
 
             <div class="filter-accordion" onclick="toggleAccordion('bg-acc', this)">
-                <span data-i18n="filters_bg">Фон</span>
+                <span>Фон</span>
                 <div class="filter-accordion-arrow">▼</div>
             </div>
             <div id="bg-acc" class="accordion-content">
@@ -404,7 +416,7 @@
             </div>
 
             <div class="filter-accordion" onclick="toggleAccordion('symbol-acc', this)">
-                <span data-i18n="filters_symbol">Символ</span>
+                <span>Символ</span>
                 <div class="filter-accordion-arrow">▼</div>
             </div>
             <div id="symbol-acc" class="accordion-content">
@@ -431,7 +443,7 @@
             <!-- Global Rented Timer (appears only in rented catalog) -->
             <div id="rented-catalog-timer" class="catalog-timer-container" style="display:none;">
                 <div class="timer-block" id="timer-days">00</div>
-                <div class="timer-sep" data-i18n="days_short">дн</div>
+                <div class="timer-sep">дн</div>
                 <div class="timer-block" id="timer-hours">00</div>
                 <div class="timer-sep">:</div>
                 <div class="timer-block" id="timer-mins">00</div>
@@ -624,8 +636,7 @@
             <a href="legal.html" target="_blank" style="text-decoration: none; color: inherit;">
                 <div class="service-item">
                     <div class="service-icon" style="background: rgba(0, 136, 204, 0.1);">🏛️</div>
-                    <div class="service-text" style="font-size: 14px;" data-i18n="legal_info">Правовая информация
-                        (Оферта, Реквизиты)</div>
+                    <div class="service-text" style="font-size: 14px;">Правовая информация (Оферта, Реквизиты)</div>
                     <div class="service-arrow">›</div>
                 </div>
             </a>
@@ -694,8 +705,8 @@
         <div class="modal-content"
             style="padding: 24px; border-radius: 24px; background: #1c1c1e; border: 1px solid rgba(0, 136, 204, 0.4); width: 90%; max-width: 360px; max-height: 80vh; display: flex; flex-direction: column;">
             <h3 data-i18n="lang_title"
-                style="font-size: 18px; margin-bottom: 20px; color: #fff; flex-shrink: 0; text-align: center;">Выберите
-                язык / Select Language</h3>
+                style="font-size: 18px; margin-bottom: 20px; color: #fff; flex-shrink: 0; text-align: center;">Vybierz
+                język / Select Language</h3>
 
             <div class="modal-list"
                 style="flex: 1; overflow-y: auto; padding-right: 4px; display: flex; flex-direction: column; gap: 10px;">
@@ -717,9 +728,9 @@
                 </div>
             </div>
 
-            <button id="confirm-lang-btn" class="blue-btn"
+            <button id="lang-confirm-btn" class="blue-btn"
                 style="width: 100%; margin-top: 24px; height: 48px; border-radius: 14px; font-weight: 800; font-size: 15px; flex-shrink: 0;"
-                onclick="confirmLanguageChange()" data-i18n="continue_btn">Продолжить</button>
+                onclick="confirmLanguageChange()" data-i18n="continue">Продолжить</button>
         </div>
     </div>
 
@@ -767,15 +778,14 @@
             <div id="payment-selection-view">
                 <div class="bottom-sheet-header"
                     style="display: flex; justify-content: space-between; align-items: center; padding: 12px 20px;">
-                    <h3 style="margin: 0; font-size: 18px; font-weight: 800;" data-i18n="pay_method_title">Выберите
-                        способ оплаты</h3>
+                    <h3 style="margin: 0; font-size: 18px; font-weight: 800;">Выберите способ оплаты</h3>
                     <button class="close-sheet-btn" onclick="closePaymentModal()"
                         style="background:none; border:none; color:#8b9bb4; font-size:24px; padding:0; cursor:pointer;">✕</button>
                 </div>
 
                 <div class="payment-tabs">
-                    <div class="pay-tab active" onclick="switchPayTab('crypto')" data-i18n="pay_crypto">Криптой</div>
-                    <div class="pay-tab" onclick="switchPayTab('card')" data-i18n="pay_card">Картой</div>
+                    <div class="pay-tab active" onclick="switchPayTab('crypto')">Криптой</div>
+                    <div class="pay-tab" onclick="switchPayTab('card')">Картой</div>
                 </div>
 
                 <div style="padding: 0 24px 30px;">
@@ -789,7 +799,7 @@
                                     <div class="pm-name">TON</div>
                                 </div>
                                 <div class="pm-row-bottom">
-                                    <div class="pm-desc" data-i18n="pay_ton_desc">Нативная валюта сети TON</div>
+                                    <div class="pm-desc">Нативная валюта сети TON</div>
                                     <div class="pm-price"><span id="pay-price-ton">0.00</span> TON</div>
                                 </div>
                             </div>
@@ -801,11 +811,10 @@
                             <div class="pm-info">
                                 <div class="pm-header">
                                     <div class="pm-name">xRocket</div>
-                                    <div class="pay-method-badge" data-i18n="pay_xr_badge">комиссия за вывод 0.1 TON
-                                    </div>
+                                    <div class="pay-method-badge">комиссия за вывод 0.1 ТОН</div>
                                 </div>
                                 <div class="pm-row-bottom">
-                                    <div class="pm-desc" data-i18n="pay_xr_desc">Оплата TON через xRocket</div>
+                                    <div class="pm-desc">Оплата тоном через xRocket</div>
                                     <div class="pm-price"><span id="pay-price-xr">0.00</span> TON</div>
                                 </div>
                             </div>
@@ -819,11 +828,9 @@
                             style="background: rgba(255, 149, 0, 0.08); border: 1px solid rgba(255, 149, 0, 0.25); border-radius: 14px; padding: 14px 16px; margin-bottom: 12px; display: flex; align-items: flex-start; gap: 10px;">
                             <span style="font-size: 20px;">🚧</span>
                             <div>
-                                <div style="font-weight: 700; color: #FF9500; font-size: 13px; margin-bottom: 2px;"
-                                    data-i18n="pay_card_warn_title">
+                                <div style="font-weight: 700; color: #FF9500; font-size: 13px; margin-bottom: 2px;">
                                     Временно недоступно</div>
-                                <div style="font-size: 12px; color: #8b9bb4; line-height: 1.4;"
-                                    data-i18n="pay_card_warn_desc">Оплата картой будет
+                                <div style="font-size: 12px; color: #8b9bb4; line-height: 1.4;">Оплата картой будет
                                     доступна примерно через 72 часа (идет активация кассы FreeKassa).</div>
                             </div>
                         </div>
@@ -831,10 +838,10 @@
                             <div class="pm-check"></div>
                             <div class="pm-info">
                                 <div class="pm-header">
-                                    <div class="pm-name" data-i18n="pay_card_name">Карта РФ / СБП</div>
+                                    <div class="pm-name">Карта РФ / СБП</div>
                                 </div>
                                 <div class="pm-row-bottom">
-                                    <div class="pm-desc" data-i18n="pay_card_desc">Оплата в рублях (активация...)</div>
+                                    <div class="pm-desc">Оплата в рублях (активация...)</div>
                                     <div class="pm-price"><span id="pay-price-rub">—</span></div>
                                 </div>
                             </div>
@@ -844,7 +851,7 @@
 
                 <div class="selection-view-footer">
                     <div class="payment-total-row">
-                        <div class="ptr-label" data-i18n="total">Итого:</div>
+                        <div class="ptr-label">Итого:</div>
                         <div class="ptr-value-wrapper">
                             <div class="ptr-value"><span id="pay-total-amount">0.27</span> TON</div>
                             <div class="ptr-info-btn"
@@ -854,7 +861,7 @@
 
                     <button class="main-rent-btn" onclick="handleContinuePayment()"
                         style="width:100%; height:50px; border-radius:16px;">
-                        <span data-i18n="pay_action">Оплатить</span>
+                        Оплатить
                     </button>
                 </div>
             </div>
@@ -863,23 +870,22 @@
     </div>
 
     <!-- Blockchain Fee Details Modal -->
-    <div id="help-modal" class="generic-modal" style="display: none;">
-        <div class="modal-overlay" onclick="closeHelp()"></div>
+    <div id="fee-details-modal" class="generic-modal" style="display: none;">
+        <div class="modal-overlay" onclick="closeBlockchainFeeDetails()"></div>
         <div class="modal-content"
             style="padding: 24px; border-radius: 24px; background: #1c1c1e; border: 1px solid rgba(0, 136, 204, 0.4); width: 90%; max-width: 360px; max-height: 80vh; display: flex; flex-direction: column;">
-            <h3 id="help-title" style="font-size: 18px; margin-bottom: 12px; color: #fff; flex-shrink: 0;"
-                data-i18n="fee_modal_title">О комиссии сети</h3>
-            <div id="help-body"
+            <h3 style="font-size: 18px; margin-bottom: 12px; color: #fff; flex-shrink: 0;">О комиссии сети</h3>
+            <div id="fee-details-body"
                 style="font-size: 13px; color: #8b9bb4; line-height: 1.6; overflow-y: auto; flex: 1; padding-right: 4px;">
-                <!-- Content injected by JS -->
+                Сеть TON взимает небольшую оплату за каждую транзакцию.
             </div>
             <button class="blue-btn"
                 style="width: 100%; margin-top: 20px; height: 44px; border-radius: 12px; flex-shrink: 0;"
-                onclick="closeHelp()" data-i18n="got_it">Понятно</button>
+                onclick="closeBlockchainFeeDetails()">Понятно</button>
         </div>
     </div>
     <script src="timer_helper.js?v=6"></script>
-    <script src="app.js?v=1772338110"></script>
+    <script src="app.js?v=1772338106"></script>
 </body>
 
 </html>
