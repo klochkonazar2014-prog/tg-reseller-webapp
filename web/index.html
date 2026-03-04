@@ -198,7 +198,8 @@
             <div class="rent-action-row" style="display: flex; gap: 12px; margin-top: 16px;">
                 <div class="rent-period-stepper">
                     <button class="step-minus" onclick="adjustDuration(-1)">−</button>
-                    <input type="number" id="rent-duration-input" class="rent-duration-input" value="1" readonly>
+                    <input type="number" id="rent-duration-input" class="rent-duration-input" value="1"
+                        oninput="onDurationInput(this)" onchange="onDurationChange(this)">
                     <button class="step-plus" onclick="adjustDuration(1)">+</button>
                 </div>
                 <button id="main-rent-action-btn" class="main-rent-btn" style="flex: 1;" onclick="openPaymentModal()">

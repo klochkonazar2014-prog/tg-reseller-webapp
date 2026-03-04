@@ -3588,7 +3588,7 @@ body.hide-filters .header-column {
     align-items: center;
     background: rgba(255, 255, 255, 0.08);
     border-radius: 16px;
-    width: 130px;
+    width: 150px;
     overflow: hidden;
     height: 52px;
 }
@@ -3608,16 +3608,13 @@ body.hide-filters .header-column {
 
 .rent-duration-input {
     flex: 1;
-    /* As requested: flex: 2 */
     background: transparent !important;
     border: none !important;
     color: white !important;
     font-size: 19px !important;
     font-weight: 700 !important;
-    /* As requested: font-weight: 700 */
-    text-align: right !important;
-    /* As requested: text-align: right */
-    width: 40px !important;
+    text-align: center !important;
+    width: 65px !important;
     padding: 0 !important;
     margin: 0 !important;
     height: 100%;
