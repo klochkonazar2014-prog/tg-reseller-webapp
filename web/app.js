@@ -631,12 +631,7 @@ let ACTIVE_FILTERS = {
     search: ""
 };
 
-// --- Language logic ---
-function switchLanguage(lang) {
-    CURRENT_LANG = lang;
-    localStorage.setItem('lang', lang);
-    location.reload();
-}
+
 
 function updateUILanguage() {
     const map = {
@@ -1076,19 +1071,27 @@ async function handleReferralWithdraw() {
 function showHelp(amount) {
     const title = document.getElementById('help-title');
     const body = document.getElementById('help-body');
-
-    title.innerText = t('what_is_this');
-    body.innerHTML = `
-        <div style="font-size: 14px; line-height: 1.6; color: rgba(255,255,255,0.9);">
-            Вы дополнительно прикрепляете <b>0.2 TON</b> для обработки транзакции (это обязательное требование смарт-контрактов для оплаты газа).
-            <br><br>
-            ✅ <b>Возврат работает автоматически:</b><br>
-            Смарт-контракт заберет только фактическую комиссию сети. <b>Весь неиспользованный остаток (как правило, около 0.14 TON) моментально и автоматически возвращается обратно на ваш кошелек!</b>
-        </div>
-    `;
-
     const modal = document.getElementById('help-modal');
-    if (modal) modal.classList.add('active');
+
+    if (title) title.innerText = t('what_is_this');
+    if (body) {
+        body.innerHTML = `
+            <div style="font-size: 14px; line-height: 1.6; color: #fff;">
+                Для активации <b>смарт-контрактов для оплаты комисии блокчейна</b> необходимо отправить <b>0.2 TON</b>, остаток которых (<b>~0.14 TON</b>) будет возвращен вам автоматически после завершения срока аренды.
+                <br><br>
+                <div style="display: flex; gap: 8px; align-items: flex-start; background: rgba(52, 199, 89, 0.1); padding: 12px; border-radius: 12px; border: 1px solid rgba(52, 199, 89, 0.2);">
+                    <span style="font-size: 18px;">✅</span>
+                    <span style="color: #fff; font-size: 13px;"><b>Возврат работает автоматически:</b><br>
+                    Смарт-контракт заберет только фактическую комиссию сети. Весь неиспользованный остаток моментально и автоматически возвращается на ваш кошелек!</span>
+                </div>
+            </div>
+        `;
+    }
+
+    if (modal) {
+        modal.style.display = 'flex';
+        setTimeout(() => modal.classList.add('active'), 10);
+    }
 }
 
 function closeHelp() {
@@ -1251,10 +1254,10 @@ async function loadLiveItems(reset = true) {
             offset: GLOBAL_OFFSET,
             type: CURRENT_TYPE,
             status: CURRENT_STATUS,
-            nft: ACTIVE_FILTERS.nft.join(','),
-            model: ACTIVE_FILTERS.model.join(','),
-            bg: ACTIVE_FILTERS.bg.join(','),
-            symbol: ACTIVE_FILTERS.symbol.join(','),
+            nft: (CURRENT_TYPE === 'gift' ? ACTIVE_FILTERS.nft.join(',') : ""),
+            model: (CURRENT_TYPE === 'gift' ? ACTIVE_FILTERS.model.join(',') : ""),
+            bg: (CURRENT_TYPE === 'gift' ? ACTIVE_FILTERS.bg.join(',') : ""),
+            symbol: (CURRENT_TYPE === 'gift' ? ACTIVE_FILTERS.symbol.join(',') : ""),
             sort: ACTIVE_FILTERS.sort,
             search: ACTIVE_FILTERS.search,
             price_from: ACTIVE_FILTERS.price_from || "",
@@ -3231,63 +3234,70 @@ function openWalletConnect() {
 }
 
 
-// --- Language Switcher (Drawer Style) ---
+let pendingLang = null;
+
+// --- Language Switcher (Premium Modal Style) ---
 function switchLanguage() {
-    const el = document.getElementById('language-drawer');
+    const el = document.getElementById('language-modal');
     if (!el) return;
 
+    pendingLang = CURRENT_LANG;
+
     // Sync checkmarks with current state
-    const label = document.getElementById('lang-label');
     const checkRu = document.getElementById('check-ru');
     const checkEn = document.getElementById('check-en');
-    if (label && checkRu && checkEn) {
-        const isRu = label.innerText.includes('Русский');
-        checkRu.style.display = isRu ? 'block' : 'none';
-        checkEn.style.display = isRu ? 'none' : 'block';
+    if (checkRu && checkEn) {
+        checkRu.style.display = (CURRENT_LANG === 'ru') ? 'block' : 'none';
+        checkEn.style.display = (CURRENT_LANG === 'en') ? 'block' : 'none';
     }
 
     el.style.display = 'flex';
     setTimeout(() => el.classList.add('active'), 10);
-    tg.HapticFeedback.impactOccurred('medium');
+    if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
 }
 
 function closeLanguageDrawer() {
-    const el = document.getElementById('language-drawer');
+    const el = document.getElementById('language-modal');
     if (!el) return;
     el.classList.remove('active');
     setTimeout(() => el.style.display = 'none', 300);
 }
 
 function selectLanguage(lang) {
-    // Сохраняем выбранный язык
-    CURRENT_LANG = lang;
-    localStorage.setItem('lang', lang);
-
-    const label = document.getElementById('lang-label');
+    pendingLang = lang;
     const checkRu = document.getElementById('check-ru');
     const checkEn = document.getElementById('check-en');
 
-    if (lang === 'ru') {
-        if (label) label.innerText = 'Русский ›';
-        if (checkRu) checkRu.style.display = 'block';
-        if (checkEn) checkEn.style.display = 'none';
-    } else {
-        if (label) label.innerText = 'English ›';
-        if (checkRu) checkRu.style.display = 'none';
-        if (checkEn) checkEn.style.display = 'block';
+    if (checkRu) checkRu.style.display = (lang === 'ru') ? 'block' : 'none';
+    if (checkEn) checkEn.style.display = (lang === 'en') ? 'block' : 'none';
+
+    if (tg && tg.HapticFeedback) {
+        tg.HapticFeedback.impactOccurred('light');
     }
+}
+
+function confirmLanguageChange() {
+    if (!pendingLang) {
+        closeLanguageDrawer();
+        return;
+    }
+
+    if (pendingLang === CURRENT_LANG) {
+        closeLanguageDrawer();
+        return;
+    }
+
+    CURRENT_LANG = pendingLang;
+    localStorage.setItem('lang', pendingLang);
 
     if (tg && tg.HapticFeedback) {
         tg.HapticFeedback.notificationOccurred('success');
     }
 
-    // Закрыть drawer и перезагрузить страницу для применения языка
+    closeLanguageDrawer();
     setTimeout(() => {
-        closeLanguageDrawer();
-        setTimeout(() => {
-            location.reload();
-        }, 100);
-    }, 200);
+        location.reload();
+    }, 150);
 }
 
 // --- Order Polling Logic ---
@@ -3621,7 +3631,7 @@ function showBlockchainFeeDetails(e) {
     const body = document.getElementById('fee-details-body');
     body.innerHTML = `
         <div style="font-size: 14px; line-height: 1.6; color: #fff;">
-            <p style="color: #8b9bb4;">Для активации смарт-контракта необходимо отправить <b>0.2 TON</b>, остаток которых (<b>~0.14 TON</b>) будет возвращен вам автоматически после завершения срока аренды.</p>
+            <p style="color: #8b9bb4;">Для обработки транзакции необходимо отправить <b>0.2 TON</b>, остаток которых (<b>~0.14 TON</b>) будет возвращен вам автоматически после завершения срока аренды.</p>
             
             <p style="margin-top: 14px;"><b>Если оплата через xRocket:</b></p>
             <p style="color: #8b9bb4;">Необходимо добавить <b>0.1 TON</b> — это комиссия платежного бота за вывод средств на внешний кошелек.</p>

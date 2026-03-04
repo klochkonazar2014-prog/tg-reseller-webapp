@@ -255,19 +255,25 @@
         <input type="hidden" id="tc-current-order-id">
     </div>
 
-    <!-- Help Bottom Sheet (Pretty Drawer) -->
-    <div id="help-modal" class="bottom-sheet">
-        <div class="bottom-sheet-backdrop" onclick="closeHelp()"></div>
-        <div class="bottom-sheet-content" style="border-radius: 20px 20px 0 0;">
-            <div class="bottom-sheet-header"
-                style="display: flex; justify-content: space-between; align-items: center; padding: 12px 20px;">
-                <h3 id="help-title" style="margin: 0; font-size: 18px; font-weight: 800;">Что это значит?</h3>
+    <!-- Help Modal (Premium Centered Style) -->
+    <div id="help-modal" class="generic-modal" style="display: none;">
+        <div class="modal-overlay" onclick="closeHelp()"></div>
+        <div class="modal-content"
+            style="padding: 24px; border-radius: 24px; background: #1c1c1e; border: 1px solid rgba(0, 136, 204, 0.4); width: 90%; max-width: 360px; max-height: 80vh; display: flex; flex-direction: column;">
+            <div
+                style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; flex-shrink: 0;">
+                <h3 id="help-title" style="margin: 0; font-size: 18px; font-weight: 800; color: #fff;">Что это значит?
+                </h3>
                 <button class="close-sheet-btn" onclick="closeHelp()"
-                    style="background:none; border:none; color:#8b9bb4; font-size:24px; padding:0; cursor:pointer;">✕</button>
+                    style="background:none; border:none; color:#8b9bb4; font-size:24px; padding:0; cursor:pointer; line-height: 1;">✕</button>
             </div>
-            <div id="help-body" class="bottom-sheet-body" style="padding: 0 20px 20px;">
+            <div id="help-body"
+                style="font-size: 13px; color: #8b9bb4; line-height: 1.6; overflow-y: auto; flex: 1; padding-right: 4px;">
                 <!-- Content handled by showHelp() in app.js -->
             </div>
+            <button class="blue-btn"
+                style="width: 100%; margin-top: 20px; height: 44px; border-radius: 12px; flex-shrink: 0; font-weight: 800;"
+                onclick="closeHelp()" data-i18n="earnings_ok">Понятно</button>
         </div>
     </div>
 
@@ -699,26 +705,38 @@
         </div>
     </div>
 
-    <!-- Language Selection Drawer (Bottom Sheet) -->
-    <div id="language-drawer" class="bottom-sheet" style="display: none;">
-        <div class="bottom-sheet-backdrop" onclick="closeLanguageDrawer()"></div>
-        <div class="bottom-sheet-content">
-            <div class="bottom-sheet-header">
-                <div class="bottom-sheet-dash"></div>
-                <h3 data-i18n="lang_title">Выберите язык / Select Language</h3>
-            </div>
-            <div class="bottom-sheet-list">
-                <div class="drawer-item" onclick="selectLanguage('ru')">
-                    <span class="drawer-icon">RU</span>
-                    <span class="drawer-text">Русский</span>
-                    <span id="check-ru" class="drawer-check">✓</span>
+    <!-- Language Selection Modal (Premium Style) -->
+    <div id="language-modal" class="generic-modal" style="display: none;">
+        <div class="modal-overlay" onclick="closeLanguageDrawer()"></div>
+        <div class="modal-content"
+            style="padding: 24px; border-radius: 24px; background: #1c1c1e; border: 1px solid rgba(0, 136, 204, 0.4); width: 90%; max-width: 360px; max-height: 80vh; display: flex; flex-direction: column;">
+            <h3 data-i18n="lang_title"
+                style="font-size: 18px; margin-bottom: 20px; color: #fff; flex-shrink: 0; text-align: center;">Vybierz
+                język / Select Language</h3>
+
+            <div class="modal-list"
+                style="flex: 1; overflow-y: auto; padding-right: 4px; display: flex; flex-direction: column; gap: 10px;">
+                <div class="drawer-item" onclick="selectLanguage('ru')"
+                    style="background: rgba(255,255,255,0.03); border-radius: 14px; padding: 14px 18px; display: flex; align-items: center; cursor: pointer; transition: all 0.2s;">
+                    <span class="drawer-icon"
+                        style="width: 32px; height: 32px; background: rgba(0,136,204,0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #0088cc; margin-right: 14px; font-size: 12px;">RU</span>
+                    <span class="drawer-text" style="flex: 1; color: #fff; font-weight: 600;">Русский</span>
+                    <span id="check-ru" class="drawer-check"
+                        style="color: #0088cc; font-weight: 800; font-size: 18px;">✓</span>
                 </div>
-                <div class="drawer-item" onclick="selectLanguage('en')">
-                    <span class="drawer-icon">EN</span>
-                    <span class="drawer-text">English</span>
-                    <span id="check-en" class="drawer-check" style="display:none;">✓</span>
+                <div class="drawer-item" onclick="selectLanguage('en')"
+                    style="background: rgba(255,255,255,0.03); border-radius: 14px; padding: 14px 18px; display: flex; align-items: center; cursor: pointer; transition: all 0.2s;">
+                    <span class="drawer-icon"
+                        style="width: 32px; height: 32px; background: rgba(0,136,204,0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #0088cc; margin-right: 14px; font-size: 12px;">EN</span>
+                    <span class="drawer-text" style="flex: 1; color: #fff; font-weight: 600;">English</span>
+                    <span id="check-en" class="drawer-check"
+                        style="display:none; color: #0088cc; font-weight: 800; font-size: 18px;">✓</span>
                 </div>
             </div>
+
+            <button id="lang-confirm-btn" class="blue-btn"
+                style="width: 100%; margin-top: 24px; height: 48px; border-radius: 14px; font-weight: 800; font-size: 15px; flex-shrink: 0;"
+                onclick="confirmLanguageChange()" data-i18n="continue">Продолжить</button>
         </div>
     </div>
 
@@ -872,8 +890,8 @@
                 onclick="closeBlockchainFeeDetails()">Понятно</button>
         </div>
     </div>
-    <script src="timer_helper.js?v=5"></script>
-    <script src="app.js?v=1772338105"></script>
+    <script src="timer_helper.js?v=6"></script>
+    <script src="app.js?v=1772338110"></script>
 </body>
 
 </html>
