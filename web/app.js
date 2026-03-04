@@ -1071,19 +1071,27 @@ async function handleReferralWithdraw() {
 function showHelp(amount) {
     const title = document.getElementById('help-title');
     const body = document.getElementById('help-body');
-
-    title.innerText = t('what_is_this');
-    body.innerHTML = `
-        <div style="font-size: 14px; line-height: 1.6; color: rgba(255,255,255,0.9);">
-            Вы дополнительно прикрепляете <b>0.2 TON</b> для обработки транзакции (это обязательное требование смарт-контрактов для оплаты газа).
-            <br><br>
-            ✅ <b>Возврат работает автоматически:</b><br>
-            Смарт-контракт заберет только фактическую комиссию сети. <b>Весь неиспользованный остаток (как правило, около 0.14 TON) моментально и автоматически возвращается обратно на ваш кошелек!</b>
-        </div>
-    `;
-
     const modal = document.getElementById('help-modal');
-    if (modal) modal.classList.add('active');
+
+    if (title) title.innerText = t('what_is_this');
+    if (body) {
+        body.innerHTML = `
+            <div style="font-size: 14px; line-height: 1.6; color: #fff;">
+                Для активации <b>смарт-контрактов для оплаты комисии блокчейна</b> необходимо отправить <b>0.2 TON</b>, остаток которых (<b>~0.14 TON</b>) будет возвращен вам автоматически после завершения срока аренды.
+                <br><br>
+                <div style="display: flex; gap: 8px; align-items: flex-start; background: rgba(52, 199, 89, 0.1); padding: 12px; border-radius: 12px; border: 1px solid rgba(52, 199, 89, 0.2);">
+                    <span style="font-size: 18px;">✅</span>
+                    <span style="color: #fff; font-size: 13px;"><b>Возврат работает автоматически:</b><br>
+                    Смарт-контракт заберет только фактическую комиссию сети. Весь неиспользованный остаток моментально и автоматически возвращается на ваш кошелек!</span>
+                </div>
+            </div>
+        `;
+    }
+
+    if (modal) {
+        modal.style.display = 'flex';
+        setTimeout(() => modal.classList.add('active'), 10);
+    }
 }
 
 function closeHelp() {
@@ -2268,16 +2276,49 @@ async function openProductView(item) {
     // Pricing & Duration
     let rawP = parseFloat(item.price_per_day) || 0;
     const dailyPrice = rawP.toFixed(2);
-    document.getElementById('view-daily-price').innerHTML = renderTonAmount(dailyPrice);
-    if (GLOBAL_TON_PRICE) {
-        document.getElementById('view-daily-price-usd').innerText = `~$${(rawP * GLOBAL_TON_PRICE).toFixed(2)}`;
-    }
-
+    const dailyPriceUsd = GLOBAL_TON_PRICE ? `~$${(rawP * GLOBAL_TON_PRICE).toFixed(2)}` : '~$0.00';
     const minDays = Math.floor((item.min_duration || 86400) / 86400);
     const maxDays = Math.floor((item.max_duration || 2592000) / 86400);
-    const rangeEl = document.getElementById('view-duration-range');
-    if (rangeEl) rangeEl.textContent = `${minDays} — ${maxDays}`;
-    document.getElementById('view-discount').innerText = "0.1%";
+
+    const pricingCard = document.querySelector('.pricing-card');
+    if (pricingCard) {
+        pricingCard.innerHTML = `
+                <div class="pricing-grid" style="display: grid; grid-template-columns: 120px 120px 120px; gap: 8px; justify-content: center;">
+                    <div>
+                        <div id="view-label-price" class="pricing-label" style="font-size: 11px; color:#8794a1; font-weight:600; margin-bottom:4px;" data-i18n="price_per_day">${t('price_per_day')}</div>
+                        <div class="pricing-value">
+                            <div id="view-daily-price" style="font-size: 16px; font-weight:700; color:#fff;"><span class="icon-before icon-ton tm-amount">${dailyPrice}</span></div>
+                            <div id="view-daily-price-usd" style="font-size: 11px; color:#8794a1; margin-top:2px;">${dailyPriceUsd}</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div id="view-label-period" class="pricing-label" style="font-size: 11px; color:#8794a1; font-weight:600; margin-bottom:4px;" data-i18n="period">${t('period')}</div>
+                        <div id="view-duration-range" class="pricing-value" style="font-size: 16px; font-weight:700; color:#fff;">${minDays} — ${maxDays}</div>
+                    </div>
+                    <div>
+                        <div id="view-label-discount" class="pricing-label" style="font-size: 11px; color:#8794a1; font-weight:600; margin-bottom:4px;" data-i18n="discount">${t('discount')}</div>
+                        <div id="view-discount" class="pricing-value" style="font-size: 16px; font-weight:700; color:#fff;">0.1%</div>
+                    </div>
+                </div>
+                <div class="auto-relist-note" style="margin-top: 12px; display: flex; gap: 8px; font-size: 11px; color: #8794a1;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="23 4 23 10 17 10"></polyline>
+                        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                    </svg>
+                    <span><b id="view-auto-relist-title" data-i18n="auto_relist">${t('auto_relist')}</b> <span id="view-auto-relist-desc" data-i18n="auto_relist_desc">${t('auto_relist_desc')}</span></span>
+                </div>`;
+    }
+
+    let feeNotice = document.querySelector('.fee-notice-box');
+    if (feeNotice) {
+        feeNotice.style.display = 'block';
+        feeNotice.style.width = '120px';
+        feeNotice.style.boxSizing = 'border-box';
+        feeNotice.innerHTML = `
+                <span><span id="fee-notice-text">${t('fee_notice_text') || 'Вы отправляете небольшую сумму TON для покрытия комиссии сети и работы сервиса. Остаток будет возвращен вам автоматически.'}</span>
+                    <a href="javascript:void(0)" onclick="showHelp('fee')" style="color: #0088cc; text-decoration: none;" id="fee-what-mean" data-i18n="what_is_this">${t('what_is_this')}</a></span>`;
+    }
+
     document.getElementById('rent-duration-input').value = minDays;
 
     // Attributes
@@ -2353,10 +2394,9 @@ async function openProductView(item) {
         }
     }
 
-    // Rent Button
     const rentBtn = document.getElementById('main-rent-action-btn');
     const stepper = document.querySelector('.rent-period-stepper');
-    const feeNotice = document.querySelector('.fee-notice-box');
+    // feeNotice handled above
 
     if (rentBtn) {
         rentBtn.style.display = 'flex';
@@ -2465,42 +2505,6 @@ async function openProductView(item) {
     }
 }
 
-function onDurationInput(el) {
-    if (!CURRENT_PAYMENT_ITEM) return;
-
-    const minDays = Math.floor((CURRENT_PAYMENT_ITEM.min_duration || 86400) / 86400);
-    const maxDays = Math.floor((CURRENT_PAYMENT_ITEM.max_duration || 2592000) / 86400);
-
-    let val = parseInt(el.value);
-
-    // If user deleted everything, don't force reset yet to allow typing
-    if (el.value === '') {
-        updateTotalPrice();
-        return;
-    }
-
-    if (val > maxDays) {
-        el.value = maxDays;
-    }
-    // We don't force minDays onInput because it would prevent user from deleting digits 
-    // to type a new number (e.g. going from 15 to 2). We handle min on onChange.
-
-    updateTotalPrice();
-}
-
-function onDurationChange(el) {
-    if (!CURRENT_PAYMENT_ITEM) return;
-    const minDays = Math.floor((CURRENT_PAYMENT_ITEM.min_duration || 86400) / 86400);
-    const maxDays = Math.floor((CURRENT_PAYMENT_ITEM.max_duration || 2592000) / 86400);
-    let val = parseInt(el.value);
-
-    if (isNaN(val) || val < minDays) val = minDays;
-    if (val > maxDays) val = maxDays;
-
-    el.value = val;
-    updateTotalPrice();
-}
-
 function adjustDuration(delta) {
     if (!CURRENT_PAYMENT_ITEM) return;
 
@@ -2529,15 +2533,11 @@ function updateTotalPrice() {
     if (!CURRENT_PAYMENT_ITEM) return;
     const input = document.getElementById('rent-duration-input');
     const minDays = Math.floor((CURRENT_PAYMENT_ITEM.min_duration || 86400) / 86400);
-    const maxDays = Math.floor((CURRENT_PAYMENT_ITEM.max_duration || 2592000) / 86400);
-
-    let rawVal = parseInt(input.value);
-    let dur = rawVal;
-
-    // For price calculation, we use clamped values, but we DON'T update input.value here
-    if (isNaN(dur) || dur < minDays) dur = minDays;
-    if (dur > maxDays) dur = maxDays;
-
+    let dur = parseInt(input.value) || minDays;
+    if (dur < minDays) {
+        dur = minDays;
+        input.value = minDays;
+    }
     // Backend price already includes markup, so just multiply by duration
     let dp = parseFloat(CURRENT_PAYMENT_ITEM.price_per_day);
     // If invalid, try to calc from total, otherwise trust the value (even if 0, though DB has >0)
@@ -3663,7 +3663,7 @@ function showBlockchainFeeDetails(e) {
     const body = document.getElementById('fee-details-body');
     body.innerHTML = `
         <div style="font-size: 14px; line-height: 1.6; color: #fff;">
-            <p style="color: #8b9bb4;">Для активации <b>смарт-контрактов для оплаты комисии блокчейна</b> необходимо отправить <b>0.2 TON</b>, остаток которых (<b>~0.14 TON</b>) будет возвращен вам автоматически после завершения срока аренды.</p>
+            <p style="color: #8b9bb4;">Для обработки транзакции необходимо отправить <b>0.2 TON</b>, остаток которых (<b>~0.14 TON</b>) будет возвращен вам автоматически после завершения срока аренды.</p>
             
             <p style="margin-top: 14px;"><b>Если оплата через xRocket:</b></p>
             <p style="color: #8b9bb4;">Необходимо добавить <b>0.1 TON</b> — это комиссия платежного бота за вывод средств на внешний кошелек.</p>
