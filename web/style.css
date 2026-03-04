@@ -3588,37 +3588,41 @@ body.hide-filters .header-column {
     align-items: center;
     background: rgba(255, 255, 255, 0.08);
     border-radius: 16px;
-    width: 160px;
-    min-width: 160px;
+    width: 150px;
+    min-width: 150px;
     overflow: hidden;
     height: 52px;
 }
 
 .rent-period-stepper button {
     height: 100% !important;
+    width: 44px !important;
+    flex: none !important;
     display: flex;
     align-items: center;
     justify-content: center;
-    flex: 1;
     border: none;
     background: none;
     color: #8b9bb4;
-    font-size: 22px;
+    font-size: 24px;
     cursor: pointer;
 }
 
 .rent-duration-input {
-    flex: 1.5;
+    flex: 1 !important;
     background: transparent !important;
     border: none !important;
     color: white !important;
     font-size: 19px !important;
     font-weight: 700 !important;
     text-align: center !important;
+    width: 100% !important;
+    min-width: 0 !important;
     padding: 0 !important;
     margin: 0 !important;
     height: 100%;
     -moz-appearance: textfield;
+    appearance: none;
 }
 
 .rent-duration-input::-webkit-outer-spin-button,
