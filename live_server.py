@@ -185,22 +185,25 @@ async def handle_live_items(request):
                     return False
 
                 if f_nft and f_nft != 'all':
-                    if not is_nft_match(base_title, f_nft):
+                    nft_filters = [x.strip() for x in f_nft.split(',')]
+                    if not any(is_nft_match(base_title, n) for n in nft_filters):
                         continue
                 
                 if f_model and f_model != 'all':
+                    model_filters = [x.strip().lower() for x in f_model.split(',')]
                     item_model = str(m.get("model", "")).lower().strip()
-                    requested_model = f_model.lower().strip()
-                    if item_model != requested_model:
-                        # Optional: logging.debug(f"[Filter] Skip {r['title']}: model '{item_model}' != '{requested_model}'")
+                    if item_model not in model_filters:
                         continue
-                    else:
-                        logging.info(f"[Filter] MATCH! {r['title']} passed model filter '{f_model}'")
 
                 if f_bg and f_bg != 'all':
-                    if str(m.get("backdrop", "")).lower() != f_bg.lower(): continue
+                    bg_filters = [x.strip().lower() for x in f_bg.split(',')]
+                    if str(m.get("backdrop", "")).lower() not in bg_filters: 
+                        continue
+                        
                 if f_symbol and f_symbol != 'all':
-                    if str(m.get("symbol", "")).lower() != f_symbol.lower(): continue
+                    symbol_filters = [x.strip().lower() for x in f_symbol.split(',')]
+                    if str(m.get("symbol", "")).lower() not in symbol_filters: 
+                        continue
 
                 # Extract number for sorting and filtering
                 title = r['title']

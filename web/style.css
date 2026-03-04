@@ -1216,13 +1216,33 @@ body {
     outline: none;
 }
 
+.gift-number-box {
+    margin: 24px 24px 12px 24px;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.03);
+    /* Lighter than panel */
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    /* Чуть серее фона */
+    border-radius: 16px;
+}
+
+.gift-number-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: #8b9bb4;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+    display: block;
+}
+
 .filter-accordion {
     padding: 18px 24px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     cursor: pointer;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .filter-accordion.active {
@@ -1241,7 +1261,7 @@ body {
     padding-bottom: 10px;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 

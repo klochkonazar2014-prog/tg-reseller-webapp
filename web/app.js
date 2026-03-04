@@ -619,11 +619,11 @@ function getTelegifterUrl(type, name, collection, slugIndex = 0) {
 }
 
 let ACTIVE_FILTERS = {
-    nft: 'all',
-    model: 'all',
-    bg: 'all',
-    symbol: 'all',
-    tags: 'all',
+    nft: [],
+    model: [],
+    bg: [],
+    symbol: [],
+    tags: [],
     sort: 'id_desc',
     price_from: null,
     price_to: null,
@@ -1251,10 +1251,10 @@ async function loadLiveItems(reset = true) {
             offset: GLOBAL_OFFSET,
             type: CURRENT_TYPE,
             status: CURRENT_STATUS,
-            nft: ACTIVE_FILTERS.nft,
-            model: ACTIVE_FILTERS.model,
-            bg: ACTIVE_FILTERS.bg,
-            symbol: ACTIVE_FILTERS.symbol,
+            nft: ACTIVE_FILTERS.nft.join(','),
+            model: ACTIVE_FILTERS.model.join(','),
+            bg: ACTIVE_FILTERS.bg.join(','),
+            symbol: ACTIVE_FILTERS.symbol.join(','),
             sort: ACTIVE_FILTERS.sort,
             search: ACTIVE_FILTERS.search,
             price_from: ACTIVE_FILTERS.price_from || "",
@@ -1548,13 +1548,13 @@ function initFilterLists() {
     nftCont.innerHTML = '';
 
     if (!nftSearch || t('all').toLowerCase().includes(nftSearch)) {
-        addFilterItem(nftCont, t('all'), "all", 'nft', ACTIVE_FILTERS.nft === 'all');
+        addFilterItem(nftCont, t('all'), "all", 'nft', ACTIVE_FILTERS.nft.length === 0);
     }
 
     (window.STATIC_COLLECTIONS || []).forEach(col => {
         const lowerName = col.name.toLowerCase();
         if (lowerName.includes(nftSearch) && !lowerName.includes('phantom') && !lowerName.includes('unknown')) {
-            addFilterItem(nftCont, col.name, col.name, 'nft', ACTIVE_FILTERS.nft === col.name, col.image);
+            addFilterItem(nftCont, col.name, col.name, 'nft', ACTIVE_FILTERS.nft.includes(col.name), col.image);
         }
     });
 
@@ -1605,7 +1605,7 @@ function initFilterLists() {
             sInput.placeholder = t('search_filter_hint', { label: m.label }) + t('search_filter_global');
 
             if (!sVal || t('select_all').toLowerCase().includes(sVal)) {
-                addFilterItem(cont, t('select_all'), "all", m.key, ACTIVE_FILTERS[m.key] === 'all');
+                addFilterItem(cont, t('select_all'), "all", m.key, ACTIVE_FILTERS[m.key].length === 0);
             }
 
             allItems.forEach(item => {
@@ -1618,7 +1618,7 @@ function initFilterLists() {
 
                     if (!icon && (m.key === 'bg' || m.key === 'symbol')) icon = VISUAL_MAP[m.key][item.name] || null;
                     // FIX: Pass item.collection as collectionContext
-                    addFilterItem(cont, item.name, item.name, m.key, ACTIVE_FILTERS[m.key] === item.name, icon, item.collection, item.image);
+                    addFilterItem(cont, item.name, item.name, m.key, ACTIVE_FILTERS[m.key].includes(item.name), icon, item.collection, item.image);
                 }
             });
             return;
@@ -1628,7 +1628,7 @@ function initFilterLists() {
         sInput.placeholder = t('search_filter_hint', { label: m.label });
 
         if (!sVal || t('select_all').toLowerCase().includes(sVal)) {
-            addFilterItem(cont, t('select_all'), "all", m.key, ACTIVE_FILTERS[m.key] === 'all');
+            addFilterItem(cont, t('select_all'), "all", m.key, ACTIVE_FILTERS[m.key].length === 0);
         }
 
         const items = (ATTR_STATS[m.key] && ATTR_STATS[m.key][selectedNFT]) || [];
@@ -1641,7 +1641,7 @@ function initFilterLists() {
                 else if (m.key === 'model') icon = getTelegifterUrl('model', item.name, selectedNFT);
 
                 if (!icon && (m.key === 'bg' || m.key === 'symbol')) icon = VISUAL_MAP[m.key][item.name] || null;
-                addFilterItem(cont, item.name, item.name, m.key, ACTIVE_FILTERS[m.key] === item.name, icon, selectedNFT, item.image);
+                addFilterItem(cont, item.name, item.name, m.key, ACTIVE_FILTERS[m.key].includes(item.name), icon, selectedNFT, item.image);
             }
         });
     });
@@ -1651,8 +1651,8 @@ function initFilterLists() {
         const el = document.getElementById(id);
         if (!el) return;
         const val = ACTIVE_FILTERS[key];
-        if (val && val !== 'all') {
-            el.innerText = val;
+        if (val && val.length > 0) {
+            el.innerText = val.length === 1 ? val[0] : `${defaultLabel} (${val.length})`;
             el.parentElement.classList.add('active'); // Highlight active chip
         } else {
             el.innerText = defaultLabel;
@@ -1725,7 +1725,20 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
     `;
     div.onclick = (e) => {
         e.stopPropagation();
-        ACTIVE_FILTERS[key] = value ? value.trim() : value;
+
+        if (value === 'all' || !value) {
+            ACTIVE_FILTERS[key] = [];
+        } else {
+            const v = value.trim();
+            if (!Array.isArray(ACTIVE_FILTERS[key])) ACTIVE_FILTERS[key] = [];
+
+            const idx = ACTIVE_FILTERS[key].indexOf(v);
+            if (idx > -1) {
+                ACTIVE_FILTERS[key].splice(idx, 1);
+            } else {
+                ACTIVE_FILTERS[key].push(v);
+            }
+        }
 
         // Sync inputs from modal if visible
         const gNum = document.getElementById('filter-gift-number');
@@ -1736,9 +1749,9 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
         if (pTo) ACTIVE_FILTERS.price_to = pTo.value;
 
         if (key === 'nft') {
-            ACTIVE_FILTERS.model = 'all';
-            ACTIVE_FILTERS.bg = 'all';
-            ACTIVE_FILTERS.symbol = 'all';
+            ACTIVE_FILTERS.model = [];
+            ACTIVE_FILTERS.bg = [];
+            ACTIVE_FILTERS.symbol = [];
             ['model', 'bg', 'symbol'].forEach(k => {
                 const inp = document.getElementById(`filter-search-${k}`);
                 if (inp) inp.value = '';
@@ -1781,11 +1794,11 @@ function closeMrktModal() {
 
 function resetMrktModal() {
     ACTIVE_FILTERS = {
-        nft: 'all',
-        model: 'all',
-        bg: 'all',
-        symbol: 'all',
-        tags: 'all',
+        nft: [],
+        model: [],
+        bg: [],
+        symbol: [],
+        tags: [],
         sort: 'price_asc',
         price_from: null,
         price_to: null,
