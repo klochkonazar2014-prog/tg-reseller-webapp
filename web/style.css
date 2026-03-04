@@ -1393,9 +1393,69 @@ body {
 .search-wrapper {
     position: relative;
     flex: 1;
-    /* Expand to fill space */
     min-width: 0;
-    /* Allow shrinking */
+}
+
+/* --- SUB-ACCORDIONS (Nested Filters) --- */
+.filter-sub-accordion {
+    padding: 12px 20px 12px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.01);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.2s;
+}
+
+.filter-sub-accordion:active {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.filter-sub-accordion span {
+    font-size: 14px;
+    font-weight: 700;
+    color: #8b9bb4;
+}
+
+.sub-accordion-arrow {
+    font-size: 10px;
+    color: #555;
+    transition: transform 0.3s;
+}
+
+.filter-sub-accordion.active .sub-accordion-arrow {
+    transform: rotate(180deg);
+    color: var(--accent-blue);
+}
+
+.sub-accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.sub-accordion-content.active {
+    max-height: 1000px;
+    /* Allow enough space for many models */
+    padding-bottom: 10px;
+}
+
+.sub-accordion-content .filter-list-row {
+    padding-left: 45px;
+    /* Deeper indentation for nested items */
+}
+
+.sub-accordion-content .filter-label {
+    font-size: 14px;
+    /* Smaller labels for nested items */
+}
+
+.sub-accordion-content .filter-icon-box {
+    width: 44px;
+    /* Smaller icons for nested items */
+    height: 44px;
 }
 
 .header-unified-badge {

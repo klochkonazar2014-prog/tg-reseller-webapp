@@ -1575,57 +1575,64 @@ function initFilterLists() {
 
         const isNFTSelected = (Array.isArray(selectedNFT) && selectedNFT.length > 0);
 
-        maps.forEach(m => {
-            const cont = document.getElementById(m.id);
-            const sInput = document.getElementById(m.search);
-            if (!cont || !sInput) return;
-            const sVal = sInput.value.toLowerCase();
-            cont.innerHTML = '';
+        // Define which items to show
+        let itemsToShow = [];
 
-            // Define which items to show
-            let itemsToShow = [];
-
-            if (m.key === 'model') {
-                if (!isNFTSelected) {
-                    cont.innerHTML = `<div style="padding:20px; color:#8b9bb4; text-align:center; font-size:13px; background:rgba(255,255,255,0.03); border-radius:12px; margin-top:10px;">${t('select_collection_first')}</div>`;
-                    sInput.disabled = true;
-                    return;
-                }
-                // Combine models from all selected collections
-                const combined = {};
-                selectedNFT.forEach(col => {
-                    const list = (ATTR_STATS.model && ATTR_STATS.model[col]) || [];
-                    list.forEach(it => {
-                        if (!combined[it.name]) combined[it.name] = { ...it, collection: col };
-                    });
-                });
-                itemsToShow = Object.values(combined);
-            } else {
-                // BG & SYMBOLS: Global selection allowed (they are grouped under "ALL" in loadFilterData)
-                const list = (ATTR_STATS[m.key] && (ATTR_STATS[m.key]["ALL"] || [])) || [];
-                itemsToShow = list.map(it => ({ ...it, collection: "ALL" }));
+        if (m.key === 'model') {
+            if (!isNFTSelected) {
+                cont.innerHTML = `<div style="padding:20px; color:#8b9bb4; text-align:center; font-size:13px; background:rgba(255,255,255,0.03); border-radius:12px; margin-top:10px;">${t('select_collection_first')}</div>`;
+                sInput.disabled = true;
+                return;
             }
-
-            itemsToShow.sort((a, b) => a.name.localeCompare(b.name));
 
             sInput.disabled = false;
-            sInput.placeholder = isNFTSelected ? t('search_filter_hint', { label: m.label }) : t('search_filter_hint', { label: m.label }) + t('search_filter_global');
+            sInput.placeholder = t('search_filter_hint', { label: m.label });
 
-            if (!sVal || t('select_all').toLowerCase().includes(sVal)) {
-                addFilterItem(cont, t('select_all'), "all", m.key, ACTIVE_FILTERS[m.key].length === 0);
-            }
+            // If multiple collections, show sub-accordions
+            selectedNFT.forEach(col => {
+                const list = (ATTR_STATS.model && ATTR_STATS.model[col]) || [];
+                const filtered = list.filter(it => it.name.toLowerCase().includes(sVal) && !it.name.toLowerCase().includes('phantom'));
 
-            itemsToShow.forEach(item => {
-                const lowerName = item.name.toLowerCase();
-                if (lowerName.includes(sVal) && !lowerName.includes('phantom') && !lowerName.includes('unknown')) {
-                    let icon = null;
-                    if (m.key === 'symbol') icon = getTelegifterUrl('symbol', item.name);
-                    else if (m.key === 'model') icon = getTelegifterUrl('model', item.name, item.collection);
+                if (filtered.length > 0) {
+                    const subId = `model-sub-${col.replace(/\s+/g, '-')}`;
 
-                    if (!icon && (m.key === 'bg' || m.key === 'symbol')) icon = VISUAL_MAP[m.key][item.name] || null;
-                    addFilterItem(cont, item.name, item.name, m.key, ACTIVE_FILTERS[m.key].includes(item.name), icon, item.collection, item.image);
+                    // Auto-expand if ANY models are selected in this specific collection
+                    const hasSelectedInCol = ACTIVE_FILTERS.model.some(selName => list.some(it => it.name === selName));
+
+                    const subCont = addFilterSubAccordion(cont, col, subId, hasSelectedInCol);
+
+                    filtered.sort((a, b) => a.name.localeCompare(b.name)).forEach(item => {
+                        let icon = getTelegifterUrl('model', item.name, col);
+                        addFilterItem(subCont, item.name, item.name, 'model', ACTIVE_FILTERS.model.includes(item.name), icon, col, item.image);
+                    });
                 }
             });
+            return; // Models handled specially
+        } else {
+            // BG & SYMBOLS: Global selection allowed (they are grouped under "ALL" in loadFilterData)
+            const list = (ATTR_STATS[m.key] && (ATTR_STATS[m.key]["ALL"] || [])) || [];
+            itemsToShow = list.map(it => ({ ...it, collection: "ALL" }));
+        }
+
+        itemsToShow.sort((a, b) => a.name.localeCompare(b.name));
+
+        sInput.disabled = false;
+        sInput.placeholder = isNFTSelected ? t('search_filter_hint', { label: m.label }) : t('search_filter_hint', { label: m.label }) + t('search_filter_global');
+
+        if (!sVal || t('select_all').toLowerCase().includes(sVal)) {
+            addFilterItem(cont, t('select_all'), "all", m.key, ACTIVE_FILTERS[m.key].length === 0);
+        }
+
+        itemsToShow.forEach(item => {
+            const lowerName = item.name.toLowerCase();
+            if (lowerName.includes(sVal) && !lowerName.includes('phantom') && !lowerName.includes('unknown')) {
+                let icon = null;
+                if (m.key === 'symbol') icon = getTelegifterUrl('symbol', item.name);
+                else if (m.key === 'model') icon = getTelegifterUrl('model', item.name, item.collection);
+
+                if (!icon && (m.key === 'bg' || m.key === 'symbol')) icon = VISUAL_MAP[m.key][item.name] || null;
+                addFilterItem(cont, item.name, item.name, m.key, ACTIVE_FILTERS[m.key].includes(item.name), icon, item.collection, item.image);
+            }
         });
     });
 
@@ -1648,6 +1655,29 @@ function initFilterLists() {
     updateChip('chip-label-bg', 'bg', t('backdrop'));
     updateChip('chip-label-symbol', 'symbol', t('symbol'));
 }
+
+function addFilterSubAccordion(container, title, subId, autoExpand = false) {
+    const header = document.createElement('div');
+    header.className = `filter-sub-accordion ${autoExpand ? 'active' : ''}`;
+    header.innerHTML = `
+        <span>${title}</span>
+        <div class="sub-accordion-arrow">▼</div>
+    `;
+
+    const content = document.createElement('div');
+    content.id = subId;
+    content.className = `sub-accordion-content ${autoExpand ? 'active' : ''}`;
+
+    header.onclick = () => {
+        header.classList.toggle('active');
+        content.classList.toggle('active');
+    };
+
+    container.appendChild(header);
+    container.appendChild(content);
+    return content;
+}
+
 
 function addFilterItem(container, name, value, key, isSelected, imgUrl, collectionContext, fallbackImgUrl) {
     const div = document.createElement('div');
