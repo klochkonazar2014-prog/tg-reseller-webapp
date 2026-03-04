@@ -1573,76 +1573,59 @@ function initFilterLists() {
         const sVal = sInput.value.toLowerCase();
         cont.innerHTML = '';
 
-        if (selectedNFT === 'all') {
-            // MODELS: Require NFT selection first
+        const isNFTSelected = (Array.isArray(selectedNFT) && selectedNFT.length > 0);
+
+        maps.forEach(m => {
+            const cont = document.getElementById(m.id);
+            const sInput = document.getElementById(m.search);
+            if (!cont || !sInput) return;
+            const sVal = sInput.value.toLowerCase();
+            cont.innerHTML = '';
+
+            // Define which items to show
+            let itemsToShow = [];
+
             if (m.key === 'model') {
-                cont.innerHTML = `<div style="padding:20px; color:#8b9bb4; text-align:center; font-size:13px; background:rgba(255,255,255,0.03); border-radius:12px; margin-top:10px;">${t('select_collection_first')}</div>`;
-                sInput.disabled = true;
-                return;
+                if (!isNFTSelected) {
+                    cont.innerHTML = `<div style="padding:20px; color:#8b9bb4; text-align:center; font-size:13px; background:rgba(255,255,255,0.03); border-radius:12px; margin-top:10px;">${t('select_collection_first')}</div>`;
+                    sInput.disabled = true;
+                    return;
+                }
+                // Combine models from all selected collections
+                const combined = {};
+                selectedNFT.forEach(col => {
+                    const list = (ATTR_STATS.model && ATTR_STATS.model[col]) || [];
+                    list.forEach(it => {
+                        if (!combined[it.name]) combined[it.name] = { ...it, collection: col };
+                    });
+                });
+                itemsToShow = Object.values(combined);
+            } else {
+                // BG & SYMBOLS: Global selection allowed (they are grouped under "ALL" in loadFilterData)
+                const list = (ATTR_STATS[m.key] && (ATTR_STATS[m.key]["ALL"] || [])) || [];
+                itemsToShow = list.map(it => ({ ...it, collection: "ALL" }));
             }
 
-            // BG & SYMBOLS: Global selection allowed
-            const allItemsMap = {};
-            // Iterate OVER COLLECTIONS to preserve context
-            Object.entries(ATTR_STATS[m.key] || {}).forEach(([colName, list]) => {
-                if (!Array.isArray(list)) return; // Safety check
-                list.forEach(item => {
-                    // Store image AND collection for URL generation
-                    if (!allItemsMap[item.name]) {
-                        allItemsMap[item.name] = { image: item.image, collection: colName };
-                    }
-                    else if (isBadUrl(allItemsMap[item.name].image) && !isBadUrl(item.image)) {
-                        allItemsMap[item.name].image = item.image;
-                        allItemsMap[item.name].collection = colName;
-                    }
-                });
-            });
-            const allItems = Object.entries(allItemsMap)
-                .map(([n, data]) => ({ name: n, image: data.image, collection: data.collection }))
-                .sort((a, b) => a.name.localeCompare(b.name));
+            itemsToShow.sort((a, b) => a.name.localeCompare(b.name));
 
             sInput.disabled = false;
-            sInput.placeholder = t('search_filter_hint', { label: m.label }) + t('search_filter_global');
+            sInput.placeholder = isNFTSelected ? t('search_filter_hint', { label: m.label }) : t('search_filter_hint', { label: m.label }) + t('search_filter_global');
 
             if (!sVal || t('select_all').toLowerCase().includes(sVal)) {
                 addFilterItem(cont, t('select_all'), "all", m.key, ACTIVE_FILTERS[m.key].length === 0);
             }
 
-            allItems.forEach(item => {
+            itemsToShow.forEach(item => {
                 const lowerName = item.name.toLowerCase();
                 if (lowerName.includes(sVal) && !lowerName.includes('phantom') && !lowerName.includes('unknown')) {
-                    // Try to get clean visual first
                     let icon = null;
                     if (m.key === 'symbol') icon = getTelegifterUrl('symbol', item.name);
                     else if (m.key === 'model') icon = getTelegifterUrl('model', item.name, item.collection);
 
                     if (!icon && (m.key === 'bg' || m.key === 'symbol')) icon = VISUAL_MAP[m.key][item.name] || null;
-                    // FIX: Pass item.collection as collectionContext
                     addFilterItem(cont, item.name, item.name, m.key, ACTIVE_FILTERS[m.key].includes(item.name), icon, item.collection, item.image);
                 }
             });
-            return;
-        }
-
-        sInput.disabled = false;
-        sInput.placeholder = t('search_filter_hint', { label: m.label });
-
-        if (!sVal || t('select_all').toLowerCase().includes(sVal)) {
-            addFilterItem(cont, t('select_all'), "all", m.key, ACTIVE_FILTERS[m.key].length === 0);
-        }
-
-        const items = (ATTR_STATS[m.key] && ATTR_STATS[m.key][selectedNFT]) || [];
-        items.forEach(item => {
-            const lowerName = item.name.toLowerCase();
-            if (lowerName.includes(sVal) && !lowerName.includes('phantom') && !lowerName.includes('unknown')) {
-                // Try clean visual
-                let icon = null;
-                if (m.key === 'symbol') icon = getTelegifterUrl('symbol', item.name);
-                else if (m.key === 'model') icon = getTelegifterUrl('model', item.name, selectedNFT);
-
-                if (!icon && (m.key === 'bg' || m.key === 'symbol')) icon = VISUAL_MAP[m.key][item.name] || null;
-                addFilterItem(cont, item.name, item.name, m.key, ACTIVE_FILTERS[m.key].includes(item.name), icon, selectedNFT, item.image);
-            }
         });
     });
 
