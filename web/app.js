@@ -2511,7 +2511,7 @@ function adjustDuration(delta) {
     if (!CURRENT_PAYMENT_ITEM) return;
 
     const input = document.getElementById('rent-duration-input');
-    const minDays = Math.floor((CURRENT_PAYMENT_ITEM.min_duration || 86400) / 86400);
+    const minDays = Math.ceil((CURRENT_PAYMENT_ITEM.min_duration || 86400) / 86400);
     const maxDays = Math.floor((CURRENT_PAYMENT_ITEM.max_duration || 2592000) / 86400);
     let val = (parseInt(input.value) || minDays) + delta;
     if (val < minDays) val = minDays;
@@ -2522,7 +2522,7 @@ function adjustDuration(delta) {
 
 function onDurationInput(el) {
     if (!CURRENT_PAYMENT_ITEM) return;
-    const minDays = Math.floor((CURRENT_PAYMENT_ITEM.min_duration || 86400) / 86400);
+    const minDays = Math.ceil((CURRENT_PAYMENT_ITEM.min_duration || 86400) / 86400);
     const maxDays = Math.floor((CURRENT_PAYMENT_ITEM.max_duration || 2592000) / 86400);
 
     let val = parseInt(el.value);
@@ -2537,7 +2537,7 @@ function onDurationInput(el) {
 
 function onDurationChange(el) {
     if (!CURRENT_PAYMENT_ITEM) return;
-    const minDays = Math.floor((CURRENT_PAYMENT_ITEM.min_duration || 86400) / 86400);
+    const minDays = Math.ceil((CURRENT_PAYMENT_ITEM.min_duration || 86400) / 86400);
     let val = parseInt(el.value);
     if (isNaN(val) || val < minDays) {
         el.value = minDays;
@@ -2559,7 +2559,7 @@ function calculateMarkup(price) {
 function updateTotalPrice() {
     if (!CURRENT_PAYMENT_ITEM) return;
     const input = document.getElementById('rent-duration-input');
-    const minDays = Math.floor((CURRENT_PAYMENT_ITEM.min_duration || 86400) / 86400);
+    const minDays = Math.ceil((CURRENT_PAYMENT_ITEM.min_duration || 86400) / 86400);
     let dur = parseInt(input.value) || minDays;
     if (dur < minDays) {
         dur = minDays;
