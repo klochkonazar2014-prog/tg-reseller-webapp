@@ -780,14 +780,17 @@ async def handle_referral_withdraw(request):
         return web.json_response({'error': str(e)}, status=500)
 
 async def handle_user_avatar(request):
-    user_id = get_authenticated_user_id(request)
-    if not user_id or not BOT_TOKEN:
+    auth_user_id = get_authenticated_user_id(request)
+    if not auth_user_id or not BOT_TOKEN:
         return web.Response(status=401)
+    
+    # Allow fetching avatar for any user_id (e.g. referrals list), but only if requester is authenticated
+    target_user_id = request.query.get("user_id", str(auth_user_id))
     
     try:
         async with aiohttp.ClientSession() as session:
             # 1. Get user profile photos
-            photos_url = f"https://api.telegram.org/bot{BOT_TOKEN}/getUserProfilePhotos?user_id={user_id}&limit=1"
+            photos_url = f"https://api.telegram.org/bot{BOT_TOKEN}/getUserProfilePhotos?user_id={target_user_id}&limit=1"
             async with session.get(photos_url) as resp:
                 data = await resp.json()
                 if not data.get("ok") or not data["result"]["photos"]:

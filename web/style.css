@@ -4368,3 +4368,32 @@ tc-root>div {
     border-radius: 50%;
     cursor: pointer;
 }
+
+/* --- HELP MODAL COMPACT STYLE (matches payment modal) --- */
+#help-modal .bottom-sheet-content {
+    height: auto;
+    max-height: 80vh;
+    border-radius: 22px 22px 0 0;
+    background: #151B22;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+#help-modal .bottom-sheet-body {
+    padding: 0 24px 28px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.85);
+    overflow-y: auto;
+    max-height: calc(70vh - 70px);
+}
+
+#help-modal .bottom-sheet-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 20px 24px;
+}
+
+#help-modal #help-title {
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: -0.2px;
+}
