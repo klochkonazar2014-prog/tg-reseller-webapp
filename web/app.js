@@ -1076,26 +1076,15 @@ function showHelp(amount) {
     const modal = document.getElementById('help-modal');
 
     if (title) title.innerText = t('what_is_this');
-
     if (body) {
         body.innerHTML = `
-            <div class="bottom-sheet-dash" style="margin-top: 0; margin-bottom: 20px;"></div>
-            <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; padding: 16px; margin-bottom: 14px; display: flex; gap: 14px; align-items: flex-start;">
-                <div style="font-size: 24px; flex-shrink: 0;">💎</div>
-                <div>
-                    <div style="font-weight: 700; font-size: 14px; color: #fff; margin-bottom: 4px;">${t('fee_detail_title') || 'Комиссия сети'}</div>
-                    <div style="font-size: 13px; color: #8794a1; line-height: 1.5;">
-                        Для активации смарт-контрактов необходимо отправить <b style="color:#fff">0.2 TON</b>. Это покрывает газ транзакций в блокчейне TON.
-                    </div>
-                </div>
-            </div>
-            <div style="background: rgba(52, 199, 89, 0.08); border: 1px solid rgba(52, 199, 89, 0.2); border-radius: 16px; padding: 16px; display: flex; gap: 14px; align-items: flex-start;">
-                <div style="font-size: 24px; flex-shrink: 0;">✅</div>
-                <div>
-                    <div style="font-weight: 700; font-size: 14px; color: #34C759; margin-bottom: 4px;">Возврат ~0.14 TON</div>
-                    <div style="font-size: 13px; color: #8794a1; line-height: 1.5;">
-                        Неиспользованный остаток <b style="color:#fff">автоматически возвращается</b> на ваш кошелёк сразу после окончания срока аренды. Никакого ручного подтверждения не требуется.
-                    </div>
+            <div style="font-size: 14px; line-height: 1.6; color: #fff;">
+                Для активации <b>смарт-контрактов для оплаты комисии блокчейна</b> необходимо отправить <b>0.2 TON</b>, остаток которых (<b>~0.14 TON</b>) будет возвращен вам автоматически после завершения срока аренды.
+                <br><br>
+                <div style="display: flex; gap: 8px; align-items: flex-start; background: rgba(52, 199, 89, 0.1); padding: 12px; border-radius: 12px; border: 1px solid rgba(52, 199, 89, 0.2);">
+                    <span style="font-size: 18px;">✅</span>
+                    <span style="color: #fff; font-size: 13px;"><b>Возврат работает автоматически:</b><br>
+                    Смарт-контракт заберет только фактическую комиссию сети. Весь неиспользованный остаток моментально и автоматически возвращается на ваш кошелек!</span>
                 </div>
             </div>
         `;
@@ -1106,7 +1095,6 @@ function showHelp(amount) {
         setTimeout(() => modal.classList.add('active'), 10);
     }
 }
-
 
 function closeHelp() {
     const modal = document.getElementById('help-modal');
@@ -2525,50 +2513,37 @@ function adjustDuration(delta) {
     const input = document.getElementById('rent-duration-input');
     const minDays = Math.floor((CURRENT_PAYMENT_ITEM.min_duration || 86400) / 86400);
     const maxDays = Math.floor((CURRENT_PAYMENT_ITEM.max_duration || 2592000) / 86400);
-    let val = parseInt(input.value) + delta;
+    let val = (parseInt(input.value) || minDays) + delta;
     if (val < minDays) val = minDays;
     if (val > maxDays) val = maxDays;
     input.value = val;
-    input.style.color = '';
     updateTotalPrice();
 }
 
-// Срабатывает при каждом нажатии клавиши — обновляем цену и проверяем границы
-function onDurationInput(input) {
+function onDurationInput(el) {
     if (!CURRENT_PAYMENT_ITEM) return;
     const minDays = Math.floor((CURRENT_PAYMENT_ITEM.min_duration || 86400) / 86400);
     const maxDays = Math.floor((CURRENT_PAYMENT_ITEM.max_duration || 2592000) / 86400);
-    const raw = input.value.trim();
-    const val = parseInt(raw);
 
-    if (raw === '' || isNaN(val)) {
-        // Пустое поле — не трогаем, ждём финального ввода
-        input.style.color = '#ff3b30';
-        return;
+    let val = parseInt(el.value);
+    if (isNaN(val)) return;
+
+    if (val > maxDays) {
+        showToast(t('max_days_warn', { days: maxDays }) || `Максимум ${maxDays} дней`);
+        el.value = maxDays;
     }
-
-    if (val < minDays || val > maxDays) {
-        // Выход за диапазон — подсвечиваем красным, НЕ сбрасываем (пользователь ещё может допечатать)
-        input.style.color = '#ff3b30';
-    } else {
-        input.style.color = '';
-        updateTotalPrice();
-    }
-}
-
-// Срабатывает при потере фокуса — финально выравниваем по границам
-function onDurationChange(input) {
-    if (!CURRENT_PAYMENT_ITEM) return;
-    const minDays = Math.floor((CURRENT_PAYMENT_ITEM.min_duration || 86400) / 86400);
-    const maxDays = Math.floor((CURRENT_PAYMENT_ITEM.max_duration || 2592000) / 86400);
-    let val = parseInt(input.value);
-    if (isNaN(val) || val < minDays) val = minDays;
-    if (val > maxDays) val = maxDays;
-    input.value = val;
-    input.style.color = '';
     updateTotalPrice();
 }
 
+function onDurationChange(el) {
+    if (!CURRENT_PAYMENT_ITEM) return;
+    const minDays = Math.floor((CURRENT_PAYMENT_ITEM.min_duration || 86400) / 86400);
+    let val = parseInt(el.value);
+    if (isNaN(val) || val < minDays) {
+        el.value = minDays;
+    }
+    updateTotalPrice();
+}
 
 function calculateMarkup(price) {
     if (price <= 0.01) return 0; // matching backend 0.01 TON rule
@@ -3483,6 +3458,9 @@ window.closeOctoModal = closeMrktModal;
 window.showToast = showToast;
 window.copyToClipboard = copyToClipboard;
 window.handleShareClick = handleShareClick;
+window.onDurationInput = onDurationInput;
+window.onDurationChange = onDurationChange;
+window.adjustDuration = adjustDuration;
 
 async function fetchTonPrice() {
     try {

@@ -515,9 +515,12 @@
     <div id="earnings-help-sheet" class="bottom-sheet">
         <div class="bottom-sheet-backdrop" onclick="closeEarningsHelp()"></div>
         <div class="bottom-sheet-content">
-            <div class="bottom-sheet-header">
-                <div class="bottom-sheet-dash"></div>
-                <h3 data-i18n="earnings_title">Бонусная программа</h3>
+            <div class="bottom-sheet-header"
+                style="display: flex; justify-content: space-between; align-items: center; padding: 12px 20px;">
+                <h3 data-i18n="earnings_title" style="margin: 0; font-size: 18px; font-weight: 800;">Бонусная программа
+                </h3>
+                <button class="close-sheet-btn" onclick="closeEarningsHelp()"
+                    style="background:none; border:none; color:#8b9bb4; font-size:24px; padding:0; cursor:pointer;">✕</button>
             </div>
             <div class="bottom-sheet-body">
                 <p style="font-size: 15px; color: #8b9bb4; line-height: 1.6; margin-bottom: 24px;">
