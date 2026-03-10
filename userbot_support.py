@@ -1,6 +1,8 @@
 import os
 import logging
 import asyncio
+import base64
+import io
 from dotenv import load_dotenv
 from pyrogram import Client, filters
 from pyrogram.types import Message
@@ -16,9 +18,8 @@ logging.basicConfig(
     ]
 )
 
+# Переменные окружения
 load_dotenv(override=True)
-
-# Конфигурация
 API_ID = os.getenv("TELEGRAM_API_ID")
 API_HASH = os.getenv("TELEGRAM_API_HASH")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
@@ -30,107 +31,110 @@ if not all([API_ID, API_HASH, GROQ_API_KEY]):
 # Инициализация Groq
 groq_client = Groq(api_key=GROQ_API_KEY)
 
-# Системная инструкция для ИИ
+# СИСТЕМНАЯ ИНСТРУКЦИЯ (Очищенная и объединенная)
 SYSTEM_INSTRUCTION = """
-Ты — EXPERT SUPPORT AI проекта OctoRent. Твоя личность: опытный технический специалист, который знает проект от «А» до «Я».
-Твой стиль: дружелюбный эксперт (на «ты»), четкий, использующий эмодзи для наглядности.
+Ты — EXPERT SUPPORT AI проекта OctoRent. Технический гений, который знает все тонкости.
+Твой стиль: на «ты», дружелюбный, но строгий в вопросах конфиденциальности. Используй эмодзи.
 
-### КРАТКО О ПРОЕКТЕ
-OctoRent — это маркетплейс в Telegram для аренды NFT-активов:
-1. Telegram Gifts (NFT Подарки)
-2. Anonymous Numbers (+888)
-3. Usernames (@юзернеймы)
-Все операции проходят через смарт-контракты в сети TON. Основной бот проекта: @OctoRent_bot.
+### 🔴 СТРОГИЕ ЗАПРЕТЫ
+1. НИКОГДА не используй слово «НАЦЕНКА». Используй только «Комиссия сервиса».
+2. Если спрашивают про наценку или почему дороже — отвечай: «Комиссия сервиса OctoRent уже включена в цену, она нужна для работы системы и выплат рефералам».
+3. Если спрашивают про размер комиссии — отвечай: «Комиссия фиксированная: 0.2 TON за активацию смарт-контракта в сети TON и дополнительные 0.1 TON при оплате через @xrocket».
+4. Не показывай внутреннюю таблицу наценок (Markup).
 
-### 💰 ДЕНЬГИ И ЦЕНООБРАЗОВАНИЕ (МЕГА-ВАЖНО!)
-Цена для пользователя складывается из: (Цена продавца + Наценка сервиса) * Кол-во дней + 0.2 TON (Депозит на газ).
+### 💰 ДЕНЬГИ И СМАРТ-КОНТРАКТЫ
+- АКТИВАЦИЯ (0.2 TON): Это депозит для сети TON на активацию смарт-контракта.
+- ЧТО ВЕРНЕТСЯ?: Около 0.14 TON вернется тебе на кошелек СРАЗУ после ОКОНЧАНИЯ АРЕНДЫ. Это возврат за неиспользованный TON.
+- XROCKET: Доп. комиссия 0.1 TON (фи самого бота).
+- USDT: Принимаем через TonConnect.
 
-**Наша наценка (Markup):**
-- До 0.01 TON -> +0.05 TON
-- До 0.1 TON -> +0.05 TON
-- До 0.25 TON -> +0.1 TON
-- До 0.5 TON -> +0.15 TON
-- До 1.0 TON -> +0.25 TON
-- До 2.5 TON -> +0.45 TON
-- До 5.0 TON -> +0.75 TON
-- Свыше 5.0 TON -> +1.0 TON
+### 👥 ПАРТНЕРКА
+- Реферал приносит тебе **25% от комиссии сервиса**. Вывод от 0.1 TON.
 
-**Комиссии и Газ:**
-- ПРИ ОПЛАТЕ ТОНОМ: Пользователь всегда отправляет цену аренды + 0.2 TON. 
-- ВОЗВРАТ ГАЗА: Блокчейн TON автоматически возвращает около 0.14 TON обратно на кошелек пользователя сразу после завершения транзакции привязки. Это НЕ наши деньги, это возврат неизрасходованного лимита газа сети.
-- ПРИ ОПЛАТЕ ЧЕРЕЗ XROCKET: Берется доп. комиссия 0.1 TON (это фи за вывод из платежного бота).
+### ⚙️ ТЕХНИЧЕСКИЕ ТАЙНЫ
+- Срок аренды: от 1 до 180 дней.
+- Fragment: Может не видеть транзакцию до 1-2 минут. Нужно просто подождать.
+- Безопасность: Мы не храним сид-фразы. Работа через официальные кошельки (Tonkeeper и др.).
 
-### 💳 МЕТОДЫ ОПЛАТЫ
-1. TON (прямой перевод через TonConnect/Кошелек).
-2. xRocket (удобно, если TON лежит в боте).
-3. USDT (через TonConnect).
-4. КАРТЫ РФ / СБП (CloudTips): Минимум 15 рублей. Скоро в полноценном доступе.
-
-
-### 👥 ПАРТНЕРСКАЯ ПРОГРАММА
-- Реферер получает **25% от наценки сервиса** (не от всей суммы) с каждой аренды приглашенного друга.
-- Бонусы начисляются в TON на внутренний баланс.
-- Вывод бонусов возможен напрямую на кошелек при накоплении от 0.1 TON через раздел «Рефералы».
-
-### ⚙️ ТЕХНИЧЕСКИЕ ТОНКОСТИ
-- Срок аренды: от 1 до 30 дней.
-- Предзаказ: Если подарок сейчас кем-то арендован (статус rented), его можно арендовать заранее (preorder).
-- Почему привязка не сразу? Fragment (официальный маркет Телеграм) иногда видит блокчейн-транзакцию с задержкой до 1 минуты. Нужно просто подождать.
-
-### 🛡 ПРАВИЛА И ВОЗВРАТЫ
-- Возвратов НЕТ: Блокчейн TON — это база данных, которую нельзя изменить. После оплаты смарт-контракт фиксирует аренду, и отменить её технически невозможно.
-- Если что-то не получается: Проверьте баланс (нужно иметь +0.25 TON сверху для газа) или обновите кошелек.
-
-### 📞 КОНТАКТЫ
-- Тех. ошибки и баги: @Paulie_Gualtiery
-- Общие вопросы и администрация: @OctoRent_Support
-- Админ: @nerksqq
+### 👁️ КОМПЬЮТЕРНОЕ ЗРЕНИЕ (VISION)
+Ты видишь скриншоты и фото, которые присылает пользователь. Анализируй их внимательно (ошибки, баланс, статусы) и помогай.
+Если видишь баг или явную ошибку:
+Отвечай: «Я вижу проблему на скриншоте. Передал описание нашему разработчику @Paulie_Gualtiery. Он всё проверит и свяжется с тобой».
 
 ПРАВИЛА ОТВЕТА:
-- Никогда не выдумывай цифры, если их нет в этой инструкции.
-- Если юзер злится — будь спокоен, объясни всё технически (про газ, про блокчейн).
-- Предлагай ссылки на @OctoRent_bot для аренды.
+- Только на русском.
+- Направляй в @OctoRent_bot для аренды.
 """
 
 # Инициализация Pyrogram
-# session_name может быть любым, при первом запуске попросит код
 app = Client("octorent_userbot", api_id=API_ID, api_hash=API_HASH)
 
-async def get_ai_response(user_text):
-    """Запрос к Groq API (Llama 3.1)"""
+async def get_ai_response(user_text, image_b64=None):
+    """Мультимодальный запрос к Groq (Llama 3.2 Vision)"""
     try:
+        # Если есть фото — используем Vision модель
+        model = "llama-3.2-11b-vision-preview" if image_b64 else "llama-3.1-8b-instant"
+        
+        content = [{"type": "text", "text": user_text}]
+        if image_b64:
+            content.append({
+                "type": "image_url",
+                "image_url": {"url": f"data:image/jpeg;base64,{image_b64}"}
+            })
+
         completion = groq_client.chat.completions.create(
-            model="llama-3.1-8b-instant", # Быстрая и бесплатная модель
+            model=model,
             messages=[
                 {"role": "system", "content": SYSTEM_INSTRUCTION},
-                {"role": "user", "content": user_text}
+                {"role": "user", "content": content}
             ],
-            temperature=0.7,
-            max_tokens=500
+            temperature=0.6,
+            max_tokens=600
         )
         return completion.choices[0].message.content
     except Exception as e:
         logging.error(f"❌ Ошибка Groq API: {e}")
-        return "Извини, я сейчас немного притормаживаю. Попробуй спросить чуть позже или напиши в @OctoRent_Support."
+        return "Извини, я тут немного притормаживаю. Напиши, пожалуйста, в @OctoRent_Support, там помогут быстрее."
 
 @app.on_message(filters.private & ~filters.me)
-async def handle_private_message(client, message: Message):
-    """Обработка личных сообщений (кроме своих)"""
-    if not message.text:
+async def handle_private_message(client: Client, message: Message):
+    """Обработка ЛС с поддержкой фото"""
+    user_text = message.text or message.caption or ""
+    image_b64 = None
+
+    if message.photo:
+        try:
+            logging.info("📸 Загрузка фото для анализа...")
+            photo_buffer = await client.download_media(message, in_memory=True)
+            if photo_buffer:
+                image_b64 = base64.b64encode(photo_buffer.getbuffer()).decode('utf-8')
+        except Exception as e:
+            logging.error(f"❌ Ошибка загрузки фото: {e}")
+
+    if not user_text and not image_b64:
         return
 
-    user_id = message.from_user.id
-    text = message.text
+    user_name = message.from_user.username or message.from_user.full_name
+    logging.info(f"📩 От @{user_name}: {user_text} [Vision: {bool(image_b64)}]")
 
-    logging.info(f"📩 Сообщение от {user_id}: {text}")
-
-    # ИИ генерирует ответ
-    ai_reply = await get_ai_response(text)
+    # Пересылка багов разработчику
+    bug_keywords = ["баг", "ошибка", "не работает", "проблема", "выдаёт", "error", "bug", "скрин", "глюк"]
+    is_bug = any(word in user_text.lower() for word in bug_keywords) or (image_b64 and not user_text)
     
-    # Отправка ответа пользователю
+    if is_bug:
+        try:
+            await message.forward("Paulie_Gualtiery")
+            await client.send_message("Paulie_Gualtiery", f"⚠️ **Репорт!** От @{user_name}\nТекст: {user_text}")
+        except Exception as e:
+            logging.error(f"❌ Ошибка пересылки: {e}")
+
+    # Ответ ИИ
+    prompt = user_text if user_text else "[Пользователь прислал скриншот]"
+    ai_reply = await get_ai_response(prompt, image_b64)
+    
     await message.reply_text(ai_reply)
     logging.info(f"📤 Ответ ИИ: {ai_reply}")
 
 if __name__ == "__main__":
-    logging.info("🚀 Запуск ИИ-Юзербота OctoRent...")
+    logging.info("🚀 Запуск ИИ-Юзербота OctoRent (Vision Mode)...")
     app.run()
