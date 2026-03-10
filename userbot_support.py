@@ -38,15 +38,14 @@ SYSTEM_INSTRUCTION = """
 
 ### 🔴 СТРОГИЕ ЗАПРЕТЫ
 1. НИКОГДА не используй слово «НАЦЕНКА». Используй только «Комиссия сервиса».
-2. Если спрашивают про наценку или почему дороже — отвечай: «Комиссия сервиса OctoRent уже включена в цену, она нужна для работы системы и выплат рефералам».
-3. Если спрашивают про размер комиссии — отвечай: «Комиссия фиксированная: 0.2 TON за активацию смарт-контракта в сети TON и дополнительные 0.1 TON при оплате через @xrocket».
-4. Не показывай внутреннюю таблицу наценок (Markup).
+2. Если спрашивают про размер комиссии — отвечай: «Комиссия фиксированная: 0.2 TON за активацию смарт-контракта в сети TON и дополнительные 0.1 TON при оплате через @xrocket».
+3. Не показывай внутреннюю таблицу наценок (Markup).
 
 ### 💰 ДЕНЬГИ И СМАРТ-КОНТРАКТЫ
 - АКТИВАЦИЯ (0.2 TON): Это депозит для сети TON на активацию смарт-контракта.
 - ЧТО ВЕРНЕТСЯ?: Около 0.14 TON вернется тебе на кошелек СРАЗУ после ОКОНЧАНИЯ АРЕНДЫ. Это возврат за неиспользованный TON.
 - XROCKET: Доп. комиссия 0.1 TON (фи самого бота).
-- USDT: Принимаем через TonConnect.
+
 
 ### 👥 ПАРТНЕРКА
 - Реферал приносит тебе **25% от комиссии сервиса**. Вывод от 0.1 TON.
@@ -62,7 +61,7 @@ SYSTEM_INSTRUCTION = """
 Отвечай: «Я вижу проблему на скриншоте. Передал описание нашему разработчику @Paulie_Gualtiery. Он всё проверит и свяжется с тобой».
 
 ПРАВИЛА ОТВЕТА:
-- Только на русском.
+- Отвечать на том языке на котором задан вопрос .
 - Направляй в @OctoRent_bot для аренды.
 """
 
@@ -71,9 +70,13 @@ app = Client("octorent_userbot", api_id=API_ID, api_hash=API_HASH)
 
 async def get_ai_response(user_text, image_b64=None):
     """Мультимодальный запрос к Groq (Llama 3.2 Vision)"""
+    # Если есть фото — используем Vision модель, если нет — быструю текстовую
+    # Используем 90b версию, так как 11b была выведена из эксплуатации (decommissioned)
+    vision_model = "llama-3.2-90b-vision-preview" 
+    text_model = "llama-3.1-8b-instant"
+    
     try:
-        # Если есть фото — используем Vision модель
-        model = "llama-3.2-11b-vision-preview" if image_b64 else "llama-3.1-8b-instant"
+        model = vision_model if image_b64 else text_model
         
         content = [{"type": "text", "text": user_text}]
         if image_b64:
@@ -93,7 +96,23 @@ async def get_ai_response(user_text, image_b64=None):
         )
         return completion.choices[0].message.content
     except Exception as e:
-        logging.error(f"❌ Ошибка Groq API: {e}")
+        logging.warning(f"⚠️ Ошибка с моделью {model}, пробую откат на текст: {e}")
+        # Если Vision упал (например, из-за лимитов или модели), пробуем ответить текстом
+        if image_b64:
+             try:
+                 completion = groq_client.chat.completions.create(
+                    model=text_model,
+                    messages=[
+                        {"role": "system", "content": SYSTEM_INSTRUCTION},
+                        {"role": "user", "content": user_text}
+                    ],
+                    temperature=0.6,
+                    max_tokens=600
+                )
+                 return completion.choices[0].message.content + "\n\n(P.S. Я не смог проанализировать скриншот из-за тех. проблем, ответил только на текст)."
+             except Exception as e_inner:
+                 logging.error(f"❌ Ошибка даже при откате: {e_inner}")
+        
         return "Извини, я тут немного притормаживаю. Напиши, пожалуйста, в @OctoRent_Support, там помогут быстрее."
 
 @app.on_message(filters.private & ~filters.me)
