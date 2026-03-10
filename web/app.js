@@ -2511,7 +2511,7 @@ function adjustDuration(delta) {
     if (!CURRENT_PAYMENT_ITEM) return;
 
     const input = document.getElementById('rent-duration-input');
-    const minDays = Math.ceil((CURRENT_PAYMENT_ITEM.min_duration || 86400) / 86400);
+    const minDays = Math.floor((CURRENT_PAYMENT_ITEM.min_duration || 86400) / 86400);
     const maxDays = Math.floor((CURRENT_PAYMENT_ITEM.max_duration || 2592000) / 86400);
     let val = (parseInt(input.value) || minDays) + delta;
     if (val < minDays) val = minDays;
@@ -2522,7 +2522,7 @@ function adjustDuration(delta) {
 
 function onDurationInput(el) {
     if (!CURRENT_PAYMENT_ITEM) return;
-    const minDays = Math.ceil((CURRENT_PAYMENT_ITEM.min_duration || 86400) / 86400);
+    const minDays = Math.floor((CURRENT_PAYMENT_ITEM.min_duration || 86400) / 86400);
     const maxDays = Math.floor((CURRENT_PAYMENT_ITEM.max_duration || 2592000) / 86400);
 
     let val = parseInt(el.value);
@@ -2537,7 +2537,7 @@ function onDurationInput(el) {
 
 function onDurationChange(el) {
     if (!CURRENT_PAYMENT_ITEM) return;
-    const minDays = Math.ceil((CURRENT_PAYMENT_ITEM.min_duration || 86400) / 86400);
+    const minDays = Math.floor((CURRENT_PAYMENT_ITEM.min_duration || 86400) / 86400);
     let val = parseInt(el.value);
     if (isNaN(val) || val < minDays) {
         el.value = minDays;
@@ -2559,7 +2559,7 @@ function calculateMarkup(price) {
 function updateTotalPrice() {
     if (!CURRENT_PAYMENT_ITEM) return;
     const input = document.getElementById('rent-duration-input');
-    const minDays = Math.ceil((CURRENT_PAYMENT_ITEM.min_duration || 86400) / 86400);
+    const minDays = Math.floor((CURRENT_PAYMENT_ITEM.min_duration || 86400) / 86400);
     let dur = parseInt(input.value) || minDays;
     if (dur < minDays) {
         dur = minDays;
@@ -3672,10 +3672,40 @@ async function handleContinuePayment() {
         await handleUsdtRent();
     } else if (method === 'XROCKET') {
         await handleBotRent(method);
+    } else if (method === 'CLOUDTIPS') {
+        await handleCloudTipsRent();
     } else if (method === 'RUB') {
         await handleRubRent();
     } else {
         showToast("Выберите способ оплаты");
+    }
+}
+
+async function handleCloudTipsRent() {
+    if (!CURRENT_PAYMENT_ITEM) return;
+
+    const nft_address = CURRENT_PAYMENT_ITEM.nft_address;
+    const days = parseInt(document.getElementById('rent-duration-input').value) || 1;
+
+    try {
+        showToast("Создаем счет...");
+        const res = await apiFetch(`${BACKEND_URL}/api/create_cloudtips_invoice`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nft_address, days })
+        });
+        const data = await res.json();
+
+        if (data.payment_url) {
+            tg.openLink(data.payment_url);
+            closePaymentModal();
+            showToast("Переходим к оплате...");
+        } else {
+            tg.showAlert("Ошибка при создании счета: " + (data.error || "Неизвестная ошибка"));
+        }
+    } catch (e) {
+        console.error("CloudTips error:", e);
+        tg.showAlert("Ошибка соединения с сервером");
     }
 }
 

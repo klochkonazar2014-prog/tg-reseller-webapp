@@ -421,6 +421,49 @@ async def handle_create_fiat_invoice(request):
         logging.error(f"Error creating fiat invoice: {e}")
         return web.json_response({"error": str(e)}, status=500)
 
+async def handle_create_cloudtips_invoice(request):
+    """Генерация ссылки на оплату CloudTips"""
+    try:
+        data = await request.json()
+        nft_address = data.get('nft_address')
+        days = int(data.get('days', 1))
+        
+        user_id = get_authenticated_user_id(request)
+        if not user_id: return web.json_response({"error": "Unauthorized"}, status=401)
+        
+        # 1. Создаем заказ
+        res, err = await create_rental_order(user_id, nft_address, days)
+        if err: return web.json_response({"error": err}, status=404)
+        
+        order_id = res['order_id']
+        total_ton = res['total_price']
+        
+        # 2. Получаем курс
+        rates = await fetch_fiat_rates()
+        ton_rub = rates.get('RUB', 230)
+        
+        # 3. Считаем сумму в рублях (с запасом 5% на волатильность)
+        fiat_amount = round(total_ton * ton_rub * 1.05, 2)
+        if fiat_amount < 15: fiat_amount = 15 # Минимум 15 рублей
+        
+        ct_id = os.getenv("CLOUDTIPS_ID", "YOUR_CLOUDTIPS_ID")
+        
+        # Формируем ссылку: https://pay.cloudtips.ru/p/ID?amount=X&fixed=1&invoiceId=Y
+        payment_url = f"https://pay.cloudtips.ru/p/{ct_id}?amount={fiat_amount}&fixed=1&invoiceId={order_id}"
+        
+        # Обновляем заказ
+        async with db.aiosqlite.connect(db.DB_PATH) as conn:
+            await conn.execute(
+                "UPDATE orders SET currency = 'RUB', payment_gateway = 'cloudtips', fiat_amount = ?, external_id = ? WHERE id = ?",
+                (fiat_amount, str(order_id), order_id)
+            )
+            await conn.commit()
+            
+        return web.json_response({"status": "ok", "order_id": order_id, "payment_url": payment_url, "fiat_amount": fiat_amount})
+    except Exception as e:
+        logging.error(f"Error creating CloudTips invoice: {e}")
+        return web.json_response({"error": str(e)}, status=500)
+
 async def handle_get_usdt_payload(request):
     """
     Generates a Jetton Transfer payload for USDT payment via TonConnect.
@@ -1106,6 +1149,31 @@ async def handle_xrocket_webhook(request):
         logging.error(f"xRocket Webhook Error: {e}", exc_info=True)
         return web.Response(text="Internal Error", status=500)
 
+async def handle_cloudtips_webhook(request):
+    """Обработчик вебхуков CloudTips"""
+    try:
+        # CloudTips шлет POST с JSON или формой. Проверяем сигнатуру если есть ключ.
+        data = await request.json()
+        logging.info(f"☁️ CloudTips Webhook received: {data}")
+        
+        # Параметры из доки: amount, invoiceid, transactionid
+        invoice_id_raw = data.get("invoiceid")
+        status = data.get("status", "Success") # Может быть в другом поле, но InvoiceId — главный признак оплаты
+        
+        if invoice_id_raw:
+            try:
+                order_id = int(invoice_id_raw)
+                await db.update_order_status(order_id, "paid")
+                logging.info(f"✅ Заказ {order_id} оплачен через CloudTips")
+                return web.Response(text="OK")
+            except Exception as e:
+                logging.error(f"Error processing CloudTips invoice {invoice_id_raw}: {e}")
+        
+        return web.Response(text="OK")
+    except Exception as e:
+        logging.error(f"CloudTips Webhook Error: {e}")
+        return web.Response(text="Error", status=500)
+
 
 @web.middleware
 async def cors_middleware(request, handler):
@@ -1143,10 +1211,11 @@ app.add_routes([
     web.get('/api/rates', handle_get_rates),
     web.post('/api/create_fiat_invoice', handle_create_fiat_invoice),
     web.post('/api/create_bot_invoice', handle_create_bot_invoice),
+    web.post('/api/create_cloudtips_invoice', handle_create_cloudtips_invoice),
     web.get('/api/get_usdt_payload', handle_get_usdt_payload),
     web.post('/api/webhooks/freekassa', handle_freekassa_webhook),
-
     web.post('/api/webhooks/xrocket', handle_xrocket_webhook),
+    web.post('/api/webhooks/cloudtips', handle_cloudtips_webhook),
 ])
 
 
