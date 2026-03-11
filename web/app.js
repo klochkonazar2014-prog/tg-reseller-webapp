@@ -2604,18 +2604,23 @@ function updateTotalPrice() {
     const cardWarning = document.getElementById('card-limit-warning');
     const cardMethod = document.getElementById('pay-method-cloudtips');
 
-    if (payPriceRub && FIAT_RATES.RUB) {
-        // total is already (rental_fee + 0.2 gas markup)
-        let rubVal = Math.round(parseFloat(total) * FIAT_RATES.RUB * FIAT_FEE_MULTIPLIER);
-        
-        if (rubVal < 49) {
-            if (cardWarning) cardWarning.style.display = 'flex';
-            if (cardMethod) cardMethod.style.display = 'none';
-            payPriceRub.innerText = rubVal;
+    if (payPriceRub) {
+        if (FIAT_RATES.RUB) {
+            // total is already (rental_fee + 0.2 gas markup)
+            let rubVal = Math.round(parseFloat(total) * FIAT_RATES.RUB * FIAT_FEE_MULTIPLIER);
+            
+            if (rubVal < 49) {
+                if (cardWarning) cardWarning.style.display = 'flex';
+                if (cardMethod) cardMethod.style.display = 'none';
+                payPriceRub.innerText = rubVal;
+            } else {
+                if (cardWarning) cardWarning.style.display = 'none';
+                if (cardMethod) cardMethod.style.display = 'flex';
+                payPriceRub.innerText = rubVal;
+            }
         } else {
-            if (cardWarning) cardWarning.style.display = 'none';
-            if (cardMethod) cardMethod.style.display = 'flex';
-            payPriceRub.innerText = rubVal;
+            payPriceRub.innerText = '...';
+            if (cardMethod) cardMethod.style.display = 'none';
         }
     }
 
@@ -3392,6 +3397,7 @@ function startPollingOrder(orderId) {
                     clearInterval(ORDER_POLL_INTERVAL);
                     ORDER_POLL_INTERVAL = null;
                     tg.HapticFeedback.notificationOccurred('success');
+                    closePaymentModal(); // Close modal if open
                     openTcModal(orderId, false, true); // Switch to input mode
                 } else if (myOrder.status === 'active') {
                     // Уже все готово
@@ -3662,7 +3668,6 @@ function updateMethodTotal(baseTotal) {
     if (!totalAmountEl) return;
     const base = parseFloat(baseTotal) || 0;
     let total;
-
     if (SELECTED_PAY_METHOD === 'CLOUDTIPS') {
         let rubVal = Math.round(base * FIAT_RATES.RUB * FIAT_FEE_MULTIPLIER);
         if (rubVal < 49) rubVal = 49;
@@ -3719,7 +3724,6 @@ async function handleCloudTipsRent() {
 
         if (data.payment_url) {
             tg.openLink(data.payment_url);
-            closePaymentModal();
             showToast("Переходим к оплате...");
         } else {
             tg.showAlert("Ошибка при создании счета: " + (data.error || "Неизвестная ошибка"));
@@ -3742,25 +3746,58 @@ function showBlockchainFeeDetails(e) {
     if (!modal) return;
 
     const body = document.getElementById('fee-details-body');
-    body.innerHTML = `
-        <div style="font-size: 14px; line-height: 1.6; color: #fff;">
-            <p style="color: #8b9bb4;">Для обработки транзакции необходимо отправить <b>0.2 TON</b>, остаток которых (<b>~0.14 TON</b>) будет возвращен вам автоматически после завершения срока аренды.</p>
-            
-            <p style="margin-top: 14px;"><b>Если оплата через xRocket:</b></p>
-            <p style="color: #8b9bb4;">Необходимо добавить <b>0.1 TON</b> — это комиссия платежного бота за вывод средств на внешний кошелек.</p>
-            
-            <p style="margin-top: 14px;"><b>Зачем сервису выводить деньги на внешний кошелек?</b></p>
-            <p style="color: #8b9bb4;">Это необходимо для прямого взаимодействия со смарт-контрактом Fragment, так как внутренние кошельки ботов не поддерживают выполнение сложных транзакций с контрактами.</p>
-            
-            <p style="margin-top: 14px;"><b>Как рассчитывается итоговая цена:</b></p>
-            <ul style="color: #8b9bb4; padding-left: 20px; margin-top: 6px;">
-                <li><b>TON Wallet:</b> Цена товара + комиссия сети (0.2 TON).</li>
-                <li><b>xRocket:</b> Цена + 0.2 сеть + 0.1 вывод.</li>
-            </ul>
-        </div>
-    `;
+    
+    if (SELECTED_PAY_METHOD === 'CLOUDTIPS') {
+        body.innerHTML = `
+            <div style="font-size: 14px; line-height: 1.6; color: #fff;">
+                <p style="color: #fff; font-weight: 700; margin-bottom: 12px; font-size: 15px;">Как рассчитывается цена в рублях:</p>
+                <p style="color: #8b9bb4; margin-bottom: 16px;">Поскольку аренда происходит в сети TON, все расчеты привязаны к курсу криптовалюты.</p>
+                
+                <div style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 12px; margin-bottom: 16px;">
+                    <div style="font-family: monospace; font-size: 13px; color: #00d488; margin-bottom: 4px;">Формула:</div>
+                    <div style="font-size: 15px; font-weight: 700;">(TON + 0.2) × Курс × 1.05</div>
+                </div>
+
+                <ul style="color: #8b9bb4; padding-left: 20px; list-style-type: decimal;">
+                    <li style="margin-bottom: 8px;"><b>TON + 0.2:</b> Стоимость аренды + фиксированная комиссия сети за смарт-контракт.</li>
+                    <li style="margin-bottom: 8px;"><b>Курс:</b> Текущий курс TON к RUB (по данным TonAPI).</li>
+                    <li style="margin-bottom: 8px;"><b>1.05:</b> Наценка 5% за банковский эквайринг и вывод средств для оплаты аренды.</li>
+                </ul>
+
+                <p style="color: #FF9500; font-size: 12px; margin-top: 16px; display: flex; gap: 8px; align-items: flex-start;">
+                    <span>⚠️</span>
+                    <span>Минимальная сумма платежа картой — 49 ₽. Если итоговая сумма меньше, вы увидите предупреждение.</span>
+                </p>
+            </div>`;
+    } else {
+        body.innerHTML = `
+            <div style="font-size: 14px; line-height: 1.6; color: #fff;">
+                <p style="color: #8b9bb4;">Для обработки транзакции необходимо отправить <b>0.2 TON</b>, остаток которых (<b>~0.14 TON</b>) будет возвращен вам автоматически после завершения срока аренды.</p>
+                
+                <p style="margin-top: 14px;"><b>Если оплата через xRocket:</b></p>
+                <p style="color: #8b9bb4;">Необходимо добавить <b>0.1 TON</b> — это комиссия платежного бота за вывод средств на внешний кошелек.</p>
+                
+                <p style="margin-top: 14px;"><b>Зачем сервису выводить деньги на внешний кошелек?</b></p>
+                <p style="color: #8b9bb4;">Это необходимо для прямого взаимодействия со смарт-контрактом Fragment, так как внутренние кошельки ботов не поддерживают выполнение сложных транзакций с контрактами.</p>
+                
+                <p style="margin-top: 14px;"><b>Как рассчитывается итоговая цена:</b></p>
+                <ul style="color: #8b9bb4; padding-left: 20px; margin-top: 6px;">
+                    <li><b>TON Wallet:</b> Цена товара + комиссия сети (0.2 TON).</li>
+                    <li><b>xRocket:</b> Цена + 0.2 сеть + 0.1 вывод.</li>
+                </ul>
+            </div>`;
+    }
 
     modal.style.display = 'flex';
+    setTimeout(() => {
+        const overlay = modal.querySelector('.modal-overlay');
+        const content = modal.querySelector('.modal-content');
+        if (overlay) overlay.style.opacity = '1';
+        if (content) {
+            content.style.transform = 'translateY(0)';
+            content.style.opacity = '1';
+        }
+    }, 10);
 }
 
 function closeBlockchainFeeDetails() {
