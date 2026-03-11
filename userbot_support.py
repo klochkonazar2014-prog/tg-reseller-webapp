@@ -71,8 +71,8 @@ app = Client("octorent_userbot", api_id=API_ID, api_hash=API_HASH)
 async def get_ai_response(user_text, image_b64=None):
     """Мультимодальный запрос к Groq (Llama 3.2 Vision)"""
     # Если есть фото — используем Vision модель, если нет — быструю текстовую
-    # Используем 90b версию, так как 11b была выведена из эксплуатации (decommissioned)
-    vision_model = "llama-3.2-90b-vision-preview" 
+    # Используем Llama 4 Scout, так как серия Llama 3.2 Vision была полностью отключена Гроком
+    vision_model = "meta-llama/llama-4-scout-17b-16e-instruct" 
     text_model = "llama-3.1-8b-instant"
     
     try:
