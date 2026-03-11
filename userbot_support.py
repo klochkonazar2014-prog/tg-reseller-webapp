@@ -3,6 +3,8 @@ import logging
 import asyncio
 import base64
 import io
+import time
+from collections import defaultdict
 from dotenv import load_dotenv
 from pyrogram import Client, filters
 from pyrogram.types import Message
@@ -31,129 +33,179 @@ if not all([API_ID, API_HASH, GROQ_API_KEY]):
 # Инициализация Groq
 groq_client = Groq(api_key=GROQ_API_KEY)
 
-# СИСТЕМНАЯ ИНСТРУКЦИЯ (Очищенная и объединенная)
+# --- ГЛУБОКИЕ ЗНАНИЯ И ИНСТРУКЦИИ ---
 SYSTEM_INSTRUCTION = """
-Ты — EXPERT SUPPORT AI проекта OctoRent. Технический гений, который знает все тонкости.
-Твой стиль: на «ты», дружелюбный, но строгий в вопросах конфиденциальности. Используй эмодзи.
+Ты — EXPERT SUPPORT AI проекта OctoRent. Технический гений, который знает проект на уровне кода.
+Твой стиль: на «ты», дружелюбный, но строгий. Используй эмодзи.
+
+### 🧠 ГЛУБОКИЕ ТЕХНИЧЕСКИЕ ЗНАНИЯ (OctoRent Wiki)
+- **Архитектура**: Мы работаем через Mini App (acd_app.js), Backend (live_server.py) и Auto-Buyer (auto_buyer.py).
+- **Оплата (Три кита)**:
+  1. TON (Прямой перевод на кошелек): Самый надежный.
+  2. xRocket: Удобно, но доп. комиссия 0.1 TON за вывод из их бота.
+  3. USDT (TonConnect): Прямая оплата Jettons.
+  4. CloudTips: Поддержка карт РФ и СБП (в процессе финальной калибровки).
+- **Смарт-контракты**: При аренде вызывается контракт. Депозит 0.2 TON обязателен. Кэшбэк/возврат газа (~0.14 TON) приходит СРАЗУ (в ту же секунду) ПОСЛЕ ОКОНЧАНИЯ АРЕНДЫ (при возврате актива).
+- **Fragment**: Блокчейн TON иногда лагает. Транзакция может появиться в Fragment через 1-2 минуты. Нужно просто ждать.
+- **Длительность**: От 1 до 180 дней. После срока NFT отвязывается сама.
+- **Партнерка**: 25% от нашей прибыли (комиссии сервиса). Вывод от 0.1 TON.
 
 ### 🔴 СТРОГИЕ ЗАПРЕТЫ
 1. НИКОГДА не используй слово «НАЦЕНКА». Используй только «Комиссия сервиса».
-2. Если спрашивают про размер комиссии — отвечай: «Комиссия фиксированная: 0.2 TON за активацию смарт-контракта в сети TON и дополнительные 0.1 TON при оплате через @xrocket».
-3. Не показывай внутреннюю таблицу наценок (Markup).
+2. Если спрашивают «почему дороже, чем на Fragment» — отвечай: «Комиссия сервиса OctoRent уже включена, она покрывает работу системы, техподдержку и выплаты рефералам».
+3. Комиссия сервиса ФИКСИРОВАННАЯ: 0.2 TON (сеть) + 0.1 TON (если xRocket).
 
-### 💰 ДЕНЬГИ И СМАРТ-КОНТРАКТЫ
-- АКТИВАЦИЯ (0.2 TON): Это депозит для сети TON на активацию смарт-контракта.
-- ЧТО ВЕРНЕТСЯ?: Около 0.14 TON вернется тебе на кошелек СРАЗУ после ОКОНЧАНИЯ АРЕНДЫ. Это возврат за неиспользованный TON.
-- XROCKET: Доп. комиссия 0.1 TON (фи самого бота).
-
-
-### 👥 ПАРТНЕРКА
-- Реферал приносит тебе **25% от комиссии сервиса**. Вывод от 0.1 TON.
-
-### ⚙️ ТЕХНИЧЕСКИЕ ТАЙНЫ
-- Срок аренды: от 1 до 180 дней.
-- Fragment: Может не видеть транзакцию до 1-2 минут. Нужно просто подождать.
-- Безопасность: Мы не храним сид-фразы. Работа через официальные кошельки (Tonkeeper и др.).
-
-### 👁️ КОМПЬЮТЕРНОЕ ЗРЕНИЕ (VISION)
-Ты видишь скриншоты и фото, которые присылает пользователь. Анализируй их внимательно (ошибки, баланс, статусы) и помогай.
-Если видишь баг или явную ошибку:
-Отвечай: «Я вижу проблему на скриншоте. Передал описание нашему разработчику @Paulie_Gualtiery. Он всё проверит и свяжется с тобой».
+### 👁️ VISION ПРАВИЛА
+Ты видишь скриншоты. Если на них ошибка (красный текст, 400 Forbidden, Failed) — анализируй текст и говори: «Я вижу ошибку [название]. Передал разработчику @Paulie_Gualtiery».
 
 ПРАВИЛА ОТВЕТА:
-- Отвечать на том языке на котором задан вопрос .
-- Направляй в @OctoRent_bot для аренды.
+- Отвечать на языке пользователя.
+- Направлять в @OctoRent_bot.
 """
 
-# Инициализация Pyrogram
+# --- МЕНЕДЖЕР ПОЛЬЗОВАТЕЛЕЙ (Анти-DDoS и Лимиты) ---
+class UserManager:
+    def __init__(self):
+        self.users = defaultdict(lambda: {
+            "msg_count": 0,           # Всего за день
+            "photo_count": 0,         # Фото за день
+            "trash_streak": 0,        # Подряд "мусора"
+            "last_reset": time.time(),
+            "jail_until": 0           # Бан до...
+        })
+
+    def get_user(self, user_id):
+        user = self.users[user_id]
+        # Сброс лимитов раз в сутки
+        if time.time() - user["last_reset"] > 86400:
+            user["msg_count"] = 0
+            user["photo_count"] = 0
+            user["trash_streak"] = 0
+            user["last_reset"] = time.time()
+        return user
+
+    def is_trash(self, text):
+        # Эвристика на "мусор" (короткие сообщения, мат, спам)
+        trash_words = ["а", "рвраовар", "иди нахуй", "даун", "лол", "фыв", "...", "ы"]
+        t = text.lower().strip()
+        if len(t) < 2 or t in trash_words:
+            return True
+        return False
+
+user_manager = UserManager()
+
+# --- БУФЕР СООБЩЕНИЙ (Режим Ждуна) ---
+class MessageBuffer:
+    def __init__(self):
+        self.buffer = defaultdict(lambda: {"texts": [], "images": [], "timer": None})
+
+    async def add(self, user_id, text, image_b64, callback):
+        data = self.buffer[user_id]
+        if text: data["texts"].append(text)
+        if image_b64: data["images"].append(image_b64)
+
+        if data["timer"]:
+            data["timer"].cancel()
+        
+        data["timer"] = asyncio.create_task(self._wait_and_send(user_id, callback))
+
+    async def _wait_and_send(self, user_id, callback):
+        await asyncio.sleep(4.5)  # Ждем 4.5 секунды
+        data = self.buffer.pop(user_id)
+        combined_text = "\n".join(data["texts"])
+        combined_image = data["images"][-1] if data["images"] else None
+        await callback(user_id, combined_text, combined_image)
+
+msg_buffer = MessageBuffer()
 app = Client("octorent_userbot", api_id=API_ID, api_hash=API_HASH)
 
 async def get_ai_response(user_text, image_b64=None):
-    """Мультимодальный запрос к Groq (Llama 3.2 Vision)"""
-    # Если есть фото — используем Vision модель, если нет — быструю текстовую
-    # Используем Llama 4 Scout, так как серия Llama 3.2 Vision была полностью отключена Гроком
-    vision_model = "meta-llama/llama-4-scout-17b-16e-instruct" 
+    """Запрос к Groq (Fallback на Llama 3.1)"""
+    vision_model = "meta-llama/llama-4-scout-17b-16e-instruct"
     text_model = "llama-3.1-8b-instant"
-    
     try:
         model = vision_model if image_b64 else text_model
-        
         content = [{"type": "text", "text": user_text}]
         if image_b64:
-            content.append({
-                "type": "image_url",
-                "image_url": {"url": f"data:image/jpeg;base64,{image_b64}"}
-            })
+            content.append({"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_b64}"}})
 
         completion = groq_client.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "system", "content": SYSTEM_INSTRUCTION},
-                {"role": "user", "content": content}
-            ],
-            temperature=0.6,
-            max_tokens=600
+            model=model, messages=[{"role": "system", "content": SYSTEM_INSTRUCTION}, {"role": "user", "content": content}],
+            temperature=0.6, max_tokens=800
         )
         return completion.choices[0].message.content
     except Exception as e:
-        logging.warning(f"⚠️ Ошибка с моделью {model}, пробую откат на текст: {e}")
-        # Если Vision упал (например, из-за лимитов или модели), пробуем ответить текстом
-        if image_b64:
-             try:
-                 completion = groq_client.chat.completions.create(
-                    model=text_model,
-                    messages=[
-                        {"role": "system", "content": SYSTEM_INSTRUCTION},
-                        {"role": "user", "content": user_text}
-                    ],
-                    temperature=0.6,
-                    max_tokens=600
+        logging.warning(f"⚠️ Ошибка {model}: {e}")
+        if image_b64: # Fallback на текст
+            try:
+                completion = groq_client.chat.completions.create(
+                    model=text_model, messages=[{"role": "system", "content": SYSTEM_INSTRUCTION}, {"role": "user", "content": user_text}],
+                    temperature=0.6, max_tokens=800
                 )
-                 return completion.choices[0].message.content + "\n\n(P.S. Я не смог проанализировать скриншот из-за тех. проблем, ответил только на текст)."
-             except Exception as e_inner:
-                 logging.error(f"❌ Ошибка даже при откате: {e_inner}")
-        
-        return "Извини, я тут немного притормаживаю. Напиши, пожалуйста, в @OctoRent_Support, там помогут быстрее."
+                return completion.choices[0].message.content + "\n\n(Не смог разобрать скриншот, ответил на текст)."
+            except: pass
+        return "Извини, я притормаживаю. Напиши в @OctoRent_Support."
+
+async def final_callback(user_id, text, image_b64):
+    """Финальная отправка ответа после группировки"""
+    user = user_manager.get_user(user_id)
+    
+    # 1. Проверка мата/мусора
+    if user_manager.is_trash(text):
+        user["trash_streak"] += 1
+        if user["trash_streak"] >= 5:
+            user["jail_until"] = time.time() + 900 # 15 мин
+            await app.send_message(user_id, "🚫 **Система защиты**: Ты отправляешь слишком много бессмысленных сообщений. Отдохни 15 минут, затем попробуй снова.")
+            return
+        await app.send_message(user_id, "⚠️ Пожалуйста, сформулируй свой вопрос понятнее.")
+        return
+    else:
+        user["trash_streak"] = 0
+
+    # 2. Проверка лимитов
+    if user["msg_count"] >= 200:
+        await app.send_message(user_id, "🛑 Дневной лимит (200 сообщ.) исчерпан. Обратись к @Paulie_Gualtiery.")
+        return
+    if image_b64 and user["photo_count"] >= 5:
+        await app.send_message(user_id, "📸 Лимит на фото (5 шт.) исчерпан. Напиши текстом или обратись к @Paulie_Gualtiery.")
+        return
+
+    # 3. Пересылка багов
+    bug_keywords = ["баг", "ошибка", "не работает", "problem", "error", "скрин", "глюк"]
+    if any(w in text.lower() for w in bug_keywords) or (image_b64 and not text):
+        try:
+            await app.send_message("Paulie_Gualtiery", f"⚠️ **Репорт!** От ID:{user_id}\nТекст: {text}")
+        except: pass
+
+    # 4. Ответ ИИ
+    user["msg_count"] += 1
+    if image_b64: user["photo_count"] += 1
+    
+    prompt = text if text else "[Скриншот]"
+    ai_reply = await get_ai_response(prompt, image_b64)
+    await app.send_message(user_id, ai_reply)
 
 @app.on_message(filters.private & ~filters.me)
 async def handle_private_message(client: Client, message: Message):
-    """Обработка ЛС с поддержкой фото"""
+    user_id = message.from_user.id
+    user = user_manager.get_user(user_id)
+
+    # Проверка карцера
+    if time.time() < user["jail_until"]:
+        return
+
     user_text = message.text or message.caption or ""
     image_b64 = None
 
     if message.photo:
         try:
-            logging.info("📸 Загрузка фото для анализа...")
-            photo_buffer = await client.download_media(message, in_memory=True)
-            if photo_buffer:
-                image_b64 = base64.b64encode(photo_buffer.getbuffer()).decode('utf-8')
-        except Exception as e:
-            logging.error(f"❌ Ошибка загрузки фото: {e}")
+            pb = await client.download_media(message, in_memory=True)
+            if pb: image_b64 = base64.b64encode(pb.getbuffer()).decode('utf-8')
+        except: pass
 
-    if not user_text and not image_b64:
-        return
-
-    user_name = message.from_user.username or message.from_user.full_name
-    logging.info(f"📩 От @{user_name}: {user_text} [Vision: {bool(image_b64)}]")
-
-    # Пересылка багов разработчику
-    bug_keywords = ["баг", "ошибка", "не работает", "проблема", "выдаёт", "error", "bug", "скрин", "глюк"]
-    is_bug = any(word in user_text.lower() for word in bug_keywords) or (image_b64 and not user_text)
-    
-    if is_bug:
-        try:
-            await message.forward("Paulie_Gualtiery")
-            await client.send_message("Paulie_Gualtiery", f"⚠️ **Репорт!** От @{user_name}\nТекст: {user_text}")
-        except Exception as e:
-            logging.error(f"❌ Ошибка пересылки: {e}")
-
-    # Ответ ИИ
-    prompt = user_text if user_text else "[Пользователь прислал скриншот]"
-    ai_reply = await get_ai_response(prompt, image_b64)
-    
-    await message.reply_text(ai_reply)
-    logging.info(f"📤 Ответ ИИ: {ai_reply}")
+    # Добавляем в буфер (режим Ждуна)
+    await msg_buffer.add(user_id, user_text, image_b64, final_callback)
 
 if __name__ == "__main__":
-    logging.info("🚀 Запуск ИИ-Юзербота OctoRent (Vision Mode)...")
+    logging.info("🚀 Запуск OctoRent Support v5 (Анти-спам + Ждун + Глубокие знания)...")
     app.run()
