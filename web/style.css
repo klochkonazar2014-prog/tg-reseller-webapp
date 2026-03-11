@@ -411,6 +411,14 @@ body {
     margin-top: auto;
 }
 
+#payment-selection-view {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+}
+
 /* Fee Details Modal Styles */
 .fee-split-boxes {
     display: flex;

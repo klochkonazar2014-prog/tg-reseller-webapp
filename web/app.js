@@ -2606,23 +2606,23 @@ function updateTotalPrice() {
 
     if (payPriceRub) {
         if (FIAT_RATES.RUB) {
-            // total is already (rental_fee + 0.2 gas markup)
-            let rubVal = Math.round(parseFloat(total) * FIAT_RATES.RUB * FIAT_FEE_MULTIPLIER);
-            
+            // Считаем как бэкенд: rental + 0.2 TON gas, потом курс * 1.05
+            const tonForCard = parseFloat(total) + 0.2;
+            let rubVal = Math.round(tonForCard * FIAT_RATES.RUB * FIAT_FEE_MULTIPLIER);
+            payPriceRub.innerText = rubVal;
+
             if (rubVal < 49) {
                 if (cardWarning) cardWarning.style.display = 'flex';
-                if (cardMethod) cardMethod.style.display = 'none';
-                payPriceRub.innerText = rubVal;
+                if (cardMethod) cardMethod.style.display = 'flex'; // видна, но кнопка disabled
             } else {
                 if (cardWarning) cardWarning.style.display = 'none';
                 if (cardMethod) cardMethod.style.display = 'flex';
-                payPriceRub.innerText = rubVal;
             }
         } else {
             payPriceRub.innerText = '...';
-            if (cardMethod) cardMethod.style.display = 'none';
         }
     }
+
 
     // Update Итого based on selected method:
     // TON = just the rental price (gas already included by backend markup)
@@ -3667,19 +3667,33 @@ function selectPayMethod(method) {
  */
 function updateMethodTotal(baseTotal) {
     const totalAmountEl = document.getElementById('pay-total-amount');
+    const totalCurrencyEl = document.getElementById('pay-total-currency');
+    const continueBtn = document.querySelector('#payment-selection-view .main-rent-btn');
     if (!totalAmountEl) return;
     const base = parseFloat(baseTotal) || 0;
     let total;
     if (SELECTED_PAY_METHOD === 'CLOUDTIPS') {
-        let rubVal = Math.round(base * FIAT_RATES.RUB * FIAT_FEE_MULTIPLIER);
-        if (rubVal < 49) rubVal = 49;
-        total = rubVal;
-    } else if (SELECTED_PAY_METHOD === 'XROCKET') {
-        // xRocket: rental + 0.2 gas + 0.1 bot fee, then * 1.03 (3% commission)
-        total = ((base + 0.2 + 0.1) * 1.03).toFixed(2);
+        // Бэкенд считает: rental + 0.2 * rate * 1.05
+        const tonForCard = base + 0.2;
+        let rubVal = Math.round(tonForCard * FIAT_RATES.RUB * FIAT_FEE_MULTIPLIER);
+        total = rubVal > 0 ? rubVal : '...';
+        if (totalCurrencyEl) totalCurrencyEl.innerText = '₽';
+        // Отключить кнопку если ниже минимума
+        if (continueBtn) {
+            const belowMin = typeof rubVal === 'number' && rubVal < 49;
+            continueBtn.disabled = belowMin;
+            continueBtn.style.opacity = belowMin ? '0.4' : '1';
+            continueBtn.style.cursor = belowMin ? 'not-allowed' : 'pointer';
+        }
     } else {
-        // TON: rental + 0.2 TON gas
-        total = (base + 0.2).toFixed(2);
+        if (totalCurrencyEl) totalCurrencyEl.innerText = 'TON';
+        if (continueBtn) { continueBtn.disabled = false; continueBtn.style.opacity = '1'; continueBtn.style.cursor = 'pointer'; }
+        if (SELECTED_PAY_METHOD === 'XROCKET') {
+            total = ((base + 0.2 + 0.1) * 1.03).toFixed(2);
+        } else {
+            // TON: rental + 0.2 TON gas
+            total = (base + 0.2).toFixed(2);
+        }
     }
     totalAmountEl.innerText = total;
 }
