@@ -421,6 +421,30 @@ async def handle_create_fiat_invoice(request):
         logging.error(f"Error creating fiat invoice: {e}")
         return web.json_response({"error": str(e)}, status=500)
 
+async def update_cloudtips_page_text(title: str):
+    """Обновляет текст на странице оплаты CloudTips через API."""
+    ct_id = os.getenv("CLOUDTIPS_ID", "")
+    access_token = os.getenv("CLOUDTIPS_ACCESS_TOKEN", "")
+    if not ct_id or not access_token:
+        return
+    try:
+        url = f"https://api.cloudtips.ru/api/pages/{ct_id}"
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json"
+        }
+        payload = {"title": title}
+        async with aiohttp.ClientSession() as session:
+            async with session.patch(url, json=payload, headers=headers, timeout=10) as resp:
+                if resp.status in (200, 204):
+                    logging.info(f"[CloudTips] Page text updated to: {title}")
+                else:
+                    body = await resp.text()
+                    logging.warning(f"[CloudTips] Page text update failed: {resp.status} — {body}")
+    except Exception as e:
+        logging.warning(f"[CloudTips] Page text update error: {e}")
+
+
 async def handle_create_cloudtips_invoice(request):
     """Генерация ссылки на оплату CloudTips"""
     try:
@@ -438,11 +462,29 @@ async def handle_create_cloudtips_invoice(request):
         order_id = res['order_id']
         total_ton = res['total_price']
         
-        # 2. Получаем курс
+        # 2. Получаем название подарка из базы
+        nft_name = "Аренда подарка"
+        try:
+            async with db.aiosqlite.connect(db.DB_PATH) as conn:
+                conn.row_factory = db.aiosqlite.Row
+                async with conn.execute(
+                    "SELECT nft_name FROM listings WHERE nft_address = ?", (nft_address,)
+                ) as cur:
+                    row = await cur.fetchone()
+                    if row and row['nft_name']:
+                        nft_name = f"Аренда: {row['nft_name']} ({days} дн.)"
+        except Exception as e:
+            logging.warning(f"[CloudTips] Could not fetch nft_name: {e}")
+        
+        # 3. Обновляем текст на странице CloudTips (fire-and-forget, не блокируем)
+        await update_cloudtips_page_text(nft_name)
+        
+        # 4. Получаем курс
         rates = await fetch_fiat_rates()
         ton_rub = rates.get('RUB', 230)
         
-        # 3. Считаем сумму в рублях (с запасом 5% на волатильность)
+        # 5. Считаем сумму в рублях (с запасом 5% на волатильность)
+
         fiat_amount = round(total_ton * ton_rub * 1.05, 2)
         if fiat_amount < 49: fiat_amount = 49 # Минимум 49 рублей (лимит CloudTips)
         

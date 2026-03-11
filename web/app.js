@@ -3557,7 +3557,9 @@ function openPaymentModal() {
         selectionView.style.transform = 'translateY(0)'; // Reset drag if any
     }
 
-    updateTotalPrice(); // Sync all prices
+    // Refresh fiat rates every time modal opens
+    fetchFiatRates().then(() => updateTotalPrice());
+    updateTotalPrice(); // Sync immediately (cached values)
 
     modal.style.display = 'flex';
     setTimeout(() => modal.classList.add('active'), 10);
@@ -3826,7 +3828,6 @@ async function handleBotRent(gateway) {
         if (res.payment_url) {
             // Use openTelegramLink to open bot invoice as in-app mini-app overlay
             tg.openTelegramLink(res.payment_url);
-            closePaymentModal();
             showToast("Инвойс создан! Оплатите в xRocket");
         } else {
             showToast((res.error || "Ошибка") + " (код: " + (resp.status || '?') + ")");

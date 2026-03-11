@@ -422,6 +422,59 @@ async def run_refund_worker():
             logging.error(f"[BG-Refund] Global error: {e}")
             await asyncio.sleep(60)
 
+async def refresh_cloudtips_token(refresh_token: str) -> str | None:
+    """Обновляет CloudTips access token используя refresh token. Возвращает новый access token или None."""
+    url = "https://identity.cloudtips.ru/connect/token"
+    payload = {
+        "grant_type": "refresh_token",
+        "refresh_token": refresh_token,
+        "client_id": "MobilePhone"
+    }
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, data=payload, timeout=15) as resp:
+                if resp.status == 200:
+                    data = await resp.json()
+                    new_access = data.get("access_token")
+                    new_refresh = data.get("refresh_token")
+                    if new_access:
+                        # Обновляем переменные окружения в памяти
+                        os.environ["CLOUDTIPS_ACCESS_TOKEN"] = new_access
+                        if new_refresh:
+                            os.environ["CLOUDTIPS_REFRESH_TOKEN"] = new_refresh
+                        
+                        # Обновляем .env файл на диске
+                        try:
+                            env_path = os.path.join(os.path.dirname(__file__), ".env")
+                            with open(env_path, "r", encoding="utf-8") as f:
+                                content = f.read()
+                            
+                            import re
+                            content = re.sub(
+                                r"CLOUDTIPS_ACCESS_TOKEN=.*",
+                                f"CLOUDTIPS_ACCESS_TOKEN={new_access}",
+                                content
+                            )
+                            if new_refresh:
+                                content = re.sub(
+                                    r"CLOUDTIPS_REFRESH_TOKEN=.*",
+                                    f"CLOUDTIPS_REFRESH_TOKEN={new_refresh}",
+                                    content
+                                )
+                            with open(env_path, "w", encoding="utf-8") as f:
+                                f.write(content)
+                            logging.info("[BG-CloudTips] ✅ Token refreshed and saved to .env!")
+                        except Exception as e:
+                            logging.warning(f"[BG-CloudTips] Could not save token to .env: {e}")
+                        
+                        return new_access
+                else:
+                    logging.error(f"[BG-CloudTips] Refresh token failed: {resp.status}")
+    except Exception as e:
+        logging.error(f"[BG-CloudTips] Refresh token error: {e}")
+    return None
+
+
 async def run_cloudtips_worker():
     """Фоновая задача для автоматической проверки платежей CloudTips через API"""
     logging.info("[BG-CloudTips] Starting CloudTips Polling Worker...")
@@ -464,7 +517,17 @@ async def run_cloudtips_worker():
                                 except: pass
                                 
                     elif resp.status == 401:
-                        logging.warning("[BG-CloudTips] Token expired. Need to refresh (logic pending or manual update required).")
+                        logging.warning("[BG-CloudTips] Token expired! Attempting refresh...")
+                        if refresh_token_val:
+                            new_token = await refresh_cloudtips_token(refresh_token_val)
+                            if new_token:
+                                access_token = new_token
+                                refresh_token_val = os.getenv("CLOUDTIPS_REFRESH_TOKEN")
+                                logging.info("[BG-CloudTips] Token refreshed successfully!")
+                            else:
+                                logging.error("[BG-CloudTips] Could not refresh token. Manual update required!")
+                        else:
+                            logging.error("[BG-CloudTips] No refresh token available. Manual update required!")
                     else:
                         logging.error(f"[BG-CloudTips] API Error {resp.status}")
 
@@ -472,6 +535,7 @@ async def run_cloudtips_worker():
             logging.error(f"[BG-CloudTips] Global error: {e}")
             
         await asyncio.sleep(120) # Проверяем каждые 2 минуты
+
 
 async def main_loop():
     await db.init_db()
