@@ -444,7 +444,7 @@ async def handle_create_cloudtips_invoice(request):
         
         # 3. Считаем сумму в рублях (с запасом 5% на волатильность)
         fiat_amount = round(total_ton * ton_rub * 1.05, 2)
-        if fiat_amount < 15: fiat_amount = 15 # Минимум 15 рублей
+        if fiat_amount < 49: fiat_amount = 49 # Минимум 49 рублей (лимит CloudTips)
         
         ct_id = os.getenv("CLOUDTIPS_ID", "YOUR_CLOUDTIPS_ID")
         

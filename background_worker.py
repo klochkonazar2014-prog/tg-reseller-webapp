@@ -422,6 +422,57 @@ async def run_refund_worker():
             logging.error(f"[BG-Refund] Global error: {e}")
             await asyncio.sleep(60)
 
+async def run_cloudtips_worker():
+    """Фоновая задача для автоматической проверки платежей CloudTips через API"""
+    logging.info("[BG-CloudTips] Starting CloudTips Polling Worker...")
+    
+    access_token = os.getenv("CLOUDTIPS_ACCESS_TOKEN")
+    refresh_token_val = os.getenv("CLOUDTIPS_REFRESH_TOKEN")
+    
+    if not access_token:
+        logging.error("[BG-CloudTips] No CloudTips token found. Worker disabled.")
+        return
+
+    while True:
+        try:
+            # 1. Запрашиваем последние транзакции
+            url = "https://api.cloudtips.ru/api/transactions?page=1&pageSize=40"
+            headers = {"Authorization": f"Bearer {access_token}"}
+            
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, headers=headers, timeout=15) as resp:
+                    if resp.status == 200:
+                        data = await resp.json()
+                        transactions = data.get("items", [])
+                        
+                        # Ищем успешные транзакции с нашими invoiceId
+                        for tx in transactions:
+                            status = tx.get("status")
+                            invoice_id_raw = tx.get("invoiceId")
+                            
+                            if status == "Success" and invoice_id_raw:
+                                try:
+                                    order_id = int(invoice_id_raw)
+                                    # Проверяем базу — если заказ еще не оплачен, обновляем
+                                    async with aiosqlite.connect(db.DB_PATH) as conn:
+                                        conn.row_factory = aiosqlite.Row
+                                        async with conn.execute("SELECT status FROM orders WHERE id = ?", (order_id,)) as cur:
+                                            row = await cur.fetchone()
+                                            if row and row['status'] == 'pending':
+                                                await db.update_order_status(order_id, "paid")
+                                                logging.info(f"✅ Order {order_id} AUTO-CONFIRMED via CloudTips API!")
+                                except: pass
+                                
+                    elif resp.status == 401:
+                        logging.warning("[BG-CloudTips] Token expired. Need to refresh (logic pending or manual update required).")
+                    else:
+                        logging.error(f"[BG-CloudTips] API Error {resp.status}")
+
+        except Exception as e:
+            logging.error(f"[BG-CloudTips] Global error: {e}")
+            
+        await asyncio.sleep(120) # Проверяем каждые 2 минуты
+
 async def main_loop():
     await db.init_db()
     logging.info("--- BACKGROUND WORKER STARTED (Parallel Mode) ---")
@@ -429,7 +480,8 @@ async def main_loop():
     async with aiohttp.ClientSession() as session:
         await asyncio.gather(
             run_history_sync(session),
-            run_refund_worker() # Enabled to process delayed refunds automatically
+            run_refund_worker(),
+            run_cloudtips_worker()
         )
 
 

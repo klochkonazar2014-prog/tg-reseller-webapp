@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -825,28 +825,30 @@
 
                     <!-- Card Tab Pane -->
                     <div id="pane-card" class="pay-tab-pane">
-                        <!-- Coming soon notice -->
-                        <div
-                            style="background: rgba(255, 149, 0, 0.08); border: 1px solid rgba(255, 149, 0, 0.25); border-radius: 14px; padding: 14px 16px; margin-bottom: 12px; display: flex; align-items: flex-start; gap: 10px;">
-                            <span style="font-size: 20px;">🚧</span>
+                        <div id="card-limit-warning" style="display: none; background: rgba(255, 149, 0, 0.08); border: 1px solid rgba(255, 149, 0, 0.25); border-radius: 14px; padding: 14px 16px; margin-bottom: 12px; gap: 10px;">
+                            <span style="font-size: 20px;">⚠️</span>
                             <div>
-                                <div style="font-weight: 700; color: #FF9500; font-size: 13px; margin-bottom: 2px;">
-                                    Временно недоступно</div>
-                                <div style="font-size: 12px; color: #8b9bb4; line-height: 1.4;">Оплата картой будет
-                                    доступна примерно через 72 часа (идет активация кассы).</div>
+                                <div style="font-weight: 700; color: #FF9500; font-size: 13px; margin-bottom: 2px;">Сумма слишком мала</div>
+                                <div style="font-size: 12px; color: #8b9bb4; line-height: 1.4;">Минимальный платеж картой — <b>49 ₽</b>. Пожалуйста, выберите товар подороже или увеличьте срок аренды.</div>
                             </div>
                         </div>
-                        <div class="pay-method-card" style="opacity: 0.4; pointer-events: none;">
+
+                        <div id="pay-method-cloudtips" class="pay-method-card active" onclick="selectPayMethod('CLOUDTIPS')">
                             <div class="pm-check"></div>
                             <div class="pm-info">
                                 <div class="pm-header">
                                     <div class="pm-name">Карта РФ / СБП</div>
+                                    <div class="pay-method-badge" style="background: rgba(0, 212, 136, 0.1); color: #00d488;">Без комиссии сети</div>
                                 </div>
                                 <div class="pm-row-bottom">
-                                    <div class="pm-desc">Оплата в рублях (активация...)</div>
-                                    <div class="pm-price"><span id="pay-price-rub">—</span></div>
+                                    <div class="pm-desc">Мгновенная оплата через CloudTips</div>
+                                    <div class="pm-price"><span id="pay-price-rub">0</span> ₽</div>
                                 </div>
                             </div>
+                        </div>
+
+                        <div style="margin-top: 12px; font-size: 11px; color: #8b9bb4; line-height: 1.4; padding: 0 4px;">
+                            * Цена включает комиссию сервиса 5% за банковский перевод.
                         </div>
                     </div>
                 </div>
@@ -855,7 +857,7 @@
                     <div class="payment-total-row">
                         <div class="ptr-label">Итого:</div>
                         <div class="ptr-value-wrapper">
-                            <div class="ptr-value"><span id="pay-total-amount">0.27</span> TON</div>
+                            <div class="ptr-value"><span id="pay-total-amount">0.27</span> <span id="pay-total-currency">TON</span></div>
                             <div class="ptr-info-btn"
                                 onclick="showBlockchainFeeDetails(event); event.stopPropagation();">i</div>
                         </div>

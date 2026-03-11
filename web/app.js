@@ -10,6 +10,7 @@ let IS_SHARING_REF = false; // Prevent double clicks on referral share
 console.log("Using backend:", BACKEND_URL);
 
 const MY_MARKUP = 0.20;
+const FIAT_FEE_MULTIPLIER = 1.05; // +5% commission for bank transfer
 const MANIFEST_URL = BACKEND_URL + "/tonconnect-manifest.json";
 let SELECTED_PAY_METHOD = 'TON';
 
@@ -2600,9 +2601,22 @@ function updateTotalPrice() {
     if (payPriceXr) payPriceXr.innerText = botTotal;
 
     const payPriceRub = document.getElementById('pay-price-rub');
-    if (payPriceRub && GLOBAL_TON_PRICE && FIAT_RATES.RUB) {
-        const rubVal = (total * GLOBAL_TON_PRICE * FIAT_RATES.RUB * 1.05).toFixed(0);
-        payPriceRub.innerText = rubVal;
+    const cardWarning = document.getElementById('card-limit-warning');
+    const cardMethod = document.getElementById('pay-method-cloudtips');
+
+    if (payPriceRub && FIAT_RATES.RUB) {
+        // total is already (rental_fee + 0.2 gas markup)
+        let rubVal = Math.round(parseFloat(total) * FIAT_RATES.RUB * FIAT_FEE_MULTIPLIER);
+        
+        if (rubVal < 49) {
+            if (cardWarning) cardWarning.style.display = 'flex';
+            if (cardMethod) cardMethod.style.display = 'none';
+            payPriceRub.innerText = rubVal;
+        } else {
+            if (cardWarning) cardWarning.style.display = 'none';
+            if (cardMethod) cardMethod.style.display = 'flex';
+            payPriceRub.innerText = rubVal;
+        }
     }
 
     // Update Итого based on selected method:
@@ -3613,11 +3627,13 @@ function switchPayTab(tab) {
     if (tab === 'crypto') {
         document.querySelector('.pay-tab:nth-child(1)').classList.add('active');
         document.getElementById('pane-crypto').classList.add('active');
+        document.getElementById('pay-total-currency').innerText = 'TON';
         selectPayMethod('TON');
     } else {
         document.querySelector('.pay-tab:nth-child(2)').classList.add('active');
         document.getElementById('pane-card').classList.add('active');
-        selectPayMethod('RUB');
+        document.getElementById('pay-total-currency').innerText = '₽';
+        selectPayMethod('CLOUDTIPS');
     }
 }
 
@@ -3646,7 +3662,12 @@ function updateMethodTotal(baseTotal) {
     if (!totalAmountEl) return;
     const base = parseFloat(baseTotal) || 0;
     let total;
-    if (SELECTED_PAY_METHOD === 'XROCKET') {
+
+    if (SELECTED_PAY_METHOD === 'CLOUDTIPS') {
+        let rubVal = Math.round(base * FIAT_RATES.RUB * FIAT_FEE_MULTIPLIER);
+        if (rubVal < 49) rubVal = 49;
+        total = rubVal;
+    } else if (SELECTED_PAY_METHOD === 'XROCKET') {
         // xRocket: rental + 0.2 gas + 0.1 bot fee, then * 1.03 (3% commission)
         total = ((base + 0.2 + 0.1) * 1.03).toFixed(2);
     } else {
