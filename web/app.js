@@ -1912,7 +1912,8 @@ function createItemCard(item) {
     // The design is now unified in CSS, so base 'card' is enough
     card.className = "card";
 
-    const myPrice = parseFloat(item.price_per_day).toFixed(2);
+    const priceVal = parseFloat(item.price_per_day || 0);
+    const myPrice = priceVal > 0 ? priceVal.toFixed(2) : "---";
     const match = item.nft_name.match(/^(.*?)\s*(#\d+)$/);
     const baseName = match ? match[1] : item.nft_name;
     const numStr = match ? match[2] : "";
@@ -1921,7 +1922,7 @@ function createItemCard(item) {
     const maxDaysFinal = Math.floor((item.max_duration || 2592000) / 86400);
 
     // Total min price for the grid
-    const minTotalPrice = (parseFloat(myPrice) * minDays).toFixed(2);
+    const minTotalPrice = priceVal > 0 ? (priceVal * minDays).toFixed(2) : "---";
 
     // NEW: Rented status class
     if (item.status === 'rented') {
@@ -2282,8 +2283,8 @@ async function openProductView(item) {
 
     // Pricing & Duration
     let rawP = parseFloat(item.price_per_day) || 0;
-    const dailyPrice = rawP.toFixed(2);
-    const dailyPriceUsd = GLOBAL_TON_PRICE ? `~$${(rawP * GLOBAL_TON_PRICE).toFixed(2)}` : '~$0.00';
+    const dailyPrice = rawP > 0 ? rawP.toFixed(2) : "---";
+    const dailyPriceUsd = (rawP > 0 && GLOBAL_TON_PRICE) ? `~$${(rawP * GLOBAL_TON_PRICE).toFixed(2)}` : (rawP > 0 ? '---' : '');
     const minDays = Math.floor((item.min_duration || 86400) / 86400);
     const maxDays = Math.floor((item.max_duration || 2592000) / 86400);
 

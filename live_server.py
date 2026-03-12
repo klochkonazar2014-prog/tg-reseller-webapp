@@ -131,30 +131,54 @@ async def handle_live_items(request):
         async with db.aiosqlite.connect(db.DB_PATH, timeout=30) as conn:
             conn.row_factory = db.aiosqlite.Row
             
-            # Build basic query WITHOUT json_extract to avoid malformed JSON issues
-            query = f"SELECT * FROM items WHERE status = ?"
+            # Build basic query
+            query = "SELECT * FROM items WHERE status = ?"
             params = [s_filter]
             
             if t_filter == 'gift':
-                # Exclude internal assets AND Usernames/Numbers
                 query += " AND type = 'gift' AND metadata NOT LIKE '%ton_symbol.png%' AND metadata NOT LIKE '%gift.svg%' AND metadata IS NOT NULL"
                 query += " AND title NOT LIKE '@%' AND title NOT LIKE '+888%'"
             else:
-                query += f" AND type = ?"
+                query += " AND type = ?"
                 params.append(t_filter)
+
+            # Collection filter (f_nft) moved to SQL if possible
+            if f_nft and f_nft != 'all':
+                nft_filters = [x.strip() for x in f_nft.split(',')]
+                if nft_filters:
+                    placeholders = []
+                    for nf in nft_filters:
+                        # Heuristic to match singular titles in DB from plural filters
+                        base_nf = nf
+                        if nf.lower().endswith('ies'): base_nf = nf[:-3] + 'y'
+                        elif nf.lower().endswith('es'): base_nf = nf[:-2]
+                        elif nf.lower().endswith('s'): base_nf = nf[:-1]
+                        
+                        placeholders.append("title LIKE ?")
+                        params.append(f"{base_nf}%") 
+                    query += " AND (" + " OR ".join(placeholders) + ")"
                 
             if f_search:
                 query += " AND (title LIKE ? OR nft_address LIKE ?)"
                 params.extend([f"%{f_search}%", f"%{f_search}%"])
 
-            # Randomize order for 'available' catalog to avoid same NFTs in a row
-            # MUST be at the end of the query (before LIMIT)
-            if s_filter == 'available' and not f_search: # Keep original search order if searching
-                query += " ORDER BY RANDOM()"
-            elif f_sort == 'id_desc':
+            # Sorting logic
+            if s_filter == 'available' and not f_search and f_sort == 'id_desc':
+                query += " ORDER BY RANDOM()" # Randomize for discovery
+            elif f_sort == 'price_asc':
+                query += " ORDER BY price_per_day ASC"
+            elif f_sort == 'price_desc':
+                query += " ORDER BY price_per_day DESC"
+            else:
                 query += " ORDER BY id DESC"
 
-            # Fetch all matching rows
+            # Apply LIMIT and OFFSET in SQL for performance
+            # Since we do more filtering in Python (for JSON attributes), 
+            # we need to fetch a larger batch to fill the requested 'limit'.
+            fetch_limit = 1000 if (f_model or f_bg or f_symbol) else limit
+            query += f" LIMIT ? OFFSET ?"
+            params.extend([fetch_limit, offset])
+
             async with conn.execute(query, params) as cursor:
                 all_rows = await cursor.fetchall()
             
@@ -217,10 +241,12 @@ async def handle_live_items(request):
                     except: pass
                 
                 # Apply price filters safely to prevent float(None) errors for some items
-                price = float(r['price_per_day'] or 0.0)
-                # Display price WITHOUT network expense
-                if "Lol Pop #124946" in (title or ""):
-                    price = float(r['original_price'] or 0.0) # Shows exactly 0.01
+                # Fallback to original_price if price_per_day is missing/zero (especially for pre-orders)
+                raw_price = float(r['price_per_day'] or 0.0)
+                if raw_price <= 0:
+                    raw_price = float(r['original_price'] or 0.0)
+                
+                price = raw_price
 
                 filtered_items.append({
                     "id": r['id'],

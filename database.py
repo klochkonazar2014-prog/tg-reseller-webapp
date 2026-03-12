@@ -276,10 +276,9 @@ async def sync_item(nft_address, item_type, title, original_price=None, price_pe
                     await db.execute("UPDATE items SET status = ?, rent_ends_at = ?, auto_relist = ?, last_updated = CURRENT_TIMESTAMP WHERE nft_address = ?", (status, rent_ends_at, auto_relist, nft_address))
             else:
                 # For new items
-                op = original_price if original_price is not None else 0
-                ppd = price_per_day if price_per_day is not None else 0
+                # We allow None (NULL) here to distinguish from actual free items
                 await db.execute("INSERT INTO items (type, nft_address, title, original_price, price_per_day, min_duration, max_duration, description, metadata, status, rent_ends_at, auto_relist, last_updated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)", 
-                               (item_type, nft_address, title, op, ppd, min_duration, max_duration, description, metadata, status, rent_ends_at, auto_relist))
+                               (item_type, nft_address, title, original_price, price_per_day, min_duration, max_duration, description, metadata, status, rent_ends_at, auto_relist))
     
     if conn:
         await _perform_sync(conn)
