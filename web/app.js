@@ -1223,8 +1223,7 @@ async function toggleCatalogMode() {
 }
 
 async function loadLiveItems(reset = true) {
-    if (IS_LOADING) return;
-    if (!HAS_MORE && !reset) return;
+    if (IS_LOADING && !reset) return;
 
     const hideLoading = () => {
         const screen = document.getElementById('loading-screen');
@@ -2236,12 +2235,17 @@ async function openProductView(item) {
     if (colEl) {
         colEl.innerText = `${colName} >`;
         colEl.style.display = (item.type === 'gift') ? 'block' : 'none';
+
+        // Extract base name for exact collection matching
+        const giftBaseName = item.nft_name.replace(/#\d+/, '').trim();
+
         colEl.onclick = () => {
-            ACTIVE_FILTERS.nft = colName;
+            ACTIVE_FILTERS.nft = [giftBaseName]; // Точное название вместо абстрактного colName
             closeProductView();
             loadLiveItems(true);
         };
     }
+
 
     const ownerEl = document.getElementById('view-owner');
     if (ownerEl) {
@@ -2364,12 +2368,13 @@ async function openProductView(item) {
             r.onclick = () => {
                 // FAILSAFE: Ensure we set the Collection filter too, otherwise Model list is disabled
                 if (key === 'model' || key === 'bg' || key === 'symbol') {
-                    ACTIVE_FILTERS.nft = colName;
+                    ACTIVE_FILTERS.nft = [giftBaseName]; // Используем реальное название подарка
                 }
-                ACTIVE_FILTERS[key] = val;
+                ACTIVE_FILTERS[key] = [val]; // И точное значение атрибута как массив
                 closeProductView();
                 loadLiveItems(true);
             };
+
             propCont.appendChild(r);
         };
 
@@ -3878,8 +3883,25 @@ async function handleTonRent() {
             };
             console.log("Preparing TON transaction:", transaction);
             await tonConnectUI.sendTransaction(transaction);
-            closePaymentModal();
-            showToast(t('payment_sent'));
+            
+            // Вместо быстрого закрытия показываем экран успеха внутри модалки
+            const selView = document.getElementById('payment-selection-view');
+            if (selView) {
+                selView.innerHTML = `
+                    <div style="text-align:center; padding: 40px 20px;">
+                        <div style="font-size: 48px; margin-bottom: 20px;">✅</div>
+                        <h2 style="color: #fff; margin-bottom: 12px;">Транзакция отправлена!</h2>
+                        <p style="color: #8b9bb4; line-height: 1.5; margin-bottom: 30px;">
+                            Ваша оплата находится в обработке сети TON.<br><br>
+                            Пожалуйста, подождите несколько минут. Когда смарт-контракт обработает заказ, статус предмета изменится на "Арендовано", и вы сможете подключить его к Fragment.
+                        </p>
+                        <button onclick="closePaymentModal(); loadLiveItems(true);" class="main-rent-btn" style="width:100%;">Отлично</button>
+                    </div>
+                `;
+            } else {
+                closePaymentModal();
+                showToast(t('payment_sent'));
+            }
         } else {
             showToast(res.error || "Ошибка подготовки платежа");
         }

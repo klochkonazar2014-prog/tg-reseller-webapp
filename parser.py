@@ -174,6 +174,15 @@ async def sync_token_page(session, item_type, cursor=None):
                     
                     db_type = 'gift' if item_type == 'gifts' else 'number' if item_type == 'numbers' else 'username'
                     
+                    # Обработка статуса напрямую из списка (MarketApp отдает статус в итеме)
+                    status_raw = it.get('status', 'available')
+                    # Если статус for_rent или for_sale_and_rent -> available
+                    # Если rented -> rented
+                    status_db = 'rented' if status_raw == 'rented' else 'available'
+                    
+                    # Извлекаем время окончания аренды, если оно есть
+                    rent_ends_at = it.get('status_details', {}).get('end_time') or it.get('end_time')
+                    
                     await db.sync_item(
                         nft_address=addr,
                         item_type=db_type,
@@ -183,6 +192,8 @@ async def sync_token_page(session, item_type, cursor=None):
                         min_duration=min_d,
                         max_duration=max_d,
                         metadata=meta,
+                        status=status_db,
+                        rent_ends_at=rent_ends_at,
                         auto_relist=it.get('auto_relist', 1),
                         conn=conn
                     )
@@ -382,21 +393,21 @@ async def main_loop():
             cycle_start_str = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(cycle_start_time))
             
             try:
-                # 1. Real-time check for NEW items (Page 1 only)
-                # We do NOT use cursors here. We just check the "fresh" list.
-                
-                # Gifts
-                await sync_token_page(session, "gifts", cursor=None)
-                await asyncio.sleep(0.5) 
-                
-                # Usernames
-                await sync_token_page(session, "usernames", cursor=None)
-                await asyncio.sleep(0.5)
+                # 1. Full Sync for all categories (passing cursor to fetch ALL pages)
+                for cat in ["gifts", "usernames", "numbers"]:
+                    current_cursor = None
+                    total_cat_synced = 0
+                    while True:
+                        next_cursor, count = await sync_token_page(session, cat, cursor=current_cursor)
+                        total_cat_synced += count
+                        if not next_cursor or count == 0:
+                            break
+                        current_cursor = next_cursor
+                        await asyncio.sleep(0.2) # Throttle between pages
+                    
+                    if total_cat_synced > 0:
+                        logging.info(f"Done syncing {cat}: {total_cat_synced} items total.")
 
-                # Numbers
-                await sync_token_page(session, "numbers", cursor=None)
-                await asyncio.sleep(0.5)
-                
                 # 2. Sync OUR rented items (to update timers/status locally)
                 await sync_my_rented(session)
                 

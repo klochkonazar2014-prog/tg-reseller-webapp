@@ -655,7 +655,6 @@ async def inline_handler(query: InlineQuery):
                 ]])
             )
             
-            # If "ref" is searched, show only this result
             if text == "ref":
                 logging.info(f"Returning Article result for {user_id}")
                 try:
@@ -665,6 +664,40 @@ async def inline_handler(query: InlineQuery):
                 return
             
             results = [share_result]
+        elif text in ["history", "история", "orders"]:
+            orders = await db.get_user_orders(user_id)
+            results = []
+            if orders:
+                for order in orders[:30]:
+                    status_map = {
+                        'expired': '🔴 Закончена', 'active':  '🟢 Арендовано',
+                        'rented':  '⏳ Ожидает подключения', 'paid': '⏳ Ожидает подключения',
+                        'pending': '🕐 В обработке', 'pending_payment': '🕐 Ожидает оплаты',
+                    }
+                    st_text = status_map.get(order['status'], f"❓ {order['status']}")
+                    
+                    price = round(float(order['price_per_day']), 2) if order['price_per_day'] else 0
+                    desc = f"{st_text} | {order['days']} дней | {price} TON"
+                    
+                    results.append(InlineQueryResultArticle(
+                        id=f"hist_{order['id']}",
+                        title=f"🎁 {order['nft_name']}",
+                        description=desc,
+                        thumbnail_url="https://ton.org/download/ton_symbol.png",
+                        input_message_content=InputTextMessageContent(
+                            message_text=(
+                                f"📜 <b>Заказ #{order['id']}</b>\n"
+                                f"🎁 <b>Предмет:</b> {order['nft_name']}\n"
+                                f"📊 <b>Статус:</b> {st_text}\n"
+                            ),
+                            parse_mode="HTML"
+                        )
+                    ))
+            try:
+                await query.answer(results, cache_time=1, is_personal=True)
+            except Exception as e:
+                logging.error(f"Error answering history inline: {e}")
+            return
         else:
             results = []
 

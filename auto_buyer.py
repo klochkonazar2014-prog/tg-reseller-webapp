@@ -20,6 +20,7 @@ from tonutils.client import ToncenterV2Client
 from tonutils.wallet import WalletV4R2, WalletV5R1
 from tonutils.utils import Cell, begin_cell
 import base64
+import re
 
 
 # Настройки
@@ -38,6 +39,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - [AUTO-BUYER] - %(m
 
 # Глобальный набор для предотвращения двойной обработки одного и того же заказа
 processing_orders = set()
+wallet_lock = asyncio.Lock()
 
 def get_token():
     import random
@@ -214,41 +216,43 @@ async def process_payment(order):
                     logging.error(f"❌ Ошибка декодирования BOC (ни Base64, ни Hex не подошли): {e}")
                     body_cell = payload_boc
 
-            # Получаем текущий seqno для отслеживания подтверждения
-            current_seqno = await wallet.get_seqno(client, wallet.address)
-            
-            # ВАЖНО: tonutils Wallet.transfer принимает сумму в TON (float)
-            amount_ton = float(amount_nano) / 1e9
-            
-            # Для Lol Pop форсируем 0.22 TON, если API выдал меньше (для прохождения лимита Fragment)
-            if "Lol Pop #124946" in (item['title'] or "") and amount_ton < 0.22:
-                amount_ton = 0.22
-                logging.info(f"⚠️ Форсирую сумму транзакции 0.22 TON для {item['title']} (Fragment requirement)")
+            # Используем блокировку для предотвращения конфликта seqno при параллельных оплатах
+            async with wallet_lock:
+                # Получаем текущий seqno для отслеживания подтверждения
+                current_seqno = await wallet.get_seqno(client, wallet.address)
+                
+                # ВАЖНО: tonutils Wallet.transfer принимает сумму в TON (float)
+                amount_ton = float(amount_nano) / 1e9
+                
+                # Для Lol Pop форсируем 0.22 TON, если API выдал меньше (для прохождения лимита Fragment)
+                if "Lol Pop #124946" in (item['title'] or "") and amount_ton < 0.22:
+                    amount_ton = 0.22
+                    logging.info(f"⚠️ Форсирую сумму транзакции 0.22 TON для {item['title']} (Fragment requirement)")
 
-            logging.info(f"🚀 Отправляю {amount_ton:.9f} TON на {dest_addr} (seqno: {current_seqno})...")
-            
-            # Отправка транзакции с Payload
-            await wallet.transfer(
-                destination=dest_addr,
-                amount=amount_ton,
-                body=body_cell,
-                seqno=current_seqno
-            )
-            
-            logging.info(f"⏳ Транзакция отправлена в сеть. Ожидание подтверждения (seqno: {current_seqno} -> {current_seqno + 1})...")
-            
-            # Ждем подтверждения транзакции (инкремента seqno)
-            success = False
-            for _ in range(12): # Ждем до 2 минут (12 * 10сек)
-                await asyncio.sleep(10)
-                try:
-                    new_seqno = await wallet.get_seqno(client, wallet.address)
-                    if new_seqno > current_seqno:
-                        logging.info(f"✅ Транзакция подтверждена! (seqno: {new_seqno})")
-                        success = True
-                        break
-                except Exception as e:
-                    logging.error(f"Ошибка при проверке seqno: {e}")
+                logging.info(f"🚀 Отправляю {amount_ton:.9f} TON на {dest_addr} (seqno: {current_seqno})...")
+                
+                # Отправка транзакции с Payload
+                await wallet.transfer(
+                    destination=dest_addr,
+                    amount=amount_ton,
+                    body=body_cell,
+                    seqno=current_seqno
+                )
+                
+                logging.info(f"⏳ Транзакция отправлена в сеть. Ожидание подтверждения (seqno: {current_seqno} -> {current_seqno + 1})...")
+                
+                # Ждем подтверждения транзакции (инкремента seqno) внутри лока
+                success = False
+                for _ in range(12): # Ждем до 2 минут (12 * 10сек)
+                    await asyncio.sleep(10)
+                    try:
+                        new_seqno = await wallet.get_seqno(client, wallet.address)
+                        if new_seqno > current_seqno:
+                            logging.info(f"✅ Транзакция подтверждена! (seqno: {new_seqno})")
+                            success = True
+                            break
+                    except Exception as e:
+                        logging.error(f"Ошибка при проверке seqno: {e}")
             
             if not success:
                 logging.warning(f"⚠️ Не дождались подтверждения транзакции для #{order['id']}, но продолжаем.")
@@ -321,8 +325,61 @@ async def monitor_wallet():
                 # 1. TON Transactions Monitoring
                 txs = await client.get_transactions(addr, limit=50)
                 
-                # ... [Existing TON tx handling logic] ...
-                # (I will keep the existing code but add Jetton checking)
+                for tx in txs:
+                    # Пропускаем, если нет входящего сообщения
+                    if not tx.in_msg or not tx.in_msg.info:
+                        continue
+                    
+                    # Проверяем только входящие (InternalMsgInfo)
+                    if tx.in_msg.info.type_ != 'internal':
+                        continue
+                        
+                    tx_hash = tx.cell.hash.hex()
+                    
+                    # Проверяем, обрабатывали ли мы этот хеш
+                    async with db.aiosqlite.connect(db.DB_PATH) as conn:
+                        conn.row_factory = db.aiosqlite.Row
+                        async with conn.execute("SELECT id FROM orders WHERE tx_hash = ?", (tx_hash,)) as cur:
+                            if await cur.fetchone():
+                                continue
+                                
+                    # Парсим комментарий (body)
+                    comment = ""
+                    try:
+                        if tx.in_msg.body:
+                            slice = tx.in_msg.body.begin_parse()
+                            if slice.remaining_bits >= 32:
+                                op = slice.load_uint(32)
+                                if op == 0: # Текстовый комментарий
+                                    comment = slice.load_string(slice.remaining_bits // 8)
+                    except Exception as e:
+                        logging.debug(f"Could not parse comment for {tx_hash}: {e}")
+
+                    # Ищем ID заказа в комментарии (формат 'order:ID' или просто 'ID')
+                    order_id = None
+                    m = re.search(r'(?:order:)?(\d+)', comment)
+                    if m:
+                        order_id = int(m.group(1))
+                    
+                    if order_id:
+                        async with db.aiosqlite.connect(db.DB_PATH) as conn:
+                            conn.row_factory = db.aiosqlite.Row
+                            async with conn.execute("SELECT * FROM orders WHERE id = ?", (order_id,)) as cur:
+                                order = await cur.fetchone()
+                                
+                        if order and order['status'] == 'pending_payment':
+                            # Проверяем сумму (с допуском на комиссию/округление)
+                            received_amount = float(tx.in_msg.info.value_coins) / 1e9
+                            expected_amount = float(order['total_price'])
+                            
+                            if received_amount >= expected_amount * 0.99:
+                                logging.info(f"🎯 TON MATCH! Order #{order_id} paid. Received: {received_amount} TON, Expected: {expected_amount}")
+                                processing_orders.add(order_id)
+                                await db.update_order_status(order_id, 'paid', tx_hash=tx_hash)
+                                asyncio.create_task(process_payment(dict(order)))
+                            else:
+                                logging.warning(f"⚠️ Low payment for #{order_id}: got {received_amount}, need {expected_amount}")
+                
                 
                 # 2. NEW: USDT Jetton Monitoring via TonAPI
                 USDT_MASTER = "EQCxE6mUt_9S9clpu7R_6m09wYz3X0mR3GvK7N88m8_L3A1f"
@@ -505,6 +562,13 @@ async def sync_rented_tc_links():
                                 else:
                                     # Если ошибка типа "Уже привязано" - это тоже хорошо.
                                     logging.info(f"ℹ️ [Sync] Ответ MarketApp для #{order['id']} ({resp.status}): {body}")
+                                    if resp.status in [400, 401, 403]:
+                                        # Если ошибка 400/FORBIDDEN, скорее всего токен устарел или лот уже чужой
+                                        # Очищаем api_token, чтобы перестать спамить API
+                                        logging.warning(f"⚠️ Очистка api_token для #{order['id']} из-за ошибки {resp.status}")
+                                        async with db.aiosqlite.connect(db.DB_PATH) as conn_up:
+                                            await conn_up.execute("UPDATE orders SET api_token = NULL WHERE id = ?", (order['id'],))
+                                            await conn_up.commit()
                         except Exception as e_order:
                             logging.error(f"❌ [Sync] Ошибка привязки заказа #{order['id']}: {e_order}")
         except Exception as e:
