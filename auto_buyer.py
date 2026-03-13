@@ -16,7 +16,7 @@ if sys.platform == "win32":
 
 import database as db
 import aiohttp
-from tonutils.client import ToncenterClient
+from tonutils.client import ToncenterV2Client
 from tonutils.wallet import WalletV4R2, WalletV5R1
 from tonutils.utils import Cell, begin_cell
 import base64
@@ -324,7 +324,7 @@ async def monitor_wallet():
         
     logging.info(f"👀 Мониторинг кошельков {WALLETS_TO_MONITOR} запущен...")
     
-    client = ToncenterClient(base_url="https://toncenter.com", api_key=TONCENTER_API_KEY)
+    client = ToncenterV2Client(base_url="https://toncenter.com", api_key=TONCENTER_API_KEY)
     last_tx_hashes = {addr: None for addr in WALLETS_TO_MONITOR}
 
 
