@@ -346,8 +346,8 @@ async def create_rental_order(user_id, nft_address, days):
         referral_commission = max(0.0, round(markup * days * 0.25, 4))
     
     order_id = await db.create_order(user_id, nft_address, item['title'], days, total_base, is_preorder=is_preorder, referral_commission=referral_commission)
-    # Add unique fractional part to avoid collision in simple transfers
-    total_final = round(total_base + (order_id % 500) / 10000, 4)
+    # Больше не добавляем дробную часть, так как есть memo (order:ID)
+    total_final = round(total_base, 2)
     
     async with db.aiosqlite.connect(db.DB_PATH) as conn:
         await conn.execute("UPDATE orders SET total_price = ?, status = 'pending_payment' WHERE id = ?", (total_final, order_id))

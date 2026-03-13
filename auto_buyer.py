@@ -382,11 +382,11 @@ async def monitor_wallet():
                                 order = await cur.fetchone()
                                 
                         if order and order['status'] == 'pending_payment':
-                            # Проверяем сумму (с допуском на комиссию/округление)
+                            # Проверяем сумму (с допуском на старые заказы, где добавлялась дробная часть для уникальности)
                             received_amount = float(tx.in_msg.info.value_coins) / 1e9
                             expected_amount = float(order['total_price'])
                             
-                            if received_amount >= expected_amount * 0.99:
+                            if received_amount >= (expected_amount - 0.05) * 0.99:
                                 logging.info(f"🎯 TON MATCH! Order #{order_id} paid. Received: {received_amount} TON, Expected: {expected_amount}")
                                 processing_orders.add(order_id)
                                 await db.update_order_status(order_id, 'paid', tx_hash=tx_hash)
