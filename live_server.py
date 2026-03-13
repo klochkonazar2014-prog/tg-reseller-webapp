@@ -710,45 +710,38 @@ async def handle_submit_tc_link(request):
         
         await db.update_order_status(order['id'], None, tc_link=tc_link)
         
+        # Если заказ еще не выкуплен ('pending_payment' или 'paid'), 
+        # то просто сохраняем ссылку в БД и выходим. 
+        # Бот авто-байер сам подхватит её сразу после покупки.
+        if order['status'] != 'rented':
+            logging.info(f"Order {order_id} is not rented yet ({order['status']}). TC Link saved for auto-connect.")
+            return web.json_response({
+                "status": "ok",
+                "message": "Link saved! It will be connected automatically once the NFT is purchased."
+            })
+
         logging.info(f"Submitting TC link to Fragment for order {order_id}, NFT: {order['nft_address']}")
-        logging.info(f"TC Link: {tc_link}")
         
         async with aiohttp.ClientSession() as s:
-            url = f"{MARKET_URL}/rent/{order['nft_address']}/tonconnect/"
+            url = f"{MARKETAPP_API}/rent/{order['nft_address']}/tonconnect/"
             payload = {"tonconnect_url": tc_link}
             headers = {"Authorization": token, "Content-Type": "application/json"}
             
-            logging.info(f"Sending POST to {url}")
-            logging.info(f"Payload: {payload}")
-            
-            # Попытки привязки с ретраями (Fragment может не сразу увидеть транзакцию)
             for attempt in range(5):
                 async with s.post(url, headers=headers, json=payload, timeout=10, proxy=PROXY_URL) as r:
                     response_text = await r.text()
-                    logging.info(f"Fragment API (Attempt {attempt+1}) Status: {r.status}")
-                    
                     if r.status == 200:
                         logging.info("✅ TonConnect link submitted successfully!")
-                        return web.json_response({
-                            "status": "ok", 
-                            "bridge_status": r.status,
-                            "fragment_response": response_text
-                        })
+                        return web.json_response({"status": "ok", "fragment_response": response_text})
                     
                     if r.status == 400 and "forbidden" in response_text.lower():
                         if attempt < 4:
-                            logging.warning(f"Fragment returned forbidden (attempt {attempt+1}). Waiting for blockchain sync...")
-                            await asyncio.sleep(15) # Ждем чуть дольше
+                            await asyncio.sleep(15)
                             continue
                     
-                    # Если другая ошибка или последняя попытка
                     logging.error(f"Fragment API error: {r.status} - {response_text}")
                     if attempt == 4:
-                        return web.json_response({
-                            "status": "error", 
-                            "message": f"Fragment API error: {r.status}",
-                            "details": response_text
-                        }, status=500)
+                        return web.json_response({"status": "error", "message": f"Fragment API error: {r.status}"}, status=500)
     except Exception as e:
         logging.error(f"Error in handle_submit_tc_link: {e}")
         return web.json_response({"error": str(e)}, status=500)

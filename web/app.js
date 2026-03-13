@@ -260,6 +260,7 @@ const TRANSLATIONS = {
         tut_step_5: "Выберите, куда именно вы хотите, чтобы показывался арендованный актив, и нажмите кнопку <b>Save</b>.",
         tut_step_6: "Поздравляем! Ваш актив теперь привязан к OctoRent. Приятного использования! ✨",
         tut_next: "Далее",
+        tut_skip: "Пропустить",
         tut_finish: "Удачного пользования!",
         tut_connect: "Подключить актив",
         expired: "СРОК ИСТЕК"
@@ -430,6 +431,7 @@ const TRANSLATIONS = {
         error_transaction_failed: "Transaction failed. Please check your balance.",
         error_unknown: "Error: {msg}",
         tut_next: "Next",
+        tut_skip: "Skip",
         tut_finish: "Happy using!",
         tut_connect: "Connect Asset",
         expired: "EXPIRED",
@@ -2916,10 +2918,15 @@ function renderTutorialStep() {
                 <img src="${data.img}" class="tutorial-image" alt="Step ${currentTutorialStep}">
             </div>
             <div class="tutorial-desc">${t(data.key)}</div>
-            <button id="tutorial-next-btn" class="btn-progress" disabled onclick="nextTutorialStep()">
-                <div class="progress-fill"></div>
-                <span>${currentTutorialStep === 6 ? t('tut_finish') : t('tut_next')}</span>
-            </button>
+            <div class="tutorial-btns-row" style="display: flex; gap: 10px; margin-top: auto; width: 100%;">
+                <button class="btn-gray" onclick="nextTutorialStep()" style="flex: 1; height: 50px; border-radius: 12px; font-weight: 700;">
+                    ${t('tut_skip')}
+                </button>
+                <button id="tutorial-next-btn" class="btn-progress" disabled onclick="nextTutorialStep()" style="flex: 2;">
+                    <div class="progress-fill"></div>
+                    <span>${currentTutorialStep === 6 ? t('tut_finish') : t('tut_next')}</span>
+                </button>
+            </div>
         </div>
     `;
 
@@ -3889,14 +3896,24 @@ async function handleTonRent() {
             const selView = document.getElementById('payment-selection-view');
             if (selView) {
                 selView.innerHTML = `
-                    <div style="text-align:center; padding: 40px 20px;">
-                        <div style="font-size: 48px; margin-bottom: 20px;">✅</div>
-                        <h2 style="color: #fff; margin-bottom: 12px;">Транзакция отправлена!</h2>
-                        <p style="color: #8b9bb4; line-height: 1.5; margin-bottom: 30px;">
-                            Ваша оплата находится в обработке сети TON.<br><br>
-                            Пожалуйста, подождите несколько минут. Когда смарт-контракт обработает заказ, статус предмета изменится на "Арендовано", и вы сможете подключить его к Fragment.
+                    <div style="text-align:center; padding: 20px 15px;">
+                        <div style="font-size: 40px; margin-bottom: 15px;">✅</div>
+                        <h2 style="color: #fff; margin-bottom: 10px; font-size: 1.2rem;">Транзакция отправлена!</h2>
+                        <p style="color: #8b9bb4; line-height: 1.4; margin-bottom: 20px; font-size: 0.9rem;">
+                            Оплата обрабатывается сетью TON. Вы можете <b>сразу</b> ускорить процесс:
                         </p>
-                        <button onclick="closePaymentModal(); loadLiveItems(true);" class="main-rent-btn" style="width:100%;">Отлично</button>
+                        
+                        <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 20px; text-align: left;">
+                            <label style="display: block; color: #fff; font-size: 0.85rem; margin-bottom: 8px;">Ссылка для подключения к Fragment:</label>
+                            <input type="text" id="modal-tc-link-input" placeholder="Коснитесь здесь, чтобы вставить ссылку" 
+                                   style="width: 100%; background: #1a1f26; border: 1px solid #3d4652; color: #fff; padding: 10px; border-radius: 8px; font-size: 0.85rem; outline: none;">
+                            <p style="color: #6a7a8f; font-size: 0.75rem; margin-top: 8px;">
+                                Вставьте ссылку из Telegram (Fragment), и бот подключит подарок <b>автоматически</b>, как только увидит оплату.
+                            </p>
+                            <button onclick="submitTCLinkFromModal(${res.order_id})" class="main-rent-btn" style="width: 100%; margin-top: 10px; padding: 10px; height: auto; min-height: 40px;">Сохранить и Авто-подключить</button>
+                        </div>
+
+                        <button onclick="closePaymentModal(); loadLiveItems(true);" class="main-rent-btn" style="width:100%; background: none; border: 1px solid #3d4652; color: #8b9bb4;">Пропустить и закрыть</button>
                     </div>
                 `;
             } else {
@@ -3938,9 +3955,75 @@ async function handleUsdtRent() {
             }]
         };
         await tonConnectUI.sendTransaction(transaction);
-        closePaymentModal();
-        showToast(t('payment_sent'));
-    } catch (e) { console.error(e); }
+        
+        const selView = document.getElementById('payment-selection-view');
+        if (selView) {
+            selView.innerHTML = `
+                <div style="text-align:center; padding: 20px 15px;">
+                    <div style="font-size: 40px; margin-bottom: 15px;">✅</div>
+                    <h2 style="color: #fff; margin-bottom: 10px; font-size: 1.2rem;">Транзакция отправлена!</h2>
+                    <p style="color: #8b9bb4; line-height: 1.4; margin-bottom: 20px; font-size: 0.9rem;">
+                        Оплата USDT отправлена. Вы можете <b>сразу</b> ускорить процесс:
+                    </p>
+                    
+                    <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 20px; text-align: left;">
+                        <label style="display: block; color: #fff; font-size: 0.85rem; margin-bottom: 8px;">Ссылка для подключения к Fragment:</label>
+                        <input type="text" id="modal-tc-link-input" placeholder="Коснитесь здесь, чтобы вставить ссылку" 
+                               style="width: 100%; background: #1a1f26; border: 1px solid #3d4652; color: #fff; padding: 10px; border-radius: 8px; font-size: 0.85rem; outline: none;">
+                        <button onclick="submitTCLinkFromModal(${orderRes.order_id})" class="main-rent-btn" style="width: 100%; margin-top: 10px; padding: 10px; height: auto; min-height: 40px;">Сохранить и Авто-подключить</button>
+                    </div>
+
+                    <button onclick="closePaymentModal(); loadLiveItems(true);" class="main-rent-btn" style="width:100%; background: none; border: 1px solid #3d4652; color: #8b9bb4;">Пропустить и закрыть</button>
+                </div>
+            `;
+        } else {
+            closePaymentModal();
+            showToast(t('payment_sent'));
+        }
+    } catch (e) { 
+        console.error(e);
+        if (e && e.message !== 'Reject request') {
+            showToast("Ошибка при отправке USDT");
+        }
+    }
+}
+
+async function submitTCLinkFromModal(orderId) {
+    const input = document.getElementById('modal-tc-link-input');
+    const link = input ? input.value.trim() : "";
+    
+    if (!link) {
+        showToast("Сначала вставьте ссылку!");
+        return;
+    }
+    
+    if (!link.startsWith("ton-connect://") && !link.startsWith("https://ton-connect.org")) {
+        showToast("Некорректный формат ссылки!");
+        return;
+    }
+    
+    try {
+        showToast("Сохраняем ссылку...");
+        const resp = await fetch(`${BACKEND_URL}/api/submit_tc_link`, {
+            method: 'POST',
+            body: JSON.stringify({ order_id: orderId, tc_link: link }),
+            headers: {
+                'Content-Type': 'application/json',
+                'X-TG-Data': window.Telegram.WebApp.initData
+            }
+        });
+        const res = await resp.json();
+        if (res.status === 'ok') {
+            showToast("✅ Ссылка сохранена! Бот всё сделает сам.");
+            closePaymentModal();
+            loadLiveItems(true);
+        } else {
+            showToast(res.error || "Ошибка сохранения");
+        }
+    } catch (e) {
+        console.error(e);
+        showToast("Ошибка сети при сохранении");
+    }
 }
 
 async function handleRubRent() {

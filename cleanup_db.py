@@ -26,8 +26,10 @@ async def cleanup():
         async with aiosqlite.connect(db.DB_PATH) as conn:
             print("Удаление старых данных из таблицы items...")
             await conn.execute("DELETE FROM items")
+            print("Удаление истории заказов (кроме активных арен)...")
+            await conn.execute("DELETE FROM orders WHERE status != 'rented'")
             await conn.commit()
-            print("✅ Таблица items успешно очищена.")
+            print("✅ База данных успешно очищена.")
             print("Теперь запустите парсер (parser.py), чтобы он загрузил свежие и правильные данные.")
     except Exception as e:
         print(f"❌ Ошибка при очистке: {e}")

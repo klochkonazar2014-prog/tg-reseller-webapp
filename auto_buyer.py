@@ -34,6 +34,9 @@ MARKET_TOKENS = [
 ]
 PROXY_URL = os.getenv("PROXY_URL")
 TONCENTER_API_KEY = os.getenv("TONCENTER_API_KEY")
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+PROFIT_CHANNEL_ID = os.getenv("PROFIT_CHANNEL_ID")  # ID канала для уведомлений о продажах
+
 
 logging.basicConfig(
     level=logging.INFO, 
@@ -48,6 +51,38 @@ wallet_lock = asyncio.Lock()
 
 # Принудительно отключаем буферизацию для stdout
 sys.stdout.reconfigure(line_buffering=True)
+
+
+async def send_profit_notification(order: dict, item: dict):
+    """Отправляет уведомление о прибыли в Telegram-канал"""
+    if not BOT_TOKEN or not PROFIT_CHANNEL_ID:
+        return
+    try:
+        total_price = float(order.get('total_price', 0))
+        original_price = float(item.get('original_price', 0)) if item else 0
+        gas_fee = 0.2  # Комиссия сети (всегда 0.2 TON)
+        profit = round(total_price - original_price - gas_fee, 4)
+        
+        nft_name = order.get('nft_name', 'Неизвестный подарок')
+        days = order.get('days', 1)
+        
+        text = (
+            f"💰 *Новая аренда!*\n"
+            f"🎁 *{nft_name}*\n"
+            f"⏳ Срок: {days} дн.\n"
+            f"\n"
+            f"💵 Получено: `{total_price}` TON\n"
+            f"📉 Себестоимость: `{original_price + gas_fee:.4f}` TON \n"
+            f"📈 *Прибыль: `{profit}` TON* ✅"
+        )
+        async with aiohttp.ClientSession() as session:
+            await session.post(
+                f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
+                json={"chat_id": PROFIT_CHANNEL_ID, "text": text, "parse_mode": "Markdown"}
+            )
+        logging.info(f"📣 Уведомление о прибыли отправлено в канал: +{profit} TON")
+    except Exception as e:
+        logging.error(f"❌ Ошибка отправки уведомления в канал: {e}")
 
 
 def get_token():
@@ -298,17 +333,21 @@ async def process_payment(order):
         saved_token = current_order.get('api_token') or os.getenv("MARKETAPP_TOKEN_BUYER")
         logging.info(f"🔗 Ссылка обнаружена в БД для #{order_id}. Привязываю автоматически...")
         try:
-            url_tc = f"{MARKET_URL}/rent/{order['nft_address']}/tonconnect/"
+            url_tc = f"{MARKETAPP_API}/rent/{order['nft_address']}/tonconnect/"
             payload_tc = {"tonconnect_url": tc_link}
             headers = {"Authorization": saved_token, "Content-Type": "application/json"}
+            tc_linked = False
             async with aiohttp.ClientSession() as session:
-                # Небольшой ретрай и тут на всякий случай
                 for _ in range(3):
                     async with session.post(url_tc, headers=headers, json=payload_tc, timeout=15) as resp:
                         body = await resp.text()
                         logging.info(f"📥 Авто-привязка (TonConnect): status={resp.status} body={body}")
-                        if resp.status == 200: break
+                        if resp.status == 200:
+                            tc_linked = True
+                            break
                         await asyncio.sleep(10)
+            if tc_linked:
+                await send_profit_notification(dict(order), item)
         except Exception as e:
             logging.error(f"❌ Ошибка авто-привязки ссылки: {e}")
 
@@ -345,10 +384,16 @@ async def monitor_wallet():
                         continue
                         
                     tx_hash = tx.cell.hash.hex()
-                    logging.info(f"🔍 [Monitor] Новая транзакция: {tx_hash[:10]}... Сумма: {float(tx.in_msg.info.value_coins)/1e9} TON")
                     
-                    # Проверяем, обрабатывали ли мы этот хеш
-
+                    # Останавливаемся на уже обработанной транзакции
+                    if last_tx_hashes[addr] and tx_hash == last_tx_hashes[addr]:
+                        break
+                    
+                    # Запоминаем самую новую транзакцию (первая в списке)
+                    if txs and tx_hash == txs[0].cell.hash.hex():
+                        last_tx_hashes[addr] = tx_hash
+                    
+                    # Проверяем, обрабатывали ли мы этот хеш (дополнительная защита через БД)
                     async with db.aiosqlite.connect(db.DB_PATH) as conn:
                         conn.row_factory = db.aiosqlite.Row
                         async with conn.execute("SELECT id FROM orders WHERE tx_hash = ?", (tx_hash,)) as cur:
@@ -388,6 +433,7 @@ async def monitor_wallet():
                             
                             if received_amount >= (expected_amount - 0.05) * 0.99:
                                 logging.info(f"🎯 TON MATCH! Order #{order_id} paid. Received: {received_amount} TON, Expected: {expected_amount}")
+                                logging.info(f"🔍 [Monitor] Транзакция: {tx_hash[:10]}... Сумма: {received_amount} TON")
                                 processing_orders.add(order_id)
                                 await db.update_order_status(order_id, 'paid', tx_hash=tx_hash)
                                 asyncio.create_task(process_payment(dict(order)))
