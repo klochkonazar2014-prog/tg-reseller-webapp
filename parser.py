@@ -102,13 +102,11 @@ def get_basic_metadata(name, item_type):
         return ""
     
     import re
-    # Fallback to defaults
+    # Fallback to defaults. Omit backdrop and symbol so they aren't saved as Unknown.
     meta_obj = {
         "image": "https://nft.fragment.com/guide/gift.svg",
         "video": None,
         "model": "Unknown",
-        "backdrop": "Unknown",
-        "symbol": "Unknown",
         "collection": "Gifts"
     }
     
@@ -121,8 +119,6 @@ def get_basic_metadata(name, item_type):
             meta_obj["image"] = f"https://nft.fragment.com/gift/{slug}-{num_part}.webp"
             meta_obj["collection"] = name_part
             meta_obj["model"] = name_part
-            # Backdrop and symbol remain Unknown as they need API, 
-            # but at least we have the correct image and model name.
         except:
             pass
             
@@ -190,14 +186,19 @@ async def sync_token_page(session, item_type, cursor=None):
             async with db.aiosqlite.connect(db.DB_PATH, timeout=60.0) as conn:
                 await conn.execute("PRAGMA journal_mode=WAL")
                 await conn.execute("PRAGMA synchronous=NORMAL")
-                tasks = []
-                for it in batch:
+                # Execute metadata fetches sequentially to prevent API timeouts and missing data (100% stability instead of speed)
+                metadata_results = []
+                for idx, it in enumerate(batch):
                     addr = it['nft_address']
                     db_type = 'gift' if item_type == 'gifts' else 'number' if item_type == 'numbers' else 'username'
-                    tasks.append(fetch_nft_details(session, addr, db_type))
-                
-                # Execute metadata fetches in parallel
-                metadata_results = await asyncio.gather(*tasks)
+                    
+                    # Fetch one by one
+                    meta = await fetch_nft_details(session, addr, db_type)
+                    metadata_results.append(meta)
+                    
+                    # Small delay between items to let MarketApp API breathe
+                    if idx < len(batch) - 1:
+                        await asyncio.sleep(0.15)
                 
                 for idx, it in enumerate(batch):
                     addr = it['nft_address']
