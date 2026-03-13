@@ -2381,6 +2381,7 @@ async function openProductView(item) {
                 loadLiveItems(true);
             };
 
+            console.log("Adding prop row to UI:", label, val);
             propCont.appendChild(r);
         };
 
@@ -2419,6 +2420,7 @@ async function openProductView(item) {
                 propCont.appendChild(reRow);
             }
         }
+        console.log("Final properties in container:", propCont.children.length);
     }
 
     const rentBtn = document.getElementById('main-rent-action-btn');
