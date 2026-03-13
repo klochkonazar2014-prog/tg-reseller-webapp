@@ -340,8 +340,8 @@ async def monitor_wallet():
                     if not tx.in_msg or not tx.in_msg.info:
                         continue
                     
-                    # Проверяем только входящие (InternalMsgInfo)
-                    if tx.in_msg.info.type_ != 'internal':
+                    # Пропускаем внешние сообщения — у них нет value_coins
+                    if not hasattr(tx.in_msg.info, 'value_coins'):
                         continue
                         
                     tx_hash = tx.cell.hash.hex()
