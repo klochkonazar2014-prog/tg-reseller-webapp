@@ -92,7 +92,15 @@ async def handle_index(request):
     path = './web/index.html'
     if os.path.exists(path):
         with open(path, 'r', encoding='utf-8') as f:
-            content = f.read().replace('?v=1.1.84', f'?v={int(os.path.getmtime(path))}')
+            content = f.read()
+            
+        # Улучшенный сброс кэша: ищем ?v=... в ссылках и заменяем на текущее время изменения файла
+        try:
+            mtime = int(os.path.getmtime(path))
+            content = re.sub(r'\?v=\d+', f'?v={mtime}', content)
+        except:
+            pass
+            
         return web.Response(text=content, content_type='text/html', headers={'Cache-Control':'no-cache'})
     return web.Response(status=404)
 

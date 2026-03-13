@@ -2139,6 +2139,7 @@ function observeNewCards() {
     // Lottie disabled in feed to prevent lag on mobile
 }
 async function openProductView(item) {
+    console.log("Opening product view for item:", item.nft_name, "Metadata present:", !!item.metadata);
     if (!item) return;
     CURRENT_PAYMENT_ITEM = item;
     const pv = document.getElementById('product-view');
