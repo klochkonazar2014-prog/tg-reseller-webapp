@@ -7,6 +7,8 @@ let isTcModalMandatory = false;
 let tg = null;
 let IS_SHARING_REF = false; // Prevent double clicks on referral share
 
+const APP_VERSION = "1.2.5-meta-debug";
+console.log("OctoRent Version:", APP_VERSION);
 console.log("Using backend:", BACKEND_URL);
 
 const MY_MARKUP = 0.20;
@@ -2393,6 +2395,7 @@ async function openProductView(item) {
         const modelVal = meta.model || item._modelName;
         const symVal = meta.symbol || item._symbol;
         const bgVal = meta.backdrop || item._backdrop;
+        console.log("Metadata values:", { modelVal, symVal, bgVal, giftBaseName });
 
         if (modelVal && modelVal !== giftBaseName) appendClickableProp(t('model'), modelVal, 'model');
 

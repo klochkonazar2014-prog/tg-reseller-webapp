@@ -94,10 +94,11 @@ async def handle_index(request):
         with open(path, 'r', encoding='utf-8') as f:
             content = f.read()
             
-        # Улучшенный сброс кэша: ищем ?v=... в ссылках и заменяем на текущее время изменения файла
+        # Улучшенный сброс кэша: форсируем обновление версии на текущее время
+        import time
         try:
-            mtime = int(os.path.getmtime(path))
-            content = re.sub(r'\?v=\d+', f'?v={mtime}', content)
+            now = int(time.time())
+            content = re.sub(r'\?v=\d+', f'?v={now}', content)
         except:
             pass
             
