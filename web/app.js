@@ -2399,7 +2399,8 @@ async function openProductView(item) {
                 r.querySelector('.prop-right').innerHTML += `<span class="arrow-v" style="font-size:12px; margin-left:8px;">›</span>`;
 
                 r.onclick = () => {
-                    if (key === 'model' || key === 'bg' || key === 'symbol') {
+                    // Only restrict by NFT collection if they click on the model specifically
+                    if (key === 'model') {
                         ACTIVE_FILTERS.nft = [giftBaseName];
                     }
                     ACTIVE_FILTERS[key] = [val];
