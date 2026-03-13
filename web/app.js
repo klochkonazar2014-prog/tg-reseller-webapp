@@ -2420,10 +2420,11 @@ async function openProductView(item) {
             } catch (e) { }
         }
 
-        const modelVal = meta.model || item._modelName;
-        const symVal = meta.symbol || item._symbol;
-        const bgVal = meta.backdrop || item._backdrop;
-        console.log("DEBUG Meta Content:", JSON.stringify({ modelVal, symVal, bgVal, giftBaseName, meta }));
+        const modelVal = (meta.model && meta.model !== 'Unknown') ? meta.model : (item._modelName || giftBaseName);
+        const symVal = (meta.symbol && meta.symbol !== 'Unknown') ? meta.symbol : item._symbol;
+        const bgVal = (meta.backdrop && meta.backdrop !== 'Unknown') ? meta.backdrop : item._backdrop;
+        
+        console.log(`[PRODUCT_VIEW] ${item.nft_name} Meta:`, { modelVal, symVal, bgVal });
 
         // Show all available metadata from the object
         if (modelVal) appendClickableProp(t('model'), modelVal, 'model');

@@ -140,24 +140,25 @@ async def handle_live_items(request):
         async with db.aiosqlite.connect(db.DB_PATH, timeout=30) as conn:
             conn.row_factory = db.aiosqlite.Row
             
-            # Build basic query
+            # Build basic count and items queries
+            count_query = "SELECT COUNT(*) FROM items WHERE status = ?"
             query = "SELECT * FROM items WHERE status = ?"
             params = [s_filter]
             
             if t_filter == 'gift':
-                query += " AND type = 'gift' AND metadata NOT LIKE '%ton_symbol.png%' AND metadata NOT LIKE '%gift.svg%' AND metadata IS NOT NULL"
-                query += " AND title NOT LIKE '@%' AND title NOT LIKE '+888%'"
+                gift_clause = " AND type = 'gift' AND metadata NOT LIKE '%ton_symbol.png%' AND metadata NOT LIKE '%gift.svg%' AND metadata IS NOT NULL AND title NOT LIKE '@%' AND title NOT LIKE '+888%'"
+                query += gift_clause
+                count_query += gift_clause
             else:
                 query += " AND type = ?"
+                count_query += " AND type = ?"
                 params.append(t_filter)
 
-            # Collection filter (f_nft) moved to SQL if possible
             if f_nft and f_nft != 'all':
                 nft_filters = [x.strip() for x in f_nft.split(',')]
                 if nft_filters:
                     placeholders = []
                     for nf in nft_filters:
-                        # Heuristic to match singular titles in DB from plural filters
                         base_nf = nf
                         if nf.lower().endswith('ies'): base_nf = nf[:-3] + 'y'
                         elif nf.lower().endswith('es'): base_nf = nf[:-2]
@@ -165,167 +166,79 @@ async def handle_live_items(request):
                         
                         placeholders.append("title LIKE ?")
                         params.append(f"{base_nf}%") 
-                    query += " AND (" + " OR ".join(placeholders) + ")"
+                    clause = " AND (" + " OR ".join(placeholders) + ")"
+                    query += clause
+                    count_query += clause
                 
             if f_search:
-                query += " AND (title LIKE ? OR nft_address LIKE ? OR metadata LIKE ?)"
+                s_clause = " AND (title LIKE ? OR nft_address LIKE ? OR metadata LIKE ?)"
+                query += s_clause
+                count_query += s_clause
                 params.extend([f"%{f_search}%", f"%{f_search}%", f"%{f_search}%"])
 
-            # Sorting logic
-            if s_filter == 'available' and not f_search and f_sort == 'id_desc':
-                query += " ORDER BY id DESC" # Stable sort for pagination
-            elif f_sort == 'price_asc':
-                query += " ORDER BY price_per_day ASC"
-            elif f_sort == 'price_desc':
-                query += " ORDER BY price_per_day DESC"
-            else:
-                query += " ORDER BY id DESC"
+            # Ordering
+            if f_sort == 'price_asc': query += " ORDER BY price_per_day ASC"
+            elif f_sort == 'price_desc': query += " ORDER BY price_per_day DESC"
+            else: query += " ORDER BY id DESC"
 
-            # Apply LIMIT and OFFSET in SQL for performance
-            # Since we do more filtering in Python (for JSON attributes and advanced search), 
-            # we need to fetch a larger batch to fill the requested 'limit'.
-            needs_large_fetch = any([f_model, f_bg, f_symbol, f_search])
+            # Check if we need to fetch a large batch for Python-side filtering
+            needs_large_fetch = any([f_model, f_bg, f_symbol])
             fetch_limit = 2000 if needs_large_fetch else limit
-            query += f" LIMIT ? OFFSET ?"
-            params.extend([fetch_limit, offset])
+            
+            # Execute Count first
+            async with conn.execute(count_query, params) as cursor:
+                row = await cursor.fetchone()
+                total_found = row[0] if row else 0
 
-            async with conn.execute(query, params) as cursor:
+            # Execute items fetch
+            final_params = params + [fetch_limit, offset]
+            async with conn.execute(query + " LIMIT ? OFFSET ?", final_params) as cursor:
                 all_rows = await cursor.fetchall()
             
-            # NOW filter and prepare items for sorting
             filtered_items = []
             for r in all_rows:
-                # debug_title = r['title']
                 try:
                     m = json.loads(r['metadata'] or "{}")
-                except Exception:
-                    continue
-                
-                # Lenient collection matching (Gift vs Gifts)
-                # Removed logging inside loop for performance (database.db has thousands of rows)
+                except: continue
 
-                title = r['title']
-                base_title = title.split('#')[0].strip()
-
-                # Robust NFT matching using the title (which always contains the singular collection name)
-                def is_nft_match(title_singular, filter_plural):
-                    if not filter_plural or filter_plural == 'all': return True
-                    t_low = title_singular.lower().strip()
-                    f_low = filter_plural.lower().strip()
-                    if t_low == f_low: return True
-                    if t_low + 's' == f_low: return True
-                    if t_low + 'es' == f_low: return True
-                    if t_low.endswith('y') and t_low[:-1] + 'ies' == f_low: return True
-                    return False
-
-                if f_search and f_search != 'all':
-                    s_low = f_search.lower().strip()
-                    # Check title, address, then metadata fields
-                    match = False
-                    if s_low in r['title'].lower(): match = True
-                    elif s_low in r['nft_address'].lower(): match = True
-                    elif s_low in str(m.get("model", "")).lower(): match = True
-                    elif s_low in str(m.get("backdrop", "")).lower(): match = True
-                    elif s_low in str(m.get("symbol", "")).lower(): match = True
-                    
-                    if not match:
-                        continue
-
-                if f_nft and f_nft != 'all':
-                    nft_filters = [x.strip() for x in f_nft.split(',')]
-                    if not any(is_nft_match(base_title, n) for n in nft_filters):
-                        continue
-                
+                # Python side filtering for fields in JSON
                 if f_model and f_model != 'all':
-                    model_filters = [x.strip().lower() for x in f_model.split(',')]
-                    item_model = str(m.get("model", "")).lower().strip()
-                    if item_model not in model_filters:
-                        continue
-
+                    if str(m.get("model", "")).lower().strip() not in [x.strip().lower() for x in f_model.split(',')]: continue
                 if f_bg and f_bg != 'all':
-                    bg_filters = [x.strip().lower() for x in f_bg.split(',')]
-                    if str(m.get("backdrop", "")).lower() not in bg_filters: 
-                        continue
-                        
+                    if str(m.get("backdrop", "")).lower().strip() not in [x.strip().lower() for x in f_bg.split(',')]: continue
                 if f_symbol and f_symbol != 'all':
-                    symbol_filters = [x.strip().lower() for x in f_symbol.split(',')]
-                    if str(m.get("symbol", "")).lower() not in symbol_filters: 
-                        continue
+                    if str(m.get("symbol", "")).lower().strip() not in [x.strip().lower() for x in f_symbol.split(',')]: continue
 
-                # Extract number for sorting and filtering
                 title = r['title']
                 num_match = re.search(r'#(\d+)', title)
                 nft_num = int(num_match.group(1)) if num_match else 0
                 
-                # Apply number filter if provided
-                if f_gift_num:
-                    try:
-                        if int(f_gift_num) != nft_num: continue
-                    except: pass
+                if f_gift_num and str(nft_num) != str(f_gift_num): continue
                 
-                # Apply price filters safely to prevent float(None) errors for some items
-                # Fallback to original_price if price_per_day is missing/zero (especially for pre-orders)
-                raw_price = float(r['price_per_day'] or 0.0)
-                if raw_price <= 0:
-                    raw_price = float(r['original_price'] or 0.0)
-                
-                price = raw_price
+                price = float(r['price_per_day'] or r['original_price'] or 0.0)
 
                 filtered_items.append({
-                    "id": r['id'],
-                    "type": r['type'] or 'gift',
-                    "nft_name": title,
-                    "nft_address": r['nft_address'], 
-                    "price_per_day": price, 
-                    "min_duration": r['min_duration'],
-                    "max_duration": r['max_duration'], 
-                    "status": r['status'],
-                    "rent_ends_at": r['rent_ends_at'],
-                    "auto_relist": r['auto_relist'],
-                    "metadata": r['metadata'],
-                    "image": m.get("image"), 
-                    "_collection": {"name": m.get("collection", "Gift")}, 
+                    "id": r['id'], "type": r['type'] or 'gift', "nft_name": title,
+                    "nft_address": r['nft_address'], "price_per_day": price, 
+                    "min_duration": r['min_duration'], "max_duration": r['max_duration'], 
+                    "status": r['status'], "rent_ends_at": r['rent_ends_at'],
+                    "auto_relist": r['auto_relist'], "metadata": r['metadata'],
+                    "image": m.get("image"), "_collection": {"name": m.get("collection", "Gift")}, 
                     "_modelName": m.get("model") if m.get("model") != m.get("collection") else None, 
-                    "_backdrop": m.get("backdrop"), 
-                    "_symbol": m.get("symbol"),
-                    "_num": nft_num
+                    "_backdrop": m.get("backdrop"), "_symbol": m.get("symbol"), "_num": nft_num
                 })
 
-            # Calculate Rarity (frequency-based) if needed
-            if f_sort in ['model_rare', 'bg_rare', 'symbol_rare']:
-                stat_key = "_modelName" if f_sort == 'model_rare' else "_backdrop" if f_sort == 'bg_rare' else "_symbol"
-                counts = {}
-                for it in filtered_items:
-                    v = it.get(stat_key) or "Unknown"
-                    counts[v] = counts.get(v, 0) + 1
-                for it in filtered_items:
-                    it['_rarity_score'] = counts.get(it.get(stat_key) or "Unknown", 9999)
-
-            # APPLY ADVANCED SORTING
-            if f_sort == 'price_asc':
-                filtered_items.sort(key=lambda x: x['price_per_day'])
-            elif f_sort == 'price_desc':
-                filtered_items.sort(key=lambda x: x['price_per_day'], reverse=True)
-            elif f_sort == 'num_asc':
-                filtered_items.sort(key=lambda x: x['_num'])
-            elif f_sort == 'num_desc':
-                filtered_items.sort(key=lambda x: x['_num'], reverse=True)
-            elif f_sort in ['model_rare', 'bg_rare', 'symbol_rare']:
-                # Lower frequency = more rare
-                filtered_items.sort(key=lambda x: x['_rarity_score'])
+            if needs_large_fetch:
+                paginated_items = filtered_items[offset:offset + limit]
+                total_found = len(filtered_items) # If filtered in Python, total is size of filtered list
             else:
-                filtered_items.sort(key=lambda x: x['id'], reverse=True)
-            
-            # Apply pagination
-            total_found = len(filtered_items)
-            paginated_items = filtered_items[offset:offset + limit]
-            
-            logging.info(f"[handle_live_items] Found {total_found} items matching criteria. Returning {len(paginated_items)} items.")
+                paginated_items = filtered_items
+
+            logging.info(f"[handle_live_items] Found {total_found} total. Returning {len(paginated_items)} items.")
             return web.json_response({"items": paginated_items, "total_available": total_found, "offset": offset})
     except Exception as e:
         import traceback
-        error_details = traceback.format_exc()
-        logging.error(f"[handle_live_items] Error: {error_details}")
+        logging.error(f"[handle_live_items] Error: {traceback.format_exc()}")
         return web.json_response({"items": [], "error": str(e)}, status=500)
 
 async def handle_filter_data(request):
