@@ -262,10 +262,26 @@ async def sync_item(nft_address, item_type, title, original_price=None, price_pe
     import asyncio
     
     async def _perform_sync(db):
-        async with db.execute("SELECT id FROM items WHERE nft_address = ?", (nft_address,)) as cursor:
+        async with db.execute("SELECT id, metadata FROM items WHERE nft_address = ?", (nft_address,)) as cursor:
             row = await cursor.fetchone()
             if row:
-                if metadata: 
+                existing_meta_str = row[1]
+                should_update_meta = True
+                
+                if metadata and existing_meta_str:
+                    try:
+                        new_m = json.loads(metadata)
+                        old_m = json.loads(existing_meta_str)
+                        
+                        # Если новые данные "базовые" (модель равна коллекции), а старые "детальные" (модель не равна коллекции) - не затираем
+                        is_new_basic = (new_m.get("model") == new_m.get("collection"))
+                        is_old_detailed = (old_m.get("model") and old_m.get("model") != old_m.get("collection"))
+                        
+                        if is_new_basic and is_old_detailed:
+                            should_update_meta = False
+                    except: pass
+
+                if metadata and should_update_meta: 
                     await db.execute("UPDATE items SET metadata = ? WHERE nft_address = ?", (metadata, nft_address))
                 
                 # Update prices & durations

@@ -180,37 +180,35 @@ async def sync_token_page(session, item_type, cursor=None):
             async with db.aiosqlite.connect(db.DB_PATH, timeout=60.0) as conn:
                 await conn.execute("PRAGMA journal_mode=WAL")
                 await conn.execute("PRAGMA synchronous=NORMAL")
-                
+                tasks = []
                 for it in batch:
                     addr = it['nft_address']
+                    db_type = 'gift' if item_type == 'gifts' else 'number' if item_type == 'numbers' else 'username'
+                    tasks.append(fetch_nft_details(session, addr, db_type))
+                
+                # Execute metadata fetches in parallel
+                metadata_results = await asyncio.gather(*tasks)
+                
+                for idx, it in enumerate(batch):
+                    addr = it['nft_address']
                     name = it['nft_name']
-                    
-                    # Обработка статуса
                     status_raw = it.get('status', 'available')
                     status_db = 'rented' if status_raw == 'rented' else 'available'
-                    
                     status_details = it.get('status_details', {})
-                    
                     min_d = it.get('min_duration', 86400)
                     max_d = it.get('max_duration', 2592000)
                     db_type = 'gift' if item_type == 'gifts' else 'number' if item_type == 'numbers' else 'username'
-
-                    # Извлекаем прайс более надежно (особенно для арендованных)
                     raw_price_ton = float(it.get('price_per_day', 0)) / 1e9
                     if raw_price_ton <= 0:
-                        # Пытаемся взять из деталей
                         raw_price_ton = float(status_details.get('price_per_day', 0)) / 1e9
-                    
                     marked_ppd = calculate_markup(raw_price_ton) if raw_price_ton > 0 else None
                     original_price_to_save = raw_price_ton if raw_price_ton > 0 else None
-                    
-                    # Извлекаем время окончания аренды
                     rent_ends_at = status_details.get('end_time') or it.get('end_time')
                     
-                    # Metadata: Generate basic metadata immediately to avoid slow API calls
-                    # We only call fetch_nft_details if it's a NEW item and we want full details (backdrop, model, etc)
-                    # But for mass-sync we'll stick to basic metadata to be fast.
-                    meta = get_basic_metadata(name, db_type)
+                    # Use fetched metadata if available, otherwise fallback to basic
+                    meta = metadata_results[idx]
+                    if not meta:
+                        meta = get_basic_metadata(name, db_type)
                     
                     await db.sync_item(
                         nft_address=addr,

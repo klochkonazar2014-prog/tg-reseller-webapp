@@ -35,11 +35,20 @@ MARKET_TOKENS = [
 PROXY_URL = os.getenv("PROXY_URL")
 TONCENTER_API_KEY = os.getenv("TONCENTER_API_KEY")
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - [AUTO-BUYER] - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, 
+    format='%(asctime)s - [AUTO-BUYER] - %(message)s',
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
+
 
 # Глобальный набор для предотвращения двойной обработки одного и того же заказа
 processing_orders = set()
 wallet_lock = asyncio.Lock()
+
+# Принудительно отключаем буферизацию для stdout
+sys.stdout.reconfigure(line_buffering=True)
+
 
 def get_token():
     import random
@@ -315,8 +324,9 @@ async def monitor_wallet():
         
     logging.info(f"👀 Мониторинг кошельков {WALLETS_TO_MONITOR} запущен...")
     
-    client = ToncenterV2Client(base_url="https://toncenter.com", api_key="")
+    client = ToncenterV2Client(base_url="https://toncenter.com", api_key=TONCENTER_API_KEY)
     last_tx_hashes = {addr: None for addr in WALLETS_TO_MONITOR}
+
 
     import datetime
     while True:
@@ -335,8 +345,10 @@ async def monitor_wallet():
                         continue
                         
                     tx_hash = tx.cell.hash.hex()
+                    logging.info(f"🔍 [Monitor] Новая транзакция: {tx_hash[:10]}... Сумма: {float(tx.in_msg.info.value_coins)/1e9} TON")
                     
                     # Проверяем, обрабатывали ли мы этот хеш
+
                     async with db.aiosqlite.connect(db.DB_PATH) as conn:
                         conn.row_factory = db.aiosqlite.Row
                         async with conn.execute("SELECT id FROM orders WHERE tx_hash = ?", (tx_hash,)) as cur:
@@ -362,7 +374,9 @@ async def monitor_wallet():
                         order_id = int(m.group(1))
                     
                     if order_id:
+                        logging.info(f"🧩 [Monitor] Найден Order ID в комменте: {order_id}")
                         async with db.aiosqlite.connect(db.DB_PATH) as conn:
+
                             conn.row_factory = db.aiosqlite.Row
                             async with conn.execute("SELECT * FROM orders WHERE id = ?", (order_id,)) as cur:
                                 order = await cur.fetchone()

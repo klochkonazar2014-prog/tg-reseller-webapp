@@ -159,8 +159,8 @@ async def handle_live_items(request):
                     query += " AND (" + " OR ".join(placeholders) + ")"
                 
             if f_search:
-                query += " AND (title LIKE ? OR nft_address LIKE ?)"
-                params.extend([f"%{f_search}%", f"%{f_search}%"])
+                query += " AND (title LIKE ? OR nft_address LIKE ? OR metadata LIKE ?)"
+                params.extend([f"%{f_search}%", f"%{f_search}%", f"%{f_search}%"])
 
             # Sorting logic
             if s_filter == 'available' and not f_search and f_sort == 'id_desc':
@@ -173,9 +173,10 @@ async def handle_live_items(request):
                 query += " ORDER BY id DESC"
 
             # Apply LIMIT and OFFSET in SQL for performance
-            # Since we do more filtering in Python (for JSON attributes), 
+            # Since we do more filtering in Python (for JSON attributes and advanced search), 
             # we need to fetch a larger batch to fill the requested 'limit'.
-            fetch_limit = 1000 if (f_model or f_bg or f_symbol) else limit
+            needs_large_fetch = any([f_model, f_bg, f_symbol, f_search])
+            fetch_limit = 2000 if needs_large_fetch else limit
             query += f" LIMIT ? OFFSET ?"
             params.extend([fetch_limit, offset])
 
@@ -207,6 +208,19 @@ async def handle_live_items(request):
                     if t_low + 'es' == f_low: return True
                     if t_low.endswith('y') and t_low[:-1] + 'ies' == f_low: return True
                     return False
+
+                if f_search and f_search != 'all':
+                    s_low = f_search.lower().strip()
+                    # Check title, address, then metadata fields
+                    match = False
+                    if s_low in r['title'].lower(): match = True
+                    elif s_low in r['nft_address'].lower(): match = True
+                    elif s_low in str(m.get("model", "")).lower(): match = True
+                    elif s_low in str(m.get("backdrop", "")).lower(): match = True
+                    elif s_low in str(m.get("symbol", "")).lower(): match = True
+                    
+                    if not match:
+                        continue
 
                 if f_nft and f_nft != 'all':
                     nft_filters = [x.strip() for x in f_nft.split(',')]
@@ -261,7 +275,7 @@ async def handle_live_items(request):
                     "auto_relist": r['auto_relist'],
                     "image": m.get("image"), 
                     "_collection": {"name": m.get("collection", "Gift")}, 
-                    "_modelName": m.get("model"), 
+                    "_modelName": m.get("model") if m.get("model") != m.get("collection") else None, 
                     "_backdrop": m.get("backdrop"), 
                     "_symbol": m.get("symbol"),
                     "_num": nft_num
@@ -365,7 +379,7 @@ async def handle_prepare_rent(request):
     total_final = res['total_price']
     
     import base64
-    memo_text = f"order:{order_id} | nft:{nft_address[:12]}..."
+    memo_text = f"order:{order_id}"
     payload = base64.b64encode(begin_cell().store_uint(0, 32).store_string(memo_text).end_cell().to_boc(False)).decode('utf-8')
     
     return web.json_response({

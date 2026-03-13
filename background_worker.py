@@ -129,15 +129,31 @@ async def sync_token_page_aggressive(session, item_type, cursor=None):
     addresses = [it['nft_address'] for it in items]
     
     async with aiosqlite.connect(db.DB_PATH, timeout=60.0) as conn:
+        conn.row_factory = aiosqlite.Row
         placeholders = ','.join('?' for _ in addresses)
-        async with conn.execute(f"SELECT nft_address FROM items WHERE nft_address IN ({placeholders})", addresses) as cursor:
+        async with conn.execute(f"SELECT nft_address, metadata FROM items WHERE nft_address IN ({placeholders})", addresses) as cursor:
             existing_rows = await cursor.fetchall()
-            existing_addrs = {row[0] for row in existing_rows}
+            
+            # Map address -> is_detailed
+            addr_status = {}
+            for row in existing_rows:
+                addr = row['nft_address']
+                meta_str = row['metadata']
+                is_detailed = False
+                if meta_str:
+                    try:
+                        m = json.loads(meta_str)
+                        # Item is detailed if it has a model different from collection
+                        if m.get("model") and m.get("model") != m.get("collection"):
+                            is_detailed = True
+                    except: pass
+                addr_status[addr] = is_detailed
             
     tasks = []
     for it in items:
-        if it['nft_address'] not in existing_addrs:
-             tasks.append(fetch_nft_details(session, it['nft_address'], item_type))
+        addr = it['nft_address']
+        if addr not in addr_status or not addr_status[addr]:
+             tasks.append(fetch_nft_details(session, addr, item_type))
         else:
              tasks.append(asyncio.create_task(asyncio.sleep(0))) # Dummy
 
@@ -511,8 +527,9 @@ async def run_cloudtips_worker():
                                         conn.row_factory = aiosqlite.Row
                                         async with conn.execute("SELECT status FROM orders WHERE id = ?", (order_id,)) as cur:
                                             row = await cur.fetchone()
-                                            if row and row['status'] == 'pending':
+                                            if row and row['status'] == 'pending_payment':
                                                 await db.update_order_status(order_id, "paid")
+
                                                 logging.info(f"✅ Order {order_id} AUTO-CONFIRMED via CloudTips API!")
                                 except: pass
                                 
