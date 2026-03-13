@@ -66,10 +66,29 @@ async def send_profit_notification(order: dict, item: dict):
         nft_name = order.get('nft_name', 'Неизвестный подарок')
         days = order.get('days', 1)
         
+        # Парсим метаданные для деталей
+        meta = {}
+        if item and item.get('metadata'):
+            try:
+                meta = json.loads(item['metadata'])
+            except:
+                pass
+        
+        model = meta.get('model')
+        backdrop = meta.get('backdrop')
+        symbol = meta.get('symbol')
+        
+        meta_text = ""
+        if model: meta_text += f"🧱 Модель: `{model}`\n"
+        if backdrop: meta_text += f"🎨 Фон: `{backdrop}`\n"
+        if symbol: meta_text += f"💠 Символ: `{symbol}`\n"
+        if meta_text: meta_text = "\n" + meta_text
+
         text = (
             f"💰 *Новая аренда!*\n"
             f"🎁 *{nft_name}*\n"
             f"⏳ Срок: {days} дн.\n"
+            f"{meta_text}"
             f"\n"
             f"💵 Получено: `{total_price}` TON\n"
             f"📉 Себестоимость: `{original_price + gas_fee:.4f}` TON \n"

@@ -273,6 +273,7 @@ async def handle_live_items(request):
                     "status": r['status'],
                     "rent_ends_at": r['rent_ends_at'],
                     "auto_relist": r['auto_relist'],
+                    "metadata": r['metadata'],
                     "image": m.get("image"), 
                     "_collection": {"name": m.get("collection", "Gift")}, 
                     "_modelName": m.get("model") if m.get("model") != m.get("collection") else None, 

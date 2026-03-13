@@ -2381,17 +2381,29 @@ async function openProductView(item) {
             propCont.appendChild(r);
         };
 
-        if (item._modelName) appendClickableProp(t('model'), item._modelName, 'model');
+        // NEW: Parse metadata if available
+        let meta = {};
+        if (item.metadata) {
+            try {
+                meta = typeof item.metadata === 'string' ? JSON.parse(item.metadata) : item.metadata;
+            } catch (e) { }
+        }
+
+        const modelVal = meta.model || item._modelName;
+        const symVal = meta.symbol || item._symbol;
+        const bgVal = meta.backdrop || item._backdrop;
+
+        if (modelVal && modelVal !== giftBaseName) appendClickableProp(t('model'), modelVal, 'model');
 
         // Restore missing symbol logic
-        let sym = item._symbol;
+        let sym = symVal;
         if (!sym && item.attributes) {
             const sAttr = item.attributes.find(a => a.trait_type.toLowerCase() === 'symbol' || a.trait_type.toLowerCase() === 'символ');
             if (sAttr) sym = sAttr.value;
         }
         if (sym) appendClickableProp(t('symbol'), sym, 'symbol');
 
-        if (item._backdrop) appendClickableProp(t('backdrop'), item._backdrop, 'bg');
+        if (bgVal) appendClickableProp(t('backdrop'), bgVal, 'bg');
 
         // Auto-relist status - ONLY FOR GIFTS
         if (item.type === 'gift') {
