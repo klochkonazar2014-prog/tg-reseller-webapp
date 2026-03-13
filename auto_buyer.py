@@ -428,7 +428,6 @@ async def monitor_wallet():
                                                     if await cur.fetchone(): continue
                                                     
                                                 # Match order by comment 'order_id:XXX'
-                                                import re
                                                 match = re.search(r'order_id:(\d+)', comment)
                                                 if match:
                                                     order_id = int(match.group(1))
