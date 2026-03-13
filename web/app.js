@@ -2396,14 +2396,15 @@ async function openProductView(item) {
         const modelVal = meta.model || item._modelName;
         const symVal = meta.symbol || item._symbol;
         const bgVal = meta.backdrop || item._backdrop;
-        console.log("Metadata values:", { modelVal, symVal, bgVal, giftBaseName });
+        console.log("DEBUG Meta Content:", JSON.stringify({ modelVal, symVal, bgVal, giftBaseName, meta }));
 
-        if (modelVal && modelVal !== giftBaseName) appendClickableProp(t('model'), modelVal, 'model');
+        // Show all available metadata from the object
+        if (modelVal) appendClickableProp(t('model'), modelVal, 'model');
 
         // Restore missing symbol logic
         let sym = symVal;
         if (!sym && item.attributes) {
-            const sAttr = item.attributes.find(a => a.trait_type.toLowerCase() === 'symbol' || a.trait_type.toLowerCase() === 'символ');
+            const sAttr = item.attributes.find(a => a.trait_type && (a.trait_type.toLowerCase() === 'symbol' || a.trait_type.toLowerCase() === 'символ'));
             if (sAttr) sym = sAttr.value;
         }
         if (sym) appendClickableProp(t('symbol'), sym, 'symbol');
