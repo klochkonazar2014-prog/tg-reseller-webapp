@@ -1390,7 +1390,30 @@ async function loadLiveItems(reset = true) {
         hideLoading();
     } finally {
         IS_LOADING = false;
-        console.log("loadLiveItems finished. IS_LOADING reset to false.");
+        if (typeof checkTriggerVisibility === 'function') {
+            checkTriggerVisibility();
+        }
+        console.log(`loadLiveItems finished. Offset: ${GLOBAL_OFFSET}, HasMore: ${HAS_MORE}`);
+    }
+}
+
+/**
+ * NEW: Checks if the loader trigger is still visible on screen after items were added.
+ * If it is, and we have more items, it triggers the next load automatically.
+ * This prevents the scroll from getting "stuck" if the loaded items didn't fill the screen.
+ */
+function checkTriggerVisibility() {
+    if (!HAS_MORE || IS_LOADING) return;
+
+    const trigger = document.getElementById('loader-trigger');
+    if (!trigger) return;
+
+    const rect = trigger.getBoundingClientRect();
+    const isVisible = rect.top < window.innerHeight && rect.bottom >= 0;
+
+    if (isVisible) {
+        console.log("Trigger is still visible after load. Auto-loading next batch...");
+        loadLiveItems(false);
     }
 }
 
@@ -2346,40 +2369,44 @@ async function openProductView(item) {
         const tgNftLink = `https://t.me/nft/${giftSlug}-${nftNum}`;
 
         const createPropRow = (label, value) => {
-            if (!value || value === 'Unknown' || value === 'Gift' || value === 'None') return null;
+            if (!value || value === 'Gift' || value === 'None') return null;
             const row = document.createElement('div');
             row.className = 'property-item';
+            // Force visibility with inline styles to bypass any CSS conflicts
+            row.style.cssText = "display: flex !important; justify-content: space-between !important; align-items: center !important; padding: 18px 22px !important; background: rgba(255, 255, 255, 0.08) !important; border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important; margin-bottom: 2px !important; visibility: visible !important; opacity: 1 !important; height: auto !important; min-height: 50px !important;";
             row.innerHTML = `
-                <div class="prop-left"><div class="prop-name">${label}</div></div>
-                <div class="prop-right"><span style="color:var(--accent-blue); font-weight:600;">${value}</span></div>`;
+                <div class="prop-left"><div class="prop-name" style="color:#8b9bb4 !important; font-size:13px !important; font-weight:600 !important;">${label}</div></div>
+                <div class="prop-right"><span style="color:var(--accent-blue) !important; font-weight:700 !important; font-size:15px !important;">${value}</span></div>`;
             return row;
         };
 
         const tgRow = document.createElement('div');
         tgRow.className = 'property-item';
-        // Added .clickable-prop class from previous tasks
-        tgRow.innerHTML = `<div class="prop-left"><div class="prop-name">Telegram</div></div><div class="prop-right"><span style="color:var(--accent-blue); font-weight:600;">${giftBaseName} #${nftNum}</span></div>`;
+        tgRow.style.cssText = "display: flex !important; justify-content: space-between !important; align-items: center !important; padding: 18px 22px !important; background: rgba(255, 255, 255, 0.08) !important; border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important; margin-bottom: 2px !important; visibility: visible !important; opacity: 1 !important; height: auto !important; min-height: 50px !important;";
+        tgRow.innerHTML = `<div class="prop-left"><div class="prop-name" style="color:#8b9bb4 !important; font-size:13px !important; font-weight:600 !important;">Telegram</div></div><div class="prop-right"><span style="color:var(--accent-blue) !important; font-weight:700 !important; font-size:15px !important;">${giftBaseName} #${nftNum}</span></div>`;
         tgRow.onclick = () => tg.openTelegramLink(tgNftLink);
         propCont.appendChild(tgRow);
 
         // Helper for clickable properties
         const appendClickableProp = (label, val, key) => {
-            if (!val || val === 'Unknown' || val === 'Gift' || val === 'None') return;
+            if (!val || val === 'Gift' || val === 'None') return;
             const r = createPropRow(label, val);
             if (!r) return;
-            r.classList.add('clickable-prop'); // Ensure visual feedback
-            // Add arrow
-            r.querySelector('.prop-right').innerHTML += `<span class="arrow-v" style="font-size:12px; margin-left:8px;">›</span>`;
 
-            r.onclick = () => {
-                // FAILSAFE: Ensure we set the Collection filter too, otherwise Model list is disabled
-                if (key === 'model' || key === 'bg' || key === 'symbol') {
-                    ACTIVE_FILTERS.nft = [giftBaseName]; // Используем реальное название подарка
-                }
-                ACTIVE_FILTERS[key] = [val]; // И точное значение атрибута как массив
-                closeProductView();
-                loadLiveItems(true);
-            };
+            // Don't make "Unknown" clickable - it doesn't make sense to filter by it
+            if (val !== 'Unknown') {
+                r.classList.add('clickable-prop'); 
+                r.querySelector('.prop-right').innerHTML += `<span class="arrow-v" style="font-size:12px; margin-left:8px;">›</span>`;
+
+                r.onclick = () => {
+                    if (key === 'model' || key === 'bg' || key === 'symbol') {
+                        ACTIVE_FILTERS.nft = [giftBaseName];
+                    }
+                    ACTIVE_FILTERS[key] = [val];
+                    closeProductView();
+                    loadLiveItems(true);
+                };
+            }
 
             console.log("Adding prop row to UI:", label, val);
             propCont.appendChild(r);

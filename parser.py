@@ -59,22 +59,27 @@ async def fetch_nft_details(session, addr, item_type):
     
     details = await fetch_api(session, f"/nfts/{addr}/")
     if details:
-        attrs = {a['trait_type']: a['value'] for a in details.get("attributes", [])}
-        col_name = details.get("collection_name") or attrs.get("Model") or "Gifts"
+        # Create a lowercase mapping for robust attribute lookup
+        raw_attrs = details.get("attributes", [])
+        attrs = {str(a.get('trait_type', '')).lower(): a.get('value') for a in raw_attrs}
+        
+        # Helper to find attribute by multiple possible keys (synonyms)
+        def get_attr(keys, default="Unknown"):
+            for k in keys:
+                if k.lower() in attrs:
+                    return attrs[k.lower()]
+            return default
+
+        col_name = details.get("collection_name") or get_attr(["Model", "Модель"]) or "Gifts"
         
         # Try to generate Fragment URL if API didn't return one
         image_url = details.get("image_url") or details.get("preview_url")
         if not image_url and " #" in details.get("name", ""):
             import re
             try:
-                # Parse "Name #123" -> name="Name", num="123"
                 full_name = details.get("name", "")
                 name_part, num_part = full_name.rsplit(" #", 1)
-                
-                # Normalize name to slug: remove all non-alphanumeric, lowercase
-                # Fragment prefers concatenated slugs for most gifts: "Eternal Rose" -> "eternalrose"
                 slug = re.sub(r'[^a-z0-9]', '', name_part.lower())
-                
                 image_url = f"https://nft.fragment.com/gift/{slug}-{num_part}.webp"
             except Exception as e:
                 logging.error(f"Failed to generate Fragment URL for {details.get('name')}: {e}")
@@ -83,20 +88,21 @@ async def fetch_nft_details(session, addr, item_type):
         meta_obj = {
             "image": image_url,
             "video": details.get("video_url") or details.get("animation_url"),
-            "model": attrs.get("Model", col_name),
-            "backdrop": attrs.get("Backdrop", "Unknown"),
-            "symbol": attrs.get("Symbol", "Unknown"),
+            "model": get_attr(["Model", "Модель"], col_name),
+            "backdrop": get_attr(["Backdrop", "Background", "Фон"]),
+            "symbol": get_attr(["Symbol", "Символ"]),
             "collection": col_name
         }
-        return json.dumps(meta_obj)
+        return json.dumps(meta_obj, ensure_ascii=False)
     return ""
 
 def get_basic_metadata(name, item_type):
     """Generates basic metadata (image, collection) from NFT name without API calls."""
-    if item_type != 'gift' and item_type != 'gifts':
+    if item_type not in ['gift', 'gifts']:
         return ""
     
     import re
+    # Fallback to defaults
     meta_obj = {
         "image": "https://nft.fragment.com/guide/gift.svg",
         "video": None,
@@ -109,14 +115,18 @@ def get_basic_metadata(name, item_type):
     if " #" in name:
         try:
             name_part, num_part = name.rsplit(" #", 1)
+            # Fragment slug logic: remove special chars and lowercase
             slug = re.sub(r'[^a-z0-9]', '', name_part.lower())
+            
             meta_obj["image"] = f"https://nft.fragment.com/gift/{slug}-{num_part}.webp"
             meta_obj["collection"] = name_part
             meta_obj["model"] = name_part
+            # Backdrop and symbol remain Unknown as they need API, 
+            # but at least we have the correct image and model name.
         except:
             pass
             
-    return json.dumps(meta_obj)
+    return json.dumps(meta_obj, ensure_ascii=False)
 
 def calculate_markup(price_ton):
     """
