@@ -26,7 +26,7 @@ TOKENS = [
     ] if t
 ]
 if not TOKENS:
-    TOKENS = ["193541-57afc271119790fc3a4a0e7eb00f7071-1768332974"]
+    TOKENS = ["968871-39540cc5e069c1e4a0c482e9faec2de8-1769539898"]
 
 SYNC_INTERVAL = 30  # Seconds
 LOG_FORMAT = "%(asctime)s [%(levelname)s] %(message)s"

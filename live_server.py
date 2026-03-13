@@ -24,7 +24,7 @@ TOKENS = [
 ]
 if not TOKENS:
     # Fallback to hardcoded if env fails
-    TOKENS = ["193541-57afc271119790fc3a4a0e7eb00f7071-1768332974"]
+    TOKENS = ["968871-39540cc5e069c1e4a0c482e9faec2de8-1769539898"]
 OWNER_WALLET = os.getenv("OWNER_WALLET", "UQAotn3cT26kUKW5wSpP9dYKxwEQQ0qffDB24HGzuBrJ5PFB")
 PROXY_URL = os.getenv("PROXY_URL")
 PORT = 8001 
@@ -173,7 +173,7 @@ async def handle_live_items(request):
 
             # Sorting logic
             if s_filter == 'available' and not f_search and f_sort == 'id_desc':
-                query += " ORDER BY RANDOM()" # Randomize for discovery
+                query += " ORDER BY id DESC" # Stable sort for pagination
             elif f_sort == 'price_asc':
                 query += " ORDER BY price_per_day ASC"
             elif f_sort == 'price_desc':
