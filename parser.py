@@ -54,7 +54,7 @@ async def fetch_api(session, endpoint, params=None):
         return None
 
 async def fetch_nft_details(session, addr, item_type):
-    if item_type != 'gifts':
+    if item_type not in ['gifts', 'gift']:
         return ""
     
     details = await fetch_api(session, f"/nfts/{addr}/")
@@ -192,13 +192,24 @@ async def sync_token_page(session, item_type, cursor=None):
                     addr = it['nft_address']
                     db_type = 'gift' if item_type == 'gifts' else 'number' if item_type == 'numbers' else 'username'
                     
-                    # Fetch one by one
-                    meta = await fetch_nft_details(session, addr, db_type)
-                    metadata_results.append(meta)
+                    # Optimization: Only fetch from API if we don't have detailed metadata yet
+                    existing = await db.get_item_by_id_addr(addr)
+                    has_detailed = False
+                    if existing and existing.get('metadata'):
+                        try:
+                            m = json.loads(existing['metadata'])
+                            if m.get('model') and m.get('model') != m.get('collection'):
+                                has_detailed = True
+                        except: pass
                     
-                    # Small delay between items to let MarketApp API breathe
-                    if idx < len(batch) - 1:
-                        await asyncio.sleep(0.15)
+                    if has_detailed:
+                        metadata_results.append(existing['metadata'])
+                    else:
+                        # Fetch one by one
+                        meta = await fetch_nft_details(session, addr, db_type)
+                        metadata_results.append(meta)
+                        if idx < len(batch) - 1:
+                            await asyncio.sleep(0.15)
                 
                 for idx, it in enumerate(batch):
                     addr = it['nft_address']

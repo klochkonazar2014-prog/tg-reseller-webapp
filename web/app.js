@@ -1226,7 +1226,12 @@ async function toggleCatalogMode() {
     }, 500);
 }
 
+let currentLoadController = null;
+
 async function loadLiveItems(reset = true) {
+    if (reset && currentLoadController) {
+        currentLoadController.abort();
+    }
     if (IS_LOADING && !reset) return;
 
     const hideLoading = () => {
@@ -1253,6 +1258,8 @@ async function loadLiveItems(reset = true) {
     }
 
     IS_LOADING = true;
+    currentLoadController = new AbortController();
+    const { signal } = currentLoadController;
 
     try {
         const params = new URLSearchParams({
@@ -1276,14 +1283,17 @@ async function loadLiveItems(reset = true) {
         let retries = 3;
         while (retries > 0) {
             try {
-                response = await apiFetch(`${BACKEND_URL}/api/items?${params.toString()}`);
+                response = await apiFetch(`${BACKEND_URL}/api/items?${params.toString()}`, { signal });
                 if (response.ok) break;
             } catch (err) {
+                if (err.name === 'AbortError') throw err;
                 console.error(`Fetch attempt failed (${retries} retries left):`, err);
             }
             retries--;
             if (retries > 0) await new Promise(r => setTimeout(r, 1000));
         }
+
+        if (signal.aborted) return;
 
         if (!response || !response.ok) {
             throw new Error(`Server status: ${response ? response.status : 'Network Error'}`);
@@ -1297,6 +1307,7 @@ async function loadLiveItems(reset = true) {
             throw new Error("Invalid server response (JSON parse failed)");
         }
 
+        if (signal.aborted) return;
         console.log(`Loaded ${data.items ? data.items.length : 0} items from server.`);
 
         if (data && data.items) {
@@ -1337,6 +1348,11 @@ async function loadLiveItems(reset = true) {
                         <div style="color: #8b9bb4; margin-top: 8px;">${t('reset_filters')}</div>
                     </div>`;
             } else {
+                // Ensure any "Nothing found" or "Demo" message is removed before adding real items
+                const view = document.getElementById('items-view');
+                if (view.querySelector('.error-msg') || view.querySelector('.demo-label')) {
+                    view.innerHTML = '';
+                }
                 renderItemsBatch(processed);
             }
 
@@ -1349,6 +1365,10 @@ async function loadLiveItems(reset = true) {
         if (document.getElementById('scroll-loader')) document.getElementById('scroll-loader').style.display = 'none';
         hideLoading();
     } catch (e) {
+        if (e.name === 'AbortError') {
+            console.log("Load operation aborted.");
+            return;
+        }
         console.error("CRITICAL Load Error:", e);
         if (reset && document.getElementById('top-loader')) {
             document.getElementById('top-loader').innerText = "Ошибка соединения с сервером. Показываем демо-данные.";
@@ -1389,11 +1409,13 @@ async function loadLiveItems(reset = true) {
 
         hideLoading();
     } finally {
-        IS_LOADING = false;
-        if (typeof checkTriggerVisibility === 'function') {
-            checkTriggerVisibility();
+        if (!signal.aborted) {
+            IS_LOADING = false;
+            if (typeof checkTriggerVisibility === 'function') {
+                checkTriggerVisibility();
+            }
+            console.log(`loadLiveItems finished. Offset: ${GLOBAL_OFFSET}, HasMore: ${HAS_MORE}`);
         }
-        console.log(`loadLiveItems finished. Offset: ${GLOBAL_OFFSET}, HasMore: ${HAS_MORE}`);
     }
 }
 
