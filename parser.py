@@ -192,13 +192,17 @@ async def sync_token_page(session, item_type, cursor=None):
                     addr = it['nft_address']
                     db_type = 'gift' if item_type == 'gifts' else 'number' if item_type == 'numbers' else 'username'
                     
-                    # Optimization: Only fetch from API if we don't have detailed metadata yet
+                    # Optimization: Only fetch from API if we don't have DETAILED metadata yet
+                    # Detailed means: model exists and != Unknown, and we have backdrop/symbol
                     existing = await db.get_item_by_id_addr(addr)
                     has_detailed = False
                     if existing and existing.get('metadata'):
                         try:
                             m = json.loads(existing['metadata'])
-                            if m.get('model') and m.get('model') != m.get('collection'):
+                            # Strict check: model must be valid, and we must have backdrop/symbol fields
+                            valid_model = m.get('model') and m.get('model') != 'Unknown'
+                            has_attr = m.get('backdrop') and m.get('symbol')
+                            if valid_model and has_attr:
                                 has_detailed = True
                         except: pass
                     

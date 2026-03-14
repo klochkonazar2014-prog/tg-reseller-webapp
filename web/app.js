@@ -1909,7 +1909,7 @@ function resetMrktModal() {
         bg: [],
         symbol: [],
         tags: [],
-        sort: 'price_asc',
+        sort: 'id_desc',
         price_from: null,
         price_to: null,
         gift_number: null,

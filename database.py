@@ -273,9 +273,20 @@ async def sync_item(nft_address, item_type, title, original_price=None, price_pe
                         new_m = json.loads(metadata)
                         old_m = json.loads(existing_meta_str)
                         
-                        # Если новые данные "базовые" (модель равна коллекции), а старые "детальные" (модель не равна коллекции) - не затираем
-                        is_new_basic = (new_m.get("model") == new_m.get("collection"))
-                        is_old_detailed = (old_m.get("model") and old_m.get("model") != old_m.get("collection"))
+                        # Strict Detail Check:
+                        # old is detailed if model != collection (or Unknown) AND has backdrop/symbol
+                        is_old_detailed = (
+                            old_m.get("model") and 
+                            old_m.get("model") not in ["Unknown", old_m.get("collection")] and 
+                            old_m.get("backdrop") and 
+                            old_m.get("symbol")
+                        )
+                        # new is basic if it's missing attributes or has "Unknown" model
+                        is_new_basic = (
+                            not new_m.get("backdrop") or 
+                            not new_m.get("symbol") or 
+                            new_m.get("model") in ["Unknown", new_m.get("collection")]
+                        )
                         
                         if is_new_basic and is_old_detailed:
                             should_update_meta = False

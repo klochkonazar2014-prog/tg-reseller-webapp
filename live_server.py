@@ -146,7 +146,17 @@ async def handle_live_items(request):
             params = [s_filter]
             
             if t_filter == 'gift':
-                gift_clause = " AND type = 'gift' AND metadata NOT LIKE '%ton_symbol.png%' AND metadata NOT LIKE '%gift.svg%' AND metadata IS NOT NULL AND title NOT LIKE '@%' AND title NOT LIKE '+888%'"
+                # EXCLUDE: basic metadata (Unknown model), missing backdrop/symbol, or guide SVG
+                gift_clause = (
+                    " AND type = 'gift'"
+                    " AND metadata NOT LIKE '%\"model\": \"Unknown\"%'"
+                    " AND metadata LIKE '%\"backdrop\":%'"
+                    " AND metadata LIKE '%\"symbol\":%'"
+                    " AND metadata NOT LIKE '%gift.svg%'"
+                    " AND metadata IS NOT NULL"
+                    " AND title NOT LIKE '@%'"
+                    " AND title NOT LIKE '+888%'"
+                )
                 query += gift_clause
                 count_query += gift_clause
             else:
