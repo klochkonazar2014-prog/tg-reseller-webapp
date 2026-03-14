@@ -134,7 +134,7 @@ async def handle_live_items(request):
     t_filter = q.get("type", "gift")
     s_filter = q.get("status", "available") # available, rented
 
-    logging.info(f"[handle_live_items] Request params: type={t_filter}, status={s_filter}, nft={f_nft}, model={f_model}, bg={f_bg}, symbol={f_symbol}, search='{f_search}', offset={offset}")
+    logging.info(f"[handle_live_items] Request params: type={t_filter}, status={s_filter}, nft={f_nft}, model={f_model}, bg={f_bg}, symbol={f_symbol}, search='{f_search}', sort='{f_sort}', p_from={f_price_from}, p_to={f_price_to}, offset={offset}")
 
     try:
         async with db.aiosqlite.connect(db.DB_PATH, timeout=30) as conn:
@@ -189,7 +189,11 @@ async def handle_live_items(request):
             # Ordering
             if f_sort == 'price_asc': query += " ORDER BY price_per_day ASC"
             elif f_sort == 'price_desc': query += " ORDER BY price_per_day DESC"
-            else: query += " ORDER BY id DESC"
+            elif f_sort == 'num_asc': query += " ORDER BY CAST(SUBSTR(title, INSTR(title, '#') + 1) AS INTEGER) ASC"
+            elif f_sort == 'num_desc': query += " ORDER BY CAST(SUBSTR(title, INSTR(title, '#') + 1) AS INTEGER) DESC"
+            else: query += " ORDER BY id DESC"  # id_desc, model_rare, bg_rare, symbol_rare → newest first
+            
+            logging.info(f"[handle_live_items] SQL: {query} (params: {params})")
 
             # Check if we need to fetch a large batch for Python-side filtering
             needs_large_fetch = any([f_model, f_bg, f_symbol])

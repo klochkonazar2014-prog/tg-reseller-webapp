@@ -706,7 +706,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         initTonConnect();
         loadProfileData();
-        loadFilterData();
+        // ✅ Await filter data first so ACTIVE_FILTERS state is stable before catalog loads
+        await loadFilterData();
 
         // 🚀 NON-BLOCKING: Start loading but don't AWAIT here
         const catalogPromise = loadLiveItems(true);
