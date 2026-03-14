@@ -1453,7 +1453,7 @@ function checkTriggerVisibility() {
 
 
 function selectNftChip(addr, btn) {
-    ACTIVE_FILTERS.nft = addr;
+    ACTIVE_FILTERS.nft = addr ? [addr] : [];
     document.querySelectorAll('.chip-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     loadLiveItems(true); // Trigger server-side refresh
