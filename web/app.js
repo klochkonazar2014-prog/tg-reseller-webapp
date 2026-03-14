@@ -799,8 +799,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
         document.getElementById('search-input').addEventListener('input', debounce((e) => {
-            ACTIVE_FILTERS.search = e.target.value.toLowerCase();
-            applyHeaderSearch();
+            const val = e.target.value.toLowerCase();
+            if (ACTIVE_FILTERS.search === val) return; // Prevent redundant load if value didn't change
+            ACTIVE_FILTERS.search = val;
+            loadLiveItems(true);
         }, 500));
 
         // Block Zoom BUT allow scrolling
@@ -1250,7 +1252,15 @@ async function loadLiveItems(reset = true) {
         HAS_MORE = true;
         SEEN_ITEM_IDS.clear(); // Reset duplicates tracker
         ALL_MARKET_ITEMS = []; // 🚀 Clear global items list on reset
-        document.getElementById('items-view').innerHTML = '';
+        
+        // 🚀 IMMEDIATE CLEAR: Critical for preventing duplicate/stale catalogs on mobile/slow nets
+        const container = document.getElementById('items-view');
+        if (container) {
+            container.innerHTML = '';
+            // Also ensure no residual classes or attributes
+            container.className = 'grid'; 
+        }
+
         if (topLoader) topLoader.style.display = 'block';
         window.scrollTo({ top: 0, behavior: 'instant' });
     } else {
@@ -1350,9 +1360,10 @@ async function loadLiveItems(reset = true) {
             } else {
                 // Ensure any "Nothing found" or "Demo" message is removed before adding real items
                 const view = document.getElementById('items-view');
-                if (view.querySelector('.error-msg') || view.querySelector('.demo-label')) {
-                    view.innerHTML = '';
-                }
+                // CLEANUP: Use a more robust selector to find and remove error messages
+                const staleElements = view.querySelectorAll('.error-msg, .demo-label');
+                staleElements.forEach(el => el.remove());
+                
                 renderItemsBatch(processed);
             }
 
@@ -1874,14 +1885,6 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
 function applyHeaderSearch() {
     loadLiveItems(true);
 }
-
-const handleHeaderSearch = debounce(() => {
-    const sInput = document.getElementById('search-input');
-    if (sInput) {
-        ACTIVE_FILTERS.search = sInput.value;
-        applyHeaderSearch();
-    }
-}, 400);
 
 
 
