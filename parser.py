@@ -37,10 +37,14 @@ def get_token():
     return random.choice(TOKENS)
 
 # ✅ Строгий лимит на количество одновременных запросов к API
-# Semaphore(1) гарантирует, что запросы идут строго по одному (очередью)
-API_SEMAPHORE = asyncio.Semaphore(1)
+# Должен инициализироваться внутри event loop
+API_SEMAPHORE = None
 
 async def fetch_api(session, endpoint, params=None):
+    global API_SEMAPHORE
+    if API_SEMAPHORE is None:
+        API_SEMAPHORE = asyncio.Semaphore(1)
+        
     async with API_SEMAPHORE:
         headers = {"Authorization": get_token()}
         try:
