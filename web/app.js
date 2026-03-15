@@ -4,7 +4,7 @@ var BACKEND_URL = isLocal ? window.location.origin : "https://octorent.duckdns.o
 
 let isTcModalMandatory = false;
 // Consts
-let tg = null;
+let tg = window.Telegram?.WebApp || null;
 let IS_SHARING_REF = false; // Prevent double clicks on referral share
 
 const APP_VERSION = "1.2.5-meta-debug";
@@ -993,8 +993,13 @@ function closeEarningsHelp() {
 }
 
 function openReferralChoice() {
+    console.log("openReferralChoice called!");
     const el = document.getElementById('referral-choice-sheet');
-    if (!el) return;
+    if (!el) {
+        console.error("element 'referral-choice-sheet' not found!");
+        return;
+    }
+    console.log("Opening sheet:", el);
     el.style.display = 'flex';
     setTimeout(() => el.classList.add('active'), 10);
     if (window.Telegram?.WebApp?.HapticFeedback) {
