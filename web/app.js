@@ -860,6 +860,12 @@ function switchTab(index) {
     document.getElementById('friends-container').style.display = 'none';
     document.getElementById('mode-toggle-container').style.display = 'none';
 
+    // Toggle Search & Filters visibility
+    const searchRow = document.querySelector('.search-row');
+    const chipsRow = document.querySelector('.chips-row');
+    if (searchRow) searchRow.style.display = (index >= 3) ? 'none' : 'flex';
+    if (chipsRow) chipsRow.style.display = (index >= 3) ? 'none' : 'flex';
+
     if (index < 3) { // Market tabs
         let newType = CURRENT_TYPE;
         if (index === 0) newType = 'gift';
@@ -1621,13 +1627,14 @@ function initFilterLists() {
     nftCont.innerHTML = '';
 
     if (!nftSearch || t('all').toLowerCase().includes(nftSearch)) {
-        addFilterItem(nftCont, t('all'), "all", 'nft', ACTIVE_FILTERS.nft.length === 0);
+        addFilterItem(nftCont, t('all'), "all", 'nft', !ACTIVE_FILTERS.nft || ACTIVE_FILTERS.nft.length === 0);
     }
 
     (window.STATIC_COLLECTIONS || []).forEach(col => {
         const lowerName = col.name.toLowerCase();
         if (lowerName.includes(nftSearch) && !lowerName.includes('phantom') && !lowerName.includes('unknown')) {
-            addFilterItem(nftCont, col.name, col.name, 'nft', ACTIVE_FILTERS.nft.includes(col.name), col.image);
+            const isSel = (ACTIVE_FILTERS.nft || []).some(x => String(x).trim() === col.name.trim());
+            addFilterItem(nftCont, col.name, col.name, 'nft', isSel, col.image);
         }
     });
 
@@ -1668,12 +1675,13 @@ function initFilterLists() {
                 const filtered = list.filter(it => it.name.toLowerCase().includes(sVal) && !it.name.toLowerCase().includes('phantom'));
 
                 if (!sVal || t('select_all').toLowerCase().includes(sVal)) {
-                    addFilterItem(cont, t('select_all'), "all", 'model', ACTIVE_FILTERS.model.length === 0);
+                    addFilterItem(cont, t('select_all'), "all", 'model', !ACTIVE_FILTERS.model || ACTIVE_FILTERS.model.length === 0);
                 }
 
                 filtered.sort((a, b) => a.name.localeCompare(b.name)).forEach(item => {
                     let icon = getTelegifterUrl('model', item.name, col);
-                    addFilterItem(cont, item.name, item.name, 'model', ACTIVE_FILTERS.model.includes(item.name), icon, col, item.image);
+                    const isSel = (ACTIVE_FILTERS.model || []).some(x => String(x).trim() === item.name.trim());
+                    addFilterItem(cont, item.name, item.name, 'model', isSel, icon, col, item.image);
                 });
             } else {
                 // MULTIPLE: Nested sub-accordions
@@ -1691,7 +1699,8 @@ function initFilterLists() {
 
                         filtered.sort((a, b) => a.name.localeCompare(b.name)).forEach(item => {
                             let icon = getTelegifterUrl('model', item.name, col);
-                            addFilterItem(subCont, item.name, item.name, 'model', ACTIVE_FILTERS.model.includes(item.name), icon, col, item.image);
+                            const isSel = (ACTIVE_FILTERS.model || []).some(x => String(x).trim() === item.name.trim());
+                            addFilterItem(subCont, item.name, item.name, 'model', isSel, icon, col, item.image);
                         });
                     }
                 });
@@ -1709,7 +1718,7 @@ function initFilterLists() {
         sInput.placeholder = isNFTSelected ? t('search_filter_hint', { label: m.label }) : t('search_filter_hint', { label: m.label }) + t('search_filter_global');
 
         if (!sVal || t('select_all').toLowerCase().includes(sVal)) {
-            addFilterItem(cont, t('select_all'), "all", m.key, ACTIVE_FILTERS[m.key].length === 0);
+            addFilterItem(cont, t('select_all'), "all", m.key, !ACTIVE_FILTERS[m.key] || ACTIVE_FILTERS[m.key].length === 0);
         }
 
         itemsToShow.forEach(item => {
@@ -1720,7 +1729,8 @@ function initFilterLists() {
                 else if (m.key === 'model') icon = getTelegifterUrl('model', item.name, item.collection);
 
                 if (!icon && (m.key === 'bg' || m.key === 'symbol')) icon = VISUAL_MAP[m.key][item.name] || null;
-                addFilterItem(cont, item.name, item.name, m.key, ACTIVE_FILTERS[m.key].includes(item.name), icon, item.collection, item.image);
+                const isSel = (ACTIVE_FILTERS[m.key] || []).some(x => String(x).trim() === item.name.trim());
+                addFilterItem(cont, item.name, item.name, m.key, isSel, icon, item.collection, item.image);
             }
         });
     });
@@ -1855,12 +1865,13 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
         if (value === 'all' || !value) {
             ACTIVE_FILTERS[key] = (key === 'sort') ? 'id_desc' : [];
         } else {
-            const v = value.trim();
+            const v = String(value).trim();
             if (key === 'sort') {
                 ACTIVE_FILTERS.sort = v;
             } else {
                 if (!Array.isArray(ACTIVE_FILTERS[key])) ACTIVE_FILTERS[key] = [];
-                const idx = ACTIVE_FILTERS[key].indexOf(v);
+                // Search for trimmed match to be safe
+                const idx = ACTIVE_FILTERS[key].findIndex(existing => String(existing).trim() === v);
                 if (idx > -1) {
                     ACTIVE_FILTERS[key].splice(idx, 1);
                 } else {
