@@ -46,6 +46,7 @@ async def fetch_api(session, endpoint, params=None):
         API_SEMAPHORE = asyncio.Semaphore(1)
         
     while True:
+        retry_needed = False
         async with API_SEMAPHORE:
             headers = {"Authorization": get_token()}
             try:
@@ -53,15 +54,20 @@ async def fetch_api(session, endpoint, params=None):
                     if r.status == 200:
                         return await r.json()
                     elif r.status == 429:
-                        logging.warning(f"Rate limited! Waiting 5s... ({endpoint})")
-                        await asyncio.sleep(5)
-                        continue # Повтор цикла (уже за пределами семафора в след. итерации)
+                        retry_needed = True
                     else:
                         logging.error(f"API Error {r.status} on {endpoint}")
                         return None
             except Exception as e:
                 logging.error(f"Request Exception: {e}")
                 return None
+        
+        if retry_needed:
+            logging.warning(f"Rate limited! Waiting 5s... ({endpoint})")
+            await asyncio.sleep(5)
+            continue
+        break
+    return None
 
 async def fetch_nft_details(session, addr, item_type):
     if item_type not in ['gifts', 'gift']:
@@ -206,7 +212,7 @@ async def sync_token_page(session, item_type, cursor=None):
                     # Detailed means: model exists and != Unknown, and we have backdrop/symbol
                     existing = await db.get_item_by_id_addr(addr)
                     has_detailed = False
-                    if existing and existing.get('metadata'):
+                    if existing and existing['metadata']:
                         try:
                             m = json.loads(existing['metadata'])
                             # Strict check: model must be valid, and we must have backdrop/symbol fields
