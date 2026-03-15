@@ -4240,8 +4240,8 @@ tc-root>div {
     }
 }
 
-/* TON Icon for inputs */
-.icon-ton {
+/* TON Icon for inputs (premium white) */
+.icon-ton-white {
     display: inline-block !important;
     width: 20px !important;
     height: 20px !important;
@@ -4249,6 +4249,14 @@ tc-root>div {
     background-size: contain !important;
     filter: brightness(0) invert(1) !important; /* Make it whiteish */
     z-index: 10 !important;
+}
+.icon-ton-white::after {
+    display: none !important; /* Remove global blue icon conflict */
+}
+
+.filter-input-wrapper {
+    position: relative;
+    width: 100%;
 }
 
 /* --- TC TUTORIAL STYLES --- */
