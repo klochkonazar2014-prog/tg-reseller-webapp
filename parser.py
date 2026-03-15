@@ -36,10 +36,15 @@ def get_token():
     import random
     return random.choice(TOKENS)
 
+# ✅ Строгий лимит на количество одновременных запросов к API
+# Semaphore(1) гарантирует, что запросы идут строго по одному (очередью)
+API_SEMAPHORE = asyncio.Semaphore(1)
+
 async def fetch_api(session, endpoint, params=None):
-    headers = {"Authorization": get_token()}
-    try:
-        async with session.get(f"{MARKET_URL}{endpoint}", headers=headers, params=params, timeout=15) as r:
+    async with API_SEMAPHORE:
+        headers = {"Authorization": get_token()}
+        try:
+            async with session.get(f"{MARKET_URL}{endpoint}", headers=headers, params=params, timeout=15) as r:
             if r.status == 200:
                 return await r.json()
             elif r.status == 429:
@@ -431,109 +436,103 @@ async def update_filters_cache(session):
 
 
 
-async def fix_missing_metadata(session, limit=200):
+async def metadata_fix_worker(session):
     """
-    Дофетчивает backdrop/symbol для NFT у которых нет этих атрибутов.
-    Вызывается в конце каждого цикла. limit — макс кол-во за один вызов.
+    Фоновый воркер: постоянно дофетчивает backdrop/symbol для NFT.
+    Работает параллельно с основным циклом.
     """
-    try:
-        async with db.aiosqlite.connect(db.DB_PATH, timeout=30) as conn:
-            conn.row_factory = db.aiosqlite.Row
-            async with conn.execute(
-                """
-                SELECT id, nft_address, title, metadata FROM items
-                WHERE type = 'gift' AND status = 'available'
-                AND (
-                    metadata NOT LIKE '%"backdrop":%'
-                    OR metadata NOT LIKE '%"symbol":%'
-                )
-                LIMIT ?
-                """,
-                (limit,)
-            ) as cursor:
-                rows = await cursor.fetchall()
-
-        if not rows:
-            return  # Ничего не нужно фиксить
-
-        logging.info(f"[MetaFix] Fixing {len(rows)} items missing backdrop/symbol...")
-        fixed = 0
-        failed = 0
-
-        BATCH = 5
-        for i in range(0, len(rows), BATCH):
-            batch = rows[i:i + BATCH]
-
-            # Параллельно фетчим детали
-            tasks = [fetch_api(session, f"/nfts/{row['nft_address']}/") for row in batch]
-            results = await asyncio.gather(*tasks)
-
-            async with db.aiosqlite.connect(db.DB_PATH, timeout=60) as conn:
-                await conn.execute("PRAGMA journal_mode=WAL")
-                await conn.execute("PRAGMA synchronous=NORMAL")
-
-                for row, details in zip(batch, results):
-                    if not details:
-                        failed += 1
-                        continue
-
-                    raw_attrs = details.get("attributes", [])
-                    attrs = {str(a.get("trait_type", "")).lower(): a.get("value") for a in raw_attrs}
-
-                    backdrop = attrs.get("backdrop") or attrs.get("background") or attrs.get("фон")
-                    symbol = attrs.get("symbol") or attrs.get("символ")
-
-                    if not backdrop and not symbol:
-                        failed += 1  # API вернул данные без атрибутов — пропускаем
-                        continue
-
-                    def get_attr(keys, default="Unknown"):
-                        for k in keys:
-                            if k.lower() in attrs:
-                                return attrs[k.lower()]
-                        return default
-
-                    # Сохраняем существующие поля и дополняем
-                    existing_meta = {}
-                    if row["metadata"]:
-                        try:
-                            existing_meta = json.loads(row["metadata"])
-                        except:
-                            pass
-
-                    col_name = details.get("collection_name") or get_attr(["Model", "Модель"]) or existing_meta.get("collection", "Gifts")
-                    updated_meta = {
-                        "image": details.get("image_url") or details.get("preview_url") or existing_meta.get("image"),
-                        "video": details.get("video_url") or details.get("animation_url") or existing_meta.get("video"),
-                        "model": get_attr(["Model", "Модель"], col_name),
-                        "backdrop": backdrop or "Unknown",
-                        "symbol": symbol or "Unknown",
-                        "collection": col_name
-                    }
-                    # Если image всё равно пустой — пробуем сгенерировать Fragment URL
-                    if not updated_meta["image"] and " #" in (row["title"] or ""):
-                        import re
-                        try:
-                            name_part, num_part = row["title"].rsplit(" #", 1)
-                            slug = re.sub(r'[^a-z0-9]', '', name_part.lower())
-                            updated_meta["image"] = f"https://nft.fragment.com/gift/{slug}-{num_part}.webp"
-                        except:
-                            pass
-
-                    await conn.execute(
-                        "UPDATE items SET metadata = ? WHERE id = ?",
-                        (json.dumps(updated_meta, ensure_ascii=False), row["id"])
+    logging.info("[MetaFix] Background worker started.")
+    limit = 200
+    while True:
+        try:
+            async with db.aiosqlite.connect(db.DB_PATH, timeout=30) as conn:
+                conn.row_factory = db.aiosqlite.Row
+                async with conn.execute(
+                    """
+                    SELECT id, nft_address, title, metadata FROM items
+                    WHERE type = 'gift' AND status = 'available'
+                    AND (
+                        metadata NOT LIKE '%"backdrop":%'
+                        OR metadata NOT LIKE '%"symbol":%'
                     )
-                    fixed += 1
+                    LIMIT ?
+                    """,
+                    (limit,)
+                ) as cursor:
+                    rows = await cursor.fetchall()
 
-                await conn.commit()
+            if not rows:
+                # Все пофикшено, спим подольше
+                await asyncio.sleep(60)
+                continue
 
-            await asyncio.sleep(0.3)  # Пауза между батчами
+            logging.info(f"[MetaFix] Fixing {len(rows)} items...")
+            fixed = 0
+            failed = 0
 
-        logging.info(f"[MetaFix] Done: fixed={fixed}, failed/no-attrs={failed}")
+            BATCH = 5
+            for i in range(0, len(rows), BATCH):
+                batch = rows[i:i + BATCH]
+                tasks = [fetch_api(session, f"/nfts/{row['nft_address']}/") for row in batch]
+                results = await asyncio.gather(*tasks)
 
-    except Exception as e:
-        logging.error(f"[MetaFix] Error: {e}")
+                async with db.aiosqlite.connect(db.DB_PATH, timeout=60) as conn:
+                    await conn.execute("PRAGMA journal_mode=WAL")
+                    for row, details in zip(batch, results):
+                        if not details:
+                            failed += 1
+                            continue
+
+                        raw_attrs = details.get("attributes", [])
+                        attrs = {str(a.get("trait_type", "")).lower(): a.get("value") for a in raw_attrs}
+                        backdrop = attrs.get("backdrop") or attrs.get("background") or attrs.get("фон")
+                        symbol = attrs.get("symbol") or attrs.get("символ")
+
+                        if not backdrop and not symbol:
+                            # Пропускаем, если API не отдал атрибуты
+                            failed += 1
+                            continue
+
+                        existing_meta = {}
+                        if row["metadata"]:
+                            try: existing_meta = json.loads(row["metadata"])
+                            except: pass
+
+                        col_name = details.get("collection_name") or existing_meta.get("collection", "Gifts")
+                        updated_meta = {
+                            "image": details.get("image_url") or details.get("preview_url") or existing_meta.get("image"),
+                            "video": details.get("video_url") or details.get("animation_url") or existing_meta.get("video"),
+                            "model": existing_meta.get("model", col_name),
+                            "backdrop": backdrop or "Unknown",
+                            "symbol": symbol or "Unknown",
+                            "collection": col_name
+                        }
+                        
+                        # Fallback для изображения
+                        if not updated_meta["image"] and " #" in (row["title"] or ""):
+                            import re
+                            try:
+                                name_part, num_part = row["title"].rsplit(" #", 1)
+                                slug = re.sub(r'[^a-z0-9]', '', name_part.lower())
+                                updated_meta["image"] = f"https://nft.fragment.com/gift/{slug}-{num_part}.webp"
+                            except: pass
+
+                        await conn.execute(
+                            "UPDATE items SET metadata = ? WHERE id = ?",
+                            (json.dumps(updated_meta, ensure_ascii=False), row["id"])
+                        )
+                        fixed += 1
+                    await conn.commit()
+                await asyncio.sleep(1.0) # Небольшая пауза между батчами
+
+            logging.info(f"[MetaFix] Cycle done: fixed={fixed}, failed={failed}")
+            
+        except Exception as e:
+            logging.error(f"[MetaFix] Error: {e}")
+            await asyncio.sleep(10)
+        
+        # Пауза между циклами воркера
+        await asyncio.sleep(5)
 
 
 async def main_loop():
@@ -546,6 +545,9 @@ async def main_loop():
     logging.info("Deep sync history is handled by force_sync.py manually.")
     
     async with aiohttp.ClientSession() as session:
+        # ✅ Запускаем фоновый воркер для метаданных
+        asyncio.create_task(metadata_fix_worker(session))
+
         while True:
             cycle_start_time = time.time()
             cycle_start_str = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(cycle_start_time))
@@ -575,8 +577,8 @@ async def main_loop():
                 
                 await update_filters_cache(session)
 
-                # 4. Дофетчиваем metadata для NFT без backdrop/symbol (до 200 за цикл)
-                await fix_missing_metadata(session, limit=200)
+            except Exception as e:
+                logging.error(f"Monitor error: {e}")
                 
             except Exception as e:
                 logging.error(f"Monitor error: {e}")
