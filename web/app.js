@@ -848,22 +848,27 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 function switchTab(index) {
-    // Indices: 0 = Gifts, 1 = Usernames, 2 = Numbers, 3 = Friends, 4 = Profile
     const navItems = document.querySelectorAll('.nav-item');
     navItems.forEach((nav, i) => {
         nav.classList.toggle('active', i === index);
     });
+
+    // Toggle classes on body for CSS-based visibility
+    document.body.classList.toggle('tab-market', index < 3);
+    document.body.classList.toggle('tab-other', index >= 3);
+    document.body.classList.toggle('tab-gifts', index === 0);
 
     // Reset all major containers
     document.getElementById('market-container').style.display = 'none';
     document.getElementById('profile-container').style.display = 'none';
     document.getElementById('friends-container').style.display = 'none';
     document.getElementById('mode-toggle-container').style.display = 'none';
+    closeMrktModal(); // Ensure filters are closed when switching tabs
 
-    // Toggle Search & Filters visibility
-    const searchRow = document.querySelector('.search-row');
+    // Toggle Search & Filters visibility via JS as well for safety
+    const searchWrapper = document.querySelector('.search-wrapper');
     const chipsRow = document.querySelector('.chips-row');
-    if (searchRow) searchRow.style.display = (index >= 3) ? 'none' : 'flex';
+    if (searchWrapper) searchWrapper.style.display = (index >= 3) ? 'none' : 'block';
     if (chipsRow) chipsRow.style.display = (index >= 3) ? 'none' : 'flex';
 
     if (index < 3) { // Market tabs
@@ -1616,7 +1621,10 @@ function initFilterLists() {
     ];
     if (sortCont) {
         sortCont.innerHTML = '';
-        sorts.forEach(s => addFilterItem(sortCont, s.n, s.id, 'sort', ACTIVE_FILTERS.sort === s.id));
+        sorts.forEach(s => {
+            const isSel = String(ACTIVE_FILTERS.sort).toLowerCase() === String(s.id).toLowerCase();
+            addFilterItem(sortCont, s.n, s.id, 'sort', isSel);
+        });
     }
 
     const nftCont = document.getElementById('nft-list-container');
@@ -1915,6 +1923,7 @@ function openAdvancedFilters() {
     const overlay = document.getElementById('mrkt-modal-overlay');
     if (modal) modal.classList.add('active');
     if (overlay) overlay.classList.add('active');
+    initFilterLists(); // Re-render lists with current selected state
 }
 
 function closeMrktModal() {
