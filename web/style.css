@@ -4240,6 +4240,16 @@ tc-root>div {
     }
 }
 
+/* TON Icon for inputs */
+.icon-ton {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    background: url('https://ton.org/download/ton_symbol.png') no-repeat center;
+    background-size: contain;
+    filter: brightness(0) invert(1); /* Make it whiteish */
+}
+
 /* --- TC TUTORIAL STYLES --- */
 .tutorial-container {
     padding: 24px;

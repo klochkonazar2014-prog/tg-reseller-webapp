@@ -638,7 +638,7 @@ let ACTIVE_FILTERS = {
     bg: [],
     symbol: [],
     tags: [],
-    sort: 'id_desc',
+    sort: ['id_desc'],
     price_from: null,
     price_to: null,
     gift_number: null,
@@ -1302,7 +1302,7 @@ async function loadLiveItems(reset = true) {
             model: (CURRENT_TYPE === 'gift' ? ACTIVE_FILTERS.model.join(',') : ""),
             bg: (CURRENT_TYPE === 'gift' ? ACTIVE_FILTERS.bg.join(',') : ""),
             symbol: (CURRENT_TYPE === 'gift' ? ACTIVE_FILTERS.symbol.join(',') : ""),
-            sort: ACTIVE_FILTERS.sort,
+            sort: (Array.isArray(ACTIVE_FILTERS.sort) ? ACTIVE_FILTERS.sort.join(',') : (ACTIVE_FILTERS.sort || 'id_desc')),
             search: ACTIVE_FILTERS.search,
             price_from: ACTIVE_FILTERS.price_from || "",
             price_to: ACTIVE_FILTERS.price_to || "",
@@ -1625,7 +1625,9 @@ function initFilterLists() {
     if (sortCont) {
         sortCont.innerHTML = '';
         sorts.forEach(s => {
-            const isSel = String(ACTIVE_FILTERS.sort).toLowerCase() === String(s.id).toLowerCase();
+            const isSel = Array.isArray(ACTIVE_FILTERS.sort) 
+                ? ACTIVE_FILTERS.sort.some(x => String(x).toLowerCase() === String(s.id).toLowerCase())
+                : String(ACTIVE_FILTERS.sort).toLowerCase() === String(s.id).toLowerCase();
             addFilterItem(sortCont, s.n, s.id, 'sort', isSel);
         });
     }
@@ -1874,11 +1876,38 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
         e.stopPropagation();
 
         if (value === 'all' || !value) {
-            ACTIVE_FILTERS[key] = (key === 'sort') ? 'id_desc' : [];
+            ACTIVE_FILTERS[key] = (key === 'sort') ? ['id_desc'] : [];
         } else {
             const v = String(value).trim();
             if (key === 'sort') {
-                ACTIVE_FILTERS.sort = v;
+                if (!Array.isArray(ACTIVE_FILTERS.sort)) ACTIVE_FILTERS.sort = [ACTIVE_FILTERS.sort || 'id_desc'];
+                
+                const idx = ACTIVE_FILTERS.sort.indexOf(v);
+                if (idx > -1) {
+                    // Remove if already selected
+                    ACTIVE_FILTERS.sort.splice(idx, 1);
+                    if (ACTIVE_FILTERS.sort.length === 0) ACTIVE_FILTERS.sort = ['id_desc'];
+                } else {
+                    // MUTUAL EXCLUSION LOGIC
+                    const exclusions = {
+                        'price_asc': 'price_desc',
+                        'price_desc': 'price_asc',
+                        'num_asc': 'num_desc',
+                        'num_desc': 'num_asc'
+                    };
+
+                    // If we add something that has an inverse, remove the inverse
+                    if (exclusions[v]) {
+                        const invIdx = ACTIVE_FILTERS.sort.indexOf(exclusions[v]);
+                        if (invIdx > -1) ACTIVE_FILTERS.sort.splice(invIdx, 1);
+                    }
+
+                    // If adding a specific sort, maybe remove 'id_desc' (default) if present
+                    const defIdx = ACTIVE_FILTERS.sort.indexOf('id_desc');
+                    if (defIdx > -1 && v !== 'id_desc') ACTIVE_FILTERS.sort.splice(defIdx, 1);
+
+                    ACTIVE_FILTERS.sort.push(v);
+                }
             } else {
                 if (!Array.isArray(ACTIVE_FILTERS[key])) ACTIVE_FILTERS[key] = [];
                 // Search for trimmed match to be safe
@@ -1943,7 +1972,7 @@ function resetMrktModal() {
         bg: [],
         symbol: [],
         tags: [],
-        sort: 'id_desc',
+        sort: ['id_desc'],
         price_from: null,
         price_to: null,
         gift_number: null,

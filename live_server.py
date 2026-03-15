@@ -203,12 +203,21 @@ async def handle_live_items(request):
                     params.append(p_to)
                 except ValueError: pass
 
-            # Ordering
-            if f_sort == 'price_asc': query += " ORDER BY price_per_day ASC"
-            elif f_sort == 'price_desc': query += " ORDER BY price_per_day DESC"
-            elif f_sort == 'num_asc': query += " ORDER BY CAST(SUBSTR(title, INSTR(title, '#') + 1) AS INTEGER) ASC"
-            elif f_sort == 'num_desc': query += " ORDER BY CAST(SUBSTR(title, INSTR(title, '#') + 1) AS INTEGER) DESC"
-            else: query += " ORDER BY id DESC"  # id_desc, model_rare, bg_rare, symbol_rare → newest first
+            # Composite Ordering
+            sort_items = [s.strip() for s in f_sort.split(',')]
+            order_fragments = []
+            
+            for s in sort_items:
+                if s == 'price_asc': order_fragments.append("price_per_day ASC")
+                elif s == 'price_desc': order_fragments.append("price_per_day DESC")
+                elif s == 'num_asc': order_fragments.append("CAST(SUBSTR(title, INSTR(title, '#') + 1) AS INTEGER) ASC")
+                elif s == 'num_desc': order_fragments.append("CAST(SUBSTR(title, INSTR(title, '#') + 1) AS INTEGER) DESC")
+                elif s == 'id_desc': order_fragments.append("id DESC")
+            
+            if not order_fragments:
+                order_fragments = ["id DESC"]
+            
+            query += " ORDER BY " + ", ".join(order_fragments)
             
             logging.info(f"[handle_live_items] SQL: {query} (params: {params})")
 

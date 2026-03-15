@@ -363,14 +363,15 @@
                 <div class="filter-accordion-arrow">▼</div>
             </div>
             <div id="price-acc" class="accordion-content">
-                <div class="filter-input-row" style="padding-top:10px;">
-                    <div class="filter-input-wrapper">
-                        <span>▼</span>
-                        <input type="number" id="filter-price-from" placeholder="От" data-i18n="filter_price_from">
+                <div class="filter-input-row" style="padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                    <div class="filter-input-wrapper" style="flex: 1;">
+                        <span class="icon-ton" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); opacity: 0.6;"></span>
+                        <input type="number" id="filter-price-from" placeholder="От" data-i18n="filter_price_from" style="padding-left: 42px !important;">
                     </div>
-                    <div style="color:#555">—</div>
-                    <div class="filter-input-wrapper">
-                        <input type="number" id="filter-price-to" placeholder="До" data-i18n="filter_price_to">
+                    <div style="color: rgba(255, 255, 255, 0.2); font-weight: 800; font-size: 18px;">—</div>
+                    <div class="filter-input-wrapper" style="flex: 1;">
+                        <span class="icon-ton" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); opacity: 0.6;"></span>
+                        <input type="number" id="filter-price-to" placeholder="До" data-i18n="filter_price_to" style="padding-left: 42px !important;">
                     </div>
                 </div>
             </div>
