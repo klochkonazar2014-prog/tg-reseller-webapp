@@ -997,7 +997,9 @@ function openReferralChoice() {
     if (!el) return;
     el.style.display = 'flex';
     setTimeout(() => el.classList.add('active'), 10);
-    tg.HapticFeedback.impactOccurred('medium');
+    if (window.Telegram?.WebApp?.HapticFeedback) {
+        window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+    }
 }
 
 function closeReferralChoice() {
