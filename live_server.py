@@ -130,6 +130,8 @@ async def handle_live_items(request):
     q = request.query
     limit, offset = int(q.get("limit", 50)), int(q.get("offset", 0))
     f_nft, f_model, f_bg, f_symbol = q.get("nft"), q.get("model"), q.get("bg"), q.get("symbol")
+    f_addr = q.get("address")
+
     f_search, f_sort = q.get("search", "").lower(), q.get("sort", "id_desc")
     f_price_from = q.get("price_from")
     f_price_to = q.get("price_to")
@@ -148,6 +150,11 @@ async def handle_live_items(request):
             count_query = "SELECT COUNT(*) FROM items WHERE status = ?"
             query = "SELECT * FROM items WHERE status = ?"
             params = [s_filter]
+            
+            if f_addr:
+                query += " AND nft_address = ?"
+                count_query += " AND nft_address = ?"
+                params.append(f_addr)
             
             if t_filter == 'gift':
                 # EXCLUDE: basic metadata (Unknown model), missing backdrop/symbol, or guide SVG

@@ -476,11 +476,12 @@
                 style="margin-top: 20px; background: rgb(255, 255, 255); color: rgb(0, 136, 204); border: none; padding: 12px 24px; border-radius: 12px; font-weight: 800; width: 100%; transition: transform 0.2s; transform: scale(1);"
                 onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'"
                 data-i18n="friends_withdraw">Вывести средства</button>
-            <button class="btn-invite-white" onclick="shareReferralLink()"
+            <button class="btn-invite-white" onclick="openReferralChoice()"
                 style="width: 100%; height: 50px; font-weight: 900; font-size: 16px; border-radius: 12px; margin-top: 12px; background: #fff; color: #0088cc; border: none; box-shadow: 0 4px 12px rgba(255,255,255,0.2);"
                 data-i18n="friends_invite">
                 Пригласить друзей
             </button>
+
         </div>
 
         <div class="commission-notice"
@@ -589,7 +590,32 @@
         </div>
     </div>
 
+    <!-- Referral Choice Bottom Sheet -->
+    <div id="referral-choice-sheet" class="bottom-sheet" style="display: none;">
+        <div class="bottom-sheet-backdrop" onclick="closeReferralChoice()"></div>
+        <div class="bottom-sheet-content" style="border-radius: 20px 20px 0 0;">
+            <div class="bottom-sheet-header"
+                style="display: flex; justify-content: space-between; align-items: center; padding: 12px 20px;">
+                <h3 id="referral-choice-title" data-i18n="referral_choice_title"
+                    style="margin: 0; font-size: 18px; font-weight: 800;">Пригласить друзей</h3>
+                <button class="close-sheet-btn" onclick="closeReferralChoice()"
+                    style="background:none; border:none; color:#8b9bb4; font-size:24px; padding:0; cursor:pointer;">✕</button>
+            </div>
+            <div class="bottom-sheet-list">
+                <div class="drawer-item" onclick="handleReferralShare()">
+                    <span class="drawer-icon" style="background: rgba(0, 136, 204, 0.1); border-radius: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; margin-right: 12px;">📤</span>
+                    <span id="label-send-link" class="drawer-text" data-i18n="referral_send">Отправить ссылку</span>
+                </div>
+                <div class="drawer-item" onclick="handleReferralCopy()">
+                    <span class="drawer-icon" style="background: rgba(0, 136, 204, 0.1); border-radius: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; margin-right: 12px;">📋</span>
+                    <span id="label-copy-link" class="drawer-text" data-i18n="referral_copy">Скопировать ссылку</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="profile-container" style="display: none;">
+
         <!-- Profile Dashboard Header -->
         <div class="profile-dashboard-card">
             <div class="profile-main-info">
