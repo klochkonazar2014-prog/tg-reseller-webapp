@@ -43,6 +43,7 @@ let GLOBAL_TON_PRICE = 0;
 let FRIENDLY_ADDR_CACHE = {};
 let COUNTDOWN_INTERVALS = {};
 let SEEN_ITEM_IDS = new Set(); // DUPLICATE PROTECTION
+let GLOBAL_LOAD_ID = 0; // Tracking for stale request protection
 
 /**
  * Converts Raw address (0:hex) to User-Friendly Non-bounceable (UQ...)
@@ -1249,6 +1250,8 @@ async function toggleCatalogMode() {
 let currentLoadController = null;
 
 async function loadLiveItems(reset = true) {
+    const myId = ++GLOBAL_LOAD_ID;
+
     if (reset && currentLoadController) {
         currentLoadController.abort();
     }
@@ -1321,7 +1324,7 @@ async function loadLiveItems(reset = true) {
             if (retries > 0) await new Promise(r => setTimeout(r, 1000));
         }
 
-        if (signal.aborted) return;
+        if (signal.aborted || GLOBAL_LOAD_ID !== myId) return;
 
         if (!response || !response.ok) {
             throw new Error(`Server status: ${response ? response.status : 'Network Error'}`);
@@ -1335,7 +1338,7 @@ async function loadLiveItems(reset = true) {
             throw new Error("Invalid server response (JSON parse failed)");
         }
 
-        if (signal.aborted) return;
+        if (signal.aborted || GLOBAL_LOAD_ID !== myId) return;
         console.log(`Loaded ${data.items ? data.items.length : 0} items from server.`);
 
         if (data && data.items) {
@@ -1394,8 +1397,8 @@ async function loadLiveItems(reset = true) {
         if (document.getElementById('scroll-loader')) document.getElementById('scroll-loader').style.display = 'none';
         hideLoading();
     } catch (e) {
-        if (e.name === 'AbortError') {
-            console.log("Load operation aborted.");
+        if (e.name === 'AbortError' || GLOBAL_LOAD_ID !== myId) {
+            console.log("Load operation aborted or stale.");
             return;
         }
         console.error("CRITICAL Load Error:", e);
