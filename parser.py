@@ -49,15 +49,15 @@ async def fetch_api(session, endpoint, params=None):
         headers = {"Authorization": get_token()}
         try:
             async with session.get(f"{MARKET_URL}{endpoint}", headers=headers, params=params, timeout=15) as r:
-            if r.status == 200:
-                return await r.json()
-            elif r.status == 429:
-                logging.warning(f"Rate limited! Waiting 5s... ({endpoint})")
-                await asyncio.sleep(5)
-                return await fetch_api(session, endpoint, params)
-            else:
-                logging.error(f"API Error {r.status} on {endpoint}")
-                return None
+                if r.status == 200:
+                    return await r.json()
+                elif r.status == 429:
+                    logging.warning(f"Rate limited! Waiting 5s... ({endpoint})")
+                    await asyncio.sleep(5)
+                    return await fetch_api(session, endpoint, params)
+                else:
+                    logging.error(f"API Error {r.status} on {endpoint}")
+                    return None
     except Exception as e:
         logging.error(f"Request Exception: {e}")
         return None
@@ -581,9 +581,6 @@ async def main_loop():
                 
                 await update_filters_cache(session)
 
-            except Exception as e:
-                logging.error(f"Monitor error: {e}")
-                
             except Exception as e:
                 logging.error(f"Monitor error: {e}")
             
