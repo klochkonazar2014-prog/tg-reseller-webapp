@@ -157,9 +157,11 @@ def history_keyboard(orders, web_app_url, page=0):
     title = order['nft_name']
     status = order['status']
 
-    # 1. Название подарка (некликабельно)
+    # 1. Название подарка (кнопка Mini App)
+    sep = "&" if "?" in web_app_url else "?"
+    item_url = f"{web_app_url}{sep}nft_address={order['nft_address']}"
     keyboard.inline_keyboard.append([
-        InlineKeyboardButton(text=f"🎁 {title}", callback_data=f"noop_{order['id']}")
+        InlineKeyboardButton(text=f"🎁 {title}", web_app=WebAppInfo(url=item_url))
     ])
 
     # 2. ОДИН статус
@@ -176,26 +178,8 @@ def history_keyboard(orders, web_app_url, page=0):
         InlineKeyboardButton(text=status_text, callback_data=f"noop_st_{order['id']}")
     ])
 
-    # 3. Ссылка «Посмотреть» на подарок
-    tg_link = None
-    if " #" in title:
-        name_part, num_part = title.rsplit(" #", 1)
-        slug = re.sub(r'[^a-zA-Z0-9]', '', name_part)
-        tg_link = f"https://t.me/nft/{slug}-{num_part}"
-    elif title.startswith('@'):
-        tg_link = f"https://t.me/nft/{title.lstrip('@')}"
-    elif title.startswith('+'):
-        clean_n = re.sub(r'[^0-9]', '', title)
-        tg_link = f"https://t.me/nft/{clean_n}"
-
-    if tg_link:
-        keyboard.inline_keyboard.append([
-            InlineKeyboardButton(text="🖼 Посмотреть", url=tg_link)
-        ])
-
-    # 4. Кнопка подключения к Fragment (только если rented)
+    # 3. Кнопка подключения к Fragment (только если rented)
     if status == 'rented':
-        sep = "&" if "?" in web_app_url else "?"
         connect_url = f"{web_app_url}{sep}order_id={order['id']}&action=connect"
         keyboard.inline_keyboard.append([
             InlineKeyboardButton(text="🔗 Подключить к Fragment", web_app=WebAppInfo(url=connect_url))
