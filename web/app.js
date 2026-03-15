@@ -4,7 +4,7 @@ var BACKEND_URL = isLocal ? window.location.origin : "https://octorent.duckdns.o
 
 let isTcModalMandatory = false;
 // Consts
-let tg = window.Telegram?.WebApp || null;
+let tg = null;
 let IS_SHARING_REF = false; // Prevent double clicks on referral share
 
 const APP_VERSION = "1.2.5-meta-debug";
@@ -157,12 +157,7 @@ const TRANSLATIONS = {
         search: "Поиск",
         no_items: "Ничего не найдено",
         reset_filters: "Попробуйте сбросить фильтры",
-        referral_choice_title: "Пригласить друзей",
-        referral_send: "Отправить ссылку",
-        referral_copy: "Скопировать ссылку",
-        status: "Статус",
         price_per_day: "Цена в день",
-
         period: "Срок (дни)",
         discount: "Скидка",
         days: "Дни",
@@ -992,57 +987,62 @@ function closeEarningsHelp() {
     if (sheet) sheet.classList.remove('active');
 }
 
-function openReferralChoice() {
-    console.log("openReferralChoice called!");
-    const el = document.getElementById('referral-choice-sheet');
-    if (!el) {
-        console.error("element 'referral-choice-sheet' not found!");
-        return;
-    }
-    console.log("Opening sheet:", el);
-    el.style.display = 'flex';
-    setTimeout(() => el.classList.add('active'), 10);
-    if (window.Telegram?.WebApp?.HapticFeedback) {
-        window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
-    }
-}
+async function shareReferralLink() {
+    if (IS_SHARING_REF) return;
+    IS_SHARING_REF = true;
 
-function closeReferralChoice() {
-    const el = document.getElementById('referral-choice-sheet');
-    if (!el) return;
-    el.classList.remove('active');
-    setTimeout(() => el.style.display = 'none', 300);
-}
+    console.log("shareReferralLink called!");
+    // Diagnostic log
+    console.log("SDK Support:", {
+        sendPreparedInlineMessage: !!(window.Telegram?.WebApp?.sendPreparedInlineMessage),
+        shareURL: !!(window.Telegram?.WebApp?.shareURL),
+        switchInlineQuery: !!(window.Telegram?.WebApp?.switchInlineQuery)
+    });
 
-async function handleReferralShare() {
-    closeReferralChoice();
+    const btn = document.querySelector('.btn-invite-white');
+    const originalText = btn ? btn.innerText : null;
+    if (btn) {
+        btn.style.opacity = '0.7';
+        btn.innerText = '...';
+    }
+
     const userId = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user?.id) || 0;
     const botUser = "OctoRent_bot";
     const refLink = `https://t.me/${botUser}/app?startapp=${userId}`;
     const shareText = "🎁 Твой подарок уже ждёт тебя в OctoRent!\n\nЗабирай его прямо сейчас — и получай призы на свой аккаунт ✨";
 
-    if (window.Telegram?.WebApp?.shareURL) {
-        window.Telegram.WebApp.shareURL(refLink, shareText);
-    } else if (window.Telegram?.WebApp?.switchInlineQuery) {
-        window.Telegram.WebApp.switchInlineQuery('ref', ['users', 'groups', 'channels']);
-    } else {
-        handleReferralCopy();
+    try {
+        // Step 1: try shareURL (standard link sharing with preview)
+        if (window.Telegram?.WebApp?.shareURL) {
+            console.log("Using shareURL for refLink");
+            window.Telegram.WebApp.shareURL(refLink, shareText);
+            return;
+        }
+
+        // Step 2: fall back to switchInlineQuery
+        if (window.Telegram?.WebApp?.switchInlineQuery) {
+            console.log("Using switchInlineQuery fallback");
+            window.Telegram.WebApp.switchInlineQuery('ref', ['users', 'groups', 'channels']);
+            return;
+        }
+
+        // Step 3: Copy to clipboard as last resort
+        console.log("Using clipboard fallback");
+        copyToClipboard(refLink);
+        showToast("Реферальная ссылка скопирована!");
+    } catch (e) {
+        console.error("Sharing failed:", e);
+        showToast("Ошибка при попытке поделиться");
+    } finally {
+        setTimeout(() => {
+            IS_SHARING_REF = false;
+            if (btn && originalText) {
+                btn.style.opacity = '1';
+                btn.innerText = originalText;
+            }
+        }, 1000);
     }
 }
-
-async function handleReferralCopy() {
-    closeReferralChoice();
-    const userId = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user?.id) || 0;
-    const botUser = "OctoRent_bot";
-    const refLink = `https://t.me/${botUser}/app?startapp=${userId}`;
-    copyToClipboard(refLink);
-    showToast("Реферальная ссылка скопирована!");
-}
-
-async function shareReferralLink() {
-    openReferralChoice();
-}
-
 
 // Alias for filter modal
 function openOctoModal() {
@@ -3271,9 +3271,10 @@ async function loadHistoryContent() {
         orders.forEach(o => {
             const item = document.createElement('div');
             item.className = 'history-item';
-            item.style = 'background:rgba(255,255,255,0.05); border-radius:12px; padding:12px; margin-bottom:12px; display:flex; flex-direction:column; gap:10px;';
+            item.style = 'background:rgba(255,255,255,0.05); border-radius:12px; padding:12px; margin-bottom:10px; display:flex; flex-direction:column; gap:8px;';
 
             let statusColor = '#8b9bb4';
+            let statusText = o.status;
             let showTcBtn = false;
             let displayStatus = o.status;
 
@@ -3295,41 +3296,23 @@ async function loadHistoryContent() {
                 displayStatus = 'Обработка...';
             }
 
-            // Determine icon for the "Mini App" button
-            let iconImg = 'https://nft.fragment.com/gift/voodoodoll-1.webp';
-            if (o.nft_name.toLowerCase().includes('arm')) iconImg = 'https://nft.fragment.com/gift/mightyarm-2006.webp';
-            // In a real app we'd use the item's actual image, but from my_orders we usually only have basic info.
-            // If the backend provides 'image', we should use it.
-            if (o.image) iconImg = o.image;
-
             item.innerHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 2px;">
-                    <span style="font-size:11px; color:#8b9bb4; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">${t('status')}</span>
-                    <span class="status-tag" style="color:${statusColor}; border: 1px solid ${statusColor}44; background: ${statusColor}11; font-size:11px; padding:2px 8px; border-radius:6px;">${displayStatus}</span>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="color:#fff; font-weight:700; font-size:14px;">${o.nft_name}</span>
+                    <span class="status-tag" style="color:${statusColor}; border: 1px solid ${statusColor}44; background: ${statusColor}11;">${displayStatus}</span>
                 </div>
-                
-                <div class="history-product-btn" onclick="openProductByAddress('${o.nft_address}')" 
-                     style="display:flex; align-items:center; gap:12px; background:rgba(255,255,255,0.04); padding:10px 14px; border-radius:14px; cursor:pointer; active { transform: scale(0.98); } transition: transform 0.1s;">
-                    <div style="width:36px; height:36px; border-radius:8px; overflow:hidden; background:rgba(0,0,0,0.2); flex-shrink:0;">
-                        <img src="${iconImg}" style="width:100%; height:100%; object-fit:cover;">
-                    </div>
-                    <span style="color:#fff; font-weight:700; font-size:15px; flex:1;">${o.nft_name}</span>
-                    <span style="color:#8b9bb4; font-size:18px;">›</span>
+                <div style="display:flex; justify-content:space-between; font-size:12px; color:#8b9bb4; font-weight:600;">
+                    <span>${o.days} дн.</span>
+                    <span class="tm-amount icon-ton" style="font-size:inherit; font-weight:800; color:#fff;">${o.total_price}</span>
                 </div>
-
-                <div style="display:flex; justify-content:space-between; align-items:baseline; font-size:12px; padding: 0 4px;">
-                    <div style="color:#8b9bb4; font-weight:600;">${o.days} дн.</div>
-                    <div class="tm-amount icon-ton" style="font-size:14px; font-weight:800; color:#fff;">${o.total_price}</div>
-                </div>
-
                 ${showTcBtn ? `
-                    <button onclick="openTcModal(${o.id})" class="btn-yellow" style="height:40px; font-size:13px; margin-top:4px; font-weight:700; border-radius:12px;">${t('connect_to_fragment')}</button>
+                    <button onclick="openTcModal(${o.id})" class="btn-yellow" style="height:38px; font-size:13px; margin-top:5px; font-weight:700; border-radius:10px;">${t('connect_to_fragment')}</button>
                 ` : ''}
             `;
 
+            // If active and end_time exists, we could show timer here too, but user asked specifically for modal/card
             list.appendChild(item);
         });
-
     } catch (e) {
         list.innerHTML = '<div style="color:#ff3b30; text-align:center; padding:10px;">Ошибка загрузки</div>';
     }
@@ -3619,12 +3602,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Global exposed functions for inline HTML events
-window.openReferralChoice = openReferralChoice;
-window.closeReferralChoice = closeReferralChoice;
-window.handleReferralShare = handleReferralShare;
-window.handleReferralCopy = handleReferralCopy;
 window.shareReferralLink = shareReferralLink;
-
 window.handleReferralWithdraw = handleReferralWithdraw;
 window.showEarningsHelp = showEarningsHelp;
 window.closeEarningsHelp = closeEarningsHelp;
@@ -4197,37 +4175,6 @@ async function handleRubRent() {
 }
 
 
-async function openProductByAddress(addr) {
-    if (!addr) return;
-    
-    // 1. Try to find in already loaded items
-    let item = ALL_MARKET_ITEMS.find(it => it.nft_address === addr);
-    
-    if (item) {
-        openProductView(item);
-        return;
-    }
-    
-    // 2. Fetch from API if not loaded
-    try {
-        showToast(t('loading'));
-        // We use api/items with address filter (if supported) or search for it
-        const res = await apiFetch(`${BACKEND_URL}/api/items?address=${addr}&limit=1`);
-        if (res.ok) {
-            const data = await res.json();
-            const items = data.items || [];
-            if (items.length > 0) {
-                openProductView(items[0]);
-                return;
-            }
-        }
-        showToast("Товар не найден в каталоге");
-    } catch (e) {
-        console.error("Error opening product by address:", e);
-        showToast("Ошибка при загрузке товара");
-    }
-}
-
 // Map globals
 window.openPaymentModal = openPaymentModal;
 window.closePaymentModal = closePaymentModal;
@@ -4237,5 +4184,3 @@ window.handleContinuePayment = handleContinuePayment;
 window.handleChangeWallet = handleChangeWallet;
 window.showBlockchainFeeDetails = showBlockchainFeeDetails;
 window.closeBlockchainFeeDetails = closeBlockchainFeeDetails;
-window.openProductByAddress = openProductByAddress;
-
