@@ -836,12 +836,48 @@ async def inline_handler(query: InlineQuery):
             await query.answer([], cache_time=5)
         except: pass
 
-@dp.message(F.text)
-async def text_msg_handler(message: Message):
-    """Обработчик любого текста — возвращаем главное меню"""
+@dp.message(Command("help"))
+async def cmd_help(message: Message):
+    """Хендлер для команды /help"""
     user_id = message.from_user.id
     lang = await db.get_user_language(user_id)
     
+    help_text = (
+        "❓ <b>Помощь и FAQ</b>\n\n"
+        "1. <b>Как арендовать?</b>\n"
+        "Выберите понравившийся NFT в каталоге, укажите срок аренды и нажмите «Арендовать». После оплаты бот пришлет подтверждение.\n\n"
+        "2. <b>Как подключить к Fragment?</b>\n"
+        "После аренды в истории появится кнопка «Подключить к Fragment». Вам нужно будет ввести <code>tc://</code> ссылку из вашего кошелька.\n\n"
+        "3. <b>Возвращаются ли средства?</b>\n"
+        "Да, 0.14 TON возвращаются автоматически после завершения срока аренды.\n\n"
+        "Если у вас остались вопросы, пишите в поддержку: @OctoRentSupport"
+    )
+    if lang == 'en':
+        help_text = (
+            "❓ <b>Help & FAQ</b>\n\n"
+            "1. <b>How to rent?</b>\n"
+            "Pick an NFT from the catalog, choose the duration, and click 'Rent'. You'll get a confirmation after payment.\n\n"
+            "2. <b>How to connect to Fragment?</b>\n"
+            "After renting, find your item in 'History' and click 'Connect to Fragment'. You'll need to provide a <code>tc://</code> link from your wallet.\n\n"
+            "3. <b>Are funds returned?</b>\n"
+            "Yes, ~0.14 TON is automatically refunded after the rental period ends.\n\n"
+            "For more questions, contact support: @OctoRentSupport"
+        )
+        
+    await message.answer(help_text, parse_mode="HTML")
+
+@dp.message(F.text)
+async def text_msg_handler(message: Message):
+    """Обработчик любого текста — возвращаем главное меню или помощь"""
+    user_id = message.from_user.id
+    lang = await db.get_user_language(user_id)
+    text = (message.text or "").lower()
+    
+    # Если пользователь пишет "help", "помощь" и т.д. — вызываем хендлер помощи
+    if any(keyword in text for keyword in ["help", "помощь", "faq", "вопрос", "support"]):
+        await cmd_help(message)
+        return
+
     msg_text = "💎 <b>LIVE NFT Rental Market</b>\n\nДанные подгружаются в реальном времени напрямую с маркетплейса."
     if lang == 'en':
         msg_text = "💎 <b>LIVE NFT Rental Market</b>\n\nData is loaded in real-time directly from the marketplace."

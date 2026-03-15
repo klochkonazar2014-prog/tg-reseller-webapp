@@ -221,6 +221,7 @@ const TRANSLATIONS = {
         select_collection_first: "Выберите NFT коллекцию, чтобы увидеть список моделей.",
         search_filter_hint: "Поиск {label}...",
         search_filter_global: " (Все NFT)",
+        sort_newest: "Сначала новые",
         sort_price_asc: "Цена (По возрастанию)",
         sort_price_desc: "Цена (По убыванию)",
         sort_num_asc: "Номер (По возрастанию)",
@@ -228,6 +229,8 @@ const TRANSLATIONS = {
         sort_model_rare: "Редкость модели",
         sort_bg_rare: "Редкость фона",
         sort_symbol_rare: "Редкость символа",
+        invalid_price: "Некорректная цена",
+        price_from_gt_to: "Цена 'от' не может быть больше 'до'",
         error_insufficient_funds: "Недостаточно средств на кошельке для совершения транзакции.",
         available_from: "Освободится",
         preorder_warning_no_relist: "Внимание: у этого NFT выключен авто-перевыставление. Предзаказ может не сработать, если владелец не выставит его вручную.",
@@ -392,6 +395,7 @@ const TRANSLATIONS = {
         select_collection_first: "Select an NFT collection first to see models.",
         search_filter_hint: "Search {label}...",
         search_filter_global: " (All NFTs)",
+        sort_newest: "Newest first",
         sort_price_asc: "Price (Low to High)",
         sort_price_desc: "Price (High to Low)",
         sort_num_asc: "Number (Low to High)",
@@ -399,6 +403,8 @@ const TRANSLATIONS = {
         sort_model_rare: "Model Rarity",
         sort_bg_rare: "Backdrop Rarity",
         sort_symbol_rare: "Symbol Rarity",
+        invalid_price: "Invalid price",
+        price_from_gt_to: "Price 'from' cannot be greater than 'to'",
         error_insufficient_funds: "Not enough funds in your wallet to complete the transaction.",
         available_from: "Available from",
         preorder: "Pre-order",
@@ -1593,6 +1599,7 @@ function toggleGenericModal(key) {
 function initFilterLists() {
     const sortCont = document.getElementById('sort-list-container');
     const sorts = [
+        { id: 'id_desc', n: t('sort_newest') },
         { id: 'price_asc', n: t('sort_price_asc') },
         { id: 'price_desc', n: t('sort_price_desc') },
         { id: 'num_asc', n: t('sort_num_asc') },
@@ -1917,8 +1924,11 @@ function resetMrktModal() {
         price_from: null,
         price_to: null,
         gift_number: null,
-        search: ACTIVE_FILTERS.search || ""
+        search: ""
     };
+
+    const sInp = document.getElementById('search-input');
+    if (sInp) sInp.value = "";
 
     const gNum = document.getElementById('filter-gift-number');
     const pFrom = document.getElementById('filter-price-from');
