@@ -45,22 +45,23 @@ async def fetch_api(session, endpoint, params=None):
     if API_SEMAPHORE is None:
         API_SEMAPHORE = asyncio.Semaphore(1)
         
-    async with API_SEMAPHORE:
-        headers = {"Authorization": get_token()}
-        try:
-            async with session.get(f"{MARKET_URL}{endpoint}", headers=headers, params=params, timeout=15) as r:
-                if r.status == 200:
-                    return await r.json()
-                elif r.status == 429:
-                    logging.warning(f"Rate limited! Waiting 5s... ({endpoint})")
-                    await asyncio.sleep(5)
-                    return await fetch_api(session, endpoint, params)
-                else:
-                    logging.error(f"API Error {r.status} on {endpoint}")
-                    return None
-    except Exception as e:
-        logging.error(f"Request Exception: {e}")
-        return None
+    while True:
+        async with API_SEMAPHORE:
+            headers = {"Authorization": get_token()}
+            try:
+                async with session.get(f"{MARKET_URL}{endpoint}", headers=headers, params=params, timeout=15) as r:
+                    if r.status == 200:
+                        return await r.json()
+                    elif r.status == 429:
+                        logging.warning(f"Rate limited! Waiting 5s... ({endpoint})")
+                        await asyncio.sleep(5)
+                        continue # Повтор цикла (уже за пределами семафора в след. итерации)
+                    else:
+                        logging.error(f"API Error {r.status} on {endpoint}")
+                        return None
+            except Exception as e:
+                logging.error(f"Request Exception: {e}")
+                return None
 
 async def fetch_nft_details(session, addr, item_type):
     if item_type not in ['gifts', 'gift']:
