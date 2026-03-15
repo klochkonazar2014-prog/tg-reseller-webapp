@@ -186,6 +186,23 @@ async def handle_live_items(request):
                 count_query += s_clause
                 params.extend([f"%{f_search}%", f"%{f_search}%", f"%{f_search}%"])
 
+            # Price Filtering
+            if f_price_from:
+                try:
+                    p_from = float(f_price_from)
+                    query += " AND price_per_day >= ?"
+                    count_query += " AND price_per_day >= ?"
+                    params.append(p_from)
+                except ValueError: pass
+            
+            if f_price_to:
+                try:
+                    p_to = float(f_price_to)
+                    query += " AND price_per_day <= ?"
+                    count_query += " AND price_per_day <= ?"
+                    params.append(p_to)
+                except ValueError: pass
+
             # Ordering
             if f_sort == 'price_asc': query += " ORDER BY price_per_day ASC"
             elif f_sort == 'price_desc': query += " ORDER BY price_per_day DESC"

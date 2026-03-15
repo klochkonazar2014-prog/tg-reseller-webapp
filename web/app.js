@@ -1846,16 +1846,19 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
         e.stopPropagation();
 
         if (value === 'all' || !value) {
-            ACTIVE_FILTERS[key] = [];
+            ACTIVE_FILTERS[key] = (key === 'sort') ? 'id_desc' : [];
         } else {
             const v = value.trim();
-            if (!Array.isArray(ACTIVE_FILTERS[key])) ACTIVE_FILTERS[key] = [];
-
-            const idx = ACTIVE_FILTERS[key].indexOf(v);
-            if (idx > -1) {
-                ACTIVE_FILTERS[key].splice(idx, 1);
+            if (key === 'sort') {
+                ACTIVE_FILTERS.sort = v;
             } else {
-                ACTIVE_FILTERS[key].push(v);
+                if (!Array.isArray(ACTIVE_FILTERS[key])) ACTIVE_FILTERS[key] = [];
+                const idx = ACTIVE_FILTERS[key].indexOf(v);
+                if (idx > -1) {
+                    ACTIVE_FILTERS[key].splice(idx, 1);
+                } else {
+                    ACTIVE_FILTERS[key].push(v);
+                }
             }
         }
 
@@ -1934,9 +1937,26 @@ function applyMrktModal() {
     const pFrom = document.getElementById('filter-price-from');
     const pTo = document.getElementById('filter-price-to');
 
+    const vf = pFrom ? pFrom.value.replace(',', '.') : "";
+    const vt = pTo ? pTo.value.replace(',', '.') : "";
+
+    // Validation
+    if (vf && isNaN(parseFloat(vf))) {
+        showToast(t('invalid_price'));
+        return;
+    }
+    if (vt && isNaN(parseFloat(vt))) {
+        showToast(t('invalid_price'));
+        return;
+    }
+    if (vf && vt && parseFloat(vf) > parseFloat(vt)) {
+        showToast(t('price_from_gt_to'));
+        return;
+    }
+
     ACTIVE_FILTERS.gift_number = gNum ? gNum.value : "";
-    ACTIVE_FILTERS.price_from = pFrom ? pFrom.value : "";
-    ACTIVE_FILTERS.price_to = pTo ? pTo.value : "";
+    ACTIVE_FILTERS.price_from = vf;
+    ACTIVE_FILTERS.price_to = vt;
 
     closeMrktModal();
     loadLiveItems(true);

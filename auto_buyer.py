@@ -332,10 +332,10 @@ async def process_payment(order):
             processing_orders.remove(order_id)
             logging.info(f"🔓 Блокировка снята для заказа #{order_id}")
 
-    # 5. ТЕПЕРЬ МЕНЯЕМ СТАТУС НА 'rented' И НАЗНАЧАЕМ ВРЕМЯ ВОЗВРАТА
     import time
     rent_ends_at = int(time.time()) + (order['days'] * 86400)
-    refund_scheduled_at = rent_ends_at + 3600 # +1 hour for MarketApp to return funds
+    # По просьбе пользователя: воврат через 20 минут после окончания аренды
+    refund_scheduled_at = rent_ends_at + 1200 
 
     async with db.aiosqlite.connect(db.DB_PATH) as conn:
         await conn.execute(
@@ -383,7 +383,28 @@ async def monitor_wallet():
     logging.info(f"👀 Мониторинг кошельков {WALLETS_TO_MONITOR} запущен...")
     
     client = ToncenterV2Client(base_url="https://toncenter.com", api_key=TONCENTER_API_KEY)
-    last_tx_hashes = {addr: None for addr in WALLETS_TO_MONITOR}
+    # Файл для хранения последних обработанных хешей
+    HASH_FILE = "last_tx_hashes.json"
+    
+    def load_last_hashes():
+        if os.path.exists(HASH_FILE):
+            try:
+                with open(HASH_FILE, "r") as f:
+                    return json.load(f)
+            except: pass
+        return {addr: None for addr in WALLETS_TO_MONITOR}
+
+    def save_last_hashes(hashes):
+        try:
+            with open(HASH_FILE, "w") as f:
+                json.dump(hashes, f)
+        except: pass
+
+    last_tx_hashes = load_last_hashes()
+    # Убеждаемся, что все текущие адреса есть в словаре
+    for addr in WALLETS_TO_MONITOR:
+        if addr not in last_tx_hashes:
+            last_tx_hashes[addr] = None
 
 
     import datetime
@@ -407,10 +428,6 @@ async def monitor_wallet():
                     # Останавливаемся на уже обработанной транзакции
                     if last_tx_hashes[addr] and tx_hash == last_tx_hashes[addr]:
                         break
-                    
-                    # Запоминаем самую новую транзакцию (первая в списке)
-                    if txs and tx_hash == txs[0].cell.hash.hex():
-                        last_tx_hashes[addr] = tx_hash
                     
                     # Проверяем, обрабатывали ли мы этот хеш (дополнительная защита через БД)
                     async with db.aiosqlite.connect(db.DB_PATH) as conn:
@@ -438,14 +455,20 @@ async def monitor_wallet():
                         order_id = int(m.group(1))
                     
                     if order_id:
-                        logging.info(f"🧩 [Monitor] Найден Order ID в комменте: {order_id}")
                         async with db.aiosqlite.connect(db.DB_PATH) as conn:
-
                             conn.row_factory = db.aiosqlite.Row
                             async with conn.execute("SELECT * FROM orders WHERE id = ?", (order_id,)) as cur:
                                 order = await cur.fetchone()
                                 
                         if order and order['status'] == 'pending_payment':
+                            # Захватываем кошелек отправителя для будущего возврата
+                            user_wallet = None
+                            try:
+                                if tx.in_msg.info.src:
+                                    user_wallet = str(tx.in_msg.info.src)
+                            except: pass
+
+                            logging.info(f"🧩 [Monitor] Найдена оплата для заказа #{order_id} в комментарии...")
                             # Проверяем сумму (с допуском на старые заказы, где добавлялась дробная часть для уникальности)
                             received_amount = float(tx.in_msg.info.value_coins) / 1e9
                             expected_amount = float(order['total_price'])
@@ -454,13 +477,20 @@ async def monitor_wallet():
                                 logging.info(f"🎯 TON MATCH! Order #{order_id} paid. Received: {received_amount} TON, Expected: {expected_amount}")
                                 logging.info(f"🔍 [Monitor] Транзакция: {tx_hash[:10]}... Сумма: {received_amount} TON")
                                 processing_orders.add(order_id)
-                                await db.update_order_status(order_id, 'paid', tx_hash=tx_hash)
+                                await db.update_order_status(order_id, 'paid', tx_hash=tx_hash, user_wallet=user_wallet)
                                 asyncio.create_task(process_payment(dict(order)))
                             else:
                                 logging.warning(f"⚠️ Low payment for #{order_id}: got {received_amount}, need {expected_amount}")
+                        elif order:
+                            # Уже не pending_payment (например paid или rented) - просто игнорируем без логов
+                            continue
                 
-                
-                # 2. NEW: USDT Jetton Monitoring via TonAPI
+                # Запоминаем самую новую транзакцию (первая в списке)
+                if txs:
+                    last_tx_hashes[addr] = txs[0].cell.hash.hex()
+                    save_last_hashes(last_tx_hashes)
+
+                # 2. USDT Jetton Monitoring via TonAPI
                 USDT_MASTER = "EQCxE6mUt_9S9clpu7R_6m09wYz3X0mR3GvK7N88m8_L3A1f"
                 async with aiohttp.ClientSession() as session:
                     # In a real app, we should use a cursor or timestamps,
@@ -480,10 +510,7 @@ async def monitor_wallet():
                                             amount_raw = int(jt.get('amount', 0))
                                             amount_usdt = amount_raw / 1e6
                                             
-                                            comment = event.get('extra', 0) # TonAPI sometimes puts memo here or in comment
-                                            # TonAPI 'comment' is usually in JettonTransfer action
                                             comment = jt.get('comment', '')
-                                            
                                             event_id = event['event_id']
                                             
                                             # Check if already processed
@@ -654,13 +681,99 @@ async def sync_rented_tc_links():
             
         await asyncio.sleep(120) # Проверяем раз в 2 минуты
 
+async def process_order_refunds():
+    """Фоновый воркер для возврата 0.14 TON пользователям после аренды"""
+    logging.info("🔄 Воркер автоматических возвратов (0.14 TON) запущен...")
+    while True:
+        try:
+            import time
+            now = int(time.time())
+            async with db.aiosqlite.connect(db.DB_PATH) as conn:
+                conn.row_factory = db.aiosqlite.Row
+                # Ищем заказы, где пора делать возврат
+                async with conn.execute(
+                    "SELECT * FROM orders WHERE refund_status = 'pending' AND refund_scheduled_at <= ? AND user_wallet IS NOT NULL", 
+                    (now,)
+                ) as cursor:
+                    to_refund = await cursor.fetchall()
+            
+            if to_refund:
+                # Инициализируем кошелек (v5R1 или v4R2)
+                client = ToncenterV2Client(base_url="https://toncenter.com", api_key=TONCENTER_API_KEY)
+                import binascii
+                if OWNER_WALLET_ADDR and (OWNER_WALLET_ADDR.startswith("UQB") or OWNER_WALLET_ADDR.startswith("EQB")):
+                    if OWNER_HEX_KEY:
+                        full_key = binascii.unhexlify(OWNER_HEX_KEY)
+                        wallet = WalletV5R1(client, private_key=full_key[:32], public_key=full_key[32:], wallet_id=2147483409)
+                    else:
+                        wallet, _, _, _ = WalletV5R1.from_mnemonic(client, OWNER_SEED, wallet_id=2147483409)
+                else:
+                    wallet, _, _, _ = WalletV4R2.from_mnemonic(client, OWNER_SEED)
+
+                for order in to_refund:
+                    logging.info(f"💸 [Refund] Возврат 0.14 TON для заказа #{order['id']} на {order['user_wallet']}...")
+                    try:
+                        current_seqno = await wallet.get_seqno(client, wallet.address)
+                        memo = f"Refund 0.14 TON for OctoRent order #{order['id']}"
+                        body_cell = begin_cell().store_uint(0, 32).store_string(memo).end_cell()
+                        
+                        await wallet.transfer(
+                            destination=order['user_wallet'],
+                            amount=0.14,
+                            body=body_cell,
+                            seqno=current_seqno
+                        )
+                        
+                        # Обновляем статус
+                        async with db.aiosqlite.connect(db.DB_PATH) as conn:
+                            await conn.execute(
+                                "UPDATE orders SET refund_status = 'completed', refund_tx_hash = 'sent' WHERE id = ?", 
+                                (order['id'],)
+                            )
+                            await conn.commit()
+                        logging.info(f"✅ [Refund] Успешно отправлен для #{order['id']}")
+                        await asyncio.sleep(5) # Пауза между переводами
+                    except Exception as e_tx:
+                        logging.error(f"❌ [Refund] Ошибка при возврате #{order['id']}: {e_tx}")
+            
+        except Exception as e:
+            logging.error(f"❌ [Refund] Ошибка в воркере возвратов: {e}")
+            
+        await asyncio.sleep(300) # Проверка каждые 5 минут
+
+async def cleanup_expired_orders():
+    """Отменяет заказы, которые не были оплачены в течение 3 минут"""
+    logging.info("🧹 Воркер очистки просроченных заказов (3 мин) запущен...")
+    while True:
+        try:
+            # Считаем порог: текущее время - 180 секунд
+            # Так как в БД CURRENT_TIMESTAMP (UTC), используем datetime
+            import datetime
+            threshold = datetime.datetime.utcnow() - datetime.timedelta(minutes=3)
+            
+            async with db.aiosqlite.connect(db.DB_PATH) as conn:
+                # Удаляем заказы, которые не были оплачены в течение 3 минут
+                cursor = await conn.execute(
+                    "DELETE FROM orders WHERE status = 'pending_payment' AND created_at < ?", 
+                    (threshold,)
+                )
+                if cursor.rowcount > 0:
+                    logging.info(f"🧹 [Cleanup] Удалено {cursor.rowcount} просроченных заказов.")
+                await conn.commit()
+        except Exception as e:
+            logging.error(f"❌ [Cleanup] Ошибка очистки заказов: {e}")
+        
+        await asyncio.sleep(60) # Проверка каждую минуту
+
 async def main():
-    # Запускаем мониторинг кошелька и воркер предзаказов параллельно
+    # Запускаем мониторинг кошелька и воркеры параллельно
     await asyncio.gather(
         monitor_wallet(),
         check_pending_orders(),
         process_referral_withdrawals(),
-        sync_rented_tc_links()
+        sync_rented_tc_links(),
+        process_order_refunds(),
+        cleanup_expired_orders()
     )
 
 if __name__ == "__main__":

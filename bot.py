@@ -262,7 +262,7 @@ async def start_cmd(message: Message, command: CommandObject):
             parse_mode="HTML"
         )
 
-    if not args and not is_new:
+    if not is_new:
         lang = await db.get_user_language(user_id)
         msg_text = "💎 <b>LIVE NFT Rental Market</b>\n\nДанные подгружаются в реальном времени напрямую с маркетплейса."
         if lang == 'en':
@@ -835,6 +835,22 @@ async def inline_handler(query: InlineQuery):
         try:
             await query.answer([], cache_time=5)
         except: pass
+
+@dp.message(F.text)
+async def text_msg_handler(message: Message):
+    """Обработчик любого текста — возвращаем главное меню"""
+    user_id = message.from_user.id
+    lang = await db.get_user_language(user_id)
+    
+    msg_text = "💎 <b>LIVE NFT Rental Market</b>\n\nДанные подгружаются в реальном времени напрямую с маркетплейса."
+    if lang == 'en':
+        msg_text = "💎 <b>LIVE NFT Rental Market</b>\n\nData is loaded in real-time directly from the marketplace."
+        
+    await message.answer(
+        msg_text,
+        reply_markup=kb.main_menu(WEB_APP_URL, message.from_user.id == ADMIN_ID, lang=lang),
+        parse_mode="HTML"
+    )
 
 @dp.message(Command("fix_url"))
 async def cmd_fix_url(message: Message, command: CommandObject):
