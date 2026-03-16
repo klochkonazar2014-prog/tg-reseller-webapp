@@ -20,15 +20,19 @@ function startCountdown(endTime, elements, isMini = false) {
         const s = diff % 60;
 
         const endDate = new Date(endTime * 1000);
-        const dateStr = endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        const dateStr = endDate.toLocaleDateString(typeof CURRENT_LANG !== 'undefined' ? (CURRENT_LANG === 'ru' ? 'ru-RU' : 'en-US') : 'ru-RU', { month: 'short', day: 'numeric', year: 'numeric' });
         const pad = (n) => n.toString().padStart(2, '0');
 
         if (isMini) {
             // For mini timers on cards: JUST "14d 9h"
             let display;
-            if (d > 0) display = `${d}d ${h}h`;
-            else if (h > 0) display = `${h}h ${m}m`;
-            else display = `${m}m`;
+            const dayCh = typeof CURRENT_LANG !== 'undefined' ? (CURRENT_LANG === 'ru' ? 'д' : 'd') : 'д';
+            const hourCh = typeof CURRENT_LANG !== 'undefined' ? (CURRENT_LANG === 'ru' ? 'ч' : 'h') : 'ч';
+            const minCh = typeof CURRENT_LANG !== 'undefined' ? (CURRENT_LANG === 'ru' ? 'м' : 'm') : 'м';
+
+            if (d > 0) display = `${d}${dayCh} ${h}${hourCh}`;
+            else if (h > 0) display = `${h}${hourCh} ${m}${minCh}`;
+            else display = `${m}${minCh}`;
             targets.forEach(el => el.innerText = display);
         } else {
             // For product view timer: Pricing Card Style

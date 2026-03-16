@@ -269,7 +269,67 @@ const TRANSLATIONS = {
         tut_skip: "Пропустить",
         tut_finish: "Удачного пользования!",
         tut_connect: "Подключить актив",
-        expired: "СРОК ИСТЕК"
+        expired: "СРОК ИСТЕК",
+        storage: "Хранилище",
+        loading_item: "Загрузка товара...",
+        ready: "Готово!",
+        item_not_found: "Товар не найден",
+        server_timeout: "Таймаут сервера",
+        server_error: "Ошибка: {msg}",
+        share_referral_text: "🎁 Твой подарок уже ждёт тебя в OctoRent!\n\nЗабирай его прямо сейчас — и получай призы на свой аккаунт ✨",
+        referral_copy_success: "Реферальная ссылка скопирована!",
+        withdraw_success: "Вывод успешно запрошен!",
+        withdraw_min: "Минимальный баланс на вывод 0.1 TON",
+        network_error: "Ошибка соединения",
+        demo_data_notice: "Ошибка соединения с сервером. Показываем демо-данные.",
+        friends_new_referral: "Новый реферал",
+        friends_profit: "прибыль",
+        friends_zero_rentals: "0 аренд",
+        invoice_creating: "Создаем счет...",
+        redirecting_to_pay: "Переходим к оплате...",
+        invoice_error: "Ошибка при создании счета: {msg}",
+        network_error_server: "Ошибка соединения с сервером",
+        invoice_created_xrocket: "Инвойс создан! Оплатите в xRocket",
+        error: "Ошибка",
+        connect_wallet_ton: "Подключите TON кошелёк для оплаты",
+        preparing_transaction: "Готовим транзакцию...",
+        transaction_sent: "Транзакция отправлена!",
+        payment_processing_ton: "Оплата обрабатывается сетью TON. Вы можете <b>сразу</b> ускорить процесс:",
+        payment_processing_usdt: "Оплата USDT отправлена. Вы можете <b>сразу</b> ускорить процесс:",
+        fragment_tc_link_label: "Ссылка для подключения к Fragment:",
+        fragment_tc_link_placeholder: "Коснитесь здесь, чтобы вставить ссылку",
+        fragment_tc_link_hint: "Вставьте ссылку из Telegram (Fragment), и бот подключит подарок <b>автоматически</b>, как только увидит оплату.",
+        save_auto_connect: "Сохранить и Авто-подключить",
+        skip_and_close: "Пропустить и закрыть",
+        payment_prepare_error: "Ошибка подготовки платежа",
+        transaction_send_error: "Ошибка при отправке транзакции",
+        insert_link_first: "Сначала вставьте ссылку!",
+        invalid_link_format: "Некорректный формат ссылки!",
+        saving_link: "Сохраняем ссылку...",
+        link_saved_success: "✅ Ссылка сохранена! Бот всё сделает сам.",
+        save_error: "Ошибка сохранения",
+        save_network_error: "Ошибка сети при сохранении",
+        fee_details_rub_title: "Как рассчитывается цена в рублях:",
+        fee_details_rub_desc: "Поскольку аренда происходит в сети TON, все расчеты привязаны к курсу криптовалюты.",
+        fee_details_formula_label: "Формула:",
+        fee_details_formula_val: "(TON + 0.2) × Курс × 1.05",
+        fee_details_ton_gas: "TON + 0.2:",
+        fee_details_ton_gas_desc: "Стоимость аренды + фиксированная комиссия сети за смарт-контракт.",
+        fee_details_rate: "Курс:",
+        fee_details_rate_desc: "Текущий курс TON к RUB (по данным TonAPI).",
+        fee_details_markup: "1.05:",
+        fee_details_markup_desc: "Наценка 5% за банковский эквайринг и вывод средств для оплаты аренды.",
+        fee_details_rub_warning: "Минимальная сумма платежа картой — 49 ₽. Если итоговая сумма меньше, вы увидите предупреждение.",
+        fee_details_ton_desc: "Для обработки транзакции необходимо отправить <b>0.2 TON</b>, остаток которых (<b>~0.14 TON</b>) будет возвращен вам автоматически после завершения срока аренды.",
+        fee_details_xrocket_title: "Если оплата через xRocket:",
+        fee_details_xrocket_desc: "Необходимо добавить <b>0.1 TON</b> — это комиссия платежного бота за вывод средств на внешний кошелек.",
+        fee_details_why_external_title: "Зачем сервису выводить деньги на внешний кошелек?",
+        fee_details_why_external_desc: "Это необходимо для прямого взаимодействия со смарт-контрактом Fragment, так как внутренние кошельки ботов не поддерживают выполнение сложных транзакций с контрактами.",
+        fee_details_total_calc_title: "Как рассчитывается итоговая цена:",
+        fee_details_ton_wallet: "TON Wallet:",
+        fee_details_ton_wallet_desc: "Цена товара + комиссия сети (0.2 TON).",
+        fee_details_xrocket_label: "xRocket:",
+        fee_details_xrocket_desc_total: "Цена + 0.2 сеть + 0.1 вывод."
     },
     en: {
 
@@ -439,12 +499,70 @@ const TRANSLATIONS = {
         error_sdk_init_failed: "Wallet connection error. Please refresh the page.",
         error_transaction_failed: "Transaction failed. Please check your balance.",
         error_unknown: "Error: {msg}",
-        tut_next: "Next",
-        tut_skip: "Skip",
         tut_finish: "Happy using!",
         tut_connect: "Connect Asset",
         expired: "EXPIRED",
-        fee_notice_text: "You are sending a small amount of TON to cover network fees and service operation. The remainder will be returned to you automatically."
+        fee_notice_text: "You are sending a small amount of TON to cover network fees and service operation. The remainder will be returned to you automatically.",
+        storage: "Storage",
+        loading_item: "Loading item...",
+        ready: "Ready!",
+        item_not_found: "Item not found",
+        server_timeout: "Server timeout",
+        server_error: "Error: {msg}",
+        share_referral_text: "🎁 Your gift is waiting for you at OctoRent!\n\nGet it now and receive prizes for your account ✨",
+        referral_copy_success: "Referral link copied!",
+        withdraw_success: "Withdrawal successfully requested!",
+        withdraw_min: "Minimum withdrawal balance is 0.1 TON",
+        network_error: "Network error",
+        demo_data_notice: "Server connection error. Showing demo data.",
+        friends_new_referral: "New referral",
+        friends_profit: "profit",
+        friends_zero_rentals: "0 rentals",
+        invoice_creating: "Creating invoice...",
+        redirecting_to_pay: "Redirecting to payment...",
+        invoice_error: "Error creating invoice: {msg}",
+        network_error_server: "Server connection error",
+        invoice_created_xrocket: "Invoice created! Pay in xRocket",
+        error: "Error",
+        connect_wallet_ton: "Connect TON wallet for payment",
+        preparing_transaction: "Preparing transaction...",
+        transaction_sent: "Transaction sent!",
+        payment_processing_ton: "Payment is being processed by the TON network. You can speed up the process <b>immediately</b>:",
+        payment_processing_usdt: "USDT payment sent. You can speed up the process <b>immediately</b>:",
+        fragment_tc_link_label: "Link to connect to Fragment:",
+        fragment_tc_link_placeholder: "Tap here to paste link",
+        fragment_tc_link_hint: "Paste the link from Telegram (Fragment), and the bot will connect the gift <b>automatically</b> once it sees the payment.",
+        save_auto_connect: "Save and Auto-Connect",
+        skip_and_close: "Skip and close",
+        payment_prepare_error: "Payment preparation error",
+        transaction_send_error: "Error sending transaction",
+        insert_link_first: "Paste the link first!",
+        invalid_link_format: "Invalid link format!",
+        saving_link: "Saving link...",
+        link_saved_success: "✅ Link saved! The bot will do everything automatically.",
+        save_error: "Save error",
+        save_network_error: "Network error while saving",
+        fee_details_rub_title: "How the price in RUB is calculated:",
+        fee_details_rub_desc: "As the rental happens on the TON network, all calculations are tied to the cryptocurrency rate.",
+        fee_details_formula_label: "Formula:",
+        fee_details_formula_val: "(TON + 0.2) × Rate × 1.05",
+        fee_details_ton_gas: "TON + 0.2:",
+        fee_details_ton_gas_desc: "Rental cost + fixed network fee for the smart contract.",
+        fee_details_rate: "Rate:",
+        fee_details_rate_desc: "Current TON to RUB rate (according to TonAPI).",
+        fee_details_markup: "1.05:",
+        fee_details_markup_desc: "5% markup for bank acquiring and funds withdrawal for rental payment.",
+        fee_details_rub_warning: "The minimum bank card payment is 49 ₽. If the total is less, you will see a warning.",
+        fee_details_ton_desc: "To process the transaction, you must send <b>0.2 TON</b>, of which the remaining (<b>~0.14 TON</b>) will be returned to you automatically after the rental ends.",
+        fee_details_xrocket_title: "If paying via xRocket:",
+        fee_details_xrocket_desc: "You need to add <b>0.1 TON</b> — this is the payment bot's fee for withdrawing funds to an external wallet.",
+        fee_details_why_external_title: "Why does the service withdraw money to an external wallet?",
+        fee_details_why_external_desc: "This is necessary for direct interaction with the Fragment smart contract, as internal bot wallets do not support executing complex transactions with contracts.",
+        fee_details_total_calc_title: "How the total price is calculated:",
+        fee_details_ton_wallet: "TON Wallet:",
+        fee_details_ton_wallet_desc: "Item price + network fee (0.2 TON).",
+        fee_details_xrocket_label: "xRocket:",
+        fee_details_xrocket_desc_total: "Price + 0.2 network + 0.1 withdrawal."
     }
 };
 
@@ -673,7 +791,7 @@ function updateUILanguage() {
         'listing-what-mean': t('what_is_this'),
         'view-owner-label': t('owner'),
         'view-address-label': t('address'),
-        'view-storage-label': "Storage",
+        'view-storage-label': t('storage'),
         'filter-gift-number': t('gift_number'),
         'filter-price-from': t('from'),
         'filter-price-to': t('to'),
@@ -729,7 +847,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         if (deepNftAddr) {
             console.log("🚀 Deep link:", deepNftAddr);
-            showToast(CURRENT_LANG === 'ru' ? "Загрузка товара..." : "Loading item...");
+            showToast(t('loading_item'));
             const tMap = { 'gift': 0, 'username': 1, 'number': 2 };
 
             const openDeepItem = (it) => {
@@ -738,7 +856,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 if (idx !== undefined) switchTab(idx);
                 setTimeout(() => {
                     openProductView(it);
-                    showToast(CURRENT_LANG === 'ru' ? "Готово!" : "Ready!");
+                    showToast(t('ready'));
                 }, 800);
             };
 
@@ -753,7 +871,6 @@ document.addEventListener("DOMContentLoaded", async () => {
                     });
 
                     if (cached) {
-                        showToast(CURRENT_LANG === 'ru' ? "Найдено в кэше" : "Found in cache");
                         openDeepItem(cached);
                         return;
                     }
@@ -785,11 +902,11 @@ document.addEventListener("DOMContentLoaded", async () => {
                             metadata: typeof d.metadata === 'string' ? d.metadata : JSON.stringify(d.metadata || {})
                         });
                     } else {
-                        showToast(CURRENT_LANG === 'ru' ? "Товар не найден" : "Item not found");
+                        showToast(t('item_not_found'));
                     }
                 } catch (e) {
                     console.error("DL Error:", e);
-                    showToast(e.name === 'AbortError' ? "Таймаут сервера" : "Ошибка: " + e.message);
+                    showToast(e.name === 'AbortError' ? t('server_timeout') : t('server_error', { msg: e.message }));
                 }
             })();
         }
@@ -962,10 +1079,10 @@ async function loadFriendsData() {
                          onerror="this.src='${fallbackUrl}'">
                     <div style="flex: 1; margin-left: 12px;">
                         <div style="font-weight: 700; font-size: 15px;">${name}</div>
-                        ${profit === 0 ? `<div style="font-size: 11px; color: #8b9bb4;">Новый реферал</div>` : ''}
+                        ${profit === 0 ? `<div style="font-size: 11px; color: #8b9bb4;">${t('friends_new_referral')}</div>` : ''}
                     </div>
                     <div style="text-align: right;">
-                        ${profit > 0 ? `<div style="font-weight: 800; font-size: 14px; color: #0088cc;">+${profit.toFixed(4)} TON</div><div style="font-size: 11px; color: #8b9bb4; opacity: 0.6;">прибыль</div>` : `<div style="font-size: 12px; color: #8b9bb4;">0 аренд</div>`}
+                        ${profit > 0 ? `<div style="font-weight: 800; font-size: 14px; color: #0088cc;">+${profit.toFixed(4)} TON</div><div style="font-size: 11px; color: #8b9bb4; opacity: 0.6;">${t('friends_profit')}</div>` : `<div style="font-size: 12px; color: #8b9bb4;">${t('friends_zero_rentals')}</div>`}
                     </div>
                 </div>
             `;
@@ -1009,7 +1126,7 @@ async function shareReferralLink() {
     const userId = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user?.id) || 0;
     const botUser = "OctoRent_bot";
     const refLink = `https://t.me/${botUser}/app?startapp=${userId}`;
-    const shareText = "🎁 Твой подарок уже ждёт тебя в OctoRent!\n\nЗабирай его прямо сейчас — и получай призы на свой аккаунт ✨";
+    const shareText = t('share_referral_text');
 
     try {
         // Step 1: try shareURL (standard link sharing with preview)
@@ -1029,10 +1146,10 @@ async function shareReferralLink() {
         // Step 3: Copy to clipboard as last resort
         console.log("Using clipboard fallback");
         copyToClipboard(refLink);
-        showToast("Реферальная ссылка скопирована!");
+        showToast(t('referral_copy_success'));
     } catch (e) {
         console.error("Sharing failed:", e);
-        showToast("Ошибка при попытке поделиться");
+        showToast(t('network_error'));
     } finally {
         setTimeout(() => {
             IS_SHARING_REF = false;
@@ -1073,13 +1190,13 @@ async function handleReferralWithdraw() {
         });
         const data = await res.json();
         if (data.status === 'ok') {
-            showToast("Вывод успешно запрошен!");
+            showToast(t('withdraw_success'));
             loadFriendsData();
         } else {
-            showToast("Минимальный баланс на вывод 0.1 TON");
+            showToast(t('withdraw_min'));
         }
     } catch (e) {
-        showToast("Ошибка соединения");
+        showToast(t('network_error'));
     } finally {
         setTimeout(() => {
             IS_WITHDRAWING = false;
@@ -1403,7 +1520,7 @@ async function loadLiveItems(reset = true) {
         }
         console.error("CRITICAL Load Error:", e);
         if (reset && document.getElementById('top-loader')) {
-            document.getElementById('top-loader').innerText = "Ошибка соединения с сервером. Показываем демо-данные.";
+            document.getElementById('top-loader').innerText = t('demo_data_notice');
             setTimeout(() => { if (document.getElementById('top-loader')) document.getElementById('top-loader').style.display = 'none'; }, 2000);
         }
 
@@ -3870,7 +3987,7 @@ async function handleCloudTipsRent() {
     const days = parseInt(document.getElementById('rent-duration-input').value) || 1;
 
     try {
-        showToast("Создаем счет...");
+        showToast(t('invoice_creating'));
         const res = await apiFetch(`${BACKEND_URL}/api/create_cloudtips_invoice`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -3880,13 +3997,13 @@ async function handleCloudTipsRent() {
 
         if (data.payment_url) {
             tg.openLink(data.payment_url);
-            showToast("Переходим к оплате...");
+            showToast(t('redirecting_to_pay'));
         } else {
-            tg.showAlert("Ошибка при создании счета: " + (data.error || "Неизвестная ошибка"));
+            tg.showAlert(t('invoice_error', { msg: (data.error || t('error')) }));
         }
     } catch (e) {
         console.error("CloudTips error:", e);
-        tg.showAlert("Ошибка соединения с сервером");
+        tg.showAlert(t('network_error_server'));
     }
 }
 
@@ -3906,40 +4023,40 @@ function showBlockchainFeeDetails(e) {
     if (SELECTED_PAY_METHOD === 'CLOUDTIPS') {
         body.innerHTML = `
             <div style="font-size: 14px; line-height: 1.6; color: #fff;">
-                <p style="color: #fff; font-weight: 700; margin-bottom: 12px; font-size: 15px;">Как рассчитывается цена в рублях:</p>
-                <p style="color: #8b9bb4; margin-bottom: 16px;">Поскольку аренда происходит в сети TON, все расчеты привязаны к курсу криптовалюты.</p>
+                <p style="color: #fff; font-weight: 700; margin-bottom: 12px; font-size: 15px;">${t('fee_details_rub_title')}</p>
+                <p style="color: #8b9bb4; margin-bottom: 16px;">${t('fee_details_rub_desc')}</p>
                 
                 <div style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 12px; margin-bottom: 16px;">
-                    <div style="font-family: monospace; font-size: 13px; color: #00d488; margin-bottom: 4px;">Формула:</div>
-                    <div style="font-size: 15px; font-weight: 700;">(TON + 0.2) × Курс × 1.05</div>
+                    <div style="font-family: monospace; font-size: 13px; color: #00d488; margin-bottom: 4px;">${t('fee_details_formula_label')}</div>
+                    <div style="font-size: 15px; font-weight: 700;">${t('fee_details_formula_val')}</div>
                 </div>
 
                 <ul style="color: #8b9bb4; padding-left: 20px; list-style-type: decimal;">
-                    <li style="margin-bottom: 8px;"><b>TON + 0.2:</b> Стоимость аренды + фиксированная комиссия сети за смарт-контракт.</li>
-                    <li style="margin-bottom: 8px;"><b>Курс:</b> Текущий курс TON к RUB (по данным TonAPI).</li>
-                    <li style="margin-bottom: 8px;"><b>1.05:</b> Наценка 5% за банковский эквайринг и вывод средств для оплаты аренды.</li>
+                    <li style="margin-bottom: 8px;"><b>${t('fee_details_ton_gas')}</b> ${t('fee_details_ton_gas_desc')}</li>
+                    <li style="margin-bottom: 8px;"><b>${t('fee_details_rate')}</b> ${t('fee_details_rate_desc')}</li>
+                    <li style="margin-bottom: 8px;"><b>${t('fee_details_markup')}</b> ${t('fee_details_markup_desc')}</li>
                 </ul>
 
                 <p style="color: #FF9500; font-size: 12px; margin-top: 16px; display: flex; gap: 8px; align-items: flex-start;">
                     <span>⚠️</span>
-                    <span>Минимальная сумма платежа картой — 49 ₽. Если итоговая сумма меньше, вы увидите предупреждение.</span>
+                    <span>${t('fee_details_rub_warning')}</span>
                 </p>
             </div>`;
     } else {
         body.innerHTML = `
             <div style="font-size: 14px; line-height: 1.6; color: #fff;">
-                <p style="color: #8b9bb4;">Для обработки транзакции необходимо отправить <b>0.2 TON</b>, остаток которых (<b>~0.14 TON</b>) будет возвращен вам автоматически после завершения срока аренды.</p>
+                <p style="color: #8b9bb4;">${t('fee_details_ton_desc')}</p>
                 
-                <p style="margin-top: 14px;"><b>Если оплата через xRocket:</b></p>
-                <p style="color: #8b9bb4;">Необходимо добавить <b>0.1 TON</b> — это комиссия платежного бота за вывод средств на внешний кошелек.</p>
+                <p style="margin-top: 14px;"><b>${t('fee_details_xrocket_title')}</b></p>
+                <p style="color: #8b9bb4;">${t('fee_details_xrocket_desc')}</p>
                 
-                <p style="margin-top: 14px;"><b>Зачем сервису выводить деньги на внешний кошелек?</b></p>
-                <p style="color: #8b9bb4;">Это необходимо для прямого взаимодействия со смарт-контрактом Fragment, так как внутренние кошельки ботов не поддерживают выполнение сложных транзакций с контрактами.</p>
+                <p style="margin-top: 14px;"><b>${t('fee_details_why_external_title')}</b></p>
+                <p style="color: #8b9bb4;">${t('fee_details_why_external_desc')}</p>
                 
-                <p style="margin-top: 14px;"><b>Как рассчитывается итоговая цена:</b></p>
+                <p style="margin-top: 14px;"><b>${t('fee_details_total_calc_title')}</b></p>
                 <ul style="color: #8b9bb4; padding-left: 20px; margin-top: 6px;">
-                    <li><b>TON Wallet:</b> Цена товара + комиссия сети (0.2 TON).</li>
-                    <li><b>xRocket:</b> Цена + 0.2 сеть + 0.1 вывод.</li>
+                    <li><b>${t('fee_details_ton_wallet')}</b> ${t('fee_details_ton_wallet_desc')}</li>
+                    <li><b>${t('fee_details_xrocket_label')}</b> ${t('fee_details_xrocket_desc_total')}</li>
                 </ul>
             </div>`;
     }
@@ -3962,7 +4079,7 @@ function closeBlockchainFeeDetails() {
 }
 
 async function handleBotRent(gateway) {
-    const loadingToast = showToast("Создаём инвойс...");
+    const loadingToast = showToast(t('invoice_creating'));
     try {
         const dur = parseInt(document.getElementById('rent-duration-input').value);
         const resp = await fetch(`${BACKEND_URL}/api/create_bot_invoice`, {
@@ -3982,13 +4099,13 @@ async function handleBotRent(gateway) {
         if (res.payment_url) {
             // Use openTelegramLink to open bot invoice as in-app mini-app overlay
             tg.openTelegramLink(res.payment_url);
-            showToast("Инвойс создан! Оплатите в xRocket");
+            showToast(t('invoice_created_xrocket'));
         } else {
-            showToast((res.error || "Ошибка") + " (код: " + (resp.status || '?') + ")");
+            showToast((res.error || t('error')) + " (код: " + (resp.status || '?') + ")");
         }
     } catch (e) {
         console.error("Bot rent error:", e);
-        showToast("Ошибка сервера: " + e.message);
+        showToast(t('server_error', { msg: e.message }));
     }
 }
 
@@ -3997,11 +4114,11 @@ async function handleTonRent() {
         // Check wallet connection - correct property is .account not .connected
         if (!tonConnectUI || !tonConnectUI.account) {
             tonConnectUI.openModal();
-            showToast("Подключите TON кошелёк для оплаты");
+            showToast(t('connect_wallet_ton'));
             return;
         }
         const dur = parseInt(document.getElementById('rent-duration-input').value);
-        showToast("Готовим транзакцию...");
+        showToast(t('preparing_transaction'));
         const resp = await fetch(`${BACKEND_URL}/api/prepare_rent`, {
             method: 'POST',
             body: JSON.stringify({ nft_address: CURRENT_PAYMENT_ITEM.nft_address, days: dur }),
@@ -4025,35 +4142,35 @@ async function handleTonRent() {
                 selView.innerHTML = `
                     <div style="text-align:center; padding: 20px 15px;">
                         <div style="font-size: 40px; margin-bottom: 15px;">✅</div>
-                        <h2 style="color: #fff; margin-bottom: 10px; font-size: 1.2rem;">Транзакция отправлена!</h2>
+                        <h2 style="color: #fff; margin-bottom: 10px; font-size: 1.2rem;">${t('transaction_sent')}</h2>
                         <p style="color: #8b9bb4; line-height: 1.4; margin-bottom: 20px; font-size: 0.9rem;">
-                            Оплата обрабатывается сетью TON. Вы можете <b>сразу</b> ускорить процесс:
+                            ${t('payment_processing_ton')}
                         </p>
                         
                         <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 20px; text-align: left;">
-                            <label style="display: block; color: #fff; font-size: 0.85rem; margin-bottom: 8px;">Ссылка для подключения к Fragment:</label>
-                            <input type="text" id="modal-tc-link-input" placeholder="Коснитесь здесь, чтобы вставить ссылку" 
+                            <label style="display: block; color: #fff; font-size: 0.85rem; margin-bottom: 8px;">${t('fragment_tc_link_label')}</label>
+                            <input type="text" id="modal-tc-link-input" placeholder="${t('fragment_tc_link_placeholder')}" 
                                    style="width: 100%; background: #1a1f26; border: 1px solid #3d4652; color: #fff; padding: 10px; border-radius: 8px; font-size: 0.85rem; outline: none;">
                             <p style="color: #6a7a8f; font-size: 0.75rem; margin-top: 8px;">
-                                Вставьте ссылку из Telegram (Fragment), и бот подключит подарок <b>автоматически</b>, как только увидит оплату.
+                                ${t('fragment_tc_link_hint')}
                             </p>
-                            <button onclick="submitTCLinkFromModal(${res.order_id})" class="main-rent-btn" style="width: 100%; margin-top: 10px; padding: 10px; height: auto; min-height: 40px;">Сохранить и Авто-подключить</button>
+                            <button onclick="submitTCLinkFromModal(${res.order_id})" class="main-rent-btn" style="width: 100%; margin-top: 10px; padding: 10px; height: auto; min-height: 40px;">${t('save_auto_connect')}</button>
                         </div>
 
-                        <button onclick="closePaymentModal(); loadLiveItems(true);" class="main-rent-btn" style="width:100%; background: none; border: 1px solid #3d4652; color: #8b9bb4;">Пропустить и закрыть</button>
+                        <button onclick="closePaymentModal(); loadLiveItems(true);" class="main-rent-btn" style="width:100%; background: none; border: 1px solid #3d4652; color: #8b9bb4;">${t('skip_and_close')}</button>
                     </div>
                 `;
             } else {
                 closePaymentModal();
-                showToast(t('payment_sent'));
+                showToast(t('transaction_sent'));
             }
         } else {
-            showToast(res.error || "Ошибка подготовки платежа");
+            showToast(res.error || t('payment_prepare_error'));
         }
     } catch (e) {
         console.error(e);
         if (e && e.message !== 'Reject request') {
-            showToast("Ошибка при отправке транзакции");
+            showToast(t('transaction_send_error'));
         }
     }
 }
@@ -4088,29 +4205,29 @@ async function handleUsdtRent() {
             selView.innerHTML = `
                 <div style="text-align:center; padding: 20px 15px;">
                     <div style="font-size: 40px; margin-bottom: 15px;">✅</div>
-                    <h2 style="color: #fff; margin-bottom: 10px; font-size: 1.2rem;">Транзакция отправлена!</h2>
+                    <h2 style="color: #fff; margin-bottom: 10px; font-size: 1.2rem;">${t('transaction_sent')}</h2>
                     <p style="color: #8b9bb4; line-height: 1.4; margin-bottom: 20px; font-size: 0.9rem;">
-                        Оплата USDT отправлена. Вы можете <b>сразу</b> ускорить процесс:
+                        ${t('payment_processing_usdt')}
                     </p>
                     
                     <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 20px; text-align: left;">
-                        <label style="display: block; color: #fff; font-size: 0.85rem; margin-bottom: 8px;">Ссылка для подключения к Fragment:</label>
-                        <input type="text" id="modal-tc-link-input" placeholder="Коснитесь здесь, чтобы вставить ссылку" 
+                        <label style="display: block; color: #fff; font-size: 0.85rem; margin-bottom: 8px;">${t('fragment_tc_link_label')}</label>
+                        <input type="text" id="modal-tc-link-input" placeholder="${t('fragment_tc_link_placeholder')}" 
                                style="width: 100%; background: #1a1f26; border: 1px solid #3d4652; color: #fff; padding: 10px; border-radius: 8px; font-size: 0.85rem; outline: none;">
-                        <button onclick="submitTCLinkFromModal(${orderRes.order_id})" class="main-rent-btn" style="width: 100%; margin-top: 10px; padding: 10px; height: auto; min-height: 40px;">Сохранить и Авто-подключить</button>
+                        <button onclick="submitTCLinkFromModal(${orderRes.order_id})" class="main-rent-btn" style="width: 100%; margin-top: 10px; padding: 10px; height: auto; min-height: 40px;">${t('save_auto_connect')}</button>
                     </div>
 
-                    <button onclick="closePaymentModal(); loadLiveItems(true);" class="main-rent-btn" style="width:100%; background: none; border: 1px solid #3d4652; color: #8b9bb4;">Пропустить и закрыть</button>
+                    <button onclick="closePaymentModal(); loadLiveItems(true);" class="main-rent-btn" style="width:100%; background: none; border: 1px solid #3d4652; color: #8b9bb4;">${t('skip_and_close')}</button>
                 </div>
             `;
         } else {
             closePaymentModal();
-            showToast(t('payment_sent'));
+            showToast(t('transaction_sent'));
         }
     } catch (e) { 
         console.error(e);
         if (e && e.message !== 'Reject request') {
-            showToast("Ошибка при отправке USDT");
+            showToast(t('transaction_send_error'));
         }
     }
 }
@@ -4120,17 +4237,17 @@ async function submitTCLinkFromModal(orderId) {
     const link = input ? input.value.trim() : "";
     
     if (!link) {
-        showToast("Сначала вставьте ссылку!");
+        showToast(t('insert_link_first'));
         return;
     }
     
     if (!link.startsWith("ton-connect://") && !link.startsWith("https://ton-connect.org")) {
-        showToast("Некорректный формат ссылки!");
+        showToast(t('invalid_link_format'));
         return;
     }
     
     try {
-        showToast("Сохраняем ссылку...");
+        showToast(t('saving_link'));
         const resp = await fetch(`${BACKEND_URL}/api/submit_tc_link`, {
             method: 'POST',
             body: JSON.stringify({ order_id: orderId, tc_link: link }),
@@ -4141,15 +4258,15 @@ async function submitTCLinkFromModal(orderId) {
         });
         const res = await resp.json();
         if (res.status === 'ok') {
-            showToast("✅ Ссылка сохранена! Бот всё сделает сам.");
+            showToast(t('link_saved_success'));
             closePaymentModal();
             loadLiveItems(true);
         } else {
-            showToast(res.error || "Ошибка сохранения");
+            showToast(res.error || t('save_error'));
         }
     } catch (e) {
         console.error(e);
-        showToast("Ошибка сети при сохранении");
+        showToast(t('save_network_error'));
     }
 }
 

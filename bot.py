@@ -264,9 +264,9 @@ async def start_cmd(message: Message, command: CommandObject):
 
     if not is_new:
         lang = await db.get_user_language(user_id)
-        msg_text = "💎 <b>LIVE NFT Rental Market</b>\n\nДанные подгружаются в реальном времени напрямую с маркетплейса."
+        msg_text = "🐙 <b>Добро пожаловать в OctoRent</b>\n\nЛучший сервис для аренды NFT в Telegram. Нажмите синюю кнопку, чтобы открыть маркет аренды."
         if lang == 'en':
-            msg_text = "💎 <b>LIVE NFT Rental Market</b>\n\nData is loaded in real-time directly from the marketplace."
+            msg_text = "🐙 <b>Welcome to OctoRent</b>\n\nThe best NFT rental service in Telegram. Press the blue button to open the rental market."
             
         await message.answer(
             msg_text,

@@ -145,7 +145,7 @@
                 </div>
             </div>
 
-            <div id="view-collection" class="product-collection-link">Collection &gt;</div>
+            <div id="view-collection" class="product-collection-link">Коллекция &gt;</div>
             <div id="view-address" style="display:none !important;"></div>
             <div id="view-release-badge" style="display:none; margin-top:12px;"></div>
 
@@ -215,13 +215,10 @@
 
             <div id="listing-warning-box"
                 style="display: none; margin-top: 16px; background: rgba(255, 149, 0, 0.1); border: 1px solid rgba(255, 149, 0, 0.2); border-radius: 12px; padding: 12px; font-size: 11px; color: #FF9500;">
-                <div style="font-weight: 700; margin-bottom: 2px;">This gift was listed for rent less than 24 hours
-                    ago.
+                <div style="font-weight: 700; margin-bottom: 2px;">Этот подарок был выставлен на аренду менее 24 часов назад.
                 </div>
-                <div>Listed at: <span id="view-listed-time">...</span> <a href="javascript:void(0)"
-                        onclick="showHelp('listing')" style="color: #FF9500; text-decoration: underline;">What does
-                        it
-                        mean?</a></div>
+                <div>Выставлен: <span id="view-listed-time">...</span> <a href="javascript:void(0)"
+                        onclick="showHelp('listing')" style="color: #FF9500; text-decoration: underline;" id="listing-what-mean">Что это значит?</a></div>
             </div>
 
 
@@ -229,7 +226,7 @@
                 style="margin-top: 24px; border-bottom: 2px solid rgba(255,255,255,0.05); display: flex; gap: 20px;">
                 <div class="tab-item active" id="details-tab"
                     style="color: #fff; font-weight: 700; font-size: 14px; padding-bottom: 8px; border-bottom: 2px solid var(--accent-blue); cursor: pointer;">
-                    Details</div>
+                    Детали</div>
             </div>
 
             <div id="view-properties" style="margin-top: 16px; margin-bottom: 40px;">
@@ -634,13 +631,6 @@
                 <div class="service-text" data-i18n="profile_lang">Language / Язык</div>
                 <div id="lang-label" class="service-arrow" style="font-size: 13px;">Русский ›</div>
             </div>
-            <a href="legal.html" target="_blank" style="text-decoration: none; color: inherit;">
-                <div class="service-item">
-                    <div class="service-icon" style="background: rgba(0, 136, 204, 0.1);">🏛️</div>
-                    <div class="service-text" style="font-size: 14px;">Правовая информация (Оферта, Реквизиты)</div>
-                    <div class="service-arrow">›</div>
-                </div>
-            </a>
         </div>
     </div>
 
@@ -769,7 +759,7 @@
     <!-- Lightbox for tutorial -->
     <div id="tc-lightbox" class="tc-lightbox">
         <div class="tc-lightbox-close" onclick="closeLightbox()">&times;</div>
-        <img id="lightbox-img" src="" alt="Zoomed view">
+        <img id="lightbox-img" src="" alt="Увеличенный вид">
     </div>
 
     <!-- Payment Selection Modal (Bottom Sheet) -->
