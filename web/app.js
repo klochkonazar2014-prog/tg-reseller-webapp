@@ -2983,14 +2983,19 @@ function updateTotalPrice() {
     const rentBtn = document.getElementById('main-rent-action-btn');
     if (rentBtn) {
         const isRented = CURRENT_PAYMENT_ITEM && CURRENT_PAYMENT_ITEM.status === 'rented';
-        const btnLabel = isRented ? t('preorder_for') : t('rent_for');
-        const priceSpanEl = document.getElementById('rent-btn-price');
-        const priceVal = priceSpanEl ? priceSpanEl.innerText : '';
-        // Clear only text nodes, keep child elements (like price span, svg)
-        Array.from(rentBtn.childNodes)
-            .filter(n => n.nodeType === Node.TEXT_NODE)
-            .forEach(n => n.remove());
-        rentBtn.insertBefore(document.createTextNode(' ' + btnLabel + ' '), rentBtn.firstChild);
+        const labelKey = isRented ? 'preorder_for' : 'rent_for';
+        const labelText = t(labelKey);
+        
+        const labelSpan = rentBtn.querySelector('span[data-i18n]');
+        if (labelSpan) {
+            labelSpan.setAttribute('data-i18n', labelKey);
+            labelSpan.innerText = labelText + ' ';
+        } else {
+            Array.from(rentBtn.childNodes)
+                .filter(n => n.nodeType === Node.TEXT_NODE)
+                .forEach(n => n.remove());
+            rentBtn.insertBefore(document.createTextNode(' ' + labelText + ' '), rentBtn.firstChild);
+        }
     }
 }
 
