@@ -769,14 +769,14 @@
             <div id="payment-selection-view">
                 <div class="bottom-sheet-header"
                     style="display: flex; justify-content: space-between; align-items: center; padding: 12px 20px;">
-                    <h3 style="margin: 0; font-size: 18px; font-weight: 800;">Выберите способ оплаты</h3>
+                    <h3 style="margin: 0; font-size: 18px; font-weight: 800;" data-i18n="select_payment_method">Выберите способ оплаты</h3>
                     <button class="close-sheet-btn" onclick="closePaymentModal()"
                         style="background:none; border:none; color:#8b9bb4; font-size:24px; padding:0; cursor:pointer;">✕</button>
                 </div>
 
                 <div class="payment-tabs">
-                    <div class="pay-tab active" onclick="switchPayTab('crypto')">Криптой</div>
-                    <div class="pay-tab" onclick="switchPayTab('card')">Картой</div>
+                    <div class="pay-tab active" onclick="switchPayTab('crypto')" data-i18n="pay_crypto">Криптой</div>
+                    <div class="pay-tab" onclick="switchPayTab('card')" data-i18n="pay_card">Картой</div>
                 </div>
 
                 <div style="padding: 0 24px 30px;">
@@ -790,7 +790,7 @@
                                     <div class="pm-name">TON</div>
                                 </div>
                                 <div class="pm-row-bottom">
-                                    <div class="pm-desc">Нативная валюта сети TON</div>
+                                    <div class="pm-desc" data-i18n="ton_native">Нативная валюта сети TON</div>
                                     <div class="pm-price"><span id="pay-price-ton">0.00</span> TON</div>
                                 </div>
                             </div>
@@ -802,10 +802,10 @@
                             <div class="pm-info">
                                 <div class="pm-header">
                                     <div class="pm-name">xRocket</div>
-                                    <div class="pay-method-badge">комиссия за вывод 0.1 ТОН</div>
+                                    <div class="pay-method-badge" data-i18n="xrocket_fee">комиссия за вывод 0.1 ТОН</div>
                                 </div>
                                 <div class="pm-row-bottom">
-                                    <div class="pm-desc">Оплата тоном через xRocket</div>
+                                    <div class="pm-desc" data-i18n="xrocket_desc">Оплата тоном через xRocket</div>
                                     <div class="pm-price"><span id="pay-price-xr">0.00</span> TON</div>
                                 </div>
                             </div>
@@ -817,8 +817,8 @@
                         <div id="card-limit-warning" style="display: none; background: rgba(255, 149, 0, 0.08); border: 1px solid rgba(255, 149, 0, 0.25); border-radius: 14px; padding: 14px 16px; margin-bottom: 12px; gap: 10px;">
                             <span style="font-size: 20px;">⚠️</span>
                             <div>
-                                <div style="font-weight: 700; color: #FF9500; font-size: 13px; margin-bottom: 2px;">Сумма слишком мала</div>
-                                <div style="font-size: 12px; color: #8b9bb4; line-height: 1.4;">Минимальный платеж картой — <b>49 ₽</b>. Пожалуйста, выберите товар подороже или увеличьте срок аренды.</div>
+                                <div style="font-weight: 700; color: #FF9500; font-size: 13px; margin-bottom: 2px;" data-i18n="amount_too_small">Сумма слишком мала</div>
+                                <div style="font-size: 12px; color: #8b9bb4; line-height: 1.4;" data-i18n="min_card_payment">Минимальный платеж картой — <b>49 ₽</b>. Пожалуйста, выберите товар подороже или увеличьте срок аренды.</div>
                             </div>
                         </div>
 
@@ -826,17 +826,17 @@
                             <div class="pm-check"></div>
                             <div class="pm-info">
                                 <div class="pm-header">
-                                    <div class="pm-name">Карта РФ / СБП</div>
-                                    <div class="pay-method-badge" style="background: rgba(0, 212, 136, 0.1); color: #00d488;">Без комиссии сети</div>
+                                    <div class="pm-name" data-i18n="card_rf_sbp">Карта РФ / СБП</div>
+                                    <div class="pay-method-badge" style="background: rgba(0, 212, 136, 0.1); color: #00d488;" data-i18n="no_network_fee">Без комиссии сети</div>
                                 </div>
                                 <div class="pm-row-bottom">
-                                    <div class="pm-desc">Мгновенная оплата через CloudTips</div>
+                                    <div class="pm-desc" data-i18n="cloudtips_desc">Мгновенная оплата через CloudTips</div>
                                     <div class="pm-price"><span id="pay-price-rub">0</span> ₽</div>
                                 </div>
                             </div>
                         </div>
 
-                        <div style="margin-top: 12px; font-size: 11px; color: #8b9bb4; line-height: 1.4; padding: 0 4px;">
+                        <div style="margin-top: 12px; font-size: 11px; color: #8b9bb4; line-height: 1.4; padding: 0 4px;" data-i18n="card_fee_notice">
                             * Цена включает комиссию сервиса 5% за банковский перевод.
                         </div>
                     </div>
@@ -844,7 +844,7 @@
 
                 <div class="selection-view-footer">
                     <div class="payment-total-row">
-                        <div class="ptr-label">Итого:</div>
+                        <div class="ptr-label" data-i18n="total">Итого:</div>
                         <div class="ptr-value-wrapper">
                             <div class="ptr-value"><span id="pay-total-amount">0.27</span> <span id="pay-total-currency">TON</span></div>
                             <div class="ptr-info-btn"
@@ -853,7 +853,7 @@
                     </div>
 
                     <button class="main-rent-btn" onclick="handleContinuePayment()"
-                        style="width:100%; height:50px; border-radius:16px;">
+                        style="width:100%; height:50px; border-radius:16px;" data-i18n="pay_button">
                         Оплатить
                     </button>
                 </div>
@@ -867,14 +867,14 @@
         <div class="modal-overlay" onclick="closeBlockchainFeeDetails()"></div>
         <div class="modal-content"
             style="padding: 24px; border-radius: 24px; background: #1c1c1e; border: 1px solid rgba(0, 136, 204, 0.4); width: 90%; max-width: 360px; max-height: 80vh; display: flex; flex-direction: column;">
-            <h3 style="font-size: 18px; margin-bottom: 12px; color: #fff; flex-shrink: 0;">О комиссии сети</h3>
+            <h3 style="font-size: 18px; margin-bottom: 12px; color: #fff; flex-shrink: 0;" data-i18n="about_network_fee">О комиссии сети</h3>
             <div id="fee-details-body"
-                style="font-size: 13px; color: #8b9bb4; line-height: 1.6; overflow-y: auto; flex: 1; padding-right: 4px;">
+                style="font-size: 13px; color: #8b9bb4; line-height: 1.6; overflow-y: auto; flex: 1; padding-right: 4px;" data-i18n="network_fee_desc_default">
                 Сеть TON взимает небольшую оплату за каждую транзакцию.
             </div>
             <button class="blue-btn"
                 style="width: 100%; margin-top: 20px; height: 44px; border-radius: 12px; flex-shrink: 0;"
-                onclick="closeBlockchainFeeDetails()">Понятно</button>
+                onclick="closeBlockchainFeeDetails()" data-i18n="earnings_ok">Понятно</button>
         </div>
     </div>
     <script src="timer_helper.js?v=6"></script>

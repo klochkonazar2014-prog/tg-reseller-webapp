@@ -360,7 +360,23 @@ const TRANSLATIONS = {
         awaiting_confirmation: "Ждем подтверждения...",
         confirmation_desc: "Обычно это занимает 15-40 секунд.<br>Пожалуйста, не закрывайте это окно.",
         tc_link_placeholder_short: "tc://...",
-        history_empty_desc: "У вас пока нет активных или прошлых аренд"
+        history_empty_desc: "У вас пока нет активных или прошлых аренд",
+        select_payment_method: "Выберите способ оплаты",
+        pay_crypto: "Криптой",
+        pay_card: "Картой",
+        ton_native: "Нативная валюта сети TON",
+        xrocket_fee: "комиссия за вывод 0.1 ТОН",
+        xrocket_desc: "Оплата тоном через xRocket",
+        amount_too_small: "Сумма слишком мала",
+        min_card_payment: "Минимальный платеж картой — <b>49 ₽</b>. Пожалуйста, выберите товар подороже или увеличьте срок аренды.",
+        card_rf_sbp: "Карта РФ / СБП",
+        no_network_fee: "Без комиссии сети",
+        cloudtips_desc: "Мгновенная оплата через CloudTips",
+        card_fee_notice: "* Цена включает комиссию сервиса 5% за банковский перевод.",
+        total: "Итого:",
+        pay_button: "Оплатить",
+        about_network_fee: "О комиссии сети",
+        network_fee_desc_default: "Сеть TON взимает небольшую оплату за каждую транзакцию."
     },
     en: {
 
@@ -624,7 +640,23 @@ const TRANSLATIONS = {
         awaiting_confirmation: "Awaiting confirmation...",
         confirmation_desc: "Usually takes 15-40 seconds.<br>Please do not close this window.",
         tc_link_placeholder_short: "tc://...",
-        history_empty_desc: "You don't have any active or past rentals yet"
+        history_empty_desc: "You don't have any active or past rentals yet",
+        select_payment_method: "Select Payment Method",
+        pay_crypto: "Crypto",
+        pay_card: "Bank Card",
+        ton_native: "Native TON network currency",
+        xrocket_fee: "withdrawal fee 0.1 TON",
+        xrocket_desc: "Pay with TON via xRocket",
+        amount_too_small: "Amount too small",
+        min_card_payment: "Minimum card payment is <b>49 ₽</b>. Please select a more expensive item or increase the rental period.",
+        card_rf_sbp: "RF Card / SBP",
+        no_network_fee: "No network fee",
+        cloudtips_desc: "Instant payment via CloudTips",
+        card_fee_notice: "* Price includes a 5% service fee for bank transfer.",
+        total: "Total:",
+        pay_button: "Pay",
+        about_network_fee: "About network fee",
+        network_fee_desc_default: "The TON network charges a small fee for each transaction."
     }
 };
 
@@ -4028,7 +4060,7 @@ async function handleContinuePayment() {
     } else if (method === 'RUB') {
         await handleRubRent();
     } else {
-        showToast("Выберите способ оплаты");
+        showToast(t('select_payment_method'));
     }
 }
 
@@ -4069,6 +4101,9 @@ function showBlockchainFeeDetails(e) {
     if (e) e.stopPropagation();
     const modal = document.getElementById('fee-details-modal');
     if (!modal) return;
+
+    const title = modal.querySelector('h3');
+    if (title) title.innerText = t('about_network_fee');
 
     const body = document.getElementById('fee-details-body');
     
