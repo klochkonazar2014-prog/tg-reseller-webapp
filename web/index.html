@@ -200,13 +200,13 @@
                     <button class="step-plus" onclick="adjustDuration(1)">+</button>
                 </div>
                 <button id="main-rent-action-btn" class="main-rent-btn" style="flex: 1;" onclick="openPaymentModal()">
-                    Арендовать за <span id="rent-btn-price" class="icon-ton">0.00</span>
+                    <span data-i18n="rent_for">Арендовать за</span> <span id="rent-btn-price" class="icon-ton">0.00</span>
                 </button>
             </div>
 
             <div class="fee-notice-box"
                 style="margin-top: 16px; background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 12px; font-size: 11px; color: rgb(135, 148, 161); display: block;">
-                <span><span id="fee-notice-text">Вы отправляете небольшую сумму TON для покрытия комиссии сети и работы
+                <span><span id="fee-notice-text" data-i18n="fee_notice_text">Вы отправляете небольшую сумму TON для покрытия комиссии сети и работы
                         сервиса. Остаток будет возвращен вам автоматически.</span>
                     <a href="javascript:void(0)" onclick="showHelp('fee')"
                         style="color: #0088cc; text-decoration: none;" id="fee-what-mean" data-i18n="what_is_this">Что
@@ -215,17 +215,17 @@
 
             <div id="listing-warning-box"
                 style="display: none; margin-top: 16px; background: rgba(255, 149, 0, 0.1); border: 1px solid rgba(255, 149, 0, 0.2); border-radius: 12px; padding: 12px; font-size: 11px; color: #FF9500;">
-                <div style="font-weight: 700; margin-bottom: 2px;">Этот подарок был выставлен на аренду менее 24 часов назад.
+                <div style="font-weight: 700; margin-bottom: 2px;" data-i18n="listing_warning_title">Этот подарок был выставлен на аренду менее 24 часов назад.
                 </div>
-                <div>Выставлен: <span id="view-listed-time">...</span> <a href="javascript:void(0)"
-                        onclick="showHelp('listing')" style="color: #FF9500; text-decoration: underline;" id="listing-what-mean">Что это значит?</a></div>
+                <div><span data-i18n="listed_at">Выставлен:</span> <span id="view-listed-time">...</span> <a href="javascript:void(0)"
+                        onclick="showHelp('listing')" style="color: #FF9500; text-decoration: underline;" id="listing-what-mean" data-i18n="what_is_this">Что это значит?</a></div>
             </div>
 
 
             <div id="view-properties-tabs" class="properties-tabs"
                 style="margin-top: 24px; border-bottom: 2px solid rgba(255,255,255,0.05); display: flex; gap: 20px;">
                 <div class="tab-item active" id="details-tab"
-                    style="color: #fff; font-weight: 700; font-size: 14px; padding-bottom: 8px; border-bottom: 2px solid var(--accent-blue); cursor: pointer;">
+                    style="color: #fff; font-weight: 700; font-size: 14px; padding-bottom: 8px; border-bottom: 2px solid var(--accent-blue); cursor: pointer;" data-i18n="details">
                     Детали</div>
             </div>
 
@@ -241,7 +241,7 @@
     <div id="tc-modal" class="filter-panel"
         style="height: auto; max-height: 90vh; bottom: 0; border-radius: 28px 28px 0 0;">
         <div class="modal-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding: 20px 24px;">
-            <h3 style="font-size: 18px; font-weight: 800; color: #fff;">Подключить Fragment</h3>
+            <h3 style="font-size: 18px; font-weight: 800; color: #fff;" data-i18n="connect_fragment_title">Подключить Fragment</h3>
             <button id="tc-modal-close-btn" onclick="closeTcModal()"
                 style="background:none; border:none; color:#8b9bb4; font-size:24px; cursor: pointer;">✕</button>
         </div>
@@ -257,7 +257,7 @@
         <div class="bottom-sheet-content" style="border-radius: 20px 20px 0 0;">
             <div class="bottom-sheet-header"
                 style="display: flex; justify-content: space-between; align-items: center; padding: 12px 20px;">
-                <h3 id="help-title" style="margin: 0; font-size: 18px; font-weight: 800;">Что это значит?</h3>
+                <h3 id="help-title" style="margin: 0; font-size: 18px; font-weight: 800;" data-i18n="what_is_this">Что это значит?</h3>
                 <button class="close-sheet-btn" onclick="closeHelp()"
                     style="background:none; border:none; color:#8b9bb4; font-size:24px; padding:0; cursor:pointer;">✕</button>
             </div>

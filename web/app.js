@@ -329,7 +329,38 @@ const TRANSLATIONS = {
         fee_details_ton_wallet: "TON Wallet:",
         fee_details_ton_wallet_desc: "Цена товара + комиссия сети (0.2 TON).",
         fee_details_xrocket_label: "xRocket:",
-        fee_details_xrocket_desc_total: "Цена + 0.2 сеть + 0.1 вывод."
+        fee_details_xrocket_desc_total: "Цена + 0.2 сеть + 0.1 вывод.",
+        status_active: "Активен",
+        status_processing: "Обработка...",
+        error_loading_history: "Ошибка загрузки",
+        address_copied: "Адрес скопирован!",
+        wallet_not_connected: "Кошелек не подключен",
+        rental_active_success: "Аренда активна!",
+        listing_warning_title: "Этот подарок был выставлен на аренду менее 24 часов назад.",
+        listed_at: "Выставлен:",
+        connect_fragment_title: "Подключить Fragment",
+        help_fee_body: `
+            <div style="font-size: 14px; line-height: 1.6; color: #fff;">
+                Для активации <b>смарт-контрактов для оплаты комисии блокчейна</b> необходимо отправить <b>0.2 TON</b>, остаток которых (<b>~0.14 TON</b>) будет возвращен вам автоматически после завершения срока аренды.
+                <br><br>
+                <div style="display: flex; gap: 8px; align-items: flex-start; background: rgba(52, 199, 89, 0.1); padding: 12px; border-radius: 12px; border: 1px solid rgba(52, 199, 89, 0.2);">
+                    <span style="font-size: 18px;">✅</span>
+                    <span style="color: #fff; font-size: 13px;"><b>Возврат работает автоматически:</b><br>
+                    Смарт-контракт заберет только фактическую комиссию сети. Весь неиспользованный остаток моментально и автоматически возвращается на ваш кошелек!</span>
+                </div>
+            </div>
+        `,
+        help_listing_body: `
+            <div style="font-size: 14px; line-height: 1.6; color: #fff;">
+                Этот подарок был выставлен на аренду совсем недавно. Чтобы избежать проблем с транзакциями, мы рекомендуем подождать 24 часа перед арендой.
+            </div>
+        `,
+        notification_enabled: "Уведомление включено",
+        notification_disabled: "Уведомление выключено",
+        awaiting_confirmation: "Ждем подтверждения...",
+        confirmation_desc: "Обычно это занимает 15-40 секунд.<br>Пожалуйста, не закрывайте это окно.",
+        tc_link_placeholder_short: "tc://...",
+        history_empty_desc: "У вас пока нет активных или прошлых аренд"
     },
     en: {
 
@@ -562,7 +593,38 @@ const TRANSLATIONS = {
         fee_details_ton_wallet: "TON Wallet:",
         fee_details_ton_wallet_desc: "Item price + network fee (0.2 TON).",
         fee_details_xrocket_label: "xRocket:",
-        fee_details_xrocket_desc_total: "Price + 0.2 network + 0.1 withdrawal."
+        fee_details_xrocket_desc_total: "Price + 0.2 network + 0.1 withdrawal.",
+        status_active: "Active",
+        status_processing: "Processing...",
+        error_loading_history: "Loading error",
+        address_copied: "Address copied!",
+        wallet_not_connected: "Wallet not connected",
+        rental_active_success: "Rental is active!",
+        listing_warning_title: "This gift was listed for rent less than 24 hours ago.",
+        listed_at: "Listed at:",
+        connect_fragment_title: "Connect Fragment",
+        help_fee_body: `
+            <div style="font-size: 14px; line-height: 1.6; color: #fff;">
+                To activate <b>smart contracts for blockchain fees</b>, you must send <b>0.2 TON</b>, of which the remaining (<b>~0.14 TON</b>) will be returned to you automatically after the rental ends.
+                <br><br>
+                <div style="display: flex; gap: 8px; align-items: flex-start; background: rgba(52, 199, 89, 0.1); padding: 12px; border-radius: 12px; border: 1px solid rgba(52, 199, 89, 0.2);">
+                    <span style="font-size: 18px;">✅</span>
+                    <span style="color: #fff; font-size: 13px;"><b>Refund works automatically:</b><br>
+                    The smart contract will only take the actual network fee. All unused balance is instantly and automatically returned to your wallet!</span>
+                </div>
+            </div>
+        `,
+        help_listing_body: `
+            <div style="font-size: 14px; line-height: 1.6; color: #fff;">
+                This gift was listed for rent recently. To avoid transaction issues, we recommend waiting 24 hours before renting.
+            </div>
+        `,
+        notification_enabled: "Notification enabled",
+        notification_disabled: "Notification disabled",
+        awaiting_confirmation: "Awaiting confirmation...",
+        confirmation_desc: "Usually takes 15-40 seconds.<br>Please do not close this window.",
+        tc_link_placeholder_short: "tc://...",
+        history_empty_desc: "You don't have any active or past rentals yet"
     }
 };
 
@@ -1220,17 +1282,11 @@ function showHelp(amount) {
 
     if (title) title.innerText = t('what_is_this');
     if (body) {
-        body.innerHTML = `
-            <div style="font-size: 14px; line-height: 1.6; color: #fff;">
-                Для активации <b>смарт-контрактов для оплаты комисии блокчейна</b> необходимо отправить <b>0.2 TON</b>, остаток которых (<b>~0.14 TON</b>) будет возвращен вам автоматически после завершения срока аренды.
-                <br><br>
-                <div style="display: flex; gap: 8px; align-items: flex-start; background: rgba(52, 199, 89, 0.1); padding: 12px; border-radius: 12px; border: 1px solid rgba(52, 199, 89, 0.2);">
-                    <span style="font-size: 18px;">✅</span>
-                    <span style="color: #fff; font-size: 13px;"><b>Возврат работает автоматически:</b><br>
-                    Смарт-контракт заберет только фактическую комиссию сети. Весь неиспользованный остаток моментально и автоматически возвращается на ваш кошелек!</span>
-                </div>
-            </div>
-        `;
+        if (amount === 'fee') {
+            body.innerHTML = t('help_fee_body');
+        } else if (amount === 'listing') {
+            body.innerHTML = t('help_listing_body');
+        }
     }
 
     if (modal) {
@@ -1866,7 +1922,7 @@ function initFilterLists() {
     // --- UPDATE CHIP LABELS ---
     const updateChip = (id, key, defaultLabel) => {
         const el = document.getElementById(id);
-        if (!el) return;
+        if (el) return;
         const val = ACTIVE_FILTERS[key];
         if (val && val.length > 0) {
             el.innerText = val.length === 1 ? val[0] : `${defaultLabel} (${val.length})`;
@@ -3030,10 +3086,7 @@ async function handleNotifyClick() {
             const isActive = d.action === 'added';
             btn.classList.toggle('active', isActive);
 
-            showToast(isActive ?
-                (CURRENT_LANG === 'ru' ? "Уведомление включено" : "Notification enabled") :
-                (CURRENT_LANG === 'ru' ? "Уведомление выключено" : "Notification disabled")
-            );
+            showToast(isActive ? t('notification_enabled') : t('notification_disabled'));
 
             if (tg && tg.HapticFeedback) {
                 tg.HapticFeedback.notificationOccurred('success');
@@ -3142,10 +3195,9 @@ function renderPolling() {
     body.innerHTML = `
         <div class="tc-polling-premium">
             <div class="premium-spinner" style="width: 60px; height: 60px; margin-bottom: 24px;"></div>
-            <div class="tc-polling-title">Ждем подтверждения...</div>
+            <div class="tc-polling-title">${t('awaiting_confirmation')}</div>
             <div class="tc-polling-desc">
-                Обычно это занимает 15-40 секунд.<br>
-                Пожалуйста, не закрывайте это окно.
+                ${t('confirmation_desc')}
             </div>
         </div>
     `;
@@ -3231,7 +3283,7 @@ function renderInputStep() {
                     <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
                 </svg>
             </div>
-            <input type="text" id="tc-link-input" class="tc-input-premium" placeholder="tc://...">
+            <input type="text" id="tc-link-input" class="tc-input-premium" placeholder="${t('tc_link_placeholder_short')}">
         </div>
 
         <button onclick="submitTcLink()" class="tc-btn-premium" style="animation: fadeInUp 0.4s ease-out 0.2s; opacity:0; animation-fill-mode: forwards;">
@@ -3379,7 +3431,7 @@ async function loadHistoryContent() {
                 <div style="color:#8b9bb4; text-align:center; padding:40px 20px;">
                     <div style="font-size:32px; margin-bottom:10px; opacity:0.5;">📭</div>
                     <div style="font-weight:700; color:#fff;">${t('history_empty')}</div>
-                    <div style="font-size:12px; margin-top:5px;">У вас пока нет активных или прошлых аренд</div>
+                    <div style="font-size:12px; margin-top:5px;">${t('history_empty_desc')}</div>
                 </div>`;
             return;
         }
@@ -3407,10 +3459,10 @@ async function loadHistoryContent() {
                 displayStatus = t('status_rented');
             } else if (o.status === 'active') {
                 statusColor = '#34C759';
-                displayStatus = 'Активен';
+                displayStatus = t('status_active');
             } else if (o.status === 'paid') {
                 statusColor = '#007AFF';
-                displayStatus = 'Обработка...';
+                displayStatus = t('status_processing');
             }
 
             item.innerHTML = `
@@ -3431,7 +3483,7 @@ async function loadHistoryContent() {
             list.appendChild(item);
         });
     } catch (e) {
-        list.innerHTML = '<div style="color:#ff3b30; text-align:center; padding:10px;">Ошибка загрузки</div>';
+        list.innerHTML = `<div style="color:#ff3b30; text-align:center; padding:10px;">${t('error_loading_history')}</div>`;
     }
 }
 
@@ -3440,11 +3492,11 @@ async function loadHistoryContent() {
 function copyWallet() {
     if (tonConnectUI && tonConnectUI.account && tonConnectUI.account.address) {
         copyToClipboard(tonConnectUI.account.address);
-        if (tg) tg.showAlert("Адрес скопирован!");
-        else alert("Адрес скопирован!");
+        if (tg) tg.showAlert(t('address_copied'));
+        else alert(t('address_copied'));
     } else {
-        if (tg) tg.showAlert("Кошелек не подключен");
-        else alert("Кошелек не подключен");
+        if (tg) tg.showAlert(t('wallet_not_connected'));
+        else alert(t('wallet_not_connected'));
     }
 }
 
