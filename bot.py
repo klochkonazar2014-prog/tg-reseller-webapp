@@ -142,6 +142,10 @@ async def start_cmd(message: Message, command: CommandObject):
         referrer_id_str = None
         nft_addr = None
         
+        if args == "history":
+            await show_history_internal(message, user_id)
+            return
+
         if args.startswith("ref_"):
             parts = args.split("_")
             if len(parts) >= 2:
@@ -357,21 +361,33 @@ async def profile_details(callback: CallbackQuery):
 
 @dp.callback_query(F.data == "history")
 async def show_history(callback: CallbackQuery):
-    user_id = callback.from_user.id
+    await show_history_internal(callback.message, callback.from_user.id, is_callback=True)
+    await callback.answer()
+
+async def show_history_internal(message, user_id, is_callback=False):
     orders = await db.get_user_orders(user_id)
     
     if not orders:
-        await callback.answer("📜 У вас пока нет истории аренды.", show_alert=True)
+        if is_callback:
+            await bot.send_message(user_id, "📜 У вас пока нет истории аренды.")
+        else:
+            await message.answer("📜 У вас пока нет истории аренды.")
         return
         
     text = "📜 <b>Ваша история аренды</b>"
     
-    await callback.message.edit_text(
-        text,
-        reply_markup=kb.history_keyboard(orders, WEB_APP_URL, page=0),
-        parse_mode="HTML"
-    )
-    await callback.answer()
+    if is_callback:
+        await message.edit_text(
+            text,
+            reply_markup=kb.history_keyboard(orders, WEB_APP_URL, page=0),
+            parse_mode="HTML"
+        )
+    else:
+        await message.answer(
+            text,
+            reply_markup=kb.history_keyboard(orders, WEB_APP_URL, page=0),
+            parse_mode="HTML"
+        )
 
 @dp.callback_query(F.data.startswith("history_page_"))
 async def history_page(callback: CallbackQuery):

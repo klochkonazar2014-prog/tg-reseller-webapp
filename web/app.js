@@ -4486,6 +4486,17 @@ async function handleRubRent() {
 }
 
 
+function toggleHistory() {
+    const botUsername = "OctoRent_bot";
+    const link = `https://t.me/${botUsername}?start=history`;
+    if (window.Telegram && window.Telegram.WebApp) {
+        window.Telegram.WebApp.openTelegramLink(link);
+        window.Telegram.WebApp.close();
+    } else {
+        window.open(link, '_blank');
+    }
+}
+
 // Map globals
 window.openPaymentModal = openPaymentModal;
 window.closePaymentModal = closePaymentModal;
@@ -4499,3 +4510,4 @@ window.nextCTStep = nextCTStep;
 window.finalCTOrder = finalCTOrder;
 window.zoomCTImage = zoomCTImage;
 window.closeCTZoom = closeCTZoom;
+window.toggleHistory = toggleHistory;
