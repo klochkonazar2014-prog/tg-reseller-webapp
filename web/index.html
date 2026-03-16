@@ -902,6 +902,53 @@
     </div>
     <script src="timer_helper.js?v=6"></script>
     <script src="app.js?v=1773503400"></script>
+    <!-- CloudTips Two-Step Instructions Modal -->
+    <div id="ct-instructions-modal" class="generic-modal" style="display: none;">
+        <div class="modal-overlay"></div>
+        <div class="modal-content ct-modal-content">
+            <!-- Step 1: Text & Formula -->
+            <div id="ct-step-1" class="ct-instruction-step">
+                <h3 class="ct-modal-title" data-i18n="ct_fee_title">О комиссии сети</h3>
+                <div class="ct-modal-subtitle" data-i18n="ct_how_calc">Как рассчитывается цена в рублях:</div>
+                <p class="ct-modal-text" data-i18n="ct_fee_desc">Поскольку аренда происходит в сети TON, все расчеты привязаны к курсу криптовалюты.</p>
+                
+                <div class="formula-box">
+                    <div class="formula-label" data-i18n="ct_formula_label">Формула:</div>
+                    <div class="formula-value">(TON + 0.2) × Курс × 1.05</div>
+                </div>
+
+                <ul class="ct-steps-list">
+                    <li><strong data-i18n="ct_step_ton_label">TON + 0.2:</strong> <span data-i18n="ct_step_ton_desc">Стоимость аренды + фиксированная комиссия сети за смарт-контракт.</span></li>
+                    <li><strong data-i18n="ct_step_rate_label">Курс:</strong> <span data-i18n="ct_step_rate_desc">Текущий курс TON к RUB (по данным TonAPI).</span></li>
+                </ul>
+
+                <button id="ct-next-btn" class="blue-btn ct-action-btn locked" onclick="nextCTStep()">
+                    <span class="btn-text" data-i18n="earnings_ok">Понятно</span>
+                    <span class="btn-timer">(3)</span>
+                </button>
+            </div>
+
+            <!-- Step 2: visual Image -->
+            <div id="ct-step-2" class="ct-instruction-step" style="display: none;">
+                <h3 class="ct-modal-title" data-i18n="ct_instruction_title">Инструкция по оплате</h3>
+                <p class="ct-modal-text" data-i18n="ct_instruction_desc">Чтобы платеж прошел успешно, ОБЯЗАТЕЛЬНО отключите ползунок «Покрыть комиссию» на странице CloudTips.</p>
+                
+                <div class="ct-image-container" onclick="zoomCTImage()">
+                    <img src="web/pictures/cover_fee_warning.png" alt="CloudTips Instruction" class="ct-instruction-img">
+                    <div class="zoom-hint"><i class="fas fa-search-plus"></i></div>
+                </div>
+
+                <button class="blue-btn ct-action-btn" onclick="finalCTOrder()" data-i18n="pay_button">
+                    Оплатить
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Zoom Overlay -->
+    <div id="image-zoom-overlay" class="zoom-overlay" style="display: none;" onclick="closeCTZoom()">
+        <img id="zoomed-ct-img" src="web/pictures/cover_fee_warning.png" alt="Zoomed Instruction">
+    </div>
 </body>
 
 </html>

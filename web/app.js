@@ -245,6 +245,16 @@ const TRANSLATIONS = {
         cover_fee_warning: "Перед оплатой убедитесь, что данный ползунок отключен. Комиссия 5% уже включена в цену.",
         limit_3000_warning: "Лимит оплаты картой — 3000 ₽. Пожалуйста, уменьшите срок аренды.",
         ct_amount_no_change: "ВНИМАНИЕ: Не изменяйте сумму на странице оплаты! Если вы оплатите меньше, чем указано, заказ не будет зачислен.",
+        ct_fee_title: "О комиссии сети",
+        ct_how_calc: "Как рассчитывается цена в рублях:",
+        ct_fee_desc: "Поскольку аренда происходит в сети TON, все расчеты привязаны к курсу криптовалюты.",
+        ct_formula_label: "Формула:",
+        ct_step_ton_label: "TON + 0.2:",
+        ct_step_ton_desc: "Стоимость аренды + фиксированная комиссия сети за смарт-контракт.",
+        ct_step_rate_label: "Курс:",
+        ct_step_rate_desc: "Текущий курс TON к RUB (по данным TonAPI).",
+        ct_instruction_title: "Инструкция по оплате",
+        ct_instruction_desc: "Для успешной оплаты ОБЯЗАТЕЛЬНО отключите ползунок «Покрыть комиссию» на странице CloudTips.",
         loading_to_rent: "Загрузка каталога арендованных товаров...",
         loading_to_shop: "Загрузка каталога доступных для аренды товаров...",
         rent_title_suffix: " (Аренда)",
@@ -4092,12 +4102,71 @@ async function handleContinuePayment() {
     } else if (method === 'XROCKET') {
         await handleBotRent(method);
     } else if (method === 'CLOUDTIPS') {
-        await handleCloudTipsRent();
+        // --- NEW STEP: Show Instructions first ---
+        showCTInstructions(); 
     } else if (method === 'RUB') {
         await handleRubRent();
     } else {
         showToast(t('select_payment_method'));
     }
+}
+
+// --- CloudTips Two-Step Logic ---
+function showCTInstructions() {
+    const modal = document.getElementById('ct-instructions-modal');
+    if (!modal) return;
+    
+    // Reset to Step 1
+    document.getElementById('ct-step-1').style.display = 'block';
+    document.getElementById('ct-step-2').style.display = 'none';
+    
+    // Reset Button Timer
+    const nextBtn = document.getElementById('ct-next-btn');
+    const timerSpan = nextBtn.querySelector('.btn-timer');
+    const btnText = nextBtn.querySelector('.btn-text');
+    
+    nextBtn.classList.add('locked');
+    nextBtn.disabled = true;
+    
+    let timeLeft = 3;
+    timerSpan.innerText = `(${timeLeft})`;
+    
+    const timerInterval = setInterval(() => {
+        timeLeft--;
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            nextBtn.classList.remove('locked');
+            nextBtn.disabled = false;
+            timerSpan.innerText = '';
+        } else {
+            timerSpan.innerText = `(${timeLeft})`;
+        }
+    }, 1000);
+
+    modal.style.display = 'flex';
+}
+
+function nextCTStep() {
+    tg.HapticFeedback.impactOccurred('light');
+    document.getElementById('ct-step-1').style.display = 'none';
+    document.getElementById('ct-step-2').style.display = 'block';
+}
+
+function finalCTOrder() {
+    tg.HapticFeedback.impactOccurred('medium');
+    const modal = document.getElementById('ct-instructions-modal');
+    if (modal) modal.style.display = 'none';
+    handleCloudTipsRent();
+}
+
+function zoomCTImage() {
+    const overlay = document.getElementById('image-zoom-overlay');
+    if (overlay) overlay.style.display = 'flex';
+}
+
+function closeCTZoom() {
+    const overlay = document.getElementById('image-zoom-overlay');
+    if (overlay) overlay.style.display = 'none';
 }
 
 async function handleCloudTipsRent() {
@@ -4424,3 +4493,7 @@ window.handleContinuePayment = handleContinuePayment;
 window.handleChangeWallet = handleChangeWallet;
 window.showBlockchainFeeDetails = showBlockchainFeeDetails;
 window.closeBlockchainFeeDetails = closeBlockchainFeeDetails;
+window.nextCTStep = nextCTStep;
+window.finalCTOrder = finalCTOrder;
+window.zoomCTImage = zoomCTImage;
+window.closeCTZoom = closeCTZoom;

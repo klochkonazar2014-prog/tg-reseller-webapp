@@ -4436,3 +4436,179 @@ tc-root>div {
     border-radius: 50%;
     cursor: pointer;
 }
+
+/* --- CloudTips Instruction Modal Styles --- */
+.ct-modal-content {
+    background: #1c1c1e !important;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 24px !important;
+    border-radius: 28px !important;
+    max-width: 380px !important;
+    width: 90% !important;
+    animation: slideUpModal 0.3s ease-out;
+}
+
+@keyframes slideUpModal {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.ct-modal-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 8px;
+    text-align: left;
+}
+
+.ct-modal-subtitle {
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 12px;
+}
+
+.ct-modal-text {
+    font-size: 14px;
+    color: #8b9bb4;
+    line-height: 1.5;
+    margin-bottom: 20px;
+}
+
+.formula-box {
+    background: #2c2c2e;
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.formula-label {
+    color: #00ffcc;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+.formula-value {
+    color: #fff;
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+}
+
+.ct-steps-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 24px 0;
+}
+
+.ct-steps-list li {
+    font-size: 14px;
+    color: #8b9bb4;
+    line-height: 1.6;
+    margin-bottom: 12px;
+    position: relative;
+    padding-left: 20px;
+}
+
+.ct-steps-list li::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: #0088cc;
+    font-weight: bold;
+}
+
+.ct-steps-list li strong {
+    color: #fff;
+}
+
+.ct-action-btn {
+    width: 100%;
+    height: 52px;
+    font-size: 16px;
+    font-weight: 800;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ct-action-btn.locked {
+    background: #3a3a3c !important;
+    color: #8b9bb4 !important;
+    cursor: not-allowed;
+    opacity: 0.7;
+    filter: grayscale(1);
+    box-shadow: none !important;
+}
+
+.btn-timer {
+    margin-left: 8px;
+    font-size: 14px;
+    opacity: 0.8;
+}
+
+/* Step 2 Specifics */
+.ct-image-container {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 24px;
+    border: 2px solid rgba(0, 136, 204, 0.3);
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.ct-image-container:active {
+    transform: scale(0.98);
+}
+
+.ct-instruction-img {
+    width: 100%;
+    display: block;
+    transition: filter 0.3s;
+}
+
+.zoom-hint {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Zoom Overlay */
+.zoom-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 20000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: fadeInZoom 0.2s ease-out;
+}
+
+@keyframes fadeInZoom {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+#zoomed-ct-img {
+    max-width: 100%;
+    max-height: 90vh;
+    border-radius: 12px;
+    box-shadow: 0 0 30px rgba(0, 136, 204, 0.3);
+}
