@@ -579,14 +579,23 @@ async def process_referral_withdrawals():
             client = ToncenterV2Client(base_url="https://toncenter.com", api_key=TONCENTER_API_KEY)
             
             import binascii
-            if OWNER_WALLET_ADDR and (OWNER_WALLET_ADDR.startswith("UQB") or OWNER_WALLET_ADDR.startswith("EQB")):
-                if OWNER_HEX_KEY:
-                    full_key = binascii.unhexlify(OWNER_HEX_KEY)
+            if OWNER_HEX_KEY:
+                full_key = binascii.unhexlify(OWNER_HEX_KEY)
+                if OWNER_WALLET_ADDR and (OWNER_WALLET_ADDR.startswith("UQB") or OWNER_WALLET_ADDR.startswith("EQB")):
                     wallet = WalletV5R1(client, private_key=full_key[:32], public_key=full_key[32:], wallet_id=2147483409)
                 else:
-                    wallet, _, _, _ = WalletV5R1.from_mnemonic(client, OWNER_SEED, wallet_id=2147483409)
+                    from tonutils.wallet import WalletV4R2 as _W4
+                    wallet = _W4(client, private_key=full_key[:32], public_key=full_key[32:])
+            elif OWNER_SEED:
+                seed_list = OWNER_SEED.strip().split()
+                if OWNER_WALLET_ADDR and (OWNER_WALLET_ADDR.startswith("UQB") or OWNER_WALLET_ADDR.startswith("EQB")):
+                    wallet, _, _, _ = WalletV5R1.from_mnemonic(client, seed_list, wallet_id=2147483409)
+                else:
+                    wallet, _, _, _ = WalletV4R2.from_mnemonic(client, seed_list)
             else:
-                wallet, _, _, _ = WalletV4R2.from_mnemonic(client, OWNER_SEED)
+                logging.error("No OWNER_HEX_KEY or OWNER_SEED provided")
+                await asyncio.sleep(60)
+                continue
 
             for wd in pending:
                 logging.info(f"💰 Обработка выплаты #{wd['id']}: {wd['amount']} TON на {wd['wallet_address']}")
@@ -681,65 +690,7 @@ async def sync_rented_tc_links():
             
         await asyncio.sleep(120) # Проверяем раз в 2 минуты
 
-async def process_order_refunds():
-    """Фоновый воркер для возврата 0.14 TON пользователям после аренды"""
-    logging.info("🔄 Воркер автоматических возвратов (0.14 TON) запущен...")
-    while True:
-        try:
-            import time
-            now = int(time.time())
-            async with db.aiosqlite.connect(db.DB_PATH) as conn:
-                conn.row_factory = db.aiosqlite.Row
-                # Ищем заказы, где пора делать возврат
-                async with conn.execute(
-                    "SELECT * FROM orders WHERE refund_status = 'pending' AND refund_scheduled_at <= ? AND user_wallet IS NOT NULL", 
-                    (now,)
-                ) as cursor:
-                    to_refund = await cursor.fetchall()
-            
-            if to_refund:
-                # Инициализируем кошелек (v5R1 или v4R2)
-                client = ToncenterV2Client(base_url="https://toncenter.com", api_key=TONCENTER_API_KEY)
-                import binascii
-                if OWNER_WALLET_ADDR and (OWNER_WALLET_ADDR.startswith("UQB") or OWNER_WALLET_ADDR.startswith("EQB")):
-                    if OWNER_HEX_KEY:
-                        full_key = binascii.unhexlify(OWNER_HEX_KEY)
-                        wallet = WalletV5R1(client, private_key=full_key[:32], public_key=full_key[32:], wallet_id=2147483409)
-                    else:
-                        wallet, _, _, _ = WalletV5R1.from_mnemonic(client, OWNER_SEED, wallet_id=2147483409)
-                else:
-                    wallet, _, _, _ = WalletV4R2.from_mnemonic(client, OWNER_SEED)
-
-                for order in to_refund:
-                    logging.info(f"💸 [Refund] Возврат 0.14 TON для заказа #{order['id']} на {order['user_wallet']}...")
-                    try:
-                        current_seqno = await wallet.get_seqno(client, wallet.address)
-                        memo = f"Refund 0.14 TON for OctoRent order #{order['id']}"
-                        body_cell = begin_cell().store_uint(0, 32).store_string(memo).end_cell()
-                        
-                        await wallet.transfer(
-                            destination=order['user_wallet'],
-                            amount=0.14,
-                            body=body_cell,
-                            seqno=current_seqno
-                        )
-                        
-                        # Обновляем статус
-                        async with db.aiosqlite.connect(db.DB_PATH) as conn:
-                            await conn.execute(
-                                "UPDATE orders SET refund_status = 'completed', refund_tx_hash = 'sent' WHERE id = ?", 
-                                (order['id'],)
-                            )
-                            await conn.commit()
-                        logging.info(f"✅ [Refund] Успешно отправлен для #{order['id']}")
-                        await asyncio.sleep(5) # Пауза между переводами
-                    except Exception as e_tx:
-                        logging.error(f"❌ [Refund] Ошибка при возврате #{order['id']}: {e_tx}")
-            
-        except Exception as e:
-            logging.error(f"❌ [Refund] Ошибка в воркере возвратов: {e}")
-            
-        await asyncio.sleep(300) # Проверка каждые 5 минут
+# process_order_refunds removed to avoid duplication with background_worker.py
 
 async def cleanup_expired_orders():
     """Отменяет заказы, которые не были оплачены в течение 3 минут"""
@@ -772,7 +723,6 @@ async def main():
         check_pending_orders(),
         process_referral_withdrawals(),
         sync_rented_tc_links(),
-        process_order_refunds(),
         cleanup_expired_orders()
     )
 

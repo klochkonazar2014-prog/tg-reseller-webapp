@@ -383,7 +383,7 @@ async def run_refund_worker():
                                 if data.get('success'):
                                     logging.info(f"[BG-Refund] xRocket refund {refund_amount} TON sent to {user_id} for #{order['id']}")
                                     async with aiosqlite.connect(db.DB_PATH) as c:
-                                        await c.execute("UPDATE orders SET refund_status = 'processed' WHERE id = ?", (order['id'],))
+                                        await c.execute("UPDATE orders SET refund_status = 'completed' WHERE id = ?", (order['id'],))
                                         await c.commit()
                                 else:
                                     logging.error(f"[BG-Refund] xRocket transfer failed for #{order['id']}: {data}")
@@ -401,37 +401,41 @@ async def run_refund_worker():
                             
                         logging.info(f"[BG-Refund] Sending {refund_amount} TON refund to {dest_wallet} for order #{order['id']}")
                         
-                        current_seqno = await wallet.get_seqno(client, wallet.address)
-                        refund_memo = "Спасибо, что арендуете у нас! С любовью, OctoRent"
-                        body_cell = begin_cell().store_uint(0, 32).store_string(refund_memo).end_cell()
-                        
-                        await wallet.transfer(
-                            destination=dest_wallet,
-                            amount=refund_amount,
-                            body=body_cell,
-                            seqno=current_seqno
-                        )
-                        
-                        success = False
-                        for _ in range(6):
-                            await asyncio.sleep(10)
-                            if await wallet.get_seqno(client, wallet.address) > current_seqno:
-                                success = True
-                                break
-                        
-                        if success:
-                            async with aiosqlite.connect(db.DB_PATH) as c:
-                                await c.execute("UPDATE orders SET refund_status = 'processed' WHERE id = ?", (order['id'],))
-                                await c.commit()
-                            logging.info(f"[BG-Refund] Crypto refund for #{order['id']} completed")
-                        else:
-                            logging.warning(f"[BG-Refund] Crypto refund for #{order['id']} sent but seqno didn't increase yet.")
+                        try:
+                            current_seqno = await wallet.get_seqno(client, wallet.address)
+                            refund_memo = "Спасибо, что арендуете у нас! С любовью, OctoRent"
+                            body_cell = begin_cell().store_uint(0, 32).store_string(refund_memo).end_cell()
+                            
+                            await wallet.transfer(
+                                destination=dest_wallet,
+                                amount=refund_amount,
+                                body=body_cell,
+                                seqno=current_seqno
+                            )
+                            
+                            success = False
+                            for _ in range(6):
+                                await asyncio.sleep(10)
+                                if await wallet.get_seqno(client, wallet.address) > current_seqno:
+                                    success = True
+                                    break
+                            
+                            if success:
+                                async with aiosqlite.connect(db.DB_PATH) as c:
+                                    await c.execute("UPDATE orders SET refund_status = 'processed' WHERE id = ?", (order['id'],))
+                                    await c.commit()
+                                logging.info(f"[BG-Refund] Crypto refund for #{order['id']} completed")
+                                await asyncio.sleep(5) # Cooldown between TXs
+                            else:
+                                logging.warning(f"[BG-Refund] Crypto refund for #{order['id']} sent but seqno didn't increase yet.")
+                        except Exception as e_tx:
+                             logging.error(f"[BG-Refund] TX Error for order #{order['id']}: {e_tx}")
 
                 except Exception as ex:
                     logging.error(f"[BG-Refund] Error processing refund for order #{order['id']}: {ex}")
             
-            # Polling interval is 15 minutes
-            await asyncio.sleep(900)
+            # Polling interval is 5 minutes
+            await asyncio.sleep(300)
 
             
         except Exception as e:

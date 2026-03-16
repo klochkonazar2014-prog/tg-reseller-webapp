@@ -466,11 +466,11 @@ async def handle_create_cloudtips_invoice(request):
             async with db.aiosqlite.connect(db.DB_PATH) as conn:
                 conn.row_factory = db.aiosqlite.Row
                 async with conn.execute(
-                    "SELECT nft_name FROM listings WHERE nft_address = ?", (nft_address,)
+                    "SELECT title FROM items WHERE nft_address = ?", (nft_address,)
                 ) as cur:
                     row = await cur.fetchone()
-                    if row and row['nft_name']:
-                        nft_name = f"Аренда: {row['nft_name']} ({days} дн.)"
+                    if row and row['title']:
+                        nft_name = f"Аренда: {row['title']} ({days} дн.)"
         except Exception as e:
             logging.warning(f"[CloudTips] Could not fetch nft_name: {e}")
         
@@ -488,8 +488,9 @@ async def handle_create_cloudtips_invoice(request):
         
         ct_id = os.getenv("CLOUDTIPS_ID", "YOUR_CLOUDTIPS_ID")
         
-        # Формируем ссылку: https://pay.cloudtips.ru/p/ID?amount=X&fixed=1&invoiceId=Y
-        payment_url = f"https://pay.cloudtips.ru/p/{ct_id}?amount={fiat_amount}&fixed=1&invoiceId={order_id}"
+        # Возврат к проверенному формату, так как fixed=true сбрасывает сумму на 50р
+        int_fiat = int(fiat_amount)
+        payment_url = f"https://pay.cloudtips.ru/p/{ct_id}?amount={int_fiat}&fixed=1&invoiceId={order_id}"
         
         # Обновляем заказ
         async with db.aiosqlite.connect(db.DB_PATH) as conn:
@@ -1190,14 +1191,35 @@ async def handle_cloudtips_webhook(request):
         logging.info(f"☁️ CloudTips Webhook received: {data}")
         
         # Параметры из доки: amount, invoiceid, transactionid
-        invoice_id_raw = data.get("invoiceid")
-        status = data.get("status", "Success") # Может быть в другом поле, но InvoiceId — главный признак оплаты
+        invoice_id_raw = data.get("invoiceid") or data.get("invoiceId") or data.get("InvoiceId")
+        status = data.get("status", "Success") 
         
         if invoice_id_raw:
             try:
                 order_id = int(invoice_id_raw)
+                paid_amount = float(data.get("amount", 0))
+                
+                async with db.aiosqlite.connect(db.DB_PATH) as conn:
+                    conn.row_factory = db.aiosqlite.Row
+                    cur = await conn.execute("SELECT fiat_amount, status FROM orders WHERE id = ?", (order_id,))
+                    order = await cur.fetchone()
+                    
+                    if not order:
+                        logging.error(f"[CloudTips] Order {order_id} not found in webhook")
+                        return web.Response(text="Order not found", status=404)
+                    
+                    # Если уже оплачен — просто ок
+                    if order['status'] == 'paid':
+                        return web.Response(text="OK")
+                        
+                    expected = order['fiat_amount']
+                    # Даем погрешность в 0.01 руб из-за округлений
+                    if expected and paid_amount < (expected - 0.01):
+                        logging.error(f"❌ [CloudTips] Underpayment for order {order_id}: expected {expected}, got {paid_amount}")
+                        return web.Response(text="Insufficient amount", status=400)
+
                 await db.update_order_status(order_id, "paid")
-                logging.info(f"✅ Заказ {order_id} оплачен через CloudTips")
+                logging.info(f"✅ Заказ {order_id} оплачен через CloudTips (сумма: {paid_amount})")
                 return web.Response(text="OK")
             except Exception as e:
                 logging.error(f"Error processing CloudTips invoice {invoice_id_raw}: {e}")

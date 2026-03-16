@@ -242,6 +242,9 @@ const TRANSLATIONS = {
         error_unknown: "Ошибка: {msg}",
         mode_rent_btn: "Каталог арендованных товаров",
         mode_shop_btn: "Каталог доступных для аренды товаров",
+        cover_fee_warning: "Перед оплатой убедитесь, что данный ползунок отключен. Комиссия 5% уже включена в цену.",
+        limit_3000_warning: "Лимит оплаты картой — 3000 ₽. Пожалуйста, уменьшите срок аренды.",
+        ct_amount_no_change: "ВНИМАНИЕ: Не изменяйте сумму на странице оплаты! Если вы оплатите меньше, чем указано, заказ не будет зачислен.",
         loading_to_rent: "Загрузка каталога арендованных товаров...",
         loading_to_shop: "Загрузка каталога доступных для аренды товаров...",
         rent_title_suffix: " (Аренда)",
@@ -1818,20 +1821,20 @@ function toggleGenericModal(key) {
 function initFilterLists() {
     const sortCont = document.getElementById('sort-list-container');
     const sorts = [
-        { id: 'id_desc', n: t('sort_newest') },
-        { id: 'price_asc', n: t('sort_price_asc') },
-        { id: 'price_desc', n: t('sort_price_desc') },
-        { id: 'num_asc', n: t('sort_num_asc') },
-        { id: 'num_desc', n: t('sort_num_desc') },
-        { id: 'model_rare', n: t('sort_model_rare') },
-        { id: 'bg_rare', n: t('sort_bg_rare') },
-        { id: 'symbol_rare', n: t('sort_symbol_rare') }
+        { id: 'id_desc', n: t('sort_newest'), icon: 'pictures/filter icons/sort_num_desc.svg' },
+        { id: 'price_asc', n: t('sort_price_asc'), icon: 'pictures/filter icons/sort_price_asc.svg' },
+        { id: 'price_desc', n: t('sort_price_desc'), icon: 'pictures/filter icons/sort_price_desc.svg' },
+        { id: 'num_asc', n: t('sort_num_asc'), icon: 'pictures/filter icons/sort_num_asc.svg' },
+        { id: 'num_desc', n: t('sort_num_desc'), icon: 'pictures/filter icons/sort_num_desc.svg' },
+        { id: 'model_rare', n: t('sort_model_rare'), icon: 'pictures/filter icons/sort_price_desc.svg' },
+        { id: 'bg_rare', n: t('sort_bg_rare'), icon: 'pictures/filter icons/sort_price_desc.svg' },
+        { id: 'symbol_rare', n: t('sort_symbol_rare'), icon: 'pictures/filter icons/sort_price_desc.svg' }
     ];
     if (sortCont) {
         sortCont.innerHTML = '';
         sorts.forEach(s => {
             const isSel = String(ACTIVE_FILTERS.sort).toLowerCase() === String(s.id).toLowerCase();
-            addFilterItem(sortCont, s.n, s.id, 'sort', isSel);
+            addFilterItem(sortCont, s.n, s.id, 'sort', isSel, s.icon);
         });
     }
 
@@ -2061,11 +2064,17 @@ function addFilterItem(container, name, value, key, isSelected, imgUrl, collecti
             }
         }
 
-        visualHTML = `<div class="filter-icon-box" style="background: rgba(255,255,255,0.03);">
-            <img src="${icon}" class="filter-img" style="width:100%; height:100%; object-fit:contain; z-index:2; opacity:0; transition:opacity 0.2s; padding:0;" 
-                onload="this.style.opacity='1';"
-                onerror="handleFilterImageError(this, '${name.replace(/'/g, "\\'")}', '${(collectionContext || '').replace(/'/g, "\\'")}', '${(fallbackImgUrl || '').replace(/'/g, "\\'")}', '${key}')">
-        </div>`;
+        if (key === 'nft' || key === 'model' || key === 'bg' || key === 'symbol') {
+            visualHTML = `<div class="filter-icon-box" style="background: rgba(255,255,255,0.03);">
+                <img src="${icon}" class="filter-img" style="width:100%; height:100%; object-fit:contain; z-index:2; opacity:0; transition:opacity 0.2s; padding:0;" 
+                    onload="this.style.opacity='1';"
+                    onerror="handleFilterImageError(this, '${name.replace(/'/g, "\\'")}', '${(collectionContext || '').replace(/'/g, "\\'")}', '${(fallbackImgUrl || '').replace(/'/g, "\\'")}', '${key}')">
+            </div>`;
+        } else if (key === 'sort') {
+            visualHTML = `<div class="filter-icon-box sort-icon" style="background: transparent !important; border: none !important;"><img src="${imgUrl}" class="filter-img" style="width:20px; height:20px; object-fit:contain; filter: brightness(0) invert(1);"></div>`;
+        } else {
+            visualHTML = `<div class="filter-checkmark ${isSelected ? 'visible' : ''}">✓</div>`;
+        }
     }
 
     div.innerHTML = `
@@ -4018,27 +4027,49 @@ function updateMethodTotal(baseTotal) {
     if (!totalAmountEl) return;
     const base = parseFloat(baseTotal) || 0;
     let total;
+    const limitWarning = document.getElementById('cloudtips-limit-warning');
+    const amountWarning = document.getElementById('cloudtips-amount-warning');
+    const feeWarning = document.getElementById('cover-fee-warning');
+    const isCoverFeeChecked = document.getElementById('cover-fee-checkbox')?.checked;
+
+    if (limitWarning) limitWarning.style.display = 'none';
+    if (amountWarning) amountWarning.style.display = 'none';
+    if (feeWarning) feeWarning.style.display = isCoverFeeChecked ? 'flex' : 'none';
+
     if (SELECTED_PAY_METHOD === 'CLOUDTIPS') {
-        // Бэкенд считает: rental + 0.2 * rate * 1.05
-        const tonForCard = base + 0.2;
+        if (amountWarning) amountWarning.style.display = 'flex';
+        const tonForCard = base + 0.2 + (isCoverFeeChecked ? 0.14 : 0);
         let rubVal = Math.round(tonForCard * FIAT_RATES.RUB * FIAT_FEE_MULTIPLIER);
         total = rubVal > 0 ? rubVal : '...';
         if (totalCurrencyEl) totalCurrencyEl.innerText = '₽';
-        // Отключить кнопку если ниже минимума
+        
+        const overLimit = typeof rubVal === 'number' && rubVal > 3000;
+        const belowMin = typeof rubVal === 'number' && rubVal < 49;
+
+        if (overLimit && limitWarning) {
+            limitWarning.style.display = 'flex';
+        }
+
         if (continueBtn) {
-            const belowMin = typeof rubVal === 'number' && rubVal < 49;
-            continueBtn.disabled = belowMin;
-            continueBtn.style.opacity = belowMin ? '0.4' : '1';
-            continueBtn.style.cursor = belowMin ? 'not-allowed' : 'pointer';
+            const isDisabled = belowMin || overLimit;
+            continueBtn.disabled = isDisabled;
+            continueBtn.style.opacity = isDisabled ? '0.4' : '1';
+            continueBtn.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
         }
     } else {
         if (totalCurrencyEl) totalCurrencyEl.innerText = 'TON';
-        if (continueBtn) { continueBtn.disabled = false; continueBtn.style.opacity = '1'; continueBtn.style.cursor = 'pointer'; }
+        const tonTotal = base + 0.2 + (isCoverFeeChecked ? 0.14 : 0);
+        
+        if (continueBtn) { 
+            continueBtn.disabled = false; 
+            continueBtn.style.opacity = '1'; 
+            continueBtn.style.cursor = 'pointer'; 
+        }
+
         if (SELECTED_PAY_METHOD === 'XROCKET') {
-            total = ((base + 0.2 + 0.1) * 1.03).toFixed(2);
+            total = ((tonTotal + 0.1) * 1.03).toFixed(2);
         } else {
-            // TON: rental + 0.2 TON gas
-            total = (base + 0.2).toFixed(2);
+            total = tonTotal.toFixed(2);
         }
     }
     totalAmountEl.innerText = total;

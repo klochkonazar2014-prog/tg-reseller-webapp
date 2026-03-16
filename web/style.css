@@ -1600,6 +1600,33 @@ body.tab-market:not(.tab-gifts) .chips-row {
     border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
+/* --- Fee Warning Block --- */
+.fee-warning-block {
+    animation: slideDownIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideDownIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Sort Icons --- */
+.filter-icon-box.sort-icon {
+    background: transparent !important;
+    border: none !important;
+}
+
+.filter-icon-box.sort-icon img {
+    filter: brightness(0) invert(1);
+    width: 20px;
+    height: 20px;
+}
+
+.amount-warning-frame {
+    border: 2px solid #ff4444 !important;
+    background: rgba(255, 68, 68, 0.15) !important;
+}
+
 .btn-gray,
 .btn-yellow {
     border: none;

@@ -852,6 +852,29 @@
                         </div>
                     </div>
 
+                    <!-- NEW: Cover Fee & Limit Warnings -->
+                    <div id="payment-warnings-container" style="margin-bottom: 15px;">
+                        <div id="cover-fee-warning" style="display: none; margin-bottom: 10px; background: rgba(255, 149, 0, 0.1); border: 1px solid rgba(255, 149, 0, 0.3); padding: 12px; border-radius: 12px; display: flex; align-items: flex-start; gap: 12px;">
+                            <img src="pictures/cover_fee_warning.png" style="width: 40px; height: 40px; border-radius: 8px; flex-shrink: 0; object-fit: cover;">
+                            <div style="color: #FF9500; font-size: 13px; line-height: 1.4;" data-i18n="cover_fee_warning">
+                                Перед оплатой убедитесь, что данный ползунок отключен. Комиссия 5% уже включена в цену.
+                            </div>
+                        </div>
+                        <div id="cloudtips-limit-warning" style="display: none; background: rgba(255, 59, 48, 0.1); border: 1px solid rgba(255, 59, 48, 0.3); padding: 12px; border-radius: 12px; display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 20px;">🚫</span>
+                            <div style="color: #ff3b30; font-size: 13px; font-weight: 600;" data-i18n="limit_3000_warning">
+                                Лимит оплаты картой — 3000 ₽. Пожалуйста, уменьшите срок аренды.
+                            </div>
+                        </div>
+
+                        <div id="cloudtips-amount-warning" class="amount-warning-frame" style="display: none; margin-top: 10px; padding: 12px; border-radius: 12px; display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 20px;">⚠️</span>
+                            <div style="color: #ff4444; font-size: 13px; font-weight: 600;" data-i18n="ct_amount_no_change">
+                                ВНИМАНИЕ: Не изменяйте сумму на странице оплаты! Если вы оплатите меньше, чем указано, заказ не будет зачислен.
+                            </div>
+                        </div>
+                    </div>
+
                     <button class="main-rent-btn" onclick="handleContinuePayment()"
                         style="width:100%; height:50px; border-radius:16px;" data-i18n="pay_button">
                         Оплатить
