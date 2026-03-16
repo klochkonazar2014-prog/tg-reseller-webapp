@@ -867,12 +867,6 @@
                             </div>
                         </div>
 
-                        <div id="cloudtips-amount-warning" class="amount-warning-frame" style="display: none; margin-top: 10px; padding: 12px; border-radius: 12px; display: flex; align-items: center; gap: 10px;">
-                            <span style="font-size: 20px;">⚠️</span>
-                            <div style="color: #ff4444; font-size: 13px; font-weight: 600;" data-i18n="ct_amount_no_change">
-                                ВНИМАНИЕ: Не изменяйте сумму на странице оплаты! Если вы оплатите меньше, чем указано, заказ не будет зачислен.
-                            </div>
-                        </div>
                     </div>
 
                     <button class="main-rent-btn" onclick="handleContinuePayment()"
@@ -905,42 +899,34 @@
     <!-- CloudTips Two-Step Instructions Modal -->
     <div id="ct-instructions-modal" class="generic-modal" style="display: none;">
         <div class="modal-overlay"></div>
-        <div class="modal-content ct-modal-content-new">
-            <!-- Step 1: Amount Warning (Red Frame Style) -->
+        <div class="modal-content ct-modal-fragment">
+            <!-- Step 1: Amount Notice -->
             <div id="ct-step-1" class="ct-instruction-step">
-                <div class="ct-red-warning-frame">
-                    <div class="ct-warning-icon-box">
+                <div class="ct-fragment-box">
+                    <div class="ct-fragment-header">
                         <span class="warning-emoji">⚠️</span>
+                        <span data-i18n="ct_amount_no_change_title">Не изменяйте сумму!</span>
                     </div>
-                    <div class="ct-warning-text-box">
-                        <strong data-i18n="ct_amount_no_change_title">ВНИМАНИЕ: Не изменяйте сумму на странице оплаты!</strong>
-                        <p data-i18n="ct_amount_no_change_desc">Если вы оплатите меньше, чем указано, заказ не будет зачислен.</p>
-                    </div>
+                    <p class="ct-fragment-text" data-i18n="ct_amount_no_change_desc">Если вы оплатите меньше, чем указано в чеке, ваш заказ не будет зачислен автоматически.</p>
                 </div>
                 
-                <button id="ct-next-btn" class="blue-btn ct-action-btn" onclick="nextCTStep()" style="margin-top: 24px;" data-i18n="earnings_ok">
+                <button id="ct-next-btn" class="main-rent-btn ct-btn-full" onclick="nextCTStep()" style="margin-top: 20px;" data-i18n="earnings_ok">
                     Понятно
                 </button>
             </div>
 
-            <!-- Step 2: Toggle Warning + Photo (Red Frame Style) -->
+            <!-- Step 2: Toggle & Photo -->
             <div id="ct-step-2" class="ct-instruction-step" style="display: none;">
-                <div class="ct-red-warning-frame">
-                    <div class="ct-warning-icon-box">
-                        <span class="warning-emoji">⚠️</span>
-                    </div>
-                    <div class="ct-warning-text-box">
-                        <strong data-i18n="ct_instruction_title">ОБЯЗАТЕЛЬНО отключите ползунок</strong>
-                        <p data-i18n="ct_instruction_desc">«Покрыть комиссию» на странице CloudTips, иначе платеж не пройдет.</p>
-                    </div>
+                <div class="ct-fragment-box">
+                    <p class="ct-fragment-text" data-i18n="ct_instruction_desc_new">Вы можете отключить этот ползунок, так как комиссия 5% уже включена в цену.</p>
                 </div>
 
-                <div class="ct-image-container-mini" onclick="zoomCTImage()">
-                    <img src="web/pictures/cover_fee_warning.png" alt="CloudTips Instruction" class="ct-instruction-img">
-                    <div class="zoom-hint"><i class="fas fa-search-plus"></i></div>
+                <div class="ct-image-preview-box" onclick="zoomCTImage()">
+                    <img src="pictures/cover_fee_warning.png" alt="CloudTips Instruction" class="ct-preview-img">
+                    <div class="zoom-hint-mini"><i class="fas fa-search-plus"></i></div>
                 </div>
 
-                <button id="ct-pay-btn" class="blue-btn ct-action-btn locked" onclick="finalCTOrder()" style="margin-top: 12px;">
+                <button id="ct-pay-btn" class="main-rent-btn ct-btn-full locked" onclick="finalCTOrder()" style="margin-top: 15px;">
                     <span class="btn-text" data-i18n="pay_button">Оплатить</span>
                     <span class="btn-timer">(1.5s)</span>
                 </button>
@@ -950,7 +936,7 @@
 
     <!-- Image Zoom Overlay -->
     <div id="image-zoom-overlay" class="zoom-overlay" style="display: none;" onclick="closeCTZoom()">
-        <img id="zoomed-ct-img" src="web/pictures/cover_fee_warning.png" alt="Zoomed Instruction">
+        <img id="zoomed-ct-img" src="pictures/cover_fee_warning.png" alt="Zoomed Instruction">
     </div>
 </body>
 

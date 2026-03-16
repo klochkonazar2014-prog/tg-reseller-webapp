@@ -244,10 +244,9 @@ const TRANSLATIONS = {
         mode_shop_btn: "Каталог доступных для аренды товаров",
         cover_fee_warning: "Перед оплатой убедитесь, что данный ползунок отключен. Комиссия 5% уже включена в цену.",
         limit_3000_warning: "Лимит оплаты картой — 3000 ₽. Пожалуйста, уменьшите срок аренды.",
-        ct_amount_no_change_title: "ВНИМАНИЕ: Не изменяйте сумму на странице оплаты!",
-        ct_amount_no_change_desc: "Если вы оплатите меньше, чем указано, заказ не будет зачислен.",
-        ct_instruction_title: "ОБЯЗАТЕЛЬНО отключите ползунок",
-        ct_instruction_desc: "«Покрыть комиссию» на странице CloudTips, иначе платеж не пройдет.",
+        ct_amount_no_change_title: "Не изменяйте сумму!",
+        ct_amount_no_change_desc: "Если вы оплатите меньше, чем указано в чеке, ваш заказ не будет зачислен автоматически.",
+        ct_instruction_desc_new: "Вы можете отключить этот ползунок, так как комиссия 5% уже включена в цену.",
         loading_to_rent: "Загрузка каталога арендованных товаров...",
         loading_to_shop: "Загрузка каталога доступных для аренды товаров...",
         rent_title_suffix: " (Аренда)",
@@ -4160,7 +4159,11 @@ function finalCTOrder() {
 
 function zoomCTImage() {
     const overlay = document.getElementById('image-zoom-overlay');
-    if (overlay) overlay.style.display = 'flex';
+    if (overlay) {
+        const img = overlay.querySelector('img');
+        if (img) img.src = 'pictures/cover_fee_warning.png';
+        overlay.style.display = 'flex';
+    }
 }
 
 function closeCTZoom() {
