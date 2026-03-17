@@ -49,7 +49,7 @@ def info_keyboard(lang='ru'):
         )]
     ])
 
-def support_keyboard(lang='ru', coder_uname="@Paulie_Gualtiery", support_uname="@OctoRent_Support", group_url="https://t.me/your_support_group"):
+def support_keyboard(lang='ru', coder_uname="@Paulie_Gualtiery", support_uname="@Octorent_Support_bot", group_url="https://t.me/your_support_group"):
     back_text = "Назад" if lang == 'ru' else "Back"
     tech_text = "👨‍💻 Тех. вопросы" if lang == 'ru' else "👨‍💻 Tech. Questions"
     other_text = "💎 Другие вопросы" if lang == 'ru' else "💎 Other Questions"

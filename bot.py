@@ -463,7 +463,7 @@ async def noop_handler(callback: CallbackQuery):
 async def support_details(callback: CallbackQuery):
     # Динамически получаем юзернеймы
     coder_uname = await get_dynamic_username("coder", "@Paulie_Gualtiery")
-    support_uname = await get_dynamic_username("support", "@OctoRent_Support")
+    support_uname = await get_dynamic_username("support", "@Octorent_Support_bot")
     
     text = (
         "<tg-emoji emoji-id='5362079447136610876'>👨‍💻</tg-emoji> <b>Поддержка OctoRent:</b>\n\n"

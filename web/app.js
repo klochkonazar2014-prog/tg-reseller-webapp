@@ -15,7 +15,7 @@ const MY_MARKUP = 0.20;
 const FIAT_FEE_MULTIPLIER = 1.05; // +5% commission for bank transfer
 const MANIFEST_URL = BACKEND_URL + "/tonconnect-manifest.json";
 let SELECTED_PAY_METHOD = 'TON';
-let OPERATOR_CONTACTS = { admin: "@nerksqq", coder: "@Paulie_Gualtiery", support: "@OctoRent_Support" };
+let OPERATOR_CONTACTS = { admin: "@nerksqq", coder: "@Paulie_Gualtiery", support: "@Octorent_Support_bot" };
 
 async function getOperatorContacts() {
     try {
