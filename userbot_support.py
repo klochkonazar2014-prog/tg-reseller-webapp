@@ -96,8 +96,17 @@ def save_topics(data: dict):
     with open(TOPICS_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
-# user_id (str) -> {topic_id: int, username: str, created_at: int}
+# user_id (str) -> {topic_id: int, username: str, created_at: int, type: str}
 user_topics: dict = load_topics()
+
+# --- ИКОНКИ ДЛЯ ТИПОВ ---
+TYPE_ICONS = {
+    "bksolidarni": "🔵 B",
+    "deloovoy": "🔵 d",
+    "bug": "🐞 Bug",
+    "rent": "💎 Rent",
+    "user": "👤 User"
+}
 
 # --- SYSTEM PROMPT (OctoRent Wiki) ---
 def get_system_instruction():
@@ -204,7 +213,7 @@ class MessageBuffer:
 
 msg_buffer = MessageBuffer()
 
-# --- PYROGRAM CLIENT (Bot Mode) ---
+# --- PYROGRAM CLIENT (Bot API Mode) ---
 app = Client(
     "support_bot_session", 
     api_id=API_ID, 
@@ -260,16 +269,29 @@ async def get_ai_response(user_id, user_text, image_b64=None):
             except: pass
         return "⚠️ Временные проблемы с AI. Живая поддержка скоро ответит."
 
-async def ensure_user_topic(user_id: int, user_name: str) -> int:
+async def ensure_user_topic(user_id: int, user_name: str, user_type: str = "user") -> int:
     """
     Возвращает topic_id для пользователя. Создаёт новый топик, если его ещё нет.
+    user_type: может прийти из /start (например: bksolidarni, bug, rent)
     """
     key = str(user_id)
     if key in user_topics:
         return user_topics[key]["topic_id"]
 
+    # Определяем иконку и префикс
+    t_key = user_type.lower()
+    icon = TYPE_ICONS.get(t_key)
+    
+    if icon:
+        display_name = f"{icon} | {user_name} [{user_id}]"
+    else:
+        # Если тип неизвестен, но он передан (не дефолтный 'user')
+        if t_key != "user":
+            display_name = f"🏷️ {user_type.title()} | {user_name} [{user_id}]"
+        else:
+            display_name = f"👤 {user_name} [{user_id}]"
+
     # Создаём форум-топик через RAW API (надежнее для ботов)
-    display_name = f"👤 {user_name} [{user_id}]"
     try:
         # Пытаемся создать через сырой вызов API
         peer = await app.resolve_peer(SUPPORT_GROUP_ID)
@@ -292,6 +314,7 @@ async def ensure_user_topic(user_id: int, user_name: str) -> int:
         user_topics[key] = {
             "topic_id": topic_id,
             "username": user_name,
+            "type": user_type,
             "created_at": int(time.time())
         }
         save_topics(user_topics)
@@ -357,19 +380,17 @@ async def final_callback(user_id: int, topic_id: int, text: str, image_b64: str)
     else:
         user["trash_streak"] = 0
 
-    # 3. Лимиты
+    # 3. Лимиты (200 сообщений и 5 фото в сутки)
     if user["msg_count"] >= 200:
         await app.send_message(
-            SUPPORT_GROUP_ID,
-            "🛑 Дневной лимит (200 сообщений) исчерпан. Ожидай следующего дня.",
-            reply_to_message_id=topic_id
+            user_id,
+            "🛑 Дневной лимит (200 сообщений) исчерпан. Ожидай следующего дня."
         )
         return
     if image_b64 and user["photo_count"] >= 5:
         await app.send_message(
-            SUPPORT_GROUP_ID,
-            "📸 Лимит на скриншоты (5 шт./день) исчерпан. Опишите проблему текстом.",
-            reply_to_message_id=topic_id
+            user_id,
+            "📸 Лимит на скриншоты (5 шт./день) исчерпан. Опишите проблему текстом."
         )
         return
 
@@ -386,8 +407,14 @@ async def final_callback(user_id: int, topic_id: int, text: str, image_b64: str)
     clean_reply = ai_reply.replace("[BUG]", "").strip()
 
     await app.send_message(
+        user_id,
+        clean_reply
+    )
+
+    # Дублируем в топик админу для контроля
+    await app.send_message(
         SUPPORT_GROUP_ID,
-        clean_reply,
+        f"🤖 **ИИ ответил юзеру:**\n{clean_reply}",
         reply_to_message_id=topic_id
     )
 
@@ -406,29 +433,28 @@ async def handle_private_message(client: Client, message: Message):
     user = message.from_user
     user_id = user.id
     user_name = user.username or user.first_name or str(user_id)
+    
+    # Проверяем тип из /start
+    user_type = "user"
+    if message.text and message.text.startswith("/start "):
+        parts = message.text.split(" ", 1)
+        if len(parts) > 1:
+            user_type = parts[1].strip()
 
     try:
-        topic_id = await ensure_user_topic(user_id, user_name)
+        topic_id = await ensure_user_topic(user_id, user_name, user_type)
     except Exception:
         await message.reply("⚠️ Не удалось создать тему. Попробуй позже.")
         return
 
-    # Уведомляем пользователя (только при первом обращении)
+    # Приветствие (без редиректов в группу для полной приватности)
     key = str(user_id)
     if user_topics.get(key, {}).get("notified") is not True:
-        group_username = os.getenv("SUPPORT_GROUP_USERNAME", "")
-        if group_username:
-            topic_link = f"https://t.me/{group_username.lstrip('@')}/{topic_id}"
-            await message.reply(
-                f"✅ Твоё обращение принято!\n"
-                f"Перейди в тему поддержки и пиши там:\n"
-                f"{topic_link}\n\n"
-                f"AI-поддержка ответит в течение нескольких секунд."
-            )
-        else:
-            await message.reply(
-                "✅ Обращение принято! Пиши в группу поддержки, я отвечу там."
-            )
+        await message.reply(
+            f"🐙 Привет, **{user_name}**! Я твой персональный ИИ-ассистент OctoRent.\n\n"
+            "Задавай любые вопросы — я здесь, чтобы помочь. Если возникнет сложный баг, я позову техподдержку.\n"
+            "Также ты можешь вызвать человека командой /help."
+        )
         user_topics[key]["notified"] = True
         save_topics(user_topics)
 
@@ -441,14 +467,27 @@ async def handle_private_message(client: Client, message: Message):
             if pb: image_b64 = base64.b64encode(pb.getbuffer()).decode('utf-8')
         except: pass
 
-    # Пересылаем текст сообщения в топик как цитату
+    # Пересылаем текст сообщения в топик как цитату (для админа)
     if user_text or image_b64:
         if user_text:
+            # Сообщение от юзера в топик админа
             await app.send_message(
                 SUPPORT_GROUP_ID,
-                f"**{user_name}**: {user_text}",
+                f"📩 **{user_name}** ([ID {user_id}]): {user_text}",
                 reply_to_message_id=topic_id
             )
+        
+        # Обработка /help (Вызов админа)
+        if user_text and ("/help" in user_text.lower() or "позвать админа" in user_text.lower()):
+            await app.send_message(
+                LIVE_SUPPORT_ID,
+                f"🆘 **ВНИМАНИЕ!** Хозяин, зайди в Telegram X (аккаунт саппорта).\n"
+                f"Пользователю **{user_name}** ([`{user_id}`]) нужна твоя помощь!\n"
+                f"Он написал: {user_text[:200]}"
+            )
+            await app.send_message(user_id, "🔔 Я передал твой запрос админу Paulie_Gualtiery. Он скоро заглянет в этот чат!")
+            return
+
         await msg_buffer.add(user_id, topic_id, user_text, image_b64, final_callback)
 
 
