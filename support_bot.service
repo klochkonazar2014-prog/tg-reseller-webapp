@@ -5,6 +5,7 @@ After=network.target
 [Service]
 # Укажи путь к папке с ботом
 WorkingDirectory=/home/octorent
+User=klochko0202
 
 # Укажи путь к python (обычно /usr/bin/python3 или путь к venv)
 ExecStart=/usr/bin/python3 userbot_support.py
