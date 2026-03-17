@@ -1251,6 +1251,23 @@ async def handle_cloudtips_webhook(request):
         return web.Response(text="Error", status=500)
 
 
+async def handle_operator_contacts(request):
+    """Возвращает актуальные контакты операторов для Mini App"""
+    admin_id = 7868560541
+    coder_id = 5644074141
+    support_id = None # Placeholder
+    
+    admin_uname = await db.get_cache(f"username_{admin_id}") or "@nerksqq"
+    coder_uname = await db.get_cache(f"username_{coder_id}") or "@Paulie_Gualtiery"
+    support_uname = (await db.get_cache(f"username_{support_id}")) if support_id else "@OctoRent_Support"
+    
+    return web.json_response({
+        "admin": admin_uname,
+        "coder": coder_uname,
+        "support": support_uname
+    })
+
+
 @web.middleware
 async def cors_middleware(request, handler):
     if request.method == "OPTIONS":
@@ -1290,6 +1307,7 @@ app.add_routes([
     web.post('/api/create_cloudtips_invoice', handle_create_cloudtips_invoice),
     web.get('/api/get_usdt_payload', handle_get_usdt_payload),
     web.get('/api/bot_balance', handle_get_bot_balance),
+    web.get('/api/operator_contacts', handle_operator_contacts),
     web.post('/api/webhooks/freekassa', handle_freekassa_webhook),
     web.post('/api/webhooks/xrocket', handle_xrocket_webhook),
     web.post('/api/webhooks/cloudtips', handle_cloudtips_webhook),

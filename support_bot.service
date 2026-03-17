@@ -1,0 +1,19 @@
+[Unit]
+Description=OctoRent AI Support Bot
+After=network.target
+
+[Service]
+# Укажи путь к папке с ботом (например, /root/arenda_bot)
+WorkingDirectory=/путь/к/папке/бота
+
+# Укажи путь к python (обычно /usr/bin/python3 или путь к venv)
+ExecStart=/usr/bin/python3 userbot_support.py
+
+Restart=always
+RestartSec=10
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=octorent-support
+
+[Install]
+WantedBy=multi-user.target

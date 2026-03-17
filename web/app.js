@@ -15,6 +15,31 @@ const MY_MARKUP = 0.20;
 const FIAT_FEE_MULTIPLIER = 1.05; // +5% commission for bank transfer
 const MANIFEST_URL = BACKEND_URL + "/tonconnect-manifest.json";
 let SELECTED_PAY_METHOD = 'TON';
+let OPERATOR_CONTACTS = { admin: "@nerksqq", coder: "@Paulie_Gualtiery", support: "@OctoRent_Support" };
+
+async function getOperatorContacts() {
+    try {
+        const r = await apiFetch(`${BACKEND_URL}/api/operator_contacts`);
+        const d = await r.json();
+        if (d.admin) OPERATOR_CONTACTS = d;
+        updateDynamicTexts();
+    } catch (e) {
+        console.warn("Failed to fetch operator contacts:", e);
+    }
+}
+
+function updateDynamicTexts() {
+    const adminNode = document.querySelector('[data-i18n="insufficient_bot_balance_desc"]');
+    if (adminNode) {
+        // Just re-trigger translation logic or update manually if needed
+        // For now, it's easier to just update the innerText if it's already rendered
+        const currentLang = tg?.initDataUnsafe?.user?.language_code === 'ru' ? 'ru' : 'en';
+        const template = TRANSLATIONS[currentLang]?.insufficient_bot_balance_desc || "";
+        if (template.includes('@')) {
+             adminNode.innerText = template.replace(/@\w+/, OPERATOR_CONTACTS.admin);
+        }
+    }
+}
 
 /**
  * 🔒 Secure API fetch wrapper
@@ -4221,7 +4246,9 @@ function closeInsufficientBalanceModal() {
 
 function contactAdmin() {
     const message = "Здраствуйте пожалуйста пополните баланс кошелька бота";
-    const link = `https://t.me/nerksqq?text=${encodeURIComponent(message)}`;
+    // Используем актуальный юзернейм из кэша (без @)
+    const adminUname = (OPERATOR_CONTACTS.admin || "@nerksqq").replace('@', '');
+    const link = `https://t.me/${adminUname}?text=${encodeURIComponent(message)}`;
     if (window.Telegram && window.Telegram.WebApp) {
         window.Telegram.WebApp.openTelegramLink(link);
     } else {
@@ -4572,3 +4599,7 @@ window.showInsufficientBalanceModal = showInsufficientBalanceModal;
 window.closeInsufficientBalanceModal = closeInsufficientBalanceModal;
 window.contactAdmin = contactAdmin;
 window.toggleHistory = toggleHistory;
+window.getOperatorContacts = getOperatorContacts;
+
+// Инициализация: получить актуальные контакты
+getOperatorContacts();

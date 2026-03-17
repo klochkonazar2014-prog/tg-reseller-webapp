@@ -136,6 +136,14 @@ async def init_db():
         """)
         
         await db.execute("""
+            CREATE TABLE IF NOT EXISTS cache (
+                key TEXT PRIMARY KEY,
+                value TEXT,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        await db.execute("""
             CREATE TABLE IF NOT EXISTS referral_balance (
                 user_id INTEGER PRIMARY KEY,
                 balance REAL DEFAULT 0,
@@ -656,3 +664,14 @@ async def update_withdrawal_status(withdrawal_id, status, tx_hash=None):
         )
         await db.commit()
 
+
+async def set_cache(key, value):
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute("INSERT OR REPLACE INTO cache (key, value, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)", (key, value))
+        await db.commit()
+
+async def get_cache(key):
+    async with aiosqlite.connect(DB_PATH) as db:
+        async with db.execute("SELECT value FROM cache WHERE key = ?", (key,)) as cursor:
+            row = await cursor.fetchone()
+            return row[0] if row else None

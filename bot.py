@@ -43,9 +43,50 @@ WEB_APP_URL = os.getenv("WEB_APP_URL") or os.getenv("BACKEND_URL")
 OWNER_WALLET = os.getenv("OWNER_WALLET")
 MARKETAPP_TOKEN = os.getenv("MARKETAPP_TOKEN")
 MARKUP_PERCENT = 20
+SUPPORT_GROUP_URL = os.getenv("SUPPORT_GROUP_URL", "https://t.me/your_support_group")
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
+
+# Операторы (Telegram IDs)
+OPERATOR_IDS = {
+    "admin": 7868560541,
+    "coder": 5644074141,
+    "support": None # Будет добавлено позже
+}
+
+async def get_dynamic_username(op_key, default_fallback):
+    """Получает актуальный юзернейм по ID из кэша или напрямую из Telegram"""
+    user_id = OPERATOR_IDS.get(op_key)
+    if not user_id:
+        return default_fallback
+    
+    cache_key = f"username_{user_id}"
+    cached = await db.get_cache(cache_key)
+    if cached:
+        return cached
+    
+    try:
+        chat = await bot.get_chat(user_id)
+        uname = f"@{chat.username}" if chat.username else chat.full_name
+        await db.set_cache(cache_key, uname)
+        return uname
+    except Exception as e:
+        logging.error(f"Error resolving username for {user_id}: {e}")
+        return default_fallback
+
+async def refresh_operator_usernames():
+    """Фоновое обновление юзернеймов раз в час"""
+    while True:
+        for key in OPERATOR_IDS:
+            if OPERATOR_IDS[key]:
+                try:
+                    chat = await bot.get_chat(OPERATOR_IDS[key])
+                    uname = f"@{chat.username}" if chat.username else chat.full_name
+                    await db.set_cache(f"username_{OPERATOR_IDS[key]}", uname)
+                except:
+                    pass
+        await asyncio.sleep(3600)
 
 # --- LIVE API HELPERS ---
 
@@ -420,15 +461,22 @@ async def noop_handler(callback: CallbackQuery):
 
 @dp.callback_query(F.data == "support")
 async def support_details(callback: CallbackQuery):
-    # Компактный саппорт: всё в одну линию для каждого контакта
+    # Динамически получаем юзернеймы
+    coder_uname = await get_dynamic_username("coder", "@Paulie_Gualtiery")
+    support_uname = await get_dynamic_username("support", "@OctoRent_Support")
+    
     text = (
         "<tg-emoji emoji-id='5362079447136610876'>👨‍💻</tg-emoji> <b>Поддержка OctoRent:</b>\n\n"
-        "<tg-emoji emoji-id='5390928897082663005'>⚙️</tg-emoji> Ошибки: @Paulie_Gualtiery | <tg-emoji emoji-id='5472239203590888751'>💎</tg-emoji> Другое: @OctoRent_Support\n\n"
+        f"<tg-emoji emoji-id='5390928897082663005'>⚙️</tg-emoji> Ошибки: {coder_uname} | <tg-emoji emoji-id='5472239203590888751'>💎</tg-emoji> Другое: {support_uname}\n\n"
         "<i>Мы постараемся ответить вам как можно скорее!</i>"
     )
     await callback.message.edit_text(
         text,
-        reply_markup=kb.support_keyboard(),
+        reply_markup=kb.support_keyboard(
+            coder_uname=coder_uname, 
+            support_uname=support_uname,
+            group_url=SUPPORT_GROUP_URL
+        ),
         parse_mode="HTML"
     )
 
@@ -535,13 +583,15 @@ async def deposit_handler(callback: CallbackQuery):
 
 @dp.callback_query(F.data == "info")
 async def info_details(callback: CallbackQuery):
-    # Используем САМЫЕ ПЕРВЫЕ ID, которые ты скидывал (с новым Back)
+    coder_uname = await get_dynamic_username("coder", "@Paulie_Gualtiery")
+    admin_uname = await get_dynamic_username("admin", "@nerksqq")
+    
     text = (
         "<tg-emoji emoji-id='5197269100878907942'>ℹ️</tg-emoji> <b>Информация о сервисе:</b>\n\n"
         "<tg-emoji emoji-id='5319302290127991242'>📱</tg-emoji> Сервис OctoRent предоставляет услугу аренды NFT подарков, NFT и анонимных номеров +888\n\n"
         "<tg-emoji emoji-id='5188481279963715781'>⏳</tg-emoji> В скором времени появится покупка товаров и больше новых возможностей, связанных с NFT\n\n"
-        "<tg-emoji emoji-id='5337017423906226569'>👨‍💻</tg-emoji> Кодер — @Paulie_Gualtiery\n"
-        "<tg-emoji emoji-id='5215416746453776052'>👥</tg-emoji> Админ — @nerksqq"
+        f"<tg-emoji emoji-id='5337017423906226569'>👨‍💻</tg-emoji> Кодер — {coder_uname}\n"
+        f"<tg-emoji emoji-id='5215416746453776052'>👥</tg-emoji> Админ — {admin_uname}"
     )
     await callback.message.edit_text(
         text,
@@ -991,9 +1041,9 @@ async def main():
     await db.init_db()
     print("LIVE-BOT ЗАПУЩЕН! Реальное время активно.")
     
-    # Запускаем фоновую задачу
-    # Запускаем фоновую задачу
+    # Запускаем фоновые задачи
     asyncio.create_task(check_expirations())
+    asyncio.create_task(refresh_operator_usernames())
     
     # 🚀 Update Menu Button with current URL
     if WEB_APP_URL:

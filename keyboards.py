@@ -49,13 +49,17 @@ def info_keyboard(lang='ru'):
         )]
     ])
 
-def support_keyboard(lang='ru'):
+def support_keyboard(lang='ru', coder_uname="@Paulie_Gualtiery", support_uname="@OctoRent_Support", group_url="https://t.me/your_support_group"):
     back_text = "Назад" if lang == 'ru' else "Back"
     tech_text = "👨‍💻 Тех. вопросы" if lang == 'ru' else "👨‍💻 Tech. Questions"
     other_text = "💎 Другие вопросы" if lang == 'ru' else "💎 Other Questions"
+    
+    # В будущем здесь будут ссылки на топики или конкретную группу/бота
+    # Пока ведем на общие контакты или группу, как запросил юзер
+    
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text=tech_text, url="https://t.me/Paulie_Gualtiery")],
-        [InlineKeyboardButton(text=other_text, url="https://t.me/OctoRent_Support")],
+        [InlineKeyboardButton(text=tech_text, url=group_url)],
+        [InlineKeyboardButton(text=other_text, url=f"https://t.me/{support_uname.lstrip('@')}")],
         [InlineKeyboardButton(
             text=back_text, 
             callback_data="main_menu",
