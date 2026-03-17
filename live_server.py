@@ -1259,7 +1259,7 @@ async def handle_operator_contacts(request):
     
     admin_uname = await db.get_cache(f"username_{admin_id}") or "@nerksqq"
     coder_uname = await db.get_cache(f"username_{coder_id}") or "@Paulie_Gualtiery"
-    support_uname = (await db.get_cache(f"username_{support_id}")) if support_id else "@OctoRent_Support"
+    support_uname = os.getenv("SUPPORT_GROUP_URL", "@OctoRent_Support")
     
     return web.json_response({
         "admin": admin_uname,

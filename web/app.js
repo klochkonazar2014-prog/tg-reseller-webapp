@@ -41,6 +41,18 @@ function updateDynamicTexts() {
     }
 }
 
+function handleSupportClick() {
+    const url = OPERATOR_CONTACTS.support;
+    if (!url) return;
+    
+    if (url.startsWith('https://')) {
+        window.Telegram.WebApp.openTelegramLink(url);
+    } else {
+        // Если вдруг вернулся юзернейм
+        window.Telegram.WebApp.openTelegramLink('https://t.me/' + url.replace('@', ''));
+    }
+}
+
 /**
  * 🔒 Secure API fetch wrapper
  * Automatically injects Telegram initData for authentication

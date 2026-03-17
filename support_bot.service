@@ -3,8 +3,8 @@ Description=OctoRent AI Support Bot
 After=network.target
 
 [Service]
-# Укажи путь к папке с ботом (например, /root/arenda_bot)
-WorkingDirectory=/путь/к/папке/бота
+# Укажи путь к папке с ботом
+WorkingDirectory=/home/octorent
 
 # Укажи путь к python (обычно /usr/bin/python3 или путь к venv)
 ExecStart=/usr/bin/python3 userbot_support.py
