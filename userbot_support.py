@@ -300,7 +300,7 @@ async def ensure_user_topic(user_id: int, user_name: str) -> int:
         await app.send_message(
             SUPPORT_GROUP_ID,
             f"🆕 Новое обращение от **{user_name}** (`{user_id}`)\n\n"
-            f"AI-поддержка готова отвечать в этой теме!",
+            f"@OctoRent_Support готов отвечать в этой теме!",
             reply_to_message_id=topic_id
         )
         logging.info(f"✅ Создан топик #{topic_id} для {user_name} ({user_id})")
