@@ -934,6 +934,27 @@
         </div>
     </div>
 
+    <!-- Insufficient Balance Modal -->
+    <div id="insufficient-balance-modal" class="generic-modal" style="display: none;">
+        <div class="modal-overlay"></div>
+        <div class="modal-content ct-modal-fragment">
+            <div class="ct-fragment-header">
+                <span data-i18n="insufficient_bot_balance_title">Недостаточно средств</span>
+                <div class="ct-close-btn" onclick="closeInsufficientBalanceModal()">×</div>
+            </div>
+            <div class="ct-fragment-box">
+                <div class="ct-fragment-text" data-i18n="insufficient_bot_balance_desc">
+                    На кошельке бота недостаточно средств. Пожалуйста, обратитесь к @nerksqq с просьбой о пополнении кошелька бота.
+                </div>
+            </div>
+            <div class="ct-modal-footer" style="padding: 0 5px;">
+                <button class="main-rent-btn ct-btn-full" onclick="contactAdmin()">
+                    <span data-i18n="contact_admin_btn">Написать</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Image Zoom Overlay -->
     <div id="image-zoom-overlay" class="zoom-overlay" style="display: none;" onclick="closeCTZoom()">
         <img id="zoomed-ct-img" src="pictures/cover_fee_warning.png" alt="Zoomed Instruction">

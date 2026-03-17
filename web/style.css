@@ -4469,6 +4469,20 @@ tc-root>div {
     font-weight: 700;
 }
 
+.ct-close-btn {
+    margin-left: auto;
+    color: #8b9bb4;
+    font-size: 24px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0 4px;
+    transition: color 0.2s;
+}
+
+.ct-close-btn:hover {
+    color: #fff;
+}
+
 .ct-fragment-text {
     margin: 0;
     color: #8b9bb4;

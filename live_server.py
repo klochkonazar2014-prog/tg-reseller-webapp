@@ -109,6 +109,27 @@ async def handle_index(request):
         })
     return web.Response(status=404)
 
+async def handle_get_bot_balance(request):
+    """Returns the current TON balance of the bot's owner wallet"""
+    try:
+        url = f"https://toncenter.com/api/v2/getAddressBalance?address={OWNER_WALLET}"
+        api_key = os.getenv("TONCENTER_API_KEY")
+        if api_key:
+            url += f"&api_key={api_key}"
+            
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, timeout=10) as resp:
+                data = await resp.json()
+                if data.get('ok'):
+                    balance_ton = int(data['result']) / 1e9
+                    return web.json_response({"balance": balance_ton})
+                else:
+                    logging.error(f"Toncenter API error: {data}")
+                    return web.json_response({"error": "Failed to fetch balance from Toncenter"}, status=500)
+    except Exception as e:
+        logging.error(f"Error fetching bot balance: {e}")
+        return web.json_response({"error": str(e)}, status=500)
+
 async def handle_static(request):
     filename = request.match_info.get('filename', 'index.html')
     if not filename: filename = 'index.html'
@@ -1268,6 +1289,7 @@ app.add_routes([
     web.post('/api/create_bot_invoice', handle_create_bot_invoice),
     web.post('/api/create_cloudtips_invoice', handle_create_cloudtips_invoice),
     web.get('/api/get_usdt_payload', handle_get_usdt_payload),
+    web.get('/api/bot_balance', handle_get_bot_balance),
     web.post('/api/webhooks/freekassa', handle_freekassa_webhook),
     web.post('/api/webhooks/xrocket', handle_xrocket_webhook),
     web.post('/api/webhooks/cloudtips', handle_cloudtips_webhook),

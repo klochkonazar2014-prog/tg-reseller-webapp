@@ -251,6 +251,9 @@ const TRANSLATIONS = {
         loading_to_shop: "Загрузка каталога доступных для аренды товаров...",
         rent_title_suffix: " (Аренда)",
         auto_relist_label: "Авто-перевыставление",
+        insufficient_bot_balance_title: "Недостаточно средств",
+        insufficient_bot_balance_desc: "На кошельке бота недостаточно средств. Пожалуйста, обратитесь к @nerksqq с просьбой о пополнении кошелька бота.",
+        contact_admin_btn: "Написать",
         yes: "Да",
         no: "Нет",
         rented_by_you: "Арендовано вами",
@@ -572,6 +575,9 @@ const TRANSLATIONS = {
         friends_zero_rentals: "0 rentals",
         invoice_creating: "Creating invoice...",
         redirecting_to_pay: "Redirecting to payment...",
+        insufficient_bot_balance_title: "Insufficient Funds",
+        insufficient_bot_balance_desc: "The bot's wallet has insufficient funds. Please contact @nerksqq to request a refill.",
+        contact_admin_btn: "Contact",
         invoice_error: "Error creating invoice: {msg}",
         network_error_server: "Server connection error",
         invoice_created_xrocket: "Invoice created! Pay in xRocket",
@@ -4083,23 +4089,52 @@ async function handleContinuePayment() {
 
     tg.HapticFeedback.impactOccurred('medium');
 
-    if (method === 'TON') {
-        if (!tonConnectUI.connected) {
-            tonConnectUI.connectWallet().catch(e => console.error(e));
-            return;
-        }
-        await handleTonRent();
-    } else if (method === 'USDT') {
-        await handleUsdtRent();
-    } else if (method === 'XROCKET') {
-        await handleBotRent(method);
-    } else if (method === 'CLOUDTIPS') {
-        // --- NEW STEP: Show Instructions first ---
-        showCTInstructions(); 
-    } else if (method === 'RUB') {
+    if (method === 'RUB') {
         await handleRubRent();
     } else {
-        showToast(t('select_payment_method'));
+        // --- BOT BALANCE CHECK ---
+        // For methods that require the bot to pay (CloudTips, XRocket, CryptoBot, etc.)
+        // TON is a direct transfer from user, but we still prefer bot to have gas for refunds/processing
+        if (['CLOUDTIPS', 'XROCKET', 'USDT'].includes(method)) {
+            try {
+                const bResp = await apiFetch(`${BACKEND_URL}/api/bot_balance`);
+                const bData = await bResp.json();
+                
+                const dur = parseInt(document.getElementById('rent-duration-input').value) || 1;
+                // Используем оригинальную цену (без наценки сервиса), так как это то, что бот платит МаркетАппу
+                const origPrice = parseFloat(CURRENT_PAYMENT_ITEM.original_price) || 0;
+                const requiredTon = origPrice * dur + 0.20; // Чистая цена + 0.2 TON (оригинальная комиссия)
+                
+                // Проверка на 49 рублей: так как баланс в TON, переводим 49 RUB в TON
+                const minRubTon = (FIAT_RATES.RUB > 0) ? (49 / FIAT_RATES.RUB) : 0.1;
+                
+                if (bData && typeof bData.balance === 'number') {
+                    if (bData.balance < requiredTon || bData.balance < minRubTon) {
+                        showInsufficientBalanceModal();
+                        return;
+                    }
+                }
+            } catch (e) {
+                console.warn("Failed to check bot balance:", e);
+            }
+        }
+
+        if (method === 'TON') {
+            if (!tonConnectUI.connected) {
+                tonConnectUI.connectWallet().catch(e => console.error(e));
+                return;
+            }
+            await handleTonRent();
+        } else if (method === 'USDT') {
+            await handleUsdtRent();
+        } else if (method === 'XROCKET') {
+            await handleBotRent(method);
+        } else if (method === 'CLOUDTIPS') {
+            // --- NEW STEP: Show Instructions first ---
+            showCTInstructions(); 
+        } else {
+            showToast(t('select_payment_method'));
+        }
     }
 }
 
@@ -4169,6 +4204,29 @@ function zoomCTImage() {
 function closeCTZoom() {
     const overlay = document.getElementById('image-zoom-overlay');
     if (overlay) overlay.style.display = 'none';
+}
+
+function showInsufficientBalanceModal() {
+    const modal = document.getElementById('insufficient-balance-modal');
+    if (modal) {
+        modal.style.display = 'flex';
+        tg.HapticFeedback.notificationOccurred('warning');
+    }
+}
+
+function closeInsufficientBalanceModal() {
+    const modal = document.getElementById('insufficient-balance-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+function contactAdmin() {
+    const message = "Здраствуйте пожалуйста пополните баланс кошелька бота";
+    const link = `https://t.me/nerksqq?text=${encodeURIComponent(message)}`;
+    if (window.Telegram && window.Telegram.WebApp) {
+        window.Telegram.WebApp.openTelegramLink(link);
+    } else {
+        window.open(link, '_blank');
+    }
 }
 
 async function handleCloudTipsRent() {
@@ -4510,4 +4568,7 @@ window.nextCTStep = nextCTStep;
 window.finalCTOrder = finalCTOrder;
 window.zoomCTImage = zoomCTImage;
 window.closeCTZoom = closeCTZoom;
+window.showInsufficientBalanceModal = showInsufficientBalanceModal;
+window.closeInsufficientBalanceModal = closeInsufficientBalanceModal;
+window.contactAdmin = contactAdmin;
 window.toggleHistory = toggleHistory;
