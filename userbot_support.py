@@ -175,7 +175,7 @@ def get_system_instruction(user_query=None):
      * 1.01 - 2.50 TON: комиссия 0.45
      * Свыше 5.00 TON: комиссия 1.00
    - ОТВЕТЬ ПРОСТО: «За 5 дней аренды этого подарка ты получишь X TON. 💸» (Никаких объяснений!).
-   - ВАЖНО: Если ты НЕ ВИДИШЬ картинку (или вижн-модель упала), НЕ ПРИДУМЫВАЙ ЦЕНУ ИЗ ПРИМЕРОВ. Скажи: «К сожалению, я не смог рассмотреть цену на скриншоте. Напиши её текстом, и я всё посчитаю! 🐙»
+   - ВАЖНО: Если ты НЕ ВИДИШЬ картинку (или вижн-модель упала), НЕ ПРИДУМЫВАЙ ЦЕНУ. Напиши: «К сожалению, я не смог рассмотреть цену на скриншоте. Пожалуйста, напиши её текстом! По формуле (25% от комиссии сервиса) я посчитаю твой бонус за секунду. 📊»
 
 2. СТИЛЬ: Будь максимально лаконичен. Если можешь ответить одной фразой — отвечай одной фразой. Используй дружелюбный тон «на ты».
 
@@ -269,7 +269,7 @@ async def get_ai_response(user_id, user_text, image_b64=None):
     """Запрос к Groq с учетом истории сообщений пользователя."""
     # Для бесплатного лимита 10к сообщений/день лучше всего подходит 8B Instant
     # У неё самый высокий RPD (Requests Per Day) на Groq — около 14,400.
-    vision_model = "llama-3.2-90b-vision-preview" 
+    vision_model = "llama-3.2-11b-vision-preview" 
     text_model = "llama-3.1-8b-instant"        
     
     # Загружаем оптимальную историю (берем последние 15 сообщений для стабильности лимитов Groq)
@@ -309,12 +309,23 @@ async def get_ai_response(user_id, user_text, image_b64=None):
         if image_b64:
             try:
                 logging.info("🔄 Попытка переключиться на текстовую модель (llama-3.3-70b-versatile)...")
+                
+                # В фоллбеке ОБЯЗАТЕЛЬНО сохраняем контекст и историю
+                fallback_messages = [{"role": "system", "content": get_system_instruction(user_text)}]
+                fallback_messages.extend(history)
+                fallback_messages.append({"role": "user", "content": user_text or "Пользователь прислал скриншот"})
+                
                 completion = groq_client.chat.completions.create(
                     model="llama-3.3-70b-versatile",
-                    messages=[{"role": "system", "content": get_system_instruction()}, {"role": "user", "content": user_text or "Пользователь прислал скриншот"}],
+                    messages=fallback_messages,
                     temperature=0.6, max_tokens=900
                 )
-                return completion.choices[0].message.content + "\n\n_(🤖 Вижн-модель временно недоступна, ответил на текст)_"
+                fb_reply = completion.choices[0].message.content
+                
+                # Сохраняем и этот ответ в историю
+                add_history(user_id, "assistant", fb_reply)
+                
+                return fb_reply + "\n\n_(🤖 Вижн-модель временно недоступна, ответил на текст)_"
             except Exception as e2:
                 logging.error(f"❌ Фатальная ошибка AI: {e2}")
 
