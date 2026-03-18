@@ -109,19 +109,56 @@ TYPE_ICONS = {
     "user": "👤 User"
 }
 
+# --- KNOWLEDGE SEARCH (RAG) ---
+class KnowledgeSearch:
+    def __init__(self, file_path="support_knowledge_full.txt"):
+        self.file_path = Path(file_path)
+        self.blocks = []
+        self.load_blocks()
+
+    def load_blocks(self):
+        if self.file_path.exists():
+            content = self.file_path.read_text(encoding="utf-8")
+            # Разделяем на блоки по разделителю --- или по заголовкам ##
+            self.blocks = [b.strip() for b in content.split("---") if b.strip()]
+        else:
+            logging.warning(f"⚠️ Файл знаний {self.file_path} не найден.")
+
+    def search(self, query, top_k=3):
+        if not self.blocks: return ""
+        if not query: return "\n\n".join(self.blocks[:2]) # Дефолтная инфа
+
+        # Простой поиск по вхождению ключевых слов (для экономии токенов и скорости)
+        query_words = set(query.lower().split())
+        scored_blocks = []
+        for block in self.blocks:
+            score = sum(1 for word in query_words if word in block.lower())
+            scored_blocks.append((score, block))
+        
+        # Сортируем по релевантности
+        scored_blocks.sort(key=lambda x: x[0], reverse=True)
+        relevant = [b[1] for b in scored_blocks[:top_k] if b[0] > 0]
+        
+        if not relevant:
+            return "\n\n".join(self.blocks[:2]) # Если ничего не нашли, даем общие правила
+            
+        return "\n\n".join(relevant)
+
+kb = KnowledgeSearch()
+
 # --- SYSTEM PROMPT (OctoRent Wiki) ---
-def get_system_instruction():
-    k_file = Path("support_knowledge.txt")
-    knowledge = k_file.read_text(encoding="utf-8") if k_file.exists() else "Техническая база знаний временно недоступна."
+def get_system_instruction(user_query=None):
+    # Динамически ищем релевантные куски в базе знаний (RAG)
+    knowledge = kb.search(user_query)
     
     return f"""
-Ты — EXPERT SUPPORT AI проекта OctoRent. Технический гений, который знает проект на уровне кода.
-Твой стиль: на «ты», дружелюбный, но конкретный. Используй эмодзи.
-
-### 🧠 ГЛУБОКИЕ ТЕХНИЧЕСКИЕ ЗНАНИЯ (ОБЯЗАТЕЛЬНО К ПРОЧТЕНИЮ)
-{knowledge}
-
-### 🔴 СТРОГИЕ ПРАВИЛА И ОГРАНИЧЕНИЯ (НАРУШЕНИЕ ЗАПРЕЩЕНО)
+ Ты — EXPERT SUPPORT AI проекта OctoRent. Технический гений, который знает проект на уровне кода.
+ Твой стиль: на «ты», дружелюбный, но конкретный. Используй эмодзи.
+ 
+ ### 🧠 РЕЛЕВАНТНАЯ БАЗА ЗНАНИЙ (ДИНАМИЧЕСКИЙ ПОИСК)
+ {knowledge}
+ 
+ ### 🔴 СТРОГИЕ ПРАВИЛА И ОГРАНИЧЕНИЯ (НАРУШЕНИЕ ЗАПРЕЩЕНО)
 1. КОМИССИИ И РАСЧЕТЫ: ЗАПРЕЩЕНО показывать ход решения или формулы. ЗАПРЕЩЕНО упоминать любые проценты или «20%».
    - Если пользователь дает цену, считай в уме по ПРАВИЛЬНОЙ ТАБЛИЦЕ (ниже) и выдавай только итог: «При цене X за 5 дней тебе достанется Y TON».
    - ТАБЛИЦА МАРЖИ (Комиссия вычитается из цены за день):
@@ -131,8 +168,8 @@ def get_system_instruction():
      * 0.51 - 1.00 TON: комиссия 0.25
      * 1.01 - 2.50 TON: комиссия 0.45
      * Свыше 5.00 TON: комиссия 1.00
-   - ПРИМЕР: Цена 0.29. Комиссия 0.15. Чистая прибыль (0.29 - 0.15) = 0.14 TON в день. За 5 дней = 0.70 TON.
-   - ОТВЕТЬ ПРОСТО: «За 5 дней аренды этого подарка ты получишь 0.70 TON. 💸» (Никаких объяснений!).
+   - ОТВЕТЬ ПРОСТО: «За 5 дней аренды этого подарка ты получишь X TON. 💸» (Никаких объяснений!).
+   - ВАЖНО: Если ты НЕ ВИДИШЬ картинку (или вижн-модель упала), НЕ ПРИДУМЫВАЙ ЦЕНУ ИЗ ПРИМЕРОВ. Скажи: «К сожалению, я не смог рассмотреть цену на скриншоте. Напиши её текстом, и я всё посчитаю! 🐙»
 
 2. СТИЛЬ: Будь максимально лаконичен. Если можешь ответить одной фразой — отвечай одной фразой. Используй дружелюбный тон «на ты».
 
@@ -226,7 +263,7 @@ async def get_ai_response(user_id, user_text, image_b64=None):
     """Запрос к Groq с учетом истории сообщений пользователя."""
     # Для бесплатного лимита 10к сообщений/день лучше всего подходит 8B Instant
     # У неё самый высокий RPD (Requests Per Day) на Groq — около 14,400.
-    vision_model = "llama-3.2-11b-vision-preview" 
+    vision_model = "llama-3.2-90b-vision-preview" 
     text_model = "llama-3.1-8b-instant"        
     
     # Загружаем оптимальную историю (берем последние 15 сообщений для стабильности лимитов Groq)
@@ -235,8 +272,8 @@ async def get_ai_response(user_id, user_text, image_b64=None):
     try:
         model = vision_model if image_b64 else text_model
         
-        # Формируем контекст
-        messages = [{"role": "system", "content": get_system_instruction()}]
+        # Формируем контекст (подгружаем знания на основе текущего вопроса)
+        messages = [{"role": "system", "content": get_system_instruction(user_text)}]
         messages.extend(history)
         
         content = [{"type": "text", "text": user_text or "[Скриншот без текста]"}]
