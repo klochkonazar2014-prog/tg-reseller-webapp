@@ -1018,12 +1018,16 @@ async def check_expirations():
                         image_url = meta.get('image') or "https://ton.org/download/ton_symbol.png"
                         
                         try:
-                            # Отправляем уведомление
+                            # Отправляем уведомление с кнопкой
+                            keyboard = InlineKeyboardMarkup(inline_keyboard=[
+                                [InlineKeyboardButton(text="🛍 Открыть каталог", web_app=WebAppInfo(url=WEB_APP_URL))]
+                            ])
                             await bot.send_photo(
                                 chat_id=user_id,
                                 photo=image_url,
                                 caption=text,
-                                parse_mode="HTML"
+                                parse_mode="HTML",
+                                reply_markup=keyboard
                             )
                             # Удаляем уведомление чтобы не спамить
                             await conn.execute("DELETE FROM item_notifications WHERE user_id = ? AND nft_address = ?", (user_id, nft_addr))

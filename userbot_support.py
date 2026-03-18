@@ -75,10 +75,11 @@ def get_history(user_id):
 
 def clean_old_history():
     with sqlite3.connect(DB_PATH) as conn:
-        conn.execute("DELETE FROM history WHERE timestamp < datetime('now', '-1 day')")
+        conn.execute("DELETE FROM history WHERE timestamp < datetime('now', '-7 day')")
         conn.commit()
 
 init_db()
+clean_old_history()
 
 # --- GROQ CLIENT ---
 groq_client = Groq(api_key=GROQ_API_KEY)
@@ -137,27 +138,26 @@ def get_system_instruction():
 
 3. КОНФИДЕНЦИАЛЬНОСТЬ: Никогда не выдавай технические ключи, названия таблиц БД или внутренние переменные (MARKETAPP_TOKEN и т.д.).
 
-4. БАГИ: Если видишь реальную ошибку — ставь [BUG] в конце. Если это просто вопрос — [BUG] не ставить.
+4. ВЫЗОВ ЧЕЛОВЕКА: Мы используем два тега в конце ответа для уведомления админа:
+   - [BUG]: Техническая ошибка, критический сбой, не работает основной функционал.
+   - [HELP]: Пользователь просит позвать админа, хочет совершить возврат, сложный нетехнический кейс, верификация.
 
-### 🔍 КРИТЕРИИ БАГА (КОГДА СТАВИТЬ [BUG])
-Ставь [BUG] в конец ответа ТОЛЬКО если:
-1. Юзер прислал скриншот с красным текстом ошибки (500, 403, 400, "Request Failed").
-2. Юзер жалуется на техническую неисправность: «не работает кнопка», «баланс не пополнился после оплаты», «бот завис», «белый экран».
-3. Ты видишь в коде/базе знаний, что конкретный процесс (например, аренда) вернул ошибку, которую юзер не может исправить сам.
-4. **НЕ СТАВЬ [BUG]**, если юзер просто тупит, не знает куда нажать, спрашивает «как это работает» или у него просто нет денег на балансе. Это — консультация, а не баг.
+### 🔍 КРИТЕРИИ ВЫЗОВА (ИСПОЛЬЗУЙ ЛОГИКУ, А НЕ КЛЮЧЕВЫЕ СЛОВА)
+ПРАВИЛО: Твоя цель — решить проблему на месте. Админ — крайняя мера.
+1. САМОПОМОЩЬ ПРЕЖДЕ ВСЕГО: Если юзер жалуется на «глюк» или «не жмется кнопка», сначала объясни возможные причины (глюки ТГ, плохой интернет) и предложи: «Попробуй перезапустить бота командой /start или обновить Telegram».
+2. СНАЧАЛА УТОЧНЕНИЕ: Если проблема неясна («не работает»), НЕ СТАВЬ теги. Сначала попроси скриншот или подробности: «Пришли, пожалуйста, скриншот ошибки, чтобы я мог точно понять, в чем дело и позвать помощь. 📸»
+3. ТЕГИ [BUG] / [HELP] СТАВИТЬ ТОЛЬКО КОГДА:
+   - Юзер прислал скриншот с реальной ошибкой (500, Error).
+   - Юзер выполнил твои советы по самопомощи, но проблема осталась.
+   - Это явный административный вопрос (возврат, ручная проверка транзакции).
+4. **ПОНИМАНИЕ КОНТЕКСТА**: Ты должен ПОНЯТЬ, что произошел сбой, а не просто среагировать на слово «ошибка». Если юзер говорит «я ошибся дверью» — это не баг!
 
 ### 📸 ЗАПРОС СКРИНШОТОВ
-Если пользователь описывает проблему словами, но **не прислал скриншот**, и ты подозреваешь баг:
-- Вежливо попроси: «Пожалуйста, пришли скриншот ошибки или того места, где возникла проблема. Это поможет мне быстрее разобраться».
-- Пока скриншота нет — старайся помочь советом из базы знаний, но [BUG] не ставь.
-
-### 👁️ VISION (АНАЛИЗ СКРИНШОТОВ)
-- Если на скрине «Success», «Paid», «Active» — это НЕ баг. Поздравь юзера.
-- Если на скрине «Error», «Forbidden», «Timeout» — это баг. Объясни причину из базы знаний и добавь [BUG].
+- Скриншот — это «билет» для вызова админа. Всегда проси его при подозрении на баг.
 
 ### 🔁 КАК ОТВЕЧАТЬ
-- Будь кратким. Если это баг — успокой юзера: «Я вижу проблему, уже позвал живую поддержку, они скоро всё поправят».
-- Если это не баг — дай пошаговую инструкцию.
+- Если ты ставишь [BUG] или [HELP] — напиши юзеру: «Я проанализировал ситуацию и понял, что тут нужна помощь человека. Уже передал информацию админу, пожалуйста, подожди. ⏳»
+- Если ты просишь детали — напиши: «Я пока изучаю твой вопрос. Пришли, пожалуйста, скриншот/детали, и я сразу позову помощь. 🐙»
 """
 
 # --- МЕНЕДЖЕР ПОЛЬЗОВАТЕЛЕЙ (Антиспам + Карцер) ---
@@ -224,11 +224,13 @@ app = Client(
 # --- AI ---
 async def get_ai_response(user_id, user_text, image_b64=None):
     """Запрос к Groq с учетом истории сообщений пользователя."""
-    vision_model = "llama-3.2-11b-vision-preview" # Более легкая вижн-модель
-    text_model = "llama-3.1-8b-instant"          # Супер-быстрая и экономная модель
+    # Для бесплатного лимита 10к сообщений/день лучше всего подходит 8B Instant
+    # У неё самый высокий RPD (Requests Per Day) на Groq — около 14,400.
+    vision_model = "llama-3.2-11b-vision-preview" 
+    text_model = "llama-3.1-8b-instant"        
     
-    # Загружаем историю (берем только последние 5 сообщений для экономии токенов)
-    history = get_history(user_id)[-5:]
+    # Загружаем глубокую историю (берем последние 50 сообщений для полного контекста)
+    history = get_history(user_id)[-50:]
     
     try:
         model = vision_model if image_b64 else text_model
@@ -257,17 +259,23 @@ async def get_ai_response(user_id, user_text, image_b64=None):
         
         return reply
     except Exception as e:
-        logging.warning(f"⚠️ Ошибка Groq ({model}): {e}")
+        error_msg = str(e)
+        logging.error(f"❌ КРИТИЧЕСКАЯ ОШИБКА Groq ({model}): {error_msg}")
+        
+        # Попытка спасения — чисто текстовая модель без истории
         if image_b64:
             try:
+                logging.info("🔄 Попытка переключиться на текстовую модель (llama-3.3-70b-versatile)...")
                 completion = groq_client.chat.completions.create(
-                    model=text_model,
+                    model="llama-3.3-70b-versatile",
                     messages=[{"role": "system", "content": get_system_instruction()}, {"role": "user", "content": user_text or "Пользователь прислал скриншот"}],
                     temperature=0.6, max_tokens=900
                 )
-                return completion.choices[0].message.content + "\n\n_(Скриншот не удалось обработать, ответил на текст)_"
-            except: pass
-        return "⚠️ Временные проблемы с AI. Живая поддержка скоро ответит."
+                return completion.choices[0].message.content + "\n\n_(🤖 Вижн-модель временно недоступна, ответил на текст)_"
+            except Exception as e2:
+                logging.error(f"❌ Фатальная ошибка AI: {e2}")
+
+        return "⚠️ Временные проблемы с AI. Живая поддержка скоро ответит. (Ошибка: проверьте логи сервера)"
 
 async def ensure_user_topic(user_id: int, user_name: str, user_type: str = "user") -> int:
     """
@@ -380,17 +388,17 @@ async def final_callback(user_id: int, topic_id: int, text: str, image_b64: str)
     else:
         user["trash_streak"] = 0
 
-    # 3. Лимиты (200 сообщений и 5 фото в сутки)
-    if user["msg_count"] >= 200:
+    # 3. Лимиты (10 000 сообщений и 200 фото в сутки)
+    if user["msg_count"] >= 10000:
         await app.send_message(
             user_id,
-            "🛑 Дневной лимит (200 сообщений) исчерпан. Ожидай следующего дня."
+            "🛑 Дневной лимит (10 000 сообщений) исчерпан. Ожидай следующего дня."
         )
         return
-    if image_b64 and user["photo_count"] >= 5:
+    if image_b64 and user["photo_count"] >= 200:
         await app.send_message(
             user_id,
-            "📸 Лимит на скриншоты (5 шт./день) исчерпан. Опишите проблему текстом."
+            "📸 Лимит на скриншоты (200 шт./день) исчерпан. Опишите проблему текстом."
         )
         return
 
@@ -402,9 +410,11 @@ async def final_callback(user_id: int, topic_id: int, text: str, image_b64: str)
     prompt = text if text else "[Пользователь прислал только скриншот, текста нет]"
     ai_reply = await get_ai_response(user_id, prompt, image_b64)
 
-    # 5. Отправляем ответ в топик (убираем внутренний тег [BUG] из видимого ответа)
+    # 5. Отправляем ответ в топик (убираем внутренние теги из видимого ответа)
     is_bug = "[BUG]" in ai_reply
-    clean_reply = ai_reply.replace("[BUG]", "").strip()
+    is_help = "[HELP]" in ai_reply
+    
+    clean_reply = ai_reply.replace("[BUG]", "").replace("[HELP]", "").strip()
 
     await app.send_message(
         user_id,
@@ -418,9 +428,10 @@ async def final_callback(user_id: int, topic_id: int, text: str, image_b64: str)
         reply_to_message_id=topic_id
     )
 
-    # 6. Если баг — тегаем живую поддержку (но не тегаем самого админа, если он пишет)
-    if is_bug and int(user_id) != LIVE_SUPPORT_ID:
-        await tag_live_support(topic_id, user_id, f"{text[:100]}")
+    # 6. Если баг или запрос помощи — тегаем живую поддержку (кроме самого админа)
+    if (is_bug or is_help) and int(user_id) != LIVE_SUPPORT_ID:
+        reason = "обнаружен баг 🐞" if is_bug else "нужна помощь человека 🙋‍♂️"
+        await tag_live_support(topic_id, user_id, f"{reason}\n<b>Вопрос:</b> {text[:100]}")
 
 # --- ОБРАБОТЧИКИ ---
 
@@ -447,19 +458,43 @@ async def handle_private_message(client: Client, message: Message):
         await message.reply("⚠️ Не удалось создать тему. Попробуй позже.")
         return
 
-    # Приветствие (без редиректов в группу для полной приватности)
-    key = str(user_id)
-    if user_topics.get(key, {}).get("notified") is not True:
-        await message.reply(
-            f"🐙 Привет, **{user_name}**! Я твой персональный ИИ-ассистент OctoRent.\n\n"
-            "Задавай любые вопросы — я здесь, чтобы помочь. Если возникнет сложный баг, я позову техподдержку.\n"
-            "Также ты можешь вызвать человека командой /help."
-        )
-        user_topics[key]["notified"] = True
-        save_topics(user_topics)
-
-    # Пересылаем первое сообщение в топик
+    # Приветствие и команда /start
     user_text = message.text or message.caption or ""
+    key = str(user_id)
+    if user_text.startswith("/start"):
+        if user_topics.get(key, {}).get("notified") is not True:
+            await message.reply(
+                f"🐙 Привет, **{user_name}**! Я твой персональный ИИ-ассистент OctoRent.\n\n"
+                "Задавай любые вопросы — я здесь, чтобы помочь. Если возникнет сложный баг, я позову техподдержку.\n"
+                "Также ты можешь вызвать человека командой /help."
+            )
+            user_topics[key]["notified"] = True
+            save_topics(user_topics)
+        return # Важно: на /start ИИ не отвечаем
+
+    # Команда /help (Вызов админа)
+    if "/help" in user_text.lower() or "позвать админа" in user_text.lower():
+        try:
+            await app.send_message(
+                LIVE_SUPPORT_ID,
+                f"🆘 **ВНИМАНИЕ!** Хозяин, пользователю **{user_name}** ([`{user_id}`]) нужна твоя помощь!\n"
+                f"Он написал: {user_text[:200]}"
+            )
+        except Exception as e:
+            logging.error(f"❌ Не удалось уведомить админа {LIVE_SUPPORT_ID}: {e}")
+            # Пытаемся уведомить в группу, если ЛС закрыто
+            try:
+                await app.send_message(
+                    SUPPORT_GROUP_ID,
+                    f"🆘 **ВНИМАНИЕ!** Админ {LIVE_SUPPORT_ID}, проверь ЛС бота! Пользователю **{user_name}** нужна помощь.",
+                    reply_to_message_id=topic_id
+                )
+            except: pass
+            
+        await message.reply("🔔 Я передал твой запрос админу Paulie_Gualtiery. Он скоро заглянет в этот чат!")
+        return
+
+    # Обработка обычного сообщения через буфер (ИИ)
     image_b64 = None
     if message.photo:
         try:
@@ -476,18 +511,6 @@ async def handle_private_message(client: Client, message: Message):
                 f"📩 **{user_name}** ([ID {user_id}]): {user_text}",
                 reply_to_message_id=topic_id
             )
-        
-        # Обработка /help (Вызов админа)
-        if user_text and ("/help" in user_text.lower() or "позвать админа" in user_text.lower()):
-            await app.send_message(
-                LIVE_SUPPORT_ID,
-                f"🆘 **ВНИМАНИЕ!** Хозяин, зайди в Telegram X (аккаунт саппорта).\n"
-                f"Пользователю **{user_name}** ([`{user_id}`]) нужна твоя помощь!\n"
-                f"Он написал: {user_text[:200]}"
-            )
-            await app.send_message(user_id, "🔔 Я передал твой запрос админу Paulie_Gualtiery. Он скоро заглянет в этот чат!")
-            return
-
         await msg_buffer.add(user_id, topic_id, user_text, image_b64, final_callback)
 
 
