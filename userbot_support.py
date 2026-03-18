@@ -229,8 +229,8 @@ async def get_ai_response(user_id, user_text, image_b64=None):
     vision_model = "llama-3.2-11b-vision-preview" 
     text_model = "llama-3.1-8b-instant"        
     
-    # Загружаем глубокую историю (берем последние 50 сообщений для полного контекста)
-    history = get_history(user_id)[-50:]
+    # Загружаем оптимальную историю (берем последние 15 сообщений для стабильности лимитов Groq)
+    history = get_history(user_id)[-15:]
     
     try:
         model = vision_model if image_b64 else text_model
