@@ -40,7 +40,7 @@ API_HASH = os.getenv("TELEGRAM_API_HASH")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 SUPPORT_GROUP_ID = int(os.getenv("SUPPORT_GROUP_ID", "0"))  # ID супергруппы с топиками
 SUPPORT_BOT_TOKEN = os.getenv("SUPPORT_BOT_TOKEN")  # Токен от @BotFather
-LIVE_SUPPORT_ID = int(os.getenv("LIVE_SUPPORT_ID", "8037690809"))  # ID живой поддержки
+LIVE_SUPPORT_ID = int(os.getenv("LIVE_SUPPORT_ID", "5644074141"))  # ID Paulie Gualtieri по умолчанию
 
 if not all([API_ID, API_HASH, GROQ_API_KEY, SUPPORT_GROUP_ID, SUPPORT_BOT_TOKEN]):
     logging.error("❌ Отсутствуют необходимые ключи: TELEGRAM_API_ID, TELEGRAM_API_HASH, GROQ_API_KEY, SUPPORT_GROUP_ID, SUPPORT_BOT_TOKEN")
@@ -441,20 +441,24 @@ async def handle_private_message(client: Client, message: Message):
     Когда пользователь пишет юзерботу в личку —
     создаём топик в группе и перенаправляем туда.
     """
+    user_text = message.text or message.caption or ""
     user = message.from_user
     user_id = user.id
     user_name = user.username or user.first_name or str(user_id)
     
     # Проверяем тип из /start
     user_type = "user"
-    if message.text and message.text.startswith("/start "):
-        parts = message.text.split(" ", 1)
+    if user_text.startswith("/start "):
+        parts = user_text.split(" ", 1)
         if len(parts) > 1:
             user_type = parts[1].strip()
 
+    logging.info(f"📩 Входящее сообщение от {user_id} ({user_name}): {user_text[:50]}...")
+    
     try:
         topic_id = await ensure_user_topic(user_id, user_name, user_type)
-    except Exception:
+    except Exception as e:
+        logging.error(f"❌ Ошибка создания темы для {user_id}: {e}")
         await message.reply("⚠️ Не удалось создать тему. Попробуй позже.")
         return
 
@@ -462,15 +466,16 @@ async def handle_private_message(client: Client, message: Message):
     user_text = message.text or message.caption or ""
     key = str(user_id)
     if user_text.startswith("/start"):
+        # Приветствие всегда
+        await message.reply(
+            f"🐙 Привет, **{user_name}**! Я твой персональный ИИ-ассистент OctoRent.\n\n"
+            "Задавай любые вопросы — я здесь, чтобы помочь. Если возникнет сложный баг, я позову техподдержку.\n"
+            "Также ты можешь вызвать человека командой /help."
+        )
         if user_topics.get(key, {}).get("notified") is not True:
-            await message.reply(
-                f"🐙 Привет, **{user_name}**! Я твой персональный ИИ-ассистент OctoRent.\n\n"
-                "Задавай любые вопросы — я здесь, чтобы помочь. Если возникнет сложный баг, я позову техподдержку.\n"
-                "Также ты можешь вызвать человека командой /help."
-            )
             user_topics[key]["notified"] = True
             save_topics(user_topics)
-        return # Важно: на /start ИИ не отвечаем
+        return 
 
     # Команда /help (Вызов админа)
     if "/help" in user_text.lower() or "позвать админа" in user_text.lower():
@@ -670,8 +675,6 @@ async def start_bot():
     await app.stop()
 
 if __name__ == "__main__":
-    # Фиксируем твой ID для уведомлений
-    LIVE_SUPPORT_ID = 8037690809
     logging.info("🚀 Запуск OctoRent Support v6 (Smart Bridge)...")
     logging.info(f"🆘 Живая поддержка ID: {LIVE_SUPPORT_ID}")
     
