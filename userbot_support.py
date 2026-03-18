@@ -269,7 +269,7 @@ async def get_ai_response(user_id, user_text, image_b64=None):
     """Запрос к Groq с учетом истории сообщений пользователя."""
     # Для бесплатного лимита 10к сообщений/день лучше всего подходит 8B Instant
     # У неё самый высокий RPD (Requests Per Day) на Groq — около 14,400.
-    vision_model = "llama-3.2-11b-vision-preview" 
+    vision_model = "llama-3.2-11b-vision" 
     text_model = "llama-3.1-8b-instant"        
     
     # Загружаем оптимальную историю (берем последние 15 сообщений для стабильности лимитов Groq)
