@@ -28,6 +28,12 @@ if not TOKENS:
 OWNER_WALLET = os.getenv("OWNER_WALLET", "UQAotn3cT26kUKW5wSpP9dYKxwEQQ0qffDB24HGzuBrJ5PFB")
 PROXY_URL = os.getenv("PROXY_URL")
 PORT = 8001 
+# Настройка логов
+logging.basicConfig(
+    level=logging.WARNING,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[logging.StreamHandler()]
+)
 import database as db
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")

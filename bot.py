@@ -27,7 +27,7 @@ if sys.platform == "win32":
 
 # Конфигурация
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.WARNING,
     format="%(asctime)s [%(levelname)s] %(message)s",
     handlers=[
         logging.FileHandler("bot_debug.log", encoding='utf-8'),

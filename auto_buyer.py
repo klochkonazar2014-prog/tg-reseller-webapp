@@ -35,14 +35,28 @@ MARKET_TOKENS = [
 PROXY_URL = os.getenv("PROXY_URL")
 TONCENTER_API_KEY = os.getenv("TONCENTER_API_KEY")
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-PROFIT_CHANNEL_ID = os.getenv("PROFIT_CHANNEL_ID")  # ID канала для уведомлений о продажах
-
+LOG_CHANNEL_ID = os.getenv("LOG_CHANNEL_ID") or os.getenv("PROFIT_CHANNEL_ID")
+SUPPORT_BOT_TOKEN = os.getenv("SUPPORT_BOT_TOKEN")
 
 logging.basicConfig(
-    level=logging.INFO, 
+    level=logging.WARNING, 
     format='%(asctime)s - [AUTO-BUYER] - %(message)s',
     handlers=[logging.StreamHandler(sys.stdout)]
 )
+
+async def send_telegram_log(message: str):
+    """Отправляет критический лог в Telegram-канал для логов"""
+    if not SUPPORT_BOT_TOKEN or not LOG_CHANNEL_ID:
+        return
+    try:
+        async with aiohttp.ClientSession() as session:
+            await session.post(
+                f"https://api.telegram.org/bot{SUPPORT_BOT_TOKEN}/sendMessage",
+                json={"chat_id": LOG_CHANNEL_ID, "text": f"🚨 [AUTO-BUYER]\n{message}", "parse_mode": "HTML"}
+            )
+    except Exception as e:
+        # В случае ошибки отправки в ТГ — пишем в обычный лог
+        logging.error(f"❌ Ошибка отправки лога в Telegram: {e}")
 
 
 # Глобальный набор для предотвращения двойной обработки одного и того же заказа
@@ -159,7 +173,9 @@ async def process_payment(order):
         # 1. Получаем оригинал из БД, чтобы знать цену
         item = await db.get_item_by_id_addr(order['nft_address'])
         if not item:
-            logging.error(f"NFT {order['nft_address']} не найден в базе данных.")
+            err_msg = f"❌ NFT {order['nft_address']} не найден в базе данных."
+            logging.error(err_msg)
+            await send_telegram_log(err_msg)
             return
 
         # Для API MarketApp всегда используем ОРИГИНАЛЬНУЮ цену из базы,
@@ -183,6 +199,8 @@ async def process_payment(order):
                     await conn.execute("UPDATE items SET status = 'rented' WHERE nft_address = ?", (order['nft_address'],))
                     await conn.commit()
                 logging.info(f"⚠️ NFT {order['nft_address']} помечен как rented (API error/Too late)")
+            else:
+                await send_telegram_log(f"⚠️ Не удалось получить токен сессии для заказа #{order['id']}.\nNFT: {order['nft_address']}")
             return
 
         # 3. Сохраняем токен в БД
@@ -258,7 +276,9 @@ async def process_payment(order):
                     logging.error(f"❌ Ошибка инициализации кошелька по SEED: {e_seed}")
 
             if not wallet:
-                logging.error(f"❌ Не удалось инициализировать кошелек для #{order['id']}. Проверьте OWNER_HEX_KEY и OWNER_SEED.")
+                err_msg = f"❌ Не удалось инициализировать кошелек для #{order['id']}. Проверьте OWNER_HEX_KEY и OWNER_SEED."
+                logging.error(err_msg)
+                await send_telegram_log(err_msg)
                 return
 
             logging.info(f"💳 Кошелек бота: {wallet.address.to_str(is_bounceable=False)}")
@@ -321,7 +341,9 @@ async def process_payment(order):
                 logging.warning(f"⚠️ Не дождались подтверждения транзакции для #{order['id']}, но продолжаем.")
 
         except Exception as e:
-            logging.error(f"❌ Ошибка блокчейна для #{order_id}: {e}")
+            err_msg = f"❌ Ошибка блокчейна для #{order_id}: {e}"
+            logging.error(err_msg)
+            await send_telegram_log(err_msg)
             return
 
     except Exception as e:
@@ -343,7 +365,10 @@ async def process_payment(order):
             (refund_scheduled_at, order_id)
         )
         await conn.commit()
-    logging.info(f"🔒 Транзакция выполнена, статус изменен на 'rented' для #{order_id} (возврат запланирован на {refund_scheduled_at})")
+    
+    success_msg = f"✅ <b>Транзакция выполнена!</b>\nЗаказ: <code>#{order_id}</code>\nПредмет: {order['nft_name']}\nСтатус: <b>rented</b>"
+    logging.warning(success_msg.replace("<b>", "").replace("</b>", "")) # Пишем в лог на уровне WARNING чтобы попало в файл
+    await send_telegram_log(success_msg)
 
     # 6. ЕСЛИ ССЫЛКА УЖЕ ЕСТЬ В БД (пользователь ввел заранее), ПРИВЯЗЫВАЕМ ЕЁ
     current_order = await db.get_order_by_id(order_id)
@@ -366,6 +391,7 @@ async def process_payment(order):
                             break
                         await asyncio.sleep(10)
             if tc_linked:
+                await send_telegram_log(f"🔗 <b>TonConnect привязан!</b>\nЗаказ: #{order_id}")
                 await send_profit_notification(dict(order), item)
         except Exception as e:
             logging.error(f"❌ Ошибка авто-привязки ссылки: {e}")
