@@ -532,6 +532,120 @@ async def handle_create_cloudtips_invoice(request):
         logging.error(f"Error creating CloudTips invoice: {e}")
         return web.json_response({"error": str(e)}, status=500)
 
+async def handle_create_tribute_invoice(request):
+    """Генерация счета через Tribute Shop API"""
+    try:
+        data = await request.json()
+        nft_address = data.get('nft_address')
+        days = int(data.get('days', 1))
+        
+        user_id = get_authenticated_user_id(request)
+        if not user_id: return web.json_response({"error": "Unauthorized"}, status=401)
+        
+        # 1. Создаем заказ в БД
+        res, err = await create_rental_order(user_id, nft_address, days)
+        if err: return web.json_response({"error": err}, status=404)
+        
+        order_id = res['order_id']
+        total_ton = res['total_price']
+        
+        # 2. Получаем название товара
+        nft_name = "Аренда подарка"
+        try:
+            async with db.aiosqlite.connect(db.DB_PATH) as conn:
+                conn.row_factory = db.aiosqlite.Row
+                async with conn.execute("SELECT title FROM items WHERE nft_address = ?", (nft_address,)) as cur:
+                    row = await cur.fetchone()
+                    if row and row['title']: nft_name = f"Аренда: {row['title']}"
+        except: pass
+
+        # 3. Курс и расчет в копейках
+        rates = await fetch_fiat_rates()
+        ton_rub = rates.get('RUB', 230)
+        fiat_amount_rub = round(total_ton * ton_rub * 1.05, 2)
+        if fiat_amount_rub < 100: fiat_amount_rub = 100 # Минимум Tribute
+        amount_kopecks = int(fiat_amount_rub * 100)
+        
+        # 4. Запрос к Tribute API
+        api_key = os.getenv("TRIBUTE_API_KEY")
+        if not api_key: return web.json_response({"error": "Tribute API key not configured"}, status=500)
+        
+        url = "https://tribute.tg/api/v1/shop/orders"
+        headers = {"Api-Key": api_key, "Content-Type": "application/json"}
+        payload = {
+            "amount": amount_kopecks,
+            "currency": "rub",
+            "title": nft_name[:100],
+            "description": f"Аренда на {days} дн. (Заказ #{order_id})",
+            "customerId": str(user_id),
+            "comment": f"order_id:{order_id}", # Используем комментарий для трекинга
+            "successUrl": os.getenv("WEB_APP_URL", "") + "/?status=success",
+            "failUrl": os.getenv("WEB_APP_URL", "") + "/?status=fail"
+        }
+        
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, headers=headers, json=payload, timeout=15) as resp:
+                result = await resp.json()
+                if resp.status == 200:
+                    tribute_uuid = result.get("uuid")
+                    payment_url = result.get("webappPaymentUrl") or result.get("paymentUrl")
+                    
+                    # Обновляем заказ в БД
+                    async with db.aiosqlite.connect(db.DB_PATH) as conn:
+                        await conn.execute(
+                            "UPDATE orders SET payment_gateway = 'tribute', external_id = ?, fiat_amount = ? WHERE id = ?",
+                            (tribute_uuid, fiat_amount_rub, order_id)
+                        )
+                        await conn.commit()
+                        
+                    return web.json_response({"status": "ok", "order_id": order_id, "payment_url": payment_url})
+                else:
+                    logging.error(f"Tribute API Error: {resp.status} - {result}")
+                    return web.json_response({"error": "Failed to create Tribute invoice"}, status=500)
+                    
+    except Exception as e:
+        import traceback
+        logging.error(f"Error in handle_create_tribute_invoice: {traceback.format_exc()}")
+        return web.json_response({"error": str(e)}, status=500)
+
+async def handle_tribute_webhook(request):
+    """Обработчик вебхуков Tribute Shop API"""
+    try:
+        body = await request.read()
+        sig = request.headers.get("trbt-signature")
+        api_key = os.getenv("TRIBUTE_API_KEY")
+        
+        if not sig or not api_key:
+            return web.Response(text="Missing signature or key", status=400)
+            
+        # Верификация сигнатуры (HMAC-SHA256)
+        expected_sig = hmac.new(api_key.encode(), body, hashlib.sha256).hexdigest()
+        if sig != expected_sig:
+            logging.warning(f"Invalid Tribute signature: expected {expected_sig}, got {sig}")
+            return web.Response(text="Invalid signature", status=403)
+            
+        data = json.loads(body)
+        event_name = data.get("name")
+        payload = data.get("payload", {})
+        
+        if event_name == "Shop Order" and payload.get("status") == "paid":
+            tribute_uuid = payload.get("uuid")
+            # Ищем заказ по external_id (куда мы сохранили uuid)
+            async with db.aiosqlite.connect(db.DB_PATH) as conn:
+                conn.row_factory = db.aiosqlite.Row
+                async with conn.execute("SELECT id FROM orders WHERE external_id = ?", (tribute_uuid,)) as cur:
+                    order = await cur.fetchone()
+                    if order:
+                        await db.update_order_status(order['id'], "paid")
+                        logging.info(f"Order {order['id']} PAID via Tribute (UUID: {tribute_uuid})")
+                    else:
+                        logging.warning(f"Tribute paid order {tribute_uuid} not found in local DB")
+                        
+        return web.Response(text="OK")
+    except Exception as e:
+        logging.error(f"Tribute Webhook Error: {e}")
+        return web.Response(text="Error", status=500)
+
 async def handle_get_usdt_payload(request):
     """
     Generates a Jetton Transfer payload for USDT payment via TonConnect.
@@ -1311,12 +1425,14 @@ app.add_routes([
     web.post('/api/create_fiat_invoice', handle_create_fiat_invoice),
     web.post('/api/create_bot_invoice', handle_create_bot_invoice),
     web.post('/api/create_cloudtips_invoice', handle_create_cloudtips_invoice),
+    web.post('/api/create_tribute_invoice', handle_create_tribute_invoice),
     web.get('/api/get_usdt_payload', handle_get_usdt_payload),
     web.get('/api/bot_balance', handle_get_bot_balance),
     web.get('/api/operator_contacts', handle_operator_contacts),
     web.post('/api/webhooks/freekassa', handle_freekassa_webhook),
     web.post('/api/webhooks/xrocket', handle_xrocket_webhook),
     web.post('/api/webhooks/cloudtips', handle_cloudtips_webhook),
+    web.post('/api/webhooks/tribute', handle_tribute_webhook),
 ])
 
 

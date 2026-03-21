@@ -822,7 +822,21 @@
                             </div>
                         </div>
 
-                        <div id="pay-method-cloudtips" class="pay-method-card active" onclick="selectPayMethod('CLOUDTIPS')">
+                        <div id="pay-method-tribute" class="pay-method-card active" onclick="selectPayMethod('TRIBUTE')">
+                            <div class="pm-check"></div>
+                            <div class="pm-info">
+                                <div class="pm-header">
+                                    <div class="pm-name" data-i18n="card_rf_sbp">Карта РФ / СБП</div>
+                                    <div class="pay-method-badge" style="background: rgba(0, 212, 136, 0.1); color: #00d488;" data-i18n="no_network_fee">Без комиссии сети</div>
+                                </div>
+                                <div class="pm-row-bottom">
+                                    <div class="pm-desc">Оплата через Tribute</div>
+                                    <div class="pm-price"><span id="pay-price-tribute">0</span> ₽</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="pay-method-cloudtips" class="pay-method-card" onclick="selectPayMethod('CLOUDTIPS')" style="display: none;">
                             <div class="pm-check"></div>
                             <div class="pm-info">
                                 <div class="pm-header">
