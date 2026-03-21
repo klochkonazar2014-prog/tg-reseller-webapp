@@ -413,7 +413,7 @@ const TRANSLATIONS = {
         xrocket_fee: "комиссия за вывод 0.1 ТОН",
         xrocket_desc: "Оплата тоном через xRocket",
         amount_too_small: "Сумма слишком мала",
-        min_card_payment: "Минимальный платеж картой — <b>49 ₽</b>. Пожалуйста, выберите товар подороже или увеличьте срок аренды.",
+        min_card_payment: "Минимальный платеж картой — <b>{min} ₽</b>. Пожалуйста, выберите товар подороже или увеличьте срок аренды.",
         card_rf_sbp: "Карта РФ / СБП",
         no_network_fee: "Без комиссии сети",
         cloudtips_desc: "Мгновенная оплата через CloudTips",
@@ -696,7 +696,7 @@ const TRANSLATIONS = {
         xrocket_fee: "withdrawal fee 0.1 TON",
         xrocket_desc: "Pay with TON via xRocket",
         amount_too_small: "Amount too small",
-        min_card_payment: "Minimum card payment is <b>49 ₽</b>. Please select a more expensive item or increase the rental period.",
+        min_card_payment: "Minimum card payment is <b>{min} ₽</b>. Please select a more expensive item or increase the rental period.",
         card_rf_sbp: "RF Card / SBP",
         no_network_fee: "No network fee",
         cloudtips_desc: "Instant payment via CloudTips",
@@ -2994,26 +2994,33 @@ function updateTotalPrice() {
     if (payPriceCb) payPriceCb.innerText = botTotal;
     if (payPriceXr) payPriceXr.innerText = botTotal;
 
+    const payPriceTribute = document.getElementById('pay-price-tribute');
     const payPriceRub = document.getElementById('pay-price-rub');
     const cardWarning = document.getElementById('card-limit-warning');
-    const cardMethod = document.getElementById('pay-method-cloudtips');
+    const cardMethodCT = document.getElementById('pay-method-cloudtips');
+    const cardMethodTR = document.getElementById('pay-method-tribute');
 
-    if (payPriceRub) {
+    if (payPriceRub || payPriceTribute) {
         if (FIAT_RATES.RUB) {
             // Считаем как бэкенд: rental + 0.2 TON gas, потом курс * 1.05
             const tonForCard = parseFloat(total) + 0.2;
             let rubVal = Math.round(tonForCard * FIAT_RATES.RUB * FIAT_FEE_MULTIPLIER);
-            payPriceRub.innerText = rubVal;
+            
+            if (payPriceRub) payPriceRub.innerText = rubVal;
+            if (payPriceTribute) payPriceTribute.innerText = rubVal;
 
-            if (rubVal < 49) {
+            const minVal = SELECTED_PAY_METHOD === 'TRIBUTE' ? 100 : 49;
+            if (rubVal < minVal) {
                 if (cardWarning) cardWarning.style.display = 'flex';
-                if (cardMethod) cardMethod.style.display = 'flex'; // видна, но кнопка disabled
+                // Dynamic update of warning text
+                const warningTextNode = document.querySelector('[data-i18n="min_card_payment"]');
+                if (warningTextNode) warningTextNode.innerHTML = t('min_card_payment', { min: minVal });
             } else {
                 if (cardWarning) cardWarning.style.display = 'none';
-                if (cardMethod) cardMethod.style.display = 'flex';
             }
         } else {
-            payPriceRub.innerText = '...';
+            if (payPriceRub) payPriceRub.innerText = '...';
+            if (payPriceTribute) payPriceTribute.innerText = '...';
         }
     }
 
