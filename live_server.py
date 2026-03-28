@@ -30,7 +30,7 @@ PROXY_URL = os.getenv("PROXY_URL")
 PORT = 8001 
 # Настройка логов
 logging.basicConfig(
-    level=logging.WARNING,
+    level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
     handlers=[logging.StreamHandler()]
 )
@@ -569,6 +569,7 @@ async def handle_create_tribute_invoice(request):
         # 4. Запрос к Tribute API
         api_key = os.getenv("TRIBUTE_API_KEY")
         if not api_key: return web.json_response({"error": "Tribute API key not configured"}, status=500)
+        api_key = api_key.strip()
         
         url = "https://tribute.tg/api/v1/shop/orders"
         headers = {"Api-Key": api_key, "Content-Type": "application/json"}
@@ -598,10 +599,15 @@ async def handle_create_tribute_invoice(request):
                         )
                         await conn.commit()
                         
+                    logging.info(f"Tribute invoice created: {payment_url} (UUID: {tribute_uuid})")
                     return web.json_response({"status": "ok", "order_id": order_id, "payment_url": payment_url})
                 else:
-                    logging.error(f"Tribute API Error: {resp.status} - {result}")
-                    return web.json_response({"error": "Failed to create Tribute invoice"}, status=500)
+                    try:
+                        error_detail = await resp.text()
+                    except:
+                        error_detail = str(result)
+                    logging.error(f"Tribute API Error: {resp.status} - {error_detail}")
+                    return web.json_response({"error": f"Failed to create Tribute invoice: {resp.status}"}, status=500)
                     
     except Exception as e:
         import traceback

@@ -238,6 +238,15 @@ async def refresh_all_rented_items(session):
              logging.info(f"[BG] Verified {processed}/{total} rented items...")
         await asyncio.sleep(0.5)
 
+async def run_refresh_rented_loop(session):
+    logging.info("[BG] Starting Rented Items Refresh Loop")
+    while True:
+        try:
+            await refresh_all_rented_items(session)
+        except Exception as e:
+            logging.error(f"[BG] Error in rented refresh loop: {e}")
+        await asyncio.sleep(600) # Проверяем каждые 10 минут
+
 
 async def run_history_sync(session):
     logging.info("[BG-History] Starting History Sync Loop")
@@ -566,7 +575,8 @@ async def main_loop():
         await asyncio.gather(
             run_history_sync(session),
             run_refund_worker(),
-            run_cloudtips_worker()
+            run_cloudtips_worker(),
+            run_refresh_rented_loop(session)
         )
 
 
