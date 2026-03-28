@@ -277,6 +277,53 @@ async def sync_token_page(session, item_type, cursor=None):
     next_cursor = data.get('cursor') or data.get('next_cursor')
     return next_cursor, total_processed
 
+async def refresh_all_rented_items(session):
+    """Checks every rented item in our DB to see if it's back to 'available' on the marketplace"""
+    logging.info("[BG] Refreshing RENTED items statuses & timers...")
+    async with db.aiosqlite.connect(db.DB_PATH, timeout=60.0) as conn:
+        conn.row_factory = db.aiosqlite.Row
+        async with conn.execute("SELECT * FROM items WHERE status = 'rented'") as cursor:
+            rented = await cursor.fetchall()
+    
+    total = len(rented)
+    if total == 0: return
+
+    chunk_size = 10
+    for i in range(0, total, chunk_size):
+        batch = rented[i:i+chunk_size]
+        tasks = [fetch_api(session, f"/nfts/{item['nft_address']}/") for item in batch]
+        results = await asyncio.gather(*tasks)
+        
+        for item, details in zip(batch, results):
+            if not details: continue
+            status = details.get("status")
+            end_time = details.get("status_details", {}).get("end_time")
+            
+            if status == 'rented' and end_time:
+                await db.sync_item(
+                     nft_address=item['nft_address'], 
+                     item_type=item['type'], 
+                     title=item['title'], 
+                     status='rented', 
+                     rent_ends_at=end_time
+                )
+            elif status == 'for_rent':
+                await db.sync_item(
+                     nft_address=item['nft_address'], 
+                     item_type=item['type'], 
+                     title=item['title'], 
+                     status='available'
+                )
+            elif status in ['not_for_sale', 'expired', 'available']: 
+                # If marketplace says available/exp/nfs, but not 'for_rent', mark it as awaiting_relist
+                await db.sync_item(
+                     nft_address=item['nft_address'], 
+                     item_type=item['type'], 
+                     title=item['title'], 
+                     status='awaiting_relist'
+                )
+        await asyncio.sleep(0.5)
+
 async def sync_my_rented(session):
     """Fetches items rented by the bot to track end_time and status"""
     # logging.info("--- [ MY RENTED ] Syncing items ---")
@@ -579,10 +626,13 @@ async def main_loop():
                     if total_cat_synced > 0:
                         logging.info(f"Done syncing {cat}: {total_cat_synced} items total.")
 
-                # 2. Sync OUR rented items (to update timers/status locally)
+                # 2. Sync OUR rented items
                 await sync_my_rented(session)
                 
-                # 3. Discover globally rented items (to mark them as rented in DB if we missed the transition)
+                # 2.5 Refresh ALL rented items (including global ones)
+                await refresh_all_rented_items(session)
+                
+                # 3. Discover globally rented items
                 # We only check recent history for this in the parser
                 await discover_rented_items(session, cycle_start_str)
                 
