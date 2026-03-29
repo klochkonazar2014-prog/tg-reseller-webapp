@@ -14,7 +14,7 @@ console.log("Using backend:", BACKEND_URL);
 const MY_MARKUP = 0.20;
 const FIAT_FEE_MULTIPLIER = 1.05; // +5% commission for bank transfer
 const MANIFEST_URL = BACKEND_URL + "/tonconnect-manifest.json";
-let SELECTED_PAY_METHOD = 'TRIBUTE';
+let SELECTED_PAY_METHOD = 'TON';
 let OPERATOR_CONTACTS = { admin: "@nerksqq", coder: "@Paulie_Gualtiery", support: "@Octorent_Support_bot" };
 
 async function getOperatorContacts() {
@@ -2994,22 +2994,19 @@ function updateTotalPrice() {
     if (payPriceCb) payPriceCb.innerText = botTotal;
     if (payPriceXr) payPriceXr.innerText = botTotal;
 
-    const payPriceTribute = document.getElementById('pay-price-tribute');
     const payPriceRub = document.getElementById('pay-price-rub');
     const cardWarning = document.getElementById('card-limit-warning');
     const cardMethodCT = document.getElementById('pay-method-cloudtips');
-    const cardMethodTR = document.getElementById('pay-method-tribute');
 
-    if (payPriceRub || payPriceTribute) {
+    if (payPriceRub) {
         if (FIAT_RATES.RUB) {
             // Считаем как бэкенд: rental + 0.2 TON gas, потом курс * 1.05
             const tonForCard = parseFloat(total) + 0.2;
             let rubVal = Math.round(tonForCard * FIAT_RATES.RUB * FIAT_FEE_MULTIPLIER);
             
             if (payPriceRub) payPriceRub.innerText = rubVal;
-            if (payPriceTribute) payPriceTribute.innerText = rubVal;
 
-            const minVal = SELECTED_PAY_METHOD === 'TRIBUTE' ? 100 : 49;
+            const minVal = 49;
             if (rubVal < minVal) {
                 if (cardWarning) cardWarning.style.display = 'flex';
                 // Dynamic update of warning text
@@ -3020,7 +3017,6 @@ function updateTotalPrice() {
             }
         } else {
             if (payPriceRub) payPriceRub.innerText = '...';
-            if (payPriceTribute) payPriceTribute.innerText = '...';
         }
     }
 
@@ -4088,14 +4084,14 @@ function updateMethodTotal(baseTotal) {
     if (amountWarning) amountWarning.style.display = 'none';
     if (feeWarning) feeWarning.style.display = isCoverFeeChecked ? 'flex' : 'none';
 
-        if (SELECTED_PAY_METHOD === 'CLOUDTIPS' || SELECTED_PAY_METHOD === 'TRIBUTE') {
+        if (SELECTED_PAY_METHOD === 'CLOUDTIPS') {
             const tonForCard = base + 0.2 + (isCoverFeeChecked ? 0.14 : 0);
             let rubVal = Math.round(tonForCard * FIAT_RATES.RUB * FIAT_FEE_MULTIPLIER);
             total = rubVal > 0 ? rubVal : '...';
             if (totalCurrencyEl) totalCurrencyEl.innerText = '₽';
             
-            const overLimit = SELECTED_PAY_METHOD === 'CLOUDTIPS' && typeof rubVal === 'number' && rubVal > 3000;
-            const belowMin = typeof rubVal === 'number' && rubVal < 100; // Tribute min 100 RUB
+            const overLimit = typeof rubVal === 'number' && rubVal > 3000;
+            const belowMin = typeof rubVal === 'number' && rubVal < 49; // CloudTips min 49 RUB
 
             if (overLimit && limitWarning) {
                 limitWarning.style.display = 'flex';
@@ -4175,8 +4171,6 @@ async function handleContinuePayment() {
         } else if (method === 'CLOUDTIPS') {
             // --- NEW STEP: Show Instructions first ---
             showCTInstructions(); 
-        } else if (method === 'TRIBUTE') {
-            await handleTributeRent();
         } else {
             showToast(t('select_payment_method'));
         }
@@ -4303,35 +4297,6 @@ async function handleCloudTipsRent() {
     }
 }
 
-async function handleTributeRent() {
-    if (!CURRENT_PAYMENT_ITEM) return;
-
-    const nft_address = CURRENT_PAYMENT_ITEM.nft_address;
-    const days = parseInt(document.getElementById('rent-duration-input').value) || 1;
-
-    try {
-        showToast(t('invoice_creating'));
-        const res = await apiFetch(`${BACKEND_URL}/api/create_tribute_invoice`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nft_address, days })
-        });
-        const data = await res.json();
-
-        if (data.payment_url) {
-            // Tribute URL usually starts with https://tribute.tg/s/...
-            // Since it's a Telegram WebApp payment, we can try openTelegramLink if it's a t.me link
-            // but Tribute usually gives a direct URL to their webapp.
-            tg.openLink(data.payment_url);
-            showToast(t('redirecting_to_pay'));
-        } else {
-            tg.showAlert(t('invoice_error', { msg: (data.error || t('error')) }));
-        }
-    } catch (e) {
-        console.error("Tribute error:", e);
-        tg.showAlert(t('network_error_server'));
-    }
-}
 
 function handleChangeWallet() {
     tonConnectUI.disconnect().then(() => {
@@ -4349,7 +4314,7 @@ function showBlockchainFeeDetails(e) {
 
     const body = document.getElementById('fee-details-body');
     
-    if (SELECTED_PAY_METHOD === 'CLOUDTIPS' || SELECTED_PAY_METHOD === 'TRIBUTE') {
+    if (SELECTED_PAY_METHOD === 'CLOUDTIPS') {
         body.innerHTML = `
             <div style="font-size: 14px; line-height: 1.6; color: #fff;">
                 <p style="color: #fff; font-weight: 700; margin-bottom: 12px; font-size: 15px;">${t('fee_details_rub_title')}</p>
