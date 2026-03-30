@@ -556,10 +556,9 @@ async def handle_create_lavatop_invoice(request):
             return web.json_response({"error": "Unauthorized"}, status=401)
 
         api_key    = os.getenv("LAVATOP_API_KEY", "")
-        offer_id   = os.getenv("LAVATOP_OFFER_ID", "")    # UUID оффера внутри продукта
         product_id = os.getenv("LAVATOP_PRODUCT_ID", "")  # UUID продукта
 
-        if not api_key or not offer_id or not product_id:
+        if not api_key or not product_id:
             return web.json_response({"error": "Lava.top not configured"}, status=500)
 
         # 1. Создаём заказ в нашей БД
