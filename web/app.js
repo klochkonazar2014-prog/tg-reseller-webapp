@@ -13,6 +13,7 @@ console.log("Using backend:", BACKEND_URL);
 
 const MY_MARKUP = 0.20;
 const FIAT_FEE_MULTIPLIER = 1.05; // +5% commission for bank transfer
+const LAVATOP_MAX_RUB = 50000; // Lava.top practical limit per transaction
 const MANIFEST_URL = BACKEND_URL + "/tonconnect-manifest.json";
 let SELECTED_PAY_METHOD = 'TON';
 let OPERATOR_CONTACTS = { admin: "@nerksqq", coder: "@Paulie_Gualtiery", support: "@Octorent_Support_bot" };
@@ -2995,16 +2996,18 @@ function updateTotalPrice() {
     if (payPriceXr) payPriceXr.innerText = botTotal;
 
     const payPriceRub = document.getElementById('pay-price-rub');
+    const payPriceLava = document.getElementById('pay-price-lavatop');
     const cardWarning = document.getElementById('card-limit-warning');
     const cardMethodCT = document.getElementById('pay-method-cloudtips');
 
-    if (payPriceRub) {
+    if (payPriceRub || payPriceLava) {
         if (FIAT_RATES.RUB) {
             // Считаем как бэкенд: rental + 0.2 TON gas, потом курс * 1.05
             const tonForCard = parseFloat(total) + 0.2;
             let rubVal = Math.round(tonForCard * FIAT_RATES.RUB * FIAT_FEE_MULTIPLIER);
-            
+
             if (payPriceRub) payPriceRub.innerText = rubVal;
+            if (payPriceLava) payPriceLava.innerText = rubVal;
 
             const minVal = 49;
             if (rubVal < minVal) {
@@ -3017,6 +3020,7 @@ function updateTotalPrice() {
             }
         } else {
             if (payPriceRub) payPriceRub.innerText = '...';
+            if (payPriceLava) payPriceLava.innerText = '...';
         }
     }
 
@@ -4103,6 +4107,25 @@ function updateMethodTotal(baseTotal) {
                 continueBtn.style.opacity = isDisabled ? '0.4' : '1';
                 continueBtn.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
             }
+        } else if (SELECTED_PAY_METHOD === 'LAVATOP') {
+            const tonForCard = base + 0.2 + (isCoverFeeChecked ? 0.14 : 0);
+            let rubVal = Math.round(tonForCard * FIAT_RATES.RUB * FIAT_FEE_MULTIPLIER);
+            total = rubVal > 0 ? rubVal : '...';
+            if (totalCurrencyEl) totalCurrencyEl.innerText = '₽';
+
+            const overLimit = typeof rubVal === 'number' && rubVal > LAVATOP_MAX_RUB;
+            const belowMin = typeof rubVal === 'number' && rubVal < 50; // Lava.top min 50 RUB
+
+            if (overLimit && limitWarning) {
+                limitWarning.style.display = 'flex';
+            }
+
+            if (continueBtn) {
+                const isDisabled = belowMin || overLimit;
+                continueBtn.disabled = isDisabled;
+                continueBtn.style.opacity = isDisabled ? '0.4' : '1';
+                continueBtn.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
+            }
         } else {
         if (totalCurrencyEl) totalCurrencyEl.innerText = 'TON';
         const tonTotal = base + 0.2 + (isCoverFeeChecked ? 0.14 : 0);
@@ -4170,7 +4193,9 @@ async function handleContinuePayment() {
             await handleBotRent(method);
         } else if (method === 'CLOUDTIPS') {
             // --- NEW STEP: Show Instructions first ---
-            showCTInstructions(); 
+            showCTInstructions();
+        } else if (method === 'LAVATOP') {
+            await handleLavaTopRent();
         } else {
             showToast(t('select_payment_method'));
         }
@@ -4293,6 +4318,32 @@ async function handleCloudTipsRent() {
         }
     } catch (e) {
         console.error("CloudTips error:", e);
+        tg.showAlert(t('network_error_server'));
+    }
+}
+async function handleLavaTopRent() {
+    if (!CURRENT_PAYMENT_ITEM) return;
+
+    const nft_address = CURRENT_PAYMENT_ITEM.nft_address;
+    const days = parseInt(document.getElementById('rent-duration-input').value) || 1;
+
+    try {
+        showToast(t('invoice_creating'));
+        const res = await apiFetch(`${BACKEND_URL}/api/create_lavatop_invoice`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nft_address, days })
+        });
+        const data = await res.json();
+
+        if (data.payment_url) {
+            tg.openLink(data.payment_url);
+            showToast(t('redirecting_to_pay'));
+        } else {
+            tg.showAlert(t('invoice_error', { msg: (data.error || t('error')) }));
+        }
+    } catch (e) {
+        console.error("LavaTop error:", e);
         tg.showAlert(t('network_error_server'));
     }
 }

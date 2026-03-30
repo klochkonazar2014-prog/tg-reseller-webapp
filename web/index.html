@@ -200,13 +200,15 @@
                     <button class="step-plus" onclick="adjustDuration(1)">+</button>
                 </div>
                 <button id="main-rent-action-btn" class="main-rent-btn" style="flex: 1;" onclick="openPaymentModal()">
-                    <span data-i18n="rent_for">Арендовать за</span> <span id="rent-btn-price" class="icon-ton">0.00</span>
+                    <span data-i18n="rent_for">Арендовать за</span> <span id="rent-btn-price"
+                        class="icon-ton">0.00</span>
                 </button>
             </div>
 
             <div class="fee-notice-box"
                 style="margin-top: 16px; background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 12px; font-size: 11px; color: rgb(135, 148, 161); display: block;">
-                <span><span id="fee-notice-text" data-i18n="fee_notice_text">Вы отправляете небольшую сумму TON для покрытия комиссии сети и работы
+                <span><span id="fee-notice-text" data-i18n="fee_notice_text">Вы отправляете небольшую сумму TON для
+                        покрытия комиссии сети и работы
                         сервиса. Остаток будет возвращен вам автоматически.</span>
                     <a href="javascript:void(0)" onclick="showHelp('fee')"
                         style="color: #0088cc; text-decoration: none;" id="fee-what-mean" data-i18n="what_is_this">Что
@@ -215,17 +217,21 @@
 
             <div id="listing-warning-box"
                 style="display: none; margin-top: 16px; background: rgba(255, 149, 0, 0.1); border: 1px solid rgba(255, 149, 0, 0.2); border-radius: 12px; padding: 12px; font-size: 11px; color: #FF9500;">
-                <div style="font-weight: 700; margin-bottom: 2px;" data-i18n="listing_warning_title">Этот подарок был выставлен на аренду менее 24 часов назад.
+                <div style="font-weight: 700; margin-bottom: 2px;" data-i18n="listing_warning_title">Этот подарок был
+                    выставлен на аренду менее 24 часов назад.
                 </div>
-                <div><span data-i18n="listed_at">Выставлен:</span> <span id="view-listed-time">...</span> <a href="javascript:void(0)"
-                        onclick="showHelp('listing')" style="color: #FF9500; text-decoration: underline;" id="listing-what-mean" data-i18n="what_is_this">Что это значит?</a></div>
+                <div><span data-i18n="listed_at">Выставлен:</span> <span id="view-listed-time">...</span> <a
+                        href="javascript:void(0)" onclick="showHelp('listing')"
+                        style="color: #FF9500; text-decoration: underline;" id="listing-what-mean"
+                        data-i18n="what_is_this">Что это значит?</a></div>
             </div>
 
 
             <div id="view-properties-tabs" class="properties-tabs"
                 style="margin-top: 24px; border-bottom: 2px solid rgba(255,255,255,0.05); display: flex; gap: 20px;">
                 <div class="tab-item active" id="details-tab"
-                    style="color: #fff; font-weight: 700; font-size: 14px; padding-bottom: 8px; border-bottom: 2px solid var(--accent-blue); cursor: pointer;" data-i18n="details">
+                    style="color: #fff; font-weight: 700; font-size: 14px; padding-bottom: 8px; border-bottom: 2px solid var(--accent-blue); cursor: pointer;"
+                    data-i18n="details">
                     Детали</div>
             </div>
 
@@ -241,7 +247,8 @@
     <div id="tc-modal" class="filter-panel"
         style="height: auto; max-height: 90vh; bottom: 0; border-radius: 28px 28px 0 0;">
         <div class="modal-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding: 20px 24px;">
-            <h3 style="font-size: 18px; font-weight: 800; color: #fff;" data-i18n="connect_fragment_title">Подключить Fragment</h3>
+            <h3 style="font-size: 18px; font-weight: 800; color: #fff;" data-i18n="connect_fragment_title">Подключить
+                Fragment</h3>
             <button id="tc-modal-close-btn" onclick="closeTcModal()"
                 style="background:none; border:none; color:#8b9bb4; font-size:24px; cursor: pointer;">✕</button>
         </div>
@@ -257,7 +264,8 @@
         <div class="bottom-sheet-content" style="border-radius: 20px 20px 0 0;">
             <div class="bottom-sheet-header"
                 style="display: flex; justify-content: space-between; align-items: center; padding: 12px 20px;">
-                <h3 id="help-title" style="margin: 0; font-size: 18px; font-weight: 800;" data-i18n="what_is_this">Что это значит?</h3>
+                <h3 id="help-title" style="margin: 0; font-size: 18px; font-weight: 800;" data-i18n="what_is_this">Что
+                    это значит?</h3>
                 <button class="close-sheet-btn" onclick="closeHelp()"
                     style="background:none; border:none; color:#8b9bb4; font-size:24px; padding:0; cursor:pointer;">✕</button>
             </div>
@@ -360,15 +368,20 @@
                 <div class="filter-accordion-arrow">▼</div>
             </div>
             <div id="price-acc" class="accordion-content">
-                <div class="filter-input-row" style="padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                <div class="filter-input-row"
+                    style="padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
                     <div class="filter-input-wrapper" style="flex: 1;">
-                        <span class="icon-ton-white" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); opacity: 0.6;"></span>
-                        <input type="number" id="filter-price-from" placeholder="От" data-i18n="filter_price_from" style="padding-left: 42px !important;">
+                        <span class="icon-ton-white"
+                            style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); opacity: 0.6;"></span>
+                        <input type="number" id="filter-price-from" placeholder="От" data-i18n="filter_price_from"
+                            style="padding-left: 42px !important;">
                     </div>
                     <div style="color: rgba(255, 255, 255, 0.2); font-weight: 800; font-size: 18px;">—</div>
                     <div class="filter-input-wrapper" style="flex: 1;">
-                        <span class="icon-ton-white" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); opacity: 0.6;"></span>
-                        <input type="number" id="filter-price-to" placeholder="До" data-i18n="filter_price_to" style="padding-left: 42px !important;">
+                        <span class="icon-ton-white"
+                            style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); opacity: 0.6;"></span>
+                        <input type="number" id="filter-price-to" placeholder="До" data-i18n="filter_price_to"
+                            style="padding-left: 42px !important;">
                     </div>
                 </div>
             </div>
@@ -620,8 +633,7 @@
                 <div id="profile-label-history" class="service-text" data-i18n="profile_history">История аренды</div>
                 <div class="service-arrow">›</div>
             </div>
-            <div class="service-item"
-                onclick="handleSupportClick()">
+            <div class="service-item" onclick="handleSupportClick()">
                 <div class="service-icon" style="background: rgba(0, 136, 204, 0.1);">🆘</div>
                 <div id="profile-label-support" class="service-text" data-i18n="profile_support">Поддержка и FAQ</div>
                 <div class="service-arrow">›</div>
@@ -769,7 +781,8 @@
             <div id="payment-selection-view">
                 <div class="bottom-sheet-header"
                     style="display: flex; justify-content: space-between; align-items: center; padding: 12px 20px;">
-                    <h3 style="margin: 0; font-size: 18px; font-weight: 800;" data-i18n="select_payment_method">Выберите способ оплаты</h3>
+                    <h3 style="margin: 0; font-size: 18px; font-weight: 800;" data-i18n="select_payment_method">Выберите
+                        способ оплаты</h3>
                     <button class="close-sheet-btn" onclick="closePaymentModal()"
                         style="background:none; border:none; color:#8b9bb4; font-size:24px; padding:0; cursor:pointer;">✕</button>
                 </div>
@@ -802,7 +815,8 @@
                             <div class="pm-info">
                                 <div class="pm-header">
                                     <div class="pm-name">xRocket</div>
-                                    <div class="pay-method-badge" data-i18n="xrocket_fee">комиссия за вывод 0.1 ТОН</div>
+                                    <div class="pay-method-badge" data-i18n="xrocket_fee">комиссия за вывод 0.1 ТОН
+                                    </div>
                                 </div>
                                 <div class="pm-row-bottom">
                                     <div class="pm-desc" data-i18n="xrocket_desc">Оплата тоном через xRocket</div>
@@ -814,39 +828,66 @@
 
                     <!-- Card Tab Pane -->
                     <div id="pane-card" class="pay-tab-pane">
-                        <div id="card-limit-warning" style="display: none; background: rgba(255, 149, 0, 0.08); border: 1px solid rgba(255, 149, 0, 0.25); border-radius: 14px; padding: 14px 16px; margin-bottom: 12px; gap: 10px;">
+                        <div id="card-limit-warning"
+                            style="display: none; background: rgba(255, 149, 0, 0.08); border: 1px solid rgba(255, 149, 0, 0.25); border-radius: 14px; padding: 14px 16px; margin-bottom: 12px; gap: 10px;">
                             <span style="font-size: 20px;">⚠️</span>
                             <div>
-                                <div style="font-weight: 700; color: #FF9500; font-size: 13px; margin-bottom: 2px;" data-i18n="amount_too_small">Сумма слишком мала</div>
-                                <div style="font-size: 12px; color: #8b9bb4; line-height: 1.4;" data-i18n="min_card_payment">Минимальный платеж картой — <b>49 ₽</b>. Пожалуйста, выберите товар подороже или увеличьте срок аренды.</div>
+                                <div style="font-weight: 700; color: #FF9500; font-size: 13px; margin-bottom: 2px;"
+                                    data-i18n="amount_too_small">Сумма слишком мала</div>
+                                <div style="font-size: 12px; color: #8b9bb4; line-height: 1.4;"
+                                    data-i18n="min_card_payment">Минимальный платеж картой — <b>49 ₽</b>. Пожалуйста,
+                                    выберите товар подороже или увеличьте срок аренды.</div>
                             </div>
                         </div>
 
-                        <div id="pay-method-cloudtips" class="pay-method-card active" onclick="selectPayMethod('CLOUDTIPS')">
+                        <div id="pay-method-cloudtips" class="pay-method-card active"
+                            onclick="selectPayMethod('CLOUDTIPS')">
                             <div class="pm-check"></div>
                             <div class="pm-info">
                                 <div class="pm-header">
                                     <div class="pm-name" data-i18n="card_rf_sbp">Карта РФ / СБП</div>
-                                    <div class="pay-method-badge" style="background: rgba(0, 212, 136, 0.1); color: #00d488;" data-i18n="no_network_fee">Без комиссии сети</div>
+                                    <div class="pay-method-badge"
+                                        style="background: rgba(0, 212, 136, 0.1); color: #00d488;"
+                                        data-i18n="no_network_fee">Без комиссии сети</div>
                                 </div>
                                 <div class="pm-row-bottom">
-                                    <div class="pm-desc" data-i18n="cloudtips_desc">Мгновенная оплата через CloudTips</div>
+                                    <div class="pm-desc" data-i18n="cloudtips_desc">Мгновенная оплата через CloudTips
+                                    </div>
                                     <div class="pm-price"><span id="pay-price-rub">0</span> ₽</div>
                                 </div>
                             </div>
                         </div>
 
-                        <div style="margin-top: 12px; font-size: 11px; color: #8b9bb4; line-height: 1.4; padding: 0 4px;" data-i18n="card_fee_notice">
+                        <div id="pay-method-lavatop" class="pay-method-card" onclick="selectPayMethod('LAVATOP')">
+                            <div class="pm-check"></div>
+                            <div class="pm-info">
+                                <div class="pm-header">
+                                    <div class="pm-name">Карта РФ / СБП</div>
+                                    <div class="pay-method-badge"
+                                        style="background: rgba(255, 98, 0, 0.1); color: #FF6200;">Lava.top · до 50 000
+                                        ₽</div>
+                                </div>
+                                <div class="pm-row-bottom">
+                                    <div class="pm-desc">Оплата картой или СБП через Lava.top</div>
+                                    <div class="pm-price"><span id="pay-price-lavatop">0</span> ₽</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 12px; font-size: 11px; color: #8b9bb4; line-height: 1.4; padding: 0 4px;"
+                            data-i18n="card_fee_notice">
                             * Цена включает комиссию сервиса 5% за банковский перевод.
                         </div>
                     </div>
+
                 </div>
 
                 <div class="selection-view-footer">
                     <div class="payment-total-row">
                         <div class="ptr-label" data-i18n="total">Итого:</div>
                         <div class="ptr-value-wrapper">
-                            <div class="ptr-value"><span id="pay-total-amount">0.27</span> <span id="pay-total-currency">TON</span></div>
+                            <div class="ptr-value"><span id="pay-total-amount">0.27</span> <span
+                                    id="pay-total-currency">TON</span></div>
                             <div class="ptr-info-btn"
                                 onclick="showBlockchainFeeDetails(event); event.stopPropagation();">i</div>
                         </div>
@@ -854,15 +895,20 @@
 
                     <!-- NEW: Cover Fee & Limit Warnings -->
                     <div id="payment-warnings-container" style="margin-bottom: 15px;">
-                        <div id="cover-fee-warning" style="display: none; margin-bottom: 10px; background: rgba(255, 149, 0, 0.1); border: 1px solid rgba(255, 149, 0, 0.3); padding: 12px; border-radius: 12px; display: flex; align-items: flex-start; gap: 12px;">
-                            <img src="pictures/cover_fee_warning.png" style="width: 40px; height: 40px; border-radius: 8px; flex-shrink: 0; object-fit: cover;">
-                            <div style="color: #FF9500; font-size: 13px; line-height: 1.4;" data-i18n="cover_fee_warning">
+                        <div id="cover-fee-warning"
+                            style="display: none; margin-bottom: 10px; background: rgba(255, 149, 0, 0.1); border: 1px solid rgba(255, 149, 0, 0.3); padding: 12px; border-radius: 12px; display: flex; align-items: flex-start; gap: 12px;">
+                            <img src="pictures/cover_fee_warning.png"
+                                style="width: 40px; height: 40px; border-radius: 8px; flex-shrink: 0; object-fit: cover;">
+                            <div style="color: #FF9500; font-size: 13px; line-height: 1.4;"
+                                data-i18n="cover_fee_warning">
                                 Перед оплатой убедитесь, что данный ползунок отключен. Комиссия 5% уже включена в цену.
                             </div>
                         </div>
-                        <div id="cloudtips-limit-warning" style="display: none; background: rgba(255, 59, 48, 0.1); border: 1px solid rgba(255, 59, 48, 0.3); padding: 12px; border-radius: 12px; display: flex; align-items: center; gap: 10px;">
+                        <div id="cloudtips-limit-warning"
+                            style="display: none; background: rgba(255, 59, 48, 0.1); border: 1px solid rgba(255, 59, 48, 0.3); padding: 12px; border-radius: 12px; display: flex; align-items: center; gap: 10px;">
                             <span style="font-size: 20px;">🚫</span>
-                            <div style="color: #ff3b30; font-size: 13px; font-weight: 600;" data-i18n="limit_3000_warning">
+                            <div style="color: #ff3b30; font-size: 13px; font-weight: 600;"
+                                data-i18n="limit_3000_warning">
                                 Лимит оплаты картой — 3000 ₽. Пожалуйста, уменьшите срок аренды.
                             </div>
                         </div>
@@ -884,9 +930,11 @@
         <div class="modal-overlay" onclick="closeBlockchainFeeDetails()"></div>
         <div class="modal-content"
             style="padding: 24px; border-radius: 24px; background: #1c1c1e; border: 1px solid rgba(0, 136, 204, 0.4); width: 90%; max-width: 360px; max-height: 80vh; display: flex; flex-direction: column;">
-            <h3 style="font-size: 18px; margin-bottom: 12px; color: #fff; flex-shrink: 0;" data-i18n="about_network_fee">О комиссии сети</h3>
+            <h3 style="font-size: 18px; margin-bottom: 12px; color: #fff; flex-shrink: 0;"
+                data-i18n="about_network_fee">О комиссии сети</h3>
             <div id="fee-details-body"
-                style="font-size: 13px; color: #8b9bb4; line-height: 1.6; overflow-y: auto; flex: 1; padding-right: 4px;" data-i18n="network_fee_desc_default">
+                style="font-size: 13px; color: #8b9bb4; line-height: 1.6; overflow-y: auto; flex: 1; padding-right: 4px;"
+                data-i18n="network_fee_desc_default">
                 Сеть TON взимает небольшую оплату за каждую транзакцию.
             </div>
             <button class="blue-btn"
@@ -907,10 +955,12 @@
                         <span class="warning-emoji">⚠️</span>
                         <span data-i18n="ct_amount_no_change_title">Не изменяйте сумму!</span>
                     </div>
-                    <p class="ct-fragment-text" data-i18n="ct_amount_no_change_desc">Если вы оплатите меньше, чем указано в чеке, ваш заказ не будет зачислен автоматически.</p>
+                    <p class="ct-fragment-text" data-i18n="ct_amount_no_change_desc">Если вы оплатите меньше, чем
+                        указано в чеке, ваш заказ не будет зачислен автоматически.</p>
                 </div>
-                
-                <button id="ct-next-btn" class="main-rent-btn ct-btn-full" onclick="nextCTStep()" style="margin-top: 20px;" data-i18n="earnings_ok">
+
+                <button id="ct-next-btn" class="main-rent-btn ct-btn-full" onclick="nextCTStep()"
+                    style="margin-top: 20px;" data-i18n="earnings_ok">
                     Понятно
                 </button>
             </div>
@@ -918,7 +968,8 @@
             <!-- Step 2: Toggle & Photo -->
             <div id="ct-step-2" class="ct-instruction-step" style="display: none;">
                 <div class="ct-fragment-box">
-                    <p class="ct-fragment-text" data-i18n="ct_instruction_desc_new">Вы можете отключить этот ползунок, так как комиссия 5% уже включена в цену.</p>
+                    <p class="ct-fragment-text" data-i18n="ct_instruction_desc_new">Вы можете отключить этот ползунок,
+                        так как комиссия 5% уже включена в цену.</p>
                 </div>
 
                 <div class="ct-image-preview-box" onclick="zoomCTImage()">
@@ -926,7 +977,8 @@
                     <div class="zoom-hint-mini"><i class="fas fa-search-plus"></i></div>
                 </div>
 
-                <button id="ct-pay-btn" class="main-rent-btn ct-btn-full locked" onclick="finalCTOrder()" style="margin-top: 15px;">
+                <button id="ct-pay-btn" class="main-rent-btn ct-btn-full locked" onclick="finalCTOrder()"
+                    style="margin-top: 15px;">
                     <span class="btn-text" data-i18n="pay_button">Оплатить</span>
                     <span class="btn-timer">(1.5s)</span>
                 </button>
@@ -944,7 +996,8 @@
             </div>
             <div class="ct-fragment-box">
                 <div class="ct-fragment-text" id="insufficient-balance-desc" data-i18n="insufficient_bot_balance_desc">
-                    На кошельке бота недостаточно средств. Пожалуйста, обратитесь к Администратору с просьбой о пополнении кошелька бота.
+                    На кошельке бота недостаточно средств. Пожалуйста, обратитесь к Администратору с просьбой о
+                    пополнении кошелька бота.
                 </div>
             </div>
             <div class="ct-modal-footer" style="padding: 0 5px;">

@@ -518,7 +518,6 @@ async def handle_create_cloudtips_invoice(request):
         # Возврат к проверенному формату, так как fixed=true сбрасывает сумму на 50р
         int_fiat = int(fiat_amount)
         payment_url = f"https://pay.cloudtips.ru/p/{ct_id}?amount={int_fiat}&fixed=1&invoiceId={order_id}"
-        
         # Обновляем заказ
         async with db.aiosqlite.connect(db.DB_PATH) as conn:
             await conn.execute(
@@ -532,6 +531,201 @@ async def handle_create_cloudtips_invoice(request):
         logging.error(f"Error creating CloudTips invoice: {e}")
         return web.json_response({"error": str(e)}, status=500)
 
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# LAVA.TOP INTEGRATION
+# ─────────────────────────────────────────────────────────────────────────────
+
+LAVATOP_API_URL = "https://gate.lava.top"
+LAVATOP_MIN_RUB = 50  # Минимальная сумма в рублях
+
+# Блокировка для предотвращения гонки при обновлении цены оффера
+_lavatop_price_lock = asyncio.Lock()
+
+
+async def handle_create_lavatop_invoice(request):
+    """Создание инвойса Lava.top для оплаты аренды картой РФ / СБП"""
+    try:
+        data = await request.json()
+        nft_address = data.get('nft_address')
+        days = int(data.get('days', 1))
+
+        user_id = get_authenticated_user_id(request)
+        if not user_id:
+            return web.json_response({"error": "Unauthorized"}, status=401)
+
+        api_key    = os.getenv("LAVATOP_API_KEY", "")
+        offer_id   = os.getenv("LAVATOP_OFFER_ID", "")    # UUID оффера внутри продукта
+        product_id = os.getenv("LAVATOP_PRODUCT_ID", "")  # UUID продукта
+
+        if not api_key or not offer_id or not product_id:
+            return web.json_response({"error": "Lava.top not configured"}, status=500)
+
+        # 1. Создаём заказ в нашей БД
+        res, err = await create_rental_order(user_id, nft_address, days)
+        if err:
+            return web.json_response({"error": err}, status=404)
+
+        order_id  = res['order_id']
+        total_ton = res['total_price']
+
+        # 2. Считаем сумму в рублях с буфером 5% на волатильность курса
+        rates = await fetch_fiat_rates()
+        ton_rub = rates.get('RUB', 230)
+        fiat_amount = round(total_ton * ton_rub * 1.05, 2)
+        if fiat_amount < LAVATOP_MIN_RUB:
+            fiat_amount = float(LAVATOP_MIN_RUB)
+
+        headers = {
+            "X-Api-Key": api_key,
+            "Content-Type": "application/json"
+        }
+
+        # 3. Обновляем цену оффера + создаём инвойс под локом
+        #    (лок предотвращает гонку: два одновременных запроса с разными ценами)
+        async with _lavatop_price_lock:
+            # 3a. PATCH — обновляем цену оффера
+            patch_payload = {
+                "offers": [{
+                    "id": offer_id,
+                    "prices": [{
+                        "amount": fiat_amount,
+                        "currency": "RUB",
+                        "periodicity": "ONE_TIME"  # Для цифрового товара это важно
+                    }]
+                }]
+            }
+            async with aiohttp.ClientSession() as session:
+                async with session.patch(
+                    f"{LAVATOP_API_URL}/api/v2/products/{product_id}",
+                    json=patch_payload,
+                    headers=headers,
+                    timeout=10
+                ) as resp:
+                    if resp.status != 200:
+                        body = await resp.text()
+                        logging.error(f"[LavaTop] Price update failed: {resp.status} — {body}")
+                        return web.json_response({"error": "Failed to update Lava.top price"}, status=500)
+                    logging.info(f"[LavaTop] Цена оффера {offer_id} успешно обновлена: {fiat_amount}₽")
+
+            # 3b. POST /api/v3/invoice — создаём инвойс (актуальный endpoint по документации v1.17)
+            invoice_payload = {
+                "email": f"user_{user_id}@octorent.app",  # Lava требует email
+                "offerId": offer_id,
+                "currency": "RUB",
+                "paymentProvider": "SMART_GLOCAL",  # провайдер для карт РФ
+                "paymentMethod": "CARD",
+                "buyerLanguage": "RU",
+                # clientUtm — дополнительно сохраняем наш order_id в данных Lava
+                "clientUtm": {"utm_campaign": f"order_{order_id}"}
+            }
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    f"{LAVATOP_API_URL}/api/v3/invoice",
+                    json=invoice_payload,
+                    headers=headers,
+                    timeout=15
+                ) as resp:
+                    resp_data = await resp.json()
+                    logging.info(f"[LavaTop] Invoice response ({resp.status}): {resp_data}")
+
+                    if resp.status != 201:
+                        logging.error(f"[LavaTop] Invoice creation failed: {resp.status}")
+                        return web.json_response(
+                            {"error": f"Lava.top error: {resp_data.get('error', 'Unknown')}"},
+                            status=500
+                        )
+
+                    payment_url      = resp_data.get("paymentUrl", "")
+                    lava_contract_id = resp_data.get("id", "")  # contractId для поиска в вебхуке
+
+        # 4. Сохраняем contractId как external_id — по нему ищем заказ при вебхуке
+        async with db.aiosqlite.connect(db.DB_PATH) as conn:
+            await conn.execute(
+                "UPDATE orders SET currency = 'RUB', payment_gateway = 'lavatop', fiat_amount = ?, external_id = ? WHERE id = ?",
+                (fiat_amount, lava_contract_id, order_id)
+            )
+            await conn.commit()
+
+        logging.info(f"✅ [LavaTop] Инвойс создан: order_id={order_id}, fiat={fiat_amount}₽, contractId={lava_contract_id}")
+        return web.json_response({
+            "status": "ok",
+            "order_id": order_id,
+            "payment_url": payment_url,
+            "fiat_amount": fiat_amount,
+            "lava_invoice_id": lava_contract_id
+        })
+
+    except Exception as e:
+        logging.error(f"[LavaTop] Error creating invoice: {e}")
+        return web.json_response({"error": str(e)}, status=500)
+
+
+async def handle_lavatop_webhook(request):
+    """Обработчик вебхуков Lava.top — событие payment.success"""
+    try:
+        # Проверяем ключ вебхука из заголовка (настраивается в Lava → Интеграции → Webhook)
+        webhook_key = os.getenv("LAVATOP_WEBHOOK_KEY", "")
+        if webhook_key:
+            incoming_key = request.headers.get("X-Api-Key", "")
+            if incoming_key != webhook_key:
+                logging.warning(f"[LavaTop] Webhook: invalid key received")
+                return web.Response(text="Forbidden", status=403)
+
+        data = await request.json()
+        logging.info(f"🍋 [LavaTop] Webhook payload: {data}")
+
+        # Lava шлёт поле "eventType" (не "type")!
+        event_type = data.get("eventType", "")
+        if event_type != "payment.success":
+            logging.info(f"[LavaTop] Skipping event: {event_type}")
+            return web.Response(text="OK")
+
+        # contractId — UUID контракта Lava.top, который мы сохранили как external_id
+        contract_id = data.get("contractId", "")
+        if not contract_id:
+            logging.warning("[LavaTop] Webhook missing contractId")
+            return web.Response(text="OK")
+
+        paid_amount = float(data.get("amount", 0) or 0)
+
+        # Ищем наш заказ по contractId (сохранён в external_id при создании инвойса)
+        async with db.aiosqlite.connect(db.DB_PATH) as conn:
+            conn.row_factory = db.aiosqlite.Row
+            cur = await conn.execute(
+                "SELECT id, fiat_amount, status FROM orders WHERE external_id = ?", (contract_id,)
+            )
+            order = await cur.fetchone()
+            
+            if not order:
+                # Попробуем поискать по utm_campaign (на случай доната без привязки к contract_id)
+                utm_campaign = data.get('clientUtm', {}).get('utm_campaign', '')
+                if utm_campaign and utm_campaign.startswith('order_'):
+                    oid_str = utm_campaign.replace('order_', '')
+                    cur = await conn.execute("SELECT id, fiat_amount, status FROM orders WHERE id = ?", (oid_str,))
+                    order = await cur.fetchone()
+
+        if not order:
+            logging.error(f"[LavaTop] Order not found for contract {contract_id}")
+            return web.Response(text="Order not found", status=404)
+
+        order_id = order['id']
+        if order['status'] == 'paid':
+            return web.Response(text="OK")
+
+        expected = order['fiat_amount']
+        if expected and paid_amount < (expected - 1.0):  # допуск 1 руб на округление
+            logging.error(f"❌ [LavaTop] Underpayment order={order_id}: expected={expected}, got={paid_amount}")
+            return web.Response(text="Insufficient amount", status=400)
+
+        await db.update_order_status(order_id, "paid")
+        logging.info(f"✅ [LavaTop] Заказ {order_id} оплачен (сумма: {paid_amount}₽)")
+        return web.Response(text="OK")
+
+    except Exception as e:
+        logging.error(f"[LavaTop] Webhook error: {e}")
+        return web.Response(text="Error", status=500)
 
 
 async def handle_get_usdt_payload(request):
@@ -1319,6 +1513,8 @@ app.add_routes([
     web.post('/api/webhooks/freekassa', handle_freekassa_webhook),
     web.post('/api/webhooks/xrocket', handle_xrocket_webhook),
     web.post('/api/webhooks/cloudtips', handle_cloudtips_webhook),
+    web.post('/api/create_lavatop_invoice', handle_create_lavatop_invoice),
+    web.post('/api/webhooks/lavatop', handle_lavatop_webhook),
 ])
 
 
