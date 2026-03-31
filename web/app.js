@@ -4081,7 +4081,7 @@ function updateMethodTotal(baseTotal) {
     const base = parseFloat(baseTotal) || 0;
     let total;
     const limitWarning = document.getElementById('cloudtips-limit-warning');
-    const amountWarning = document.getElementById('cloudtips-amount-warning');
+    const amountWarning = document.getElementById('card-limit-warning');
     const feeWarning = document.getElementById('cover-fee-warning');
     const isCoverFeeChecked = document.getElementById('cover-fee-checkbox')?.checked;
 
@@ -4101,6 +4101,12 @@ function updateMethodTotal(baseTotal) {
             if (overLimit && limitWarning) {
                 limitWarning.style.display = 'flex';
             }
+            if (belowMin && amountWarning) {
+                amountWarning.style.display = 'flex';
+            }
+
+            const totalRow = document.querySelector('.payment-total-row');
+            if (totalRow) totalRow.classList.toggle('compact-total', !!belowMin);
 
             if (continueBtn) {
                 const isDisabled = belowMin || overLimit;
@@ -4120,6 +4126,12 @@ function updateMethodTotal(baseTotal) {
             if (overLimit && limitWarning) {
                 limitWarning.style.display = 'flex';
             }
+            if (belowMin && amountWarning) {
+                amountWarning.style.display = 'flex';
+            }
+
+            const totalRow = document.querySelector('.payment-total-row');
+            if (totalRow) totalRow.classList.toggle('compact-total', !!belowMin);
 
             if (continueBtn) {
                 const isDisabled = belowMin || overLimit;

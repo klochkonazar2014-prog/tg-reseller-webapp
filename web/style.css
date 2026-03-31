@@ -4585,3 +4585,8 @@ tc-root>div {
     white-space: nowrap;
     max-width: fit-content;
 }
+
+.payment-total-row.compact-total {
+    padding: 1px 0 !important;
+    margin-top: 5px !important;
+}
