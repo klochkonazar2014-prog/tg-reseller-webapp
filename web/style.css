@@ -4584,3 +4584,12 @@ tc-root>div {
 .selection-view-content {
     overflow: hidden !important;
 }
+
+#payment-modal, .generic-modal-box {
+    overflow: hidden !important;
+}
+
+.pay-method-badge {
+    white-space: nowrap;
+    max-width: fit-content;
+}
