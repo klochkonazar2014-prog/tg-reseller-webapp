@@ -4577,15 +4577,7 @@ tc-root>div {
     100% { transform: rotate(360deg); }
 }
 
-.pay-tab-pane {
-    overflow: hidden !important;
-}
-
-.selection-view-content {
-    overflow: hidden !important;
-}
-
-#payment-modal, .generic-modal-box {
+#payment-modal, .generic-modal-box, #payment-selection-view, .pay-tab-pane, .selection-view-content {
     overflow: hidden !important;
 }
 

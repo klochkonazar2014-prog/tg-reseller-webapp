@@ -4678,6 +4678,7 @@ window.closeInsufficientBalanceModal = closeInsufficientBalanceModal;
 window.contactAdmin = contactAdmin;
 window.toggleHistory = toggleHistory;
 window.getOperatorContacts = getOperatorContacts;
+window.submitTCLinkFromModal = submitTCLinkFromModal;
 
 function showPaymentLoader() {
     const overlay = document.getElementById('payment-loading-overlay');
