@@ -4560,4 +4560,19 @@ tc-root>div {
     max-height: 90vh;
     border-radius: 12px;
     box-shadow: 0 0 30px rgba(0, 136, 204, 0.3);
-}
+}
+
+/* --- Payment Loading Spinner --- */
+.spinner-loader {
+    width: 48px;
+    height: 48px;
+    border: 5px solid rgba(255, 255, 255, 0.1);
+    border-top: 5px solid #0088cc;
+    border-radius: 50%;
+    animation: spin-loader 1s linear infinite;
+}
+
+@keyframes spin-loader {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

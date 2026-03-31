@@ -4157,7 +4157,7 @@ async function handleContinuePayment() {
         // --- BOT BALANCE CHECK ---
         // For methods that require the bot to pay (CloudTips, XRocket, CryptoBot, etc.)
         // TON is a direct transfer from user, but we still prefer bot to have gas for refunds/processing
-        if (['CLOUDTIPS', 'XROCKET', 'USDT'].includes(method)) {
+        if (['CLOUDTIPS', 'USDT'].includes(method)) {
             try {
                 const bResp = await apiFetch(`${BACKEND_URL}/api/bot_balance`);
                 const bData = await bResp.json();
@@ -4301,6 +4301,7 @@ async function handleCloudTipsRent() {
     const nft_address = CURRENT_PAYMENT_ITEM.nft_address;
     const days = parseInt(document.getElementById('rent-duration-input').value) || 1;
 
+    showPaymentLoader();
     try {
         showToast(t('invoice_creating'));
         const res = await apiFetch(`${BACKEND_URL}/api/create_cloudtips_invoice`, {
@@ -4319,6 +4320,8 @@ async function handleCloudTipsRent() {
     } catch (e) {
         console.error("CloudTips error:", e);
         tg.showAlert(t('network_error_server'));
+    } finally {
+        hidePaymentLoader();
     }
 }
 async function handleLavaTopRent() {
@@ -4327,6 +4330,7 @@ async function handleLavaTopRent() {
     const nft_address = CURRENT_PAYMENT_ITEM.nft_address;
     const days = parseInt(document.getElementById('rent-duration-input').value) || 1;
 
+    showPaymentLoader();
     try {
         showToast(t('invoice_creating'));
         const res = await apiFetch(`${BACKEND_URL}/api/create_lavatop_invoice`, {
@@ -4345,6 +4349,8 @@ async function handleLavaTopRent() {
     } catch (e) {
         console.error("LavaTop error:", e);
         tg.showAlert(t('network_error_server'));
+    } finally {
+        hidePaymentLoader();
     }
 }
 
@@ -4666,6 +4672,16 @@ window.closeInsufficientBalanceModal = closeInsufficientBalanceModal;
 window.contactAdmin = contactAdmin;
 window.toggleHistory = toggleHistory;
 window.getOperatorContacts = getOperatorContacts;
+
+function showPaymentLoader() {
+    const overlay = document.getElementById('payment-loading-overlay');
+    if (overlay) overlay.style.display = 'flex';
+}
+
+function hidePaymentLoader() {
+    const overlay = document.getElementById('payment-loading-overlay');
+    if (overlay) overlay.style.display = 'none';
+}
 
 // Инициализация: получить актуальные контакты
 getOperatorContacts();
