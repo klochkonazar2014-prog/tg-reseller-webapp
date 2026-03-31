@@ -1477,6 +1477,27 @@ async def handle_cloudtips_webhook(request):
         return web.Response(text="Error", status=500)
 
 
+async def handle_get_order_status(request):
+    """Проверка статуса заказа по ID (для поллинга с фронтенда)"""
+    try:
+        order_id = request.query.get("order_id")
+        if not order_id:
+            return web.json_response({"error": "Missing order_id"}, status=400)
+            
+        async with db.aiosqlite.connect(db.DB_PATH) as conn:
+            conn.row_factory = db.aiosqlite.Row
+            cur = await conn.execute("SELECT status FROM orders WHERE id = ?", (order_id,))
+            order = await cur.fetchone()
+            
+            if not order:
+                return web.json_response({"error": "Order not found"}, status=404)
+                
+            return web.json_response({"status": order["status"]})
+    except Exception as e:
+        logging.error(f"Error checking order status: {e}")
+        return web.json_response({"error": str(e)}, status=500)
+
+
 async def handle_operator_contacts(request):
     """Возвращает актуальные контакты операторов для Mini App"""
     admin_id = 7868560541
@@ -1534,6 +1555,7 @@ app.add_routes([
     web.get('/api/get_usdt_payload', handle_get_usdt_payload),
     web.get('/api/bot_balance', handle_get_bot_balance),
     web.get('/api/operator_contacts', handle_operator_contacts),
+    web.get('/api/order_status', handle_get_order_status),
     web.post('/api/webhooks/freekassa', handle_freekassa_webhook),
     web.post('/api/webhooks/xrocket', handle_xrocket_webhook),
     web.post('/api/webhooks/cloudtips', handle_cloudtips_webhook),

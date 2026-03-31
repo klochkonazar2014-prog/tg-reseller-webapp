@@ -4576,3 +4576,11 @@ tc-root>div {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+
+.pay-tab-pane {
+    overflow: hidden !important;
+}
+
+.selection-view-content {
+    overflow: hidden !important;
+}

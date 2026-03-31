@@ -4154,10 +4154,10 @@ async function handleContinuePayment() {
     if (method === 'RUB') {
         await handleRubRent();
     } else {
-        // --- BOT BALANCE CHECK ---
-        // For methods that require the bot to pay (CloudTips, XRocket, CryptoBot, etc.)
-        // TON is a direct transfer from user, but we still prefer bot to have gas for refunds/processing
-        if (['CLOUDTIPS', 'USDT'].includes(method)) {
+        const btn = document.querySelector('.main-rent-btn');
+        if (btn) btn.disabled = true;
+
+        if (['CLOUDTIPS', 'LAVATOP', 'USDT'].includes(method)) {
             try {
                 const bResp = await apiFetch(`${BACKEND_URL}/api/bot_balance`);
                 const bData = await bResp.json();
@@ -4303,7 +4303,6 @@ async function handleCloudTipsRent() {
 
     showPaymentLoader();
     try {
-        showToast(t('invoice_creating'));
         const res = await apiFetch(`${BACKEND_URL}/api/create_cloudtips_invoice`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -4313,15 +4312,19 @@ async function handleCloudTipsRent() {
 
         if (data.payment_url) {
             tg.openLink(data.payment_url);
-            showToast(t('redirecting_to_pay'));
+            startOrderStatusPolling(data.order_id);
         } else {
             tg.showAlert(t('invoice_error', { msg: (data.error || t('error')) }));
+            hidePaymentLoader();
+            const btn = document.querySelector('.main-rent-btn');
+            if (btn) btn.disabled = false;
         }
     } catch (e) {
         console.error("CloudTips error:", e);
         tg.showAlert(t('network_error_server'));
-    } finally {
         hidePaymentLoader();
+        const btn = document.querySelector('.main-rent-btn');
+        if (btn) btn.disabled = false;
     }
 }
 async function handleLavaTopRent() {
@@ -4332,7 +4335,6 @@ async function handleLavaTopRent() {
 
     showPaymentLoader();
     try {
-        showToast(t('invoice_creating'));
         const res = await apiFetch(`${BACKEND_URL}/api/create_lavatop_invoice`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -4342,15 +4344,19 @@ async function handleLavaTopRent() {
 
         if (data.payment_url) {
             tg.openLink(data.payment_url);
-            showToast(t('redirecting_to_pay'));
+            startOrderStatusPolling(data.order_id);
         } else {
             tg.showAlert(t('invoice_error', { msg: (data.error || t('error')) }));
+            hidePaymentLoader();
+            const btn = document.querySelector('.main-rent-btn');
+            if (btn) btn.disabled = false;
         }
     } catch (e) {
         console.error("LavaTop error:", e);
         tg.showAlert(t('network_error_server'));
-    } finally {
         hidePaymentLoader();
+        const btn = document.querySelector('.main-rent-btn');
+        if (btn) btn.disabled = false;
     }
 }
 
@@ -4681,6 +4687,50 @@ function showPaymentLoader() {
 function hidePaymentLoader() {
     const overlay = document.getElementById('payment-loading-overlay');
     if (overlay) overlay.style.display = 'none';
+}
+
+function startOrderStatusPolling(orderId) {
+    console.log("Starting polling for order:", orderId);
+    const interval = setInterval(async () => {
+        try {
+            const resp = await apiFetch(`${BACKEND_URL}/api/order_status?order_id=${orderId}`);
+            const data = await resp.json();
+            if (data.status === 'paid' || data.status === 'rented') {
+                clearInterval(interval);
+                hidePaymentLoader();
+                showPostPaymentSuccessUI(orderId);
+            }
+        } catch (e) {
+            console.warn("Polling error:", e);
+        }
+    }, 4000);
+}
+
+function showPostPaymentSuccessUI(orderId) {
+    const selView = document.getElementById('payment-selection-view');
+    if (selView) {
+        selView.innerHTML = `
+            <div style="text-align:center; padding: 20px 15px;">
+                <div style="font-size: 40px; margin-bottom: 15px;">✅</div>
+                <h2 style="color: #fff; margin-bottom: 10px; font-size: 1.2rem;">Оплата получена!</h2>
+                <p style="color: #8b9bb4; line-height: 1.4; margin-bottom: 20px; font-size: 0.9rem;">
+                    Аренда успешно оформлена. Теперь подключите актив к Fragment.
+                </p>
+                
+                <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 20px; text-align: left;">
+                    <label style="display: block; color: #fff; font-size: 0.85rem; margin-bottom: 8px;">Ссылка TON Connect с Fragment</label>
+                    <input type="text" id="modal-tc-link-input" placeholder="Вставьте ссылку здесь..." 
+                           style="width: 100%; background: #1a1f26; border: 1px solid #3d4652; color: #fff; padding: 10px; border-radius: 8px; font-size: 0.85rem; outline: none;">
+                    <p style="color: #6a7a8f; font-size: 0.75rem; margin-top: 8px;">
+                        Мы автоматически привяжем этот предмет к вашему профилю.
+                    </p>
+                    <button onclick="submitTCLinkFromModal(${orderId})" class="main-rent-btn" style="width: 100%; margin-top: 10px; padding: 10px; height: auto; min-height: 40px;">Привязать актив</button>
+                </div>
+
+                <button onclick="closePaymentModal(); loadLiveItems(true);" class="main-rent-btn" style="width:100%; background: none; border: 1px solid #3d4652; color: #8b9bb4;">Пропустить и закрыть</button>
+            </div>
+        `;
+    }
 }
 
 // Инициализация: получить актуальные контакты
