@@ -33,7 +33,7 @@
             return false;
         };
     </script>
-    <link rel="stylesheet" href="style.css?v=2026032901">
+    <link rel="stylesheet" href="style.css?v=2026033101">
 
     <style>
         /* CRITICAL OVERRIDES - DO NOT REMOVE */
@@ -45,12 +45,24 @@
         .card-price-btn svg,
         .card-price-btn svg path,
         .card-cart-btn svg,
-        .card-cart-btn svg path {
+        .card-cart-btn svg path,
+        .pay-method-card svg path {
             fill: #FFFFFF !important;
             stroke: #FFFFFF !important;
             filter: brightness(0) invert(1) !important;
             -webkit-filter: brightness(0) invert(1) !important;
             opacity: 1 !important;
+        }
+
+        #payment-selection-view, .pay-tab-pane, .selection-view-content, .bottom-sheet-content {
+            overflow: hidden !important;
+            scrollbar-width: none !important;
+            -ms-overflow-style: none !important;
+        }
+
+        #payment-selection-view::-webkit-scrollbar, 
+        .bottom-sheet-content::-webkit-scrollbar {
+            display: none !important;
         }
 
         .main-rent-btn,
@@ -778,7 +790,7 @@
     <div id="payment-modal" class="bottom-sheet" style="display: none;">
         <div class="bottom-sheet-backdrop" onclick="closePaymentModal()"></div>
         <div class="bottom-sheet-content">
-            <div id="payment-selection-view">
+            <div id="payment-selection-view" style="overflow: hidden !important;">
                 <div class="bottom-sheet-header"
                     style="display: flex; justify-content: space-between; align-items: center; padding: 12px 20px;">
                     <h3 style="margin: 0; font-size: 18px; font-weight: 800;" data-i18n="select_payment_method">Выберите

@@ -29,7 +29,7 @@
 }
 
 /* For Firefox */
-* {
+body {
     scrollbar-width: thin;
     scrollbar-color: #333 transparent;
 }

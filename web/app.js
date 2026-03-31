@@ -3962,6 +3962,7 @@ function openPaymentModal() {
     if (selectionView) {
         selectionView.style.display = 'block';
         selectionView.style.transform = 'translateY(0)'; // Reset drag if any
+        selectionView.style.overflowY = 'hidden';
     }
 
     // Refresh fiat rates every time modal opens
