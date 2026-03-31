@@ -569,36 +569,62 @@ async def handle_create_lavatop_invoice(request):
         order_id  = res['order_id']
         total_ton = res['total_price']
 
-        # 2. Считаем сумму в рублях с буфером 5% на волатильность курса
+        # 2. Считаем сумму в рублях с буфером 5%
         rates = await fetch_fiat_rates()
         ton_rub = rates.get('RUB', 230)
         fiat_amount = round(total_ton * ton_rub * 1.05, 2)
         if fiat_amount < LAVATOP_MIN_RUB:
             fiat_amount = float(LAVATOP_MIN_RUB)
 
+        # 3. Выбираем лучший оффер из сетки (LAVATOP_OFFERS в .env)
+        offers_raw = os.getenv("LAVATOP_OFFERS", "{}")
+        try:
+            offers_map = json.loads(offers_raw)
+        except:
+            logging.error(f"[LavaTop] Invalid LAVATOP_OFFERS JSON: {offers_raw}")
+            return web.json_response({"error": "Lava.top offers configuration error"}, status=500)
+        
+        if not offers_map:
+            return web.json_response({"error": "Lava.top offers not found"}, status=500)
+
+        # Сортируем базовые цены сетки (54, 108, ...)
+        base_prices = sorted([float(k) for k in offers_map.keys()])
+        # Выбираем тот оффер, базовая цена которого ближе всего к искомой
+        best_base = base_prices[0]
+        min_diff = abs(fiat_amount - best_base)
+        for p in base_prices:
+            diff = abs(fiat_amount - p)
+            if diff < min_diff:
+                min_diff = diff
+                best_base = p
+        
+        selected_offer_id = offers_map[str(int(best_base))]
+        logging.info(f"[LavaTop] Для суммы {fiat_amount}₽ выбран оффер {selected_offer_id} (база {best_base}₽)")
+
         headers = {
             "X-Api-Key": api_key,
             "Content-Type": "application/json"
         }
 
-        # 3. Обновляем цену оффера + создаём инвойс под локом
-        #    (лок предотвращает гонку: два одновременных запроса с разными ценами)
+        # 4. Обновляем цену оффера + создаём инвойс под локом
         async with _lavatop_price_lock:
-            # 3a. PATCH — обновляем цену оффера
-            patch_payload = {
-                "offers": [{
-                    "id": offer_id,
+            # 4a. PATCH — обновляем выбранный оффер, но ПЕРЕДАЕМ ВСЕ (чтобы избежать 404)
+            patch_offers = []
+            for base_p_str, off_id in offers_map.items():
+                price_to_set = fiat_amount if off_id == selected_offer_id else float(base_p_str)
+                patch_offers.append({
+                    "id": off_id,
                     "prices": [{
-                        "amount": fiat_amount,
+                        "amount": price_to_set,
                         "currency": "RUB",
-                        "periodicity": "ONE_TIME"  # Для цифрового товара это важно
+                        "periodicity": "ONE_TIME"
                     }]
-                }]
-            }
+                })
+
             async with aiohttp.ClientSession() as session:
                 async with session.patch(
                     f"{LAVATOP_API_URL}/api/v2/products/{product_id}",
-                    json=patch_payload,
+                    json={"offers": patch_offers},
                     headers=headers,
                     timeout=10
                 ) as resp:
@@ -606,17 +632,16 @@ async def handle_create_lavatop_invoice(request):
                         body = await resp.text()
                         logging.error(f"[LavaTop] Price update failed: {resp.status} — {body}")
                         return web.json_response({"error": "Failed to update Lava.top price"}, status=500)
-                    logging.info(f"[LavaTop] Цена оффера {offer_id} успешно обновлена: {fiat_amount}₽")
+                    logging.info(f"[LavaTop] Цена оффера {selected_offer_id} успешно обновлена: {fiat_amount}₽")
 
-            # 3b. POST /api/v3/invoice — создаём инвойс (актуальный endpoint по документации v1.17)
+            # 4b. POST /api/v3/invoice — создаём инвойс
             invoice_payload = {
-                "email": f"user_{user_id}@octorent.app",  # Lava требует email
-                "offerId": offer_id,
+                "email": f"user_{user_id}@octorent.app",
+                "offerId": selected_offer_id,
                 "currency": "RUB",
-                "paymentProvider": "SMART_GLOCAL",  # провайдер для карт РФ
+                "paymentProvider": "SMART_GLOCAL",
                 "paymentMethod": "CARD",
                 "buyerLanguage": "RU",
-                # clientUtm — дополнительно сохраняем наш order_id в данных Lava
                 "clientUtm": {"utm_campaign": f"order_{order_id}"}
             }
             async with aiohttp.ClientSession() as session:
@@ -637,9 +662,9 @@ async def handle_create_lavatop_invoice(request):
                         )
 
                     payment_url      = resp_data.get("paymentUrl", "")
-                    lava_contract_id = resp_data.get("id", "")  # contractId для поиска в вебхуке
+                    lava_contract_id = resp_data.get("id", "")
 
-        # 4. Сохраняем contractId как external_id — по нему ищем заказ при вебхуке
+        # 5. Сохраняем данные в БД
         async with db.aiosqlite.connect(db.DB_PATH) as conn:
             await conn.execute(
                 "UPDATE orders SET currency = 'RUB', payment_gateway = 'lavatop', fiat_amount = ?, external_id = ? WHERE id = ?",
