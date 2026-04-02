@@ -572,7 +572,7 @@ async def handle_create_lavatop_invoice(request):
         # 2. Считаем сумму в рублях с буфером 5%
         rates = await fetch_fiat_rates()
         ton_rub = rates.get('RUB', 230)
-        fiat_amount = round(total_ton * ton_rub * 1.05, 2)
+        fiat_amount = round(total_ton * ton_rub * 1.00, 2)
         if fiat_amount < LAVATOP_MIN_RUB:
             fiat_amount = float(LAVATOP_MIN_RUB)
 
@@ -689,15 +689,33 @@ async def handle_create_lavatop_invoice(request):
 async def handle_lavatop_webhook(request):
     """Обработчик вебхуков Lava.top — событие payment.success"""
     try:
-        # Проверяем ключ вебхука из заголовка (настраивается в Lava → Интеграции → Webhook)
-        webhook_key = os.getenv("LAVATOP_WEBHOOK_KEY", "")
-        if webhook_key:
+        # 1. Проверяем HMAC-SHA256 подпись (высший уровень защиты)
+        webhook_secret = os.getenv("LAVATOP_WEBHOOK_SECRET", "")
+        if webhook_secret:
+            signature = request.headers.get("X-Lava-Signature", "")
+            raw_body = await request.read()
+            
+            if not signature:
+                logging.warning("[LavaTop] Webhook: missing signature header")
+                return web.Response(text="Missing signature", status=401)
+                
+            expected_sig = hmac.new(webhook_secret.encode(), raw_body, hashlib.sha256).hexdigest()
+            
+            if not hmac.compare_digest(signature, expected_sig):
+                logging.warning(f"[LavaTop] Webhook: invalid signature. Got {signature}, expected {expected_sig}")
+                return web.Response(text="Forbidden", status=403)
+            
+            # Если подпись верна, парсим JSON из сырых байтов
+            data = json.loads(raw_body)
+        else:
+            # Fallback на старый метод, если секрет не задан (для обратной совместимости на время настройки)
+            webhook_key = os.getenv("LAVATOP_WEBHOOK_KEY", "KLKK112233")
             incoming_key = request.headers.get("X-Api-Key", "")
             if incoming_key != webhook_key:
                 logging.warning(f"[LavaTop] Webhook: invalid key received")
                 return web.Response(text="Forbidden", status=403)
+            data = await request.json()
 
-        data = await request.json()
         logging.info(f"🍋 [LavaTop] Webhook payload: {data}")
 
         # Lava шлёт поле "eventType" (не "type")!
@@ -1558,7 +1576,7 @@ app.add_routes([
     web.get('/api/order_status', handle_get_order_status),
     web.post('/api/webhooks/freekassa', handle_freekassa_webhook),
     web.post('/api/webhooks/xrocket', handle_xrocket_webhook),
-    web.post('/api/webhooks/cloudtips', handle_cloudtips_webhook),
+    web.post(f'/api/webhooks/ct/{os.getenv("CLOUDTIPS_WEBHOOK_PATH", "cloudtips")}', handle_cloudtips_webhook),
     web.post('/api/create_lavatop_invoice', handle_create_lavatop_invoice),
     web.post('/api/webhooks/lavatop', handle_lavatop_webhook),
 ])

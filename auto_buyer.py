@@ -589,7 +589,7 @@ async def check_pending_orders():
         except Exception as e:
             logging.error(f"Ошибка в check_pending_orders: {e}")
             
-        await asyncio.sleep(30) # Проверка каждые 30 секунд
+        await asyncio.sleep(3) # Проверка каждые 3 секунды
 
 async def process_referral_withdrawals():
     """Периодически проверяет очередь выплат и отправляет TON пользователям"""
