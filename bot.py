@@ -300,25 +300,26 @@ async def start_cmd(message: Message, command: CommandObject):
     is_new = not await db.user_exists(user_id)
     await db.add_user(user_id, username, full_name)
     
-    if is_new:
+    terms_accepted = await db.get_cache(f"terms_accepted_{user_id}")
+    
+    if is_new or not terms_accepted:
         await message.answer(
             "<tg-emoji emoji-id='5447410659077661506'>❓</tg-emoji> Выберете язык / Pick up language",
             reply_markup=kb.lang_selection_keyboard(),
             parse_mode="HTML"
         )
+        return
 
-    if not is_new:
-        lang = await db.get_user_language(user_id)
-        msg_text = "🐙 <b>Добро пожаловать в OctoRent</b>\n\nЛучший сервис для аренды NFT в Telegram. Нажмите синюю кнопку, чтобы открыть маркет аренды."
-        if lang == 'en':
-            msg_text = "🐙 <b>Welcome to OctoRent</b>\n\nThe best NFT rental service in Telegram. Press the blue button to open the rental market."
-            
-        await message.answer(
-            msg_text,
-            reply_markup=kb.main_menu(WEB_APP_URL, message.from_user.id == ADMIN_ID, lang=lang),
-            parse_mode="HTML"
-        )
-
+    lang = await db.get_user_language(user_id)
+    msg_text = "🐙 <b>Добро пожаловать в OctoRent</b>\n\nЛучший сервис для аренды NFT в Telegram. Нажмите синюю кнопку, чтобы открыть маркет аренды."
+    if lang == 'en':
+        msg_text = "🐙 <b>Welcome to OctoRent</b>\n\nThe best NFT rental service in Telegram. Press the blue button to open the rental market."
+        
+    await message.answer(
+        msg_text,
+        reply_markup=kb.main_menu(WEB_APP_URL, message.from_user.id == ADMIN_ID, lang=lang),
+        parse_mode="HTML"
+    )
 
 @dp.callback_query(F.data.startswith("set_lang_"))
 async def set_lang_callback(callback: CallbackQuery):
@@ -352,7 +353,9 @@ async def set_lang_callback(callback: CallbackQuery):
 
 @dp.callback_query(F.data == "accept_terms")
 async def accept_terms_callback(callback: CallbackQuery):
-    lang = await db.get_user_language(callback.from_user.id)
+    user_id = callback.from_user.id
+    await db.set_cache(f"terms_accepted_{user_id}", "1")
+    lang = await db.get_user_language(user_id)
     msg_text = "💎 <b>LIVE NFT Rental Market</b>\n\nДанные подгружаются в реальном времени напрямую с маркетплейса."
     if lang == 'en':
         msg_text = "💎 <b>LIVE NFT Rental Market</b>\n\nData is loaded in real-time directly from the marketplace."
