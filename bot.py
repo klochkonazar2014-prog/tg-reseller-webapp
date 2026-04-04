@@ -325,6 +325,34 @@ async def set_lang_callback(callback: CallbackQuery):
     lang = callback.data.split("_")[-1]
     await db.set_user_language(callback.from_user.id, lang)
     
+    terms_text = (
+        "📜 <b>Оферта и Правила сервиса</b>\n\n"
+        "Перед использованием бота, пожалуйста, ознакомьтесь с условиями предоставления услуг:\n"
+        "👉 <a href='https://octorent.duckdns.org/legal.html'>Пользовательское соглашение</a>\n\n"
+        "<i>Нажимая «✅ Принять», вы соглашаетесь со всеми правилами.</i>"
+    ) if lang == 'ru' else (
+        "📜 <b>Terms of Service</b>\n\n"
+        "Before using the bot, please read the terms of service:\n"
+        "👉 <a href='https://octorent.duckdns.org/legal.html'>Terms of Service and Public Offer</a>\n\n"
+        "<i>By clicking '✅ Accept', you agree to all rules.</i>"
+    )
+    
+    kb_terms = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="✅ Принять" if lang == 'ru' else "✅ Accept", callback_data="accept_terms")],
+        [InlineKeyboardButton(text="❌ Отклонить" if lang == 'ru' else "❌ Decline", callback_data="decline_terms")]
+    ])
+    
+    await callback.message.edit_text(
+        terms_text,
+        reply_markup=kb_terms,
+        parse_mode="HTML",
+        disable_web_page_preview=True
+    )
+    await callback.answer()
+
+@dp.callback_query(F.data == "accept_terms")
+async def accept_terms_callback(callback: CallbackQuery):
+    lang = await db.get_user_language(callback.from_user.id)
     msg_text = "💎 <b>LIVE NFT Rental Market</b>\n\nДанные подгружаются в реальном времени напрямую с маркетплейса."
     if lang == 'en':
         msg_text = "💎 <b>LIVE NFT Rental Market</b>\n\nData is loaded in real-time directly from the marketplace."
@@ -334,7 +362,15 @@ async def set_lang_callback(callback: CallbackQuery):
         reply_markup=kb.main_menu(WEB_APP_URL, callback.from_user.id == ADMIN_ID, lang=lang),
         parse_mode="HTML"
     )
-    await callback.answer("Русский язык выбран" if lang == 'ru' else "English language selected")
+    await callback.answer("Добро пожаловать!" if lang == 'ru' else "Welcome!")
+
+@dp.callback_query(F.data == "decline_terms")
+async def decline_terms_callback(callback: CallbackQuery):
+    lang = await db.get_user_language(callback.from_user.id)
+    text = "Для использования сервиса необходимо согласиться с правилами. Нажмите /start, если передумали."
+    if lang == 'en':
+        text = "You must agree to the rules to use the service. Press /start if you change your mind."
+    await callback.message.edit_text(text, parse_mode="HTML")
 
 @dp.callback_query(F.data == "main_menu")
 async def back_to_main_menu(callback: CallbackQuery):
