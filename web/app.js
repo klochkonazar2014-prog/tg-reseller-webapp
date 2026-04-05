@@ -4205,8 +4205,7 @@ async function handleContinuePayment() {
         } else if (method === 'XROCKET') {
             await handleBotRent(method);
         } else if (method === 'CLOUDTIPS') {
-            // --- NEW STEP: Show Instructions first ---
-            showCTInstructions();
+            await handleDonatePayRent();
         } else if (method === 'LAVATOP') {
             await handleLavaTopRent();
         } else {
@@ -4308,7 +4307,7 @@ function contactAdmin() {
     }
 }
 
-async function handleCloudTipsRent() {
+async function handleDonatePayRent() {
     if (!CURRENT_PAYMENT_ITEM) return;
 
     const nft_address = CURRENT_PAYMENT_ITEM.nft_address;
@@ -4316,7 +4315,7 @@ async function handleCloudTipsRent() {
 
     showPaymentLoader();
     try {
-        const res = await apiFetch(`${BACKEND_URL}/api/create_cloudtips_invoice`, {
+        const res = await apiFetch(`${BACKEND_URL}/api/create_donatepay_invoice`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ nft_address, days })
@@ -4333,7 +4332,7 @@ async function handleCloudTipsRent() {
             if (btn) btn.disabled = false;
         }
     } catch (e) {
-        console.error("CloudTips error:", e);
+        console.error("DonatePay error:", e);
         tg.showAlert(t('network_error_server'));
         hidePaymentLoader();
         const btn = document.querySelector('.main-rent-btn');

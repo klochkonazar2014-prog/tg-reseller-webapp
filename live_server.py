@@ -13,6 +13,9 @@ from tonutils.utils import begin_cell, Address
 from dotenv import load_dotenv
 
 load_dotenv()
+from datetime import datetime, timedelta
+import database as db
+
 USDT_JETTON_ADDRESS = "EQCxE6mUt_9S9clpu7R_6m09wYz3X0mR3GvK7N88m8_L3A1f"
 MARKET_URL = "https://api.marketapp.ws/v1"
 TOKENS = [
@@ -1579,12 +1582,121 @@ app.add_routes([
     web.post(f'/api/webhooks/ct/{os.getenv("CLOUDTIPS_WEBHOOK_PATH", "cloudtips")}', handle_cloudtips_webhook),
     web.post('/api/create_lavatop_invoice', handle_create_lavatop_invoice),
     web.post('/api/webhooks/lavatop', handle_lavatop_webhook),
+    web.post('/api/create_donatepay_invoice', handle_create_donatepay_invoice),
 ])
 
+
+async def handle_create_donatepay_invoice(request):
+    try:
+        data = await request.json()
+        user_id = get_authenticated_user_id(request)
+        if not user_id: 
+            return web.json_response({"error": "Unauthorized"}, status=401)
+            
+        nft_address = data.get("nft_address")
+        days = int(data.get("days", 1))
+        
+        # Create order in DB
+        res, err = await create_rental_order(user_id, nft_address, days)
+        if err: return web.json_response({"error": err}, status=404)
+        
+        order_id = res['order_id']
+        total_ton = res['total_price']
+        
+        # Convert TON price to RUB (we'll use a fixed rate or fetch)
+        # For simplicity, 1 TON = 450 RUB (user can adjust)
+        # Better: fetch from @rates or similar
+        ton_rate = 550.0 # Placeholder, should be dynamic
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get("https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=rub") as r:
+                    rate_data = await r.json()
+                    ton_rate = float(rate_data["the-open-network"]["rub"])
+        except:
+            pass
+            
+        amount_rub = round(total_ton * ton_rate, 2)
+        
+        # Our custom payment page with Iframe
+        base_url = os.getenv("WEB_APP_URL", "")
+        # Remove trailing slash if exists
+        base_url = base_url.rstrip('/')
+        payment_url = f"{base_url}/pay.html?amount={amount_rub}&order_id={order_id}"
+        
+        # Update order with gateway
+        async with db.aiosqlite.connect(db.DB_PATH) as conn:
+            await conn.execute(
+                "UPDATE orders SET payment_gateway = ?, currency = ?, external_id = ? WHERE id = ?",
+                ("DONATEPAY", "RUB", str(order_id), order_id)
+            )
+            await conn.commit()
+            
+        return web.json_response({"payment_url": payment_url, "order_id": order_id})
+    except Exception as e:
+        logging.error(f"Error creating DonatePay invoice: {e}")
+        return web.json_response({"error": str(e)}, status=500)
+
+async def donatepay_poller():
+    """Background task to poll DonatePay API for new payments"""
+    api_key = os.getenv("DONATEPAY_API_KEY")
+    if not api_key:
+        logging.warning("DonatePay API Key not found. Polling disabled.")
+        return
+
+    logging.info("DonatePay Poller started.")
+    while True:
+        try:
+            url = f"https://donatepay.ru/api/v1/user/donations"
+            params = {"access_token": api_key, "limit": 20}
+            
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, params=params) as resp:
+                    if resp.status == 200:
+                        data = await resp.json()
+                        if data.get("status") == "success":
+                            donations = data.get("data", [])
+                            for don in donations:
+                                # DonatePay fields: 'vars' often contains our message/comment
+                                # or it might be in 'comment' if it's the old API version
+                                comment = don.get("vars", "") or don.get("comment", "")
+                                if not comment: continue
+                                
+                                # Basic matching: find order_id in the comment
+                                # We expect comment to be just the order_id or something like ORD_123
+                                match = re.search(r'(\d+)', str(comment))
+                                if match:
+                                    order_id = int(match.group(1))
+                                    
+                                    # Check if order is pending and matches sum (optional sum check)
+                                    async with db.aiosqlite.connect(db.DB_PATH) as conn:
+                                        async with conn.execute(
+                                            "SELECT status FROM orders WHERE id = ? AND payment_gateway = 'DONATEPAY'", 
+                                            (order_id,)
+                                        ) as cursor:
+                                            order = await cursor.fetchone()
+                                            if order and order[0] == 'pending':
+                                                logging.info(f"DonatePay: Payment found for order {order_id}!")
+                                                await db.update_order_status(order_id, "paid")
+                                                # Trigger notification or other logic if needed
+                    else:
+                        logging.error(f"DonatePay API error: {resp.status}")
+        except Exception as e:
+            logging.error(f"DonatePay poller error: {e}")
+            
+        await asyncio.sleep(20) # Poll every 20 seconds
 
 # Serve static files from 'web' directory at root
 app.router.add_static('/', './web', name='static', follow_symlinks=True)
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
+    # Start the DonatePay poller in the background
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+             asyncio.create_task(donatepay_poller())
+        else:
+             loop.create_task(donatepay_poller())
+    except:
+        pass
+        
     web.run_app(app, port=PORT)

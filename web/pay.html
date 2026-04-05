@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>OctoRent | Безопасная оплата</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00f2fe;
+            --secondary: #4facfe;
+            --bg: #0a0b10;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --border: rgba(255, 255, 255, 0.1);
+            --text: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+            padding: 20px;
+        }
+
+        .background-blobs {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.3;
+            animation: move 20s infinite alternate;
+        }
+
+        .blob-1 {
+            width: 300px;
+            height: 300px;
+            background: var(--primary);
+            top: -10%;
+            left: -10%;
+        }
+
+        .blob-2 {
+            width: 400px;
+            height: 400px;
+            background: var(--secondary);
+            bottom: -10%;
+            right: -10%;
+            animation-delay: -5s;
+        }
+
+        @keyframes move {
+            from { transform: translate(0, 0) scale(1); }
+            to { transform: translate(100px, 100px) scale(1.1); }
+        }
+
+        .checkout-card {
+            width: 100%;
+            max-width: 500px;
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            position: relative;
+            z-index: 1;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(0, 242, 254, 0.1);
+            color: var(--primary);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid rgba(0, 242, 254, 0.2);
+            margin-bottom: 15px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+        }
+
+        .info-label {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 14px;
+        }
+
+        .info-value {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .payment-container {
+            position: relative;
+            width: 100%;
+            background: #ffffff; /* Белый фон для виджета DonatePay */
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 220px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        iframe {
+            max-width: 100%;
+            height: 220px;
+            border: none;
+        }
+
+        .footer-note {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.4);
+            line-height: 1.5;
+        }
+
+        .loader-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 24px;
+            z-index: 10;
+            transition: opacity 0.5s ease;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(0, 242, 254, 0.1);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 480px) {
+            .checkout-card {
+                padding: 20px;
+            }
+            .payment-container {
+                min-height: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+
+    <div class="checkout-card">
+        <div id="loader" class="loader-overlay">
+            <div class="spinner"></div>
+            <p>Подготовка шлюза...</p>
+        </div>
+
+        <div class="header">
+            <span class="logo">OCTORENT</span>
+            <div class="status-badge">Безопасное соединение</div>
+            <h2 style="font-size: 20px; margin-top: 5px;">Оплата аренды</h2>
+        </div>
+
+        <div class="info-row">
+            <div>
+                <p class="info-label">Сумма к оплате</p>
+                <p class="info-value" id="disp-amount">0.00 RUB</p>
+            </div>
+            <div style="text-align: right;">
+                <p class="info-label">Заказ</p>
+                <p class="info-value" id="disp-order">#000000</p>
+            </div>
+        </div>
+
+        <div class="payment-container" id="iframe-target">
+            <!-- Iframe will be injected here -->
+        </div>
+
+        <div class="footer-note">
+            Нажимая «Оплатить», вы подтверждаете согласие с условиями предоставления услуг. Ваши данные защищены по стандарту PCI DSS.
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 1. Get params from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const amount = urlParams.get('amount') || '50';
+            const orderId = urlParams.get('order_id') || '0';
+            
+            // 2. Update UI
+            document.getElementById('disp-amount').textContent = amount + ' RUB';
+            document.getElementById('disp-order').textContent = '#' + orderId;
+
+            // 3. Prepare Iframe Source
+            // Token and Widget ID from configuration
+            const WIDGET_TOKEN = "57db5a26843d08276cef24eadff3c007581ec4d8f2fd8fe47b1a5045c2f6b096";
+            const WIDGET_ID = "7567140";
+            
+            // Build URL
+            // We use 'sum' for the amount. 
+            // We try to pass 'message' or 'comment' for the order ID.
+            const iframeUrl = `https://widget.donatepay.ru/widgets/page/${WIDGET_TOKEN}?widget_id=${WIDGET_ID}&sum=${amount}&comment=${orderId}`;
+
+            // 4. Inject Iframe
+            const iframe = document.createElement('iframe');
+            iframe.src = iframeUrl;
+            iframe.width = "510";
+            iframe.height = "220";
+            iframe.frameBorder = "0";
+            
+            iframe.onload = function() {
+                setTimeout(() => {
+                    document.getElementById('loader').style.opacity = '0';
+                    setTimeout(() => {
+                        document.getElementById('loader').style.display = 'none';
+                    }, 500);
+                }, 1000);
+            };
+
+            document.getElementById('iframe-target').appendChild(iframe);
+        });
+    </script>
+</body>
+</html>
