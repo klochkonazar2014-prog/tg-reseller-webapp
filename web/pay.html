@@ -3,18 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>OctoRent | Безопасная оплата</title>
+    <title>OctoRent | Оплата</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #00f2fe;
             --secondary: #4facfe;
-            --bg: #0a0b10;
-            --card-bg: rgba(255, 255, 255, 0.05);
-            --border: rgba(255, 255, 255, 0.1);
+            --accent: #5865F2;
+            --bg: #050505;
+            --surface: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.08);
             --text: #ffffff;
+            --text-muted: rgba(255, 255, 255, 0.5);
         }
 
         * {
@@ -33,257 +35,228 @@
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            overflow: hidden;
             padding: 20px;
-        }
-
-        .background-blobs {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
             overflow: hidden;
         }
 
-        .blob {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(80px);
-            opacity: 0.3;
-            animation: move 20s infinite alternate;
-        }
-
-        .blob-1 {
-            width: 300px;
-            height: 300px;
-            background: var(--primary);
-            top: -10%;
-            left: -10%;
-        }
-
-        .blob-2 {
-            width: 400px;
-            height: 400px;
-            background: var(--secondary);
-            bottom: -10%;
-            right: -10%;
-            animation-delay: -5s;
-        }
-
-        @keyframes move {
-            from { transform: translate(0, 0) scale(1); }
-            to { transform: translate(100px, 100px) scale(1.1); }
-        }
-
-        .checkout-card {
+        .container {
             width: 100%;
-            max-width: 500px;
-            background: var(--card-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--border);
-            border-radius: 24px;
-            padding: 30px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            position: relative;
-            z-index: 1;
+            max-width: 440px;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .header {
             text-align: center;
-            margin-bottom: 25px;
+            margin-bottom: 40px;
         }
 
         .logo {
             font-family: 'Orbitron', sans-serif;
-            font-size: 24px;
+            font-size: 28px;
             font-weight: 700;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            letter-spacing: 2px;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin-bottom: 10px;
-            display: block;
+            margin-bottom: 8px;
         }
 
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            background: rgba(0, 242, 254, 0.1);
-            color: var(--primary);
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 500;
-            border: 1px solid rgba(0, 242, 254, 0.2);
-            margin-bottom: 15px;
+        .order-card {
+            background: var(--surface);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 28px;
+            padding: 32px;
+            margin-bottom: 24px;
         }
 
-        .info-row {
+        .amount-display {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .amount-value {
+            font-size: 48px;
+            font-weight: 800;
+            letter-spacing: -1px;
+        }
+
+        .currency {
+            font-size: 24px;
+            color: var(--text-muted);
+            margin-left: 4px;
+        }
+
+        .order-details {
+            border-top: 1px solid var(--border);
+            padding-top: 24px;
+        }
+
+        .detail-row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 20px;
-            padding: 15px;
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 12px;
+            margin-bottom: 12px;
+            font-size: 15px;
         }
 
-        .info-label {
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 14px;
+        .detail-label {
+            color: var(--text-muted);
         }
 
-        .info-value {
+        .detail-value {
             font-weight: 600;
-            font-size: 16px;
         }
 
-        .payment-container {
-            position: relative;
-            width: 100%;
-            background: #ffffff; /* Белый фон для виджета DonatePay */
-            border-radius: 12px;
-            overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 220px;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        iframe {
-            max-width: 100%;
-            height: 220px;
-            border: none;
-        }
-
-        .footer-note {
-            margin-top: 20px;
+        .pay-methods-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
             text-align: center;
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.4);
-            line-height: 1.5;
         }
 
-        .loader-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
+        .btn-pay {
             width: 100%;
-            height: 100%;
-            background: var(--bg);
+            height: 64px;
+            background: #ffffff;
+            color: #000000;
+            border: none;
+            border-radius: 20px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            border-radius: 24px;
-            z-index: 10;
-            transition: opacity 0.5s ease;
+            gap: 12px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
         }
 
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid rgba(0, 242, 254, 0.1);
-            border-top-color: var(--primary);
+        .btn-pay:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-pay:active { transform: scale(0.98); }
+
+        .card-icons {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+            justify-content: center;
+            opacity: 0.6;
+        }
+
+        .card-icon {
+            height: 20px;
+            filter: grayscale(1) invert(1);
+        }
+
+        .secure-footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 13px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .loader {
+            display: none;
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(0,0,0,0.1);
+            border-top-color: #000;
             border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 15px;
+            animation: spin 0.8s linear infinite;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-        @media (max-width: 480px) {
-            .checkout-card {
-                padding: 20px;
-            }
-            .payment-container {
-                min-height: 250px;
-            }
+        .glow {
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(0, 242, 254, 0.05) 0%, rgba(0,0,0,0) 70%);
+            z-index: -1;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
         }
     </style>
 </head>
 <body>
-    <div class="background-blobs">
-        <div class="blob blob-1"></div>
-        <div class="blob blob-2"></div>
-    </div>
-
-    <div class="checkout-card">
-        <div id="loader" class="loader-overlay">
-            <div class="spinner"></div>
-            <p>Подготовка шлюза...</p>
-        </div>
-
+    <div class="glow"></div>
+    <div class="container">
         <div class="header">
-            <span class="logo">OCTORENT</span>
-            <div class="status-badge">Безопасное соединение</div>
-            <h2 style="font-size: 20px; margin-top: 5px;">Оплата аренды</h2>
+            <div class="logo">OCTORENT</div>
+            <div style="font-size: 14px; color: var(--text-muted);">Secure Checkout</div>
         </div>
-
-        <div class="info-row">
-            <div>
-                <p class="info-label">Сумма к оплате</p>
-                <p class="info-value" id="disp-amount">0.00 RUB</p>
+        <div class="order-card">
+            <div class="amount-display">
+                <span class="amount-value" id="disp-amount">0</span>
+                <span class="currency">RUB</span>
             </div>
-            <div style="text-align: right;">
-                <p class="info-label">Заказ</p>
-                <p class="info-value" id="disp-order">#000000</p>
+            <div class="order-details">
+                <div class="detail-row">
+                    <span class="detail-label">Заказ</span>
+                    <span class="detail-value" id="disp-order">#000000</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Услуга</span>
+                    <span class="detail-value">Аренда цифрового лота</span>
+                </div>
             </div>
         </div>
-
-        <div class="payment-container" id="iframe-target">
-            <!-- Iframe will be injected here -->
+        <p class="pay-methods-title">Метод оплаты: Карта РФ</p>
+        <button class="btn-pay" onclick="proceedToPayment()">
+            <div class="loader" id="btn-loader"></div>
+            <span id="btn-text">Оплатить</span>
+        </button>
+        <div class="card-icons">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/b/b9/Mir-logo.svg" class="card-icon" alt="MIR">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" class="card-icon" alt="VISA">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" class="card-icon" alt="MasterCard">
         </div>
-
-        <div class="footer-note">
-            Нажимая «Оплатить», вы подтверждаете согласие с условиями предоставления услуг. Ваши данные защищены по стандарту PCI DSS.
+        <div class="secure-footer">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 2.18l7 3.12v5.7c0 4.66-3.2 9.03-7 10.12-3.8-1.09-7-5.46-7-10.12v-5.7l7-3.12z"/>
+            </svg>
+            Защищено PCI DSS OctoRent
         </div>
     </div>
-
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // 1. Get params from URL
-            const urlParams = new URLSearchParams(window.location.search);
-            const amount = urlParams.get('amount') || '50';
-            const orderId = urlParams.get('order_id') || '0';
-            
-            // 2. Update UI
-            document.getElementById('disp-amount').textContent = amount + ' RUB';
-            document.getElementById('disp-order').textContent = '#' + orderId;
+        const urlParams = new URLSearchParams(window.location.search);
+        const amount = urlParams.get('amount') || '0';
+        const orderId = urlParams.get('order_id') || '0';
 
-            // 3. Prepare Iframe Source
-            // Token and Widget ID from configuration
-            const WIDGET_TOKEN = "57db5a26843d08276cef24eadff3c007581ec4d8f2fd8fe47b1a5045c2f6b096";
-            const WIDGET_ID = "7567140";
-            
-            // Build URL
-            // We use 'sum' for the amount. 
-            // We try to pass 'message' or 'comment' for the order ID.
-            const iframeUrl = `https://widget.donatepay.ru/widgets/page/${WIDGET_TOKEN}?widget_id=${WIDGET_ID}&sum=${amount}&comment=${orderId}`;
+        document.getElementById('disp-amount').textContent = parseFloat(amount).toFixed(2);
+        document.getElementById('disp-order').textContent = '#' + orderId;
 
-            // 4. Inject Iframe
-            const iframe = document.createElement('iframe');
-            iframe.src = iframeUrl;
-            iframe.width = "510";
-            iframe.height = "220";
-            iframe.frameBorder = "0";
-            
-            iframe.onload = function() {
-                setTimeout(() => {
-                    document.getElementById('loader').style.opacity = '0';
-                    setTimeout(() => {
-                        document.getElementById('loader').style.display = 'none';
-                    }, 500);
-                }, 1000);
-            };
+        function proceedToPayment() {
+            const btnText = document.getElementById('btn-text');
+            const loader = document.getElementById('btn-loader');
+            btnText.style.display = 'none';
+            loader.style.display = 'block';
 
-            document.getElementById('iframe-target').appendChild(iframe);
-        });
+            // ПОБЕДНЫЙ ХОД: Прямой редирект (замени 1484992 на свой ID если он другой)
+            const streamerUrl = `https://new.donatepay.ru/@1484992?amount=${amount}&message=${orderId}`;
+            
+            setTimeout(() => {
+                window.location.href = streamerUrl;
+            }, 600);
+        }
     </script>
 </body>
 </html>
