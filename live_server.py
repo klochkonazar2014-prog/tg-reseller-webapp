@@ -1529,7 +1529,7 @@ async def handle_operator_contacts(request):
     })
 
 async def handle_payment_page(request):
-    """Генерация ПРЕМИУМ страницы оплаты с интерактивным 'жидким' фоном"""
+    """Генерация ПРЕМИУМ страницы оплаты с эффектом 'Северное сияние' (Aurora Borealis)"""
     try:
         logging.info(f"🚀 [Checkout] Запрос страницы оплаты: {request.rel_url}")
         amount = request.query.get('sum', '0')
@@ -1550,7 +1550,6 @@ async def handle_payment_page(request):
                     --bg: #000000;
                     --glass: rgba(255, 255, 255, 0.03);
                     --border: rgba(255, 255, 255, 0.1);
-                    --reference-font: min(19px, 2.6666666667vw);
                 }}
 
                 * {{ 
@@ -1562,7 +1561,7 @@ async def handle_payment_page(request):
                 }}
 
                 body {{
-                    background: var(--bg);
+                    background: #000;
                     color: #fff;
                     font-family: 'Inter', sans-serif;
                     height: 100vh;
@@ -1573,37 +1572,63 @@ async def handle_payment_page(request):
                     user-select: none;
                 }}
 
-                /* LIQUID BACKGROUND */
-                .liquid-container {{
+                /* AURORA BOREALIS EFFECT (CSS ONLY) */
+                .aurora-container {{
                     position: fixed;
                     inset: 0;
                     z-index: 0;
+                    overflow: hidden;
+                    pointer-events: none;
                     background: #000;
-                    filter: blur(80px) contrast(1.2);
-                    opacity: 0.8;
-                    mix-blend-mode: exclusion;
                 }}
 
-                .blob {{
+                .aurora-layer {{
                     position: absolute;
-                    width: 50vw;
-                    height: 50vw;
-                    border-radius: 50%;
+                    width: 200%;
+                    height: 200%;
+                    top: -50%;
+                    left: -50%;
+                    background-image: radial-gradient(circle at 50% 50%, var(--aurora-color) 0%, transparent 60%);
+                    opacity: 0.3;
+                    filter: blur(80px);
                     mix-blend-mode: screen;
-                    opacity: 0.6;
                     will-change: transform;
+                    animation: aurora-drift var(--aurora-duration) infinite alternate ease-in-out;
                 }}
 
-                .blob-1 {{ background: #ffffff; top: -10%; left: -10%; }}
-                .blob-2 {{ background: #5d7a97; bottom: -10%; right: -10%; width: 60vw; height: 60vw; }}
-                .blob-3 {{ background: #222; top: 20%; right: 10%; width: 40vw; height: 40vw; }}
+                .aurora-1 {{
+                    --aurora-color: #00ff87;
+                    --aurora-duration: 25s;
+                    animation-delay: -5s;
+                }}
+                .aurora-2 {{
+                    --aurora-color: #00d2ff;
+                    --aurora-duration: 35s;
+                    animation-delay: -15s;
+                }}
+                .aurora-3 {{
+                    --aurora-color: #3a7bd5;
+                    --aurora-duration: 45s;
+                    animation-delay: -25s;
+                }}
+                .aurora-4 {{
+                    --aurora-color: #bc4e9c;
+                    --aurora-duration: 30s;
+                    animation-delay: -10s;
+                }}
+
+                @keyframes aurora-drift {{
+                    0% {{ transform: rotate(0deg) scale(1) translate(0, 0) skew(0); }}
+                    50% {{ transform: rotate(10deg) scale(1.2) translate(5%, 5%) skew(10deg, 5deg); }}
+                    100% {{ transform: rotate(-5deg) scale(1.1) translate(-5%, -2%) skew(-5deg, -10deg); }}
+                }}
 
                 /* NOISE OVERLAY */
                 .noise {{
                     position: fixed;
                     inset: 0;
                     z-index: 1;
-                    opacity: 0.12;
+                    opacity: 0.08;
                     pointer-events: none;
                     background: url('https://grainy-gradients.vercel.app/noise.svg');
                 }}
@@ -1611,14 +1636,14 @@ async def handle_payment_page(request):
                 .monolith {{
                     position: relative;
                     width: 580px;
-                    background: rgba(8, 8, 8, 0.85);
-                    backdrop-filter: blur(60px) saturate(150%);
-                    -webkit-backdrop-filter: blur(60px) saturate(150%);
+                    background: rgba(8, 8, 8, 0.82);
+                    backdrop-filter: blur(50px) saturate(160%);
+                    -webkit-backdrop-filter: blur(50px) saturate(160%);
                     border: 1px solid var(--border);
                     border-radius: 40px;
                     padding: 40px 35px;
                     z-index: 10;
-                    box-shadow: 0 50px 150px rgba(0,0,0,0.9);
+                    box-shadow: 0 50px 150px rgba(0,0,0,1);
                     text-align: center;
                     animation: fadeIn 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
                 }}
@@ -1708,14 +1733,14 @@ async def handle_payment_page(request):
                 }}
                 .pulse-dot {{ color: #ffffff; animation: blink 1.5s infinite alternate; }}
                 @keyframes blink {{ from {{ opacity: 0.2; }} to {{ opacity: 1; }} }}
-
             </style>
         </head>
         <body>
-            <div class="liquid-container" id="background">
-                <div class="blob blob-1" id="b1"></div>
-                <div class="blob blob-2" id="b2"></div>
-                <div class="blob blob-3" id="b3"></div>
+            <div class="aurora-container">
+                <div class="aurora-layer aurora-1"></div>
+                <div class="aurora-layer aurora-2"></div>
+                <div class="aurora-layer aurora-3"></div>
+                <div class="aurora-layer aurora-4"></div>
             </div>
             <div class="noise"></div>
 
@@ -1746,46 +1771,6 @@ async def handle_payment_page(request):
                     <span>ТОЛЬКО КАРТЫ РФ ИЛИ СБП</span>
                 </div>
             </div>
-
-            <script>
-                const b1 = document.getElementById('b1');
-                const b2 = document.getElementById('b2');
-                const b3 = document.getElementById('b3');
-
-                let mouseX = 0;
-                let mouseY = 0;
-                let curX = 0; 
-                let curY = 0;
-
-                window.addEventListener('mousemove', (e) => {{
-                    mouseX = (e.clientX / window.innerWidth - 0.5) * 45;
-                    mouseY = (e.clientY / window.innerHeight - 0.5) * 45;
-                }});
-
-                let time = 0;
-                function move() {{
-                    time += 0.003;
-                    
-                    // Плавное следование за мышью
-                    curX += (mouseX - curX) * 0.05;
-                    curY += (mouseY - curY) * 0.05;
-
-                    const x1 = Math.sin(time * 0.7) * 20 + 20 + curX;
-                    const y1 = Math.cos(time * 0.5) * 20 + 20 + curY;
-                    b1.style.transform = `translate(${{x1}}vw, ${{y1}}vh)`;
-
-                    const x2 = Math.cos(time * 0.4) * 25 + 50 - curX;
-                    const y2 = Math.sin(time * 0.6) * 25 + 50 - curY;
-                    b2.style.transform = `translate(${{-x2}}vw, ${{y2}}vh)`;
-
-                    const x3 = Math.sin(time * 0.3) * 15 + 30 + curX * 0.5;
-                    const y3 = Math.cos(time * 0.8) * 15 + 60 + curY * 0.5;
-                    b3.style.transform = `translate(${{x3}}vw, ${{y3}}vh)`;
-
-                    requestAnimationFrame(move);
-                }}
-                move();
-            </script>
         </body>
         </html>
         """
