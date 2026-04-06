@@ -1638,37 +1638,32 @@ async def handle_payment_page(request):
                     letter-spacing: 0.5px;
                 }}
 
-                /* Контейнер виджета v2.9 - Компактный световой короб */
+                /* Контейнер виджета v3.0 - Свечение от каждой стороны */
                 .widget-container {{
                     position: relative;
-                    width: 560px; /* Немного больше виджета (510+50) */
-                    height: 270px; /* Немного больше виджета (220+50) */
+                    width: 510px; /* Размер в размер виджета */
+                    height: 220px;
                     margin: 0 auto;
-                    border-radius: 20px;
+                    background: #fff;
+                    border-radius: 8px;
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     z-index: 5;
                     
-                    /* Градиент СУГУБО до границ виджета */
-                    background: radial-gradient(
-                        ellipse at center, 
-                        #ffffff 45%, 
-                        rgba(10,10,10,0.8) 75%, 
-                        rgba(10,10,10,1) 100%
-                    );
-                    box-shadow: 0 15px 45px rgba(0,0,0,0.5);
-                    border: 1px solid rgba(255,255,255,0.05);
+                    /* Массивное свечение строго от граней */
+                    box-shadow: 
+                        0 0 40px 10px #fff,
+                        0 0 100px 30px rgba(255, 255, 255, 0.1);
                 }}
 
                 iframe {{
                     border: none;
-                    border-radius: 8px;
+                    border-radius: 4px;
                     background: #fff;
                     position: relative;
                     z-index: 10;
                     display: block;
-                    box-shadow: 0 0 20px rgba(255,255,255,0.2);
                 }}
 
                 .instruction-footer {{
