@@ -1046,15 +1046,15 @@
     <!-- Checkout Drawer (Iframe Sheet) -->
     <div id="checkout-drawer" class="bottom-sheet" style="display: none; z-index: 10001;">
         <div class="bottom-sheet-backdrop" onclick="closeCheckoutDrawer()"></div>
-        <div class="bottom-sheet-content" style="height: 85vh; border-radius: 24px 24px 0 0; background: #fff;">
-            <div class="bottom-sheet-header" style="background: #f8f9fa; border-bottom: 1px solid #eee; padding: 10px 20px;">
+        <div class="bottom-sheet-content" style="height: auto; min-height: 320px; border-radius: 24px 24px 0 0; background: #1a1f26; transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);">
+            <div class="bottom-sheet-header" style="background: #000; border-bottom: 1px solid rgba(255,255,255,0.1); padding: 12px 20px;">
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <div style="width: 8px; height: 8px; background: #00d488; border-radius: 50%; box-shadow: 0 0 10px #00d488;"></div>
-                    <span style="color: #1a1a1a; font-weight: 700; font-size: 14px;">Безопасная оплата OctoRent</span>
+                    <span style="color: #fff; font-weight: 700; font-size: 14px;">Безопасная оплата OctoRent</span>
                 </div>
-                <button onclick="closeCheckoutDrawer()" style="background:none; border:none; color:#aaa; font-size:24px; cursor:pointer;">✕</button>
+                <button onclick="closeCheckoutDrawer()" style="background:none; border:none; color:#8b9bb4; font-size:24px; cursor:pointer;">✕</button>
             </div>
-            <div id="checkout-iframe-container" style="width: 100%; height: calc(100% - 45px); overflow: hidden; -webkit-overflow-scrolling: touch;">
+            <div id="checkout-iframe-container" style="width: 100%; height: 260px; overflow: hidden; -webkit-overflow-scrolling: touch; background: #000;">
                 <!-- Iframe will be injected here -->
             </div>
         </div>

@@ -1558,14 +1558,12 @@ async def handle_create_donatepay_invoice(request):
         rates = await fetch_fiat_rates()
         ton_rate = rates.get('RUB', 230)
             
-        # 3. Расчет в рублях с учетом 11% комиссии сервиса (новые тарифы DonatePay + вывод)
-        # Формула: Total_TON * Курс * 1.11
-        amount_rub = round(total_ton * ton_rate * 1.11)
+        # 3. Расчет в рублях с учетом 11.5% комиссии сервиса (новые тарифы DonatePay + вывод)
+        # Формула: Total_TON * Курс * 1.115
+        amount_rub = round(total_ton * ton_rate * 1.115)
         
-        # 4. Ссылка на нашу кастомную страницу оплаты (чекаут)
-        base_url = os.getenv("WEB_APP_URL", "")
-        base_url = base_url.rstrip('/')
-        payment_url = f"{base_url}/pay.html?amount={amount_rub}&order_id={order_id}"
+        # 4. Ссылка на виджет DonatePay (как в примере пользователя)
+        payment_url = f"https://widget.donatepay.ru/widgets/page/57db5a26843d08276cef24eadff3c007581ec4d8f2fd8fe47b1a5045c2f6b096?widget_id=7567140&sum={amount_rub}"
         
         # 5. Обновление заказа в БД данными чекаута
         async with db.aiosqlite.connect(db.DB_PATH) as conn:
