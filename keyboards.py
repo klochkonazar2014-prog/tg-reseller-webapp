@@ -49,17 +49,14 @@ def info_keyboard(lang='ru'):
         )]
     ])
 
-def support_keyboard(lang='ru', coder_uname="@Paulie_Gualtiery", support_uname="@Octorent_Support_bot", group_url="https://t.me/your_support_group"):
+def support_keyboard(lang='ru', **kwargs):
     back_text = "Назад" if lang == 'ru' else "Back"
-    tech_text = "👨‍💻 Тех. вопросы" if lang == 'ru' else "👨‍💻 Tech. Questions"
-    other_text = "💎 Другие вопросы" if lang == 'ru' else "💎 Other Questions"
-    
-    # В будущем здесь будут ссылки на топики или конкретную группу/бота
-    # Пока ведем на общие контакты или группу, как запросил юзер
+    support_text = "👨‍💻 Поддержка" if lang == 'ru' else "👨‍💻 Support"
+    collab_text = "🤝 Сотрудничество" if lang == 'ru' else "🤝 Cooperation"
     
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text=tech_text, url=group_url)],
-        [InlineKeyboardButton(text=other_text, url=f"https://t.me/{support_uname.lstrip('@')}")],
+        [InlineKeyboardButton(text=support_text, url="https://t.me/Paulie_Gualtiery")],
+        [InlineKeyboardButton(text=collab_text, url="tg://user?id=7868560541")],
         [InlineKeyboardButton(
             text=back_text, 
             callback_data="main_menu",

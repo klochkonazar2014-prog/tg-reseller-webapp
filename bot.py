@@ -441,17 +441,20 @@ async def profile_details(callback: CallbackQuery):
 
 @dp.callback_query(F.data == "history")
 async def show_history(callback: CallbackQuery):
-    await show_history_internal(callback.message, callback.from_user.id, is_callback=True)
+    user_id = callback.from_user.id
+    orders = await db.get_user_orders(user_id)
+    if not orders:
+        await callback.answer("📜 У вас пока нет истории аренды.", show_alert=True)
+        return
+    
+    await show_history_internal(callback.message, user_id, is_callback=True)
     await callback.answer()
 
 async def show_history_internal(message, user_id, is_callback=False):
     orders = await db.get_user_orders(user_id)
     
     if not orders:
-        if is_callback:
-            await bot.send_message(user_id, "📜 У вас пока нет истории аренды.")
-        else:
-            await message.answer("📜 У вас пока нет истории аренды.")
+        await message.answer("📜 У вас пока нет истории аренды.")
         return
         
     text = "📜 <b>Ваша история аренды</b>"
@@ -500,22 +503,19 @@ async def noop_handler(callback: CallbackQuery):
 
 @dp.callback_query(F.data == "support")
 async def support_details(callback: CallbackQuery):
-    # Динамически получаем юзернеймы
-    coder_uname = await get_dynamic_username("coder", "@Paulie_Gualtiery")
-    support_uname = await get_dynamic_username("support", "@Octorent_Support_bot")
-    
+    lang = await db.get_user_language(callback.from_user.id)
     text = (
         "<tg-emoji emoji-id='5362079447136610876'>👨‍💻</tg-emoji> <b>Поддержка OctoRent:</b>\n\n"
-        f"<tg-emoji emoji-id='5390928897082663005'>⚙️</tg-emoji> Ошибки: {coder_uname} | <tg-emoji emoji-id='5472239203590888751'>💎</tg-emoji> Другое: {support_uname}\n\n"
-        "<i>Мы постараемся ответить вам как можно скорее!</i>"
+        "По всем вопросам работы сервиса, проблемам с оплатой или арендой — пишите напрямую.\n"
+        "<i>Отвечает живой человек.</i>"
+    ) if lang == 'ru' else (
+        "<tg-emoji emoji-id='5362079447136610876'>👨‍💻</tg-emoji> <b>OctoRent Support:</b>\n\n"
+        "For any questions regarding the service, payment or rental issues — write to us directly.\n"
+        "<i>A real person responds.</i>"
     )
     await callback.message.edit_text(
         text,
-        reply_markup=kb.support_keyboard(
-            coder_uname=coder_uname, 
-            support_uname=support_uname,
-            group_url=SUPPORT_GROUP_URL
-        ),
+        reply_markup=kb.support_keyboard(lang=lang),
         parse_mode="HTML"
     )
 
@@ -955,7 +955,7 @@ async def cmd_help(message: Message):
         "После аренды в истории появится кнопка «Подключить к Fragment». Вам нужно будет ввести <code>tc://</code> ссылку из вашего кошелька.\n\n"
         "3. <b>Возвращаются ли средства?</b>\n"
         "Да, 0.14 TON возвращаются автоматически после завершения срока аренды.\n\n"
-        "Если у вас остались вопросы, пишите в поддержку: @OctoRentSupport"
+        "Если у вас остались вопросы, пишите в поддержку: @Paulie_Gualtiery"
     )
     if lang == 'en':
         help_text = (
@@ -966,7 +966,7 @@ async def cmd_help(message: Message):
             "After renting, find your item in 'History' and click 'Connect to Fragment'. You'll need to provide a <code>tc://</code> link from your wallet.\n\n"
             "3. <b>Are funds returned?</b>\n"
             "Yes, ~0.14 TON is automatically refunded after the rental period ends.\n\n"
-            "For more questions, contact support: @OctoRentSupport"
+            "For more questions, contact support: @Paulie_Gualtiery"
         )
         
     await message.answer(help_text, parse_mode="HTML")
