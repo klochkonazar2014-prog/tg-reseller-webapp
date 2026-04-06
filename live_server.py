@@ -1551,16 +1551,17 @@ async def handle_payment_page(request):
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Безопасная оплата | OctoRent</title>
-            <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
+            <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Inter:wght@400;700&display=swap" rel="stylesheet">
             <style>
                 :root {{
-                    --bg: #0f172a;
-                    --card: #1e293b;
+                    --bg: #f8fafc;
+                    --card: #ffffff;
                     --primary: #00d488;
-                    --text: #ffffff;
+                    --text: #0f172a;
+                    --text-muted: #64748b;
                 }}
                 body {{
-                    background: var(--bg);
+                    background: linear-gradient(165deg, #ffffff 0%, #f1f4f8 100%);
                     color: var(--text);
                     font-family: 'Outfit', sans-serif;
                     margin: 0;
@@ -1568,15 +1569,15 @@ async def handle_payment_page(request):
                     align-items: center;
                     justify-content: center;
                     min-height: 100vh;
-                    overflow: hidden;
+                    overflow-x: hidden;
                 }}
                 .glow {{
                     position: fixed;
-                    width: 300px;
-                    height: 300px;
+                    width: 500px;
+                    height: 500px;
                     background: var(--primary);
-                    filter: blur(150px);
-                    opacity: 0.15;
+                    filter: blur(180px);
+                    opacity: 0.1;
                     z-index: -1;
                     top: 50%;
                     left: 50%;
@@ -1585,50 +1586,69 @@ async def handle_payment_page(request):
                 .payment-card {{
                     background: var(--card);
                     padding: 40px;
-                    border-radius: 40px;
-                    box-shadow: 0 40px 100px rgba(0,0,0,0.5);
+                    border-radius: 48px;
+                    box-shadow: 0 40px 100px rgba(15, 23, 42, 0.08);
                     text-align: center;
-                    max-width: 520px;
+                    max-width: 480px;
                     width: 90%;
-                    border: 1px solid rgba(255,255,255,0.05);
+                    border: 1px solid rgba(255,255,255,1);
                     animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
                 }}
                 @keyframes slideUp {{
-                    from {{ opacity: 0; transform: translateY(40px); }}
+                    from {{ opacity: 0; transform: translateY(30px); }}
                     to {{ opacity: 1; transform: translateY(0); }}
                 }}
                 .logo-container {{
-                    margin-bottom: 30px;
+                    margin-bottom: 24px;
                 }}
                 .logo {{
-                    width: 80px;
-                    height: 80px;
+                    width: 72px;
+                    height: 72px;
                     background: linear-gradient(135deg, var(--primary) 0%, #00a56a 100%);
-                    border-radius: 24px;
+                    border-radius: 22px;
                     display: inline-flex;
                     align-items: center;
                     justify-content: center;
-                    font-size: 40px;
-                    box-shadow: 0 15px 35px rgba(0,212,136,0.25);
+                    font-size: 34px;
+                    box-shadow: 0 12px 30px rgba(0,212,136,0.2);
+                    color: white;
                 }}
-                h1 {{ font-weight: 900; font-size: 28px; margin: 0; letter-spacing: -1px; }}
-                p {{ color: #94a3b8; font-size: 16px; margin-top: 10px; }}
+                h1 {{ font-weight: 900; font-size: 26px; margin: 0; letter-spacing: -0.8px; color: var(--text); }}
+                p {{ color: var(--text-muted); font-size: 15px; margin-top: 8px; font-weight: 500; }}
+                
                 .order-info {{
-                    background: rgba(15, 23, 42, 0.5);
-                    padding: 15px;
-                    border-radius: 20px;
-                    display: inline-block;
-                    margin: 20px 0;
-                    border: 1px solid rgba(255,255,255,0.03);
+                    background: #f1f5f9;
+                    padding: 12px 24px;
+                    border-radius: 100px;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 10px;
+                    margin: 24px 0;
+                    border: 1px solid rgba(0,0,0,0.02);
+                    font-size: 14px;
+                    font-weight: 700;
+                    color: var(--text);
                 }}
+                .dot {{ width: 6px; height: 6px; background: var(--primary); border-radius: 50%; }}
+                
                 .widget-container {{
                     margin-top: 10px;
-                    border-radius: 20px;
+                    border-radius: 24px;
                     overflow: hidden;
-                    background: #fff;
-                    height: 220px;
+                    background: #ffffff;
+                    border: 2px solid #f1f5f9;
+                    box-shadow: inset 0 2px 10px rgba(0,0,0,0.02);
                 }}
-                .footer {{ margin-top: 30px; font-size: 14px; color: #64748b; }}
+                .footer {{ 
+                    margin-top: 32px; 
+                    font-size: 13px; 
+                    color: var(--text-muted); 
+                    font-weight: 600;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 6px;
+                }}
             </style>
         </head>
         <body>
@@ -1637,9 +1657,14 @@ async def handle_payment_page(request):
                 <div class="logo-container">
                     <div class="logo">⚡</div>
                 </div>
-                <h1>Оплатите ваш заказ</h1>
-                <p>Безопасный эквайринг OctoRent</p>
-                <div class="order-info">Счёт №{order_id} • <b>{amount} RUB</b></div>
+                <h1>Завершите оплату</h1>
+                <p>Официальный шлюз OctoRent</p>
+                
+                <div class="order-info">
+                    <span>Счёт №{order_id}</span>
+                    <div class="dot"></div>
+                    <span style="color: var(--primary)">{amount} RUB</span>
+                </div>
                 
                 <div class="widget-container">
                     <iframe src="https://widget.donatepay.ru/widgets/page/57db5a26843d08276cef24eadff3c007581ec4d8f2fd8fe47b1a5045c2f6b096?widget_id=7567140&sum={amount}" 
@@ -1647,7 +1672,7 @@ async def handle_payment_page(request):
                 </div>
                 
                 <div class="footer">
-                    🔒 Шифрование платежных данных активно
+                    <span style="font-size: 16px;">🔒</span> Безопасное соединение активно
                 </div>
             </div>
         </body>
@@ -1768,8 +1793,11 @@ async def cors_middleware(request, handler):
     return resp
 
 app = web.Application(middlewares=[cors_middleware])
+# ПРИНУДИТЕЛЬНАЯ РЕГИСТРАЦИЯ ПЛАТЕЖНОЙ СТРАНИЦЫ (ВЫСШИЙ ПРИОРИТЕТ)
+app.router.add_get('/checkout', handle_payment_page)
+app.router.add_get('/payment', handle_payment_page) # На всякий случай оба варианта
+
 app.add_routes([
-    web.get('/checkout', handle_payment_page), # МЕНЯЕМ ПУТЬ ДЛЯ ИЗБЕЖАНИЯ КОНФЛИКТОВ
     web.get('/', handle_index),
     web.get('/api/items', handle_live_items),
     web.get('/api/filters', handle_filter_data),
