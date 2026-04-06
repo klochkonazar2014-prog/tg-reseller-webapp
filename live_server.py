@@ -1638,35 +1638,24 @@ async def handle_payment_page(request):
                     letter-spacing: 0.5px;
                 }}
 
-                /* Контейнер виджета v3.2 - Мягкий прямоугольный ореол */
+                /* Контейнер виджета v3.3 - Liquid Smoke Interface */
                 .widget-container {{
                     position: relative;
                     width: 510px;
                     height: 220px;
                     margin: 0 auto;
                     background: #fff;
-                    border-radius: 4px;
+                    border-radius: 8px;
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     z-index: 5;
-                }}
-
-                /* Единый световой контур за виджетом */
-                .widget-container::before {{
-                    content: '';
-                    position: absolute;
-                    inset: -20px; /* Размер ореола */
-                    background: #fff;
-                    filter: blur(25px); /* Создаем тот самый плавный переход "от каждой стороны" */
-                    z-index: -1;
-                    opacity: 0.7; /* Контролируем яркость, чтобы не слепило */
-                    border-radius: 10px;
+                    box-shadow: 0 10px 40px rgba(0,0,0,0.8);
                 }}
 
                 iframe {{
                     border: none;
-                    border-radius: 2px;
+                    border-radius: 4px;
                     background: #fff;
                     position: relative;
                     z-index: 10;
@@ -1691,6 +1680,8 @@ async def handle_payment_page(request):
                     margin-left: auto;
                     margin-right: auto;
                     border: 1px solid rgba(255, 255, 255, 0.05);
+                    z-index: 20;
+                    position: relative;
                 }}
                 .pulse-dot {{ color: #00ff9d; animation: blink 1.5s infinite alternate; }}
                 @keyframes blink {{ from {{ opacity: 0.3; }} to {{ opacity: 1; }} }}
@@ -1703,17 +1694,17 @@ async def handle_payment_page(request):
             <div class="monolith">
                 <div class="payment-header">
                     <div class="header-col">
-                        <div class="label-small">ID_Заказа</div>
+                        <div class="label-small" style="font-weight: 900; opacity: 1;">ID ЗАКАЗА</div>
                         <div class="label-value">#{order_id}</div>
                     </div>
                     <div class="header-col right">
-                        <div class="label-small">Сумма_К_Оплате</div>
+                        <div class="label-small" style="font-weight: 900; opacity: 1;">СУММА К ОПЛАТЕ</div>
                         <div class="label-value">{amount} RUB</div>
                     </div>
                 </div>
 
                 <div class="item-name-box">
-                    <div class="label-small" style="margin-bottom:2px;">Предмет_Аренды</div>
+                    <div class="label-small" style="margin-bottom:2px; font-weight: 900; opacity: 1;">ПРЕДМЕТ АРЕНДЫ</div>
                     <div class="val">{item_name}</div>
                 </div>
 
@@ -1731,14 +1722,22 @@ async def handle_payment_page(request):
             <script>
                 const canvas = document.getElementById('plexus');
                 const ctx = canvas.getContext('2d');
-                const widgetWell = document.getElementById('widgetWell');
                 
                 let particles = [];
+                let smokeParticles = [];
                 const mouse = {{ x: null, y: null, radius: 180 }};
 
                 window.addEventListener('mousemove', (e) => {{
                     mouse.x = e.x;
                     mouse.y = e.y;
+                    
+                    // Создаем дым только если мышка двигается в области монолита
+                    const mono = document.querySelector('.monolith').getBoundingClientRect();
+                    if (e.x > mono.left && e.x < mono.right && e.y > mono.top && e.y < mono.bottom) {{
+                        for (let i = 0; i < 3; i++) {{
+                            smokeParticles.push(new Smoke(e.x, e.y));
+                        }}
+                    }}
                 }});
 
                 window.addEventListener('resize', () => {{
@@ -1747,20 +1746,42 @@ async def handle_payment_page(request):
                     init();
                 }});
 
+                class Smoke {{
+                    constructor(x, y) {{
+                        this.x = x;
+                        this.y = y;
+                        this.size = Math.random() * 5 + 2;
+                        this.speedX = (Math.random() - 0.5) * 2;
+                        this.speedY = (Math.random() - 0.5) * 2;
+                        this.life = 1.0;
+                        this.growth = Math.random() * 1.5 + 0.5;
+                    }}
+                    draw() {{
+                        ctx.fillStyle = `rgba(255, 255, 255, ${{this.life * 0.4}})`;
+                        ctx.beginPath();
+                        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                        ctx.fill();
+                    }}
+                    update() {{
+                        this.x += this.speedX;
+                        this.y += this.speedY;
+                        this.size += this.growth;
+                        this.life -= 0.015;
+                    }}
+                }}
+
                 class Particle {{
                     constructor() {{
                         this.x = Math.random() * canvas.width;
                         this.y = Math.random() * canvas.height;
                         this.size = Math.random() * 1.5 + 0.5;
-                        this.speedX = (Math.random() - 0.5) * 0.8;
-                        this.speedY = (Math.random() - 0.5) * 0.8;
+                        this.speedX = (Math.random() - 0.5) * 0.6;
+                        this.speedY = (Math.random() - 0.5) * 0.6;
                     }}
                     draw() {{
-                        // Проверка: находится ли частица ВНУТРИ всей модалки monolith
-                        const rect = document.querySelector('.monolith').getBoundingClientRect();
-                        const isUnder = (this.x > rect.left && this.x < rect.right && this.y > rect.top && this.y < rect.bottom);
-                        
-                        ctx.fillStyle = isUnder ? 'rgba(230, 230, 230, 0.7)' : 'rgba(93, 122, 151, 0.3)';
+                        const mono = document.querySelector('.monolith').getBoundingClientRect();
+                        const isUnder = (this.x > mono.left && this.x < mono.right && this.y > mono.top && this.y < mono.bottom);
+                        ctx.fillStyle = isUnder ? 'rgba(230, 230, 230, 0.4)' : 'rgba(93, 122, 151, 0.2)';
                         ctx.beginPath();
                         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
                         ctx.fill();
@@ -1777,7 +1798,8 @@ async def handle_payment_page(request):
                     canvas.width = window.innerWidth;
                     canvas.height = window.innerHeight;
                     particles = [];
-                    const density = (canvas.width * canvas.height) / 12000;
+                    smokeParticles = [];
+                    const density = (canvas.width * canvas.height) / 15000;
                     for (let i = 0; i < density; i++) particles.push(new Particle());
                 }}
 
@@ -1785,6 +1807,16 @@ async def handle_payment_page(request):
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
                     
                     const monoRect = document.querySelector('.monolith').getBoundingClientRect();
+
+                    // Рендерим дым
+                    for (let i = 0; i < smokeParticles.length; i++) {{
+                        smokeParticles[i].update();
+                        smokeParticles[i].draw();
+                        if (smokeParticles[i].life <= 0) {{
+                            smokeParticles.splice(i, 1);
+                            i--;
+                        }}
+                    }}
 
                     particles.forEach(p => {{
                         p.update();
@@ -1798,17 +1830,16 @@ async def handle_payment_page(request):
                             let dist = Math.sqrt(dx*dx + dy*dy);
                             
                             if (dist < 140) {{
-                                // Эффект созвездия в области модалки
                                 const midX = (particles[a].x + particles[b].x) / 2;
                                 const midY = (particles[a].y + particles[b].y) / 2;
                                 const isUnder = (midX > monoRect.left && midX < monoRect.right && midY > monoRect.top && midY < monoRect.bottom);
                                 
                                 if (isUnder) {{
-                                    ctx.strokeStyle = `rgba(220, 220, 220, ${{ (1 - dist/140) * 0.55 }})`;
-                                    ctx.lineWidth = 1.6;
+                                    ctx.strokeStyle = `rgba(220, 220, 220, ${{ (1 - dist/140) * 0.4 }})`;
+                                    ctx.lineWidth = 1.2;
                                 }} else {{
-                                    ctx.strokeStyle = `rgba(93, 122, 151, ${{ (1 - dist/140) * 0.18 }})`;
-                                    ctx.lineWidth = 1;
+                                    ctx.strokeStyle = `rgba(93, 122, 151, ${{ (1 - dist/140) * 0.12 }})`;
+                                    ctx.lineWidth = 0.8;
                                 }}
                                 
                                 ctx.beginPath();
@@ -1816,18 +1847,6 @@ async def handle_payment_page(request):
                                 ctx.lineTo(particles[b].x, particles[b].y);
                                 ctx.stroke();
                             }}
-                        }}
-                        
-                        let mdx = particles[a].x - mouse.x;
-                        let mdy = particles[a].y - mouse.y;
-                        let mdist = Math.sqrt(mdx*mdx + mdy*mdy);
-                        if (mdist < mouse.radius) {{
-                            const isInside = (mouse.x > monoRect.left && mouse.x < monoRect.right && mouse.y > monoRect.top && mouse.y < monoRect.bottom);
-                            ctx.strokeStyle = `rgba(255, 255, 255, ${{ (1 - mdist/mouse.radius) * (isInside ? 0.6 : 0.3) }})`;
-                            ctx.beginPath();
-                            ctx.moveTo(particles[a].x, particles[a].y);
-                            ctx.lineTo(mouse.x, mouse.y);
-                            ctx.stroke();
                         }}
                     }}
                     requestAnimationFrame(animate);
