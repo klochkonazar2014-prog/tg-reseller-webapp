@@ -1054,19 +1054,20 @@
         </div>
     </div>
 
-    <!-- Checkout Drawer (Iframe Sheet) - LIGHT VERSION FOR DONATEPAY -->
+    <!-- Checkout Drawer (Iframe Sheet) - FLOATING PREMIUM CARD -->
     <div id="checkout-drawer" class="bottom-sheet" style="display: none; z-index: 10020;">
-        <div class="bottom-sheet-backdrop" onclick="closeCheckoutDrawer()"></div>
-        <div class="bottom-sheet-content" style="height: auto; min-height: 600px; border-radius: 24px 24px 0 0; background: #ffffff; transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1); box-shadow: 0 -10px 40px rgba(0,0,0,0.2); width: 100% !important; overflow-x: hidden;">
-            <div class="bottom-sheet-header" style="background: #f8f9fa; border-bottom: 1px solid #eeeeee; padding: 12px 20px;">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <div style="width: 8px; height: 8px; background: #00d488; border-radius: 50%; box-shadow: 0 0 10px rgba(0,212,136,0.5);"></div>
-                    <span style="color: #1a1a1a; font-weight: 700; font-size: 15px; letter-spacing: -0.3px;">Безопасная оплата OctoRent</span>
+        <div class="bottom-sheet-backdrop" onclick="closeCheckoutDrawer()" style="backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); background: rgba(0,0,0,0.6);"></div>
+        <div class="bottom-sheet-content" style="height: auto; min-height: 520px; border-radius: 32px; background: linear-gradient(165deg, #ffffff 0%, #f1f4f8 100%); transition: transform 0.45s cubic-bezier(0.19, 1, 0.22, 1); box-shadow: 0 30px 80px rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.8); overflow: hidden; margin-bottom: 20px;">
+            <div class="bottom-sheet-header" style="background: transparent; border-bottom: 1px solid rgba(0,0,0,0.05); padding: 18px 20px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="width: 10px; height: 10px; background: #00d488; border-radius: 50%; box-shadow: 0 0 15px rgba(0,212,136,0.6);"></div>
+                    <span style="color: #1a1a1a; font-weight: 800; font-size: 16px; letter-spacing: -0.4px;">Безопасная оплата OctoRent</span>
                 </div>
-                <button onclick="closeCheckoutDrawer()" style="background:none; border:none; color:#8b9bb4; font-size:24px; cursor:pointer;">✕</button>
+                <button onclick="closeCheckoutDrawer()" 
+                    style="background: rgba(0,0,0,0.04); border: none; color: #1a1a1a; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; transition: all 0.2s;">✕</button>
             </div>
             <!-- Container for scaled iframe (no scroll needed now) -->
-            <div id="checkout-iframe-container" style="width: 100%; height: 540px; overflow: hidden; background: #fff;">
+            <div id="checkout-iframe-container" style="width: 100%; height: 500px; overflow: hidden; background: transparent;">
                 <!-- Scaled Iframe will be injected here via app.js -->
             </div>
         </div>

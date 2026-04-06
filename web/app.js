@@ -4338,12 +4338,18 @@ function openCheckoutDrawer(url, orderId) {
     hidePaymentLoader();
     overlay.style.display = 'flex';
     
-    // Инъекция iframe с масштабированием (scale) для мобильных устройств
-    // Фиксируем внутреннюю ширину 520px и сжимаем до 0.7, чтобы влезло в экран ~360px
+    // Инъекция iframe с масштабированием (scale) и ПОЛНЫМИ ПРАВАМИ для оплаты
+    // sandbox позволяет виджету открывать внешние окна шлюзов (tome.ge) без ошибки 405
     container.innerHTML = `
         <div style="width: 100%; overflow: hidden; display: flex; justify-content: center; background: #fff;">
             <div style="transform: scale(0.7); transform-origin: top center; width: 520px; height: 770px; flex-shrink: 0;">
-                <iframe src="${url}" style="width: 520px; height: 770px; border:none;" allow="payment"></iframe>
+                <iframe 
+                    src="${url}" 
+                    style="width: 520px; height: 770px; border:none;" 
+                    allow="payment; clipboard-read; clipboard-write"
+                    sandbox="allow-forms allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"
+                    referrerpolicy="no-referrer-when-downgrade"
+                ></iframe>
             </div>
         </div>
     `;
