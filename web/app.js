@@ -4770,9 +4770,9 @@ async function handleRubRent() {
         }
     } catch (e) { console.error(e); }
 }
-
-
-?start=history`;
+function toggleHistory() {
+    const botUsername = "OctoRent_bot";
+    const link = `https://t.me/${botUsername}?start=history`;
     if (window.Telegram && window.Telegram.WebApp) {
         window.Telegram.WebApp.openTelegramLink(link);
         window.Telegram.WebApp.close();
