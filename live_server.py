@@ -1554,8 +1554,8 @@ async def handle_payment_page(request):
             <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
             <style>
                 :root {{
-                    --accent: #ffffff;
                     --bg: #000000;
+                    --monolith-bg: rgba(8, 8, 8, 0.9);
                 }}
 
                 * {{ box-sizing: border-box; margin: 0; padding: 0; }}
@@ -1569,9 +1569,9 @@ async def handle_payment_page(request):
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    perspective: 1500px;
                 }}
 
+                /* Холст для Plexus Bubble */
                 #plexus {{
                     position: fixed;
                     inset: 0;
@@ -1579,117 +1579,112 @@ async def handle_payment_page(request):
                     background: #000;
                 }}
 
-                .monolith-wrap {{
-                    position: relative;
-                    z-index: 10;
-                    transition: transform 0.1s ease-out;
-                    transform-style: preserve-3d;
-                }}
-
                 .monolith {{
-                    width: 520px;
-                    background: rgba(8, 8, 8, 0.85);
-                    backdrop-filter: blur(30px);
-                    -webkit-backdrop-filter: blur(30px);
-                    border: 1px solid rgba(255, 255, 255, 0.12);
-                    border-radius: 44px;
-                    padding: 55px 40px;
-                    box-shadow: 0 50px 120px rgba(0,0,0,0.9);
+                    position: relative;
+                    width: 480px; /* Фиксированная ширина под виджет */
+                    background: var(--monolith-bg);
+                    backdrop-filter: blur(40px);
+                    -webkit-backdrop-filter: blur(40px);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    border-radius: 32px;
+                    padding: 45px 25px 25px 25px;
+                    box-shadow: 0 50px 150px rgba(0,0,0,1);
                     text-align: center;
-                    transform: translateZ(50px);
+                    z-index: 10;
                 }}
 
                 .top-info {{
                     font-family: 'JetBrains Mono', monospace;
-                    font-size: 9px;
-                    letter-spacing: 5px;
-                    color: rgba(255, 255, 255, 0.25);
-                    margin-bottom: 35px;
+                    font-size: 8px;
+                    letter-spacing: 4px;
+                    color: rgba(255, 255, 255, 0.2);
+                    margin-bottom: 25px;
                     text-transform: uppercase;
                 }}
 
                 .amount-container h1 {{
-                    font-size: 88px;
+                    font-size: 72px;
                     font-weight: 900;
-                    letter-spacing: -4px;
-                    background: linear-gradient(to bottom, #fff 30%, rgba(255,255,255,0.2) 100%);
+                    letter-spacing: -3px;
+                    background: linear-gradient(to bottom, #fff 20%, rgba(255,255,255,0.2) 100%);
                     -webkit-background-clip: text;
                     -webkit-text-fill-color: transparent;
-                    filter: drop-shadow(0 0 15px rgba(255,255,255,0.1));
+                    line-height: 1;
                 }}
 
                 .amount-container span {{
                     display: block;
                     font-family: 'JetBrains Mono', monospace;
-                    font-size: 11px;
-                    color: rgba(255,255,255,0.4);
+                    font-size: 10px;
+                    color: rgba(255,255,255,0.3);
+                    margin-bottom: 35px;
                     letter-spacing: 2px;
-                    margin-top: -8px;
-                    margin-bottom: 45px;
                 }}
 
+                /* Статичный контейнер для виджета */
                 .widget-frame {{
                     background: #fff;
-                    border-radius: 28px;
+                    border-radius: 20px;
                     overflow: hidden;
-                    height: 380px;
-                    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-                    border: 1px solid rgba(255,255,255,0.05);
+                    height: 400px;
+                    width: 100%;
+                    box-shadow: inset 0 0 40px rgba(0,0,0,0.1);
+                    position: relative;
+                }}
+
+                /* Мягкий градиент-переход к белому виджету */
+                .widget-frame::after {{
+                    content: "";
+                    position: absolute;
+                    inset: 0;
+                    box-shadow: inset 0 0 15px rgba(0,0,0,0.2);
+                    pointer-events: none;
+                    border-radius: 20px;
                 }}
 
                 .secure-footer {{
-                    margin-top: 45px;
+                    margin-top: 25px;
                     font-family: 'JetBrains Mono', monospace;
-                    font-size: 8.5px;
-                    color: rgba(255,255,255,0.15);
+                    font-size: 8px;
+                    color: rgba(255,255,255,0.1);
                     display: flex;
                     justify-content: space-between;
-                    letter-spacing: 2px;
                 }}
-                
-                .pulse-sec {{ color: #00ff9d; animation: blink 1s infinite alternate; }}
-                @keyframes blink {{ from {{ opacity: 0.3; }} to {{ opacity: 1; }} }}
             </style>
         </head>
         <body>
             <canvas id="plexus"></canvas>
 
-            <div class="monolith-wrap" id="monolithWrap">
-                <div class="monolith">
-                    <div class="top-info">CRYPTO_GATEWAY_V4</div>
-                    
-                    <div class="amount-container">
-                        <h1>{amount}</h1>
-                        <span>RUB PAYLOAD</span>
-                    </div>
+            <div class="monolith" id="monolith">
+                <div class="top-info">OCTO_PAYMENT_GATE_2.0</div>
+                
+                <div class="amount-container">
+                    <h1>{amount}</h1>
+                    <span>RUB AUTHORIZATION</span>
+                </div>
 
-                    <div class="widget-frame">
-                        <iframe src="https://widget.donatepay.ru/widgets/page/57db5a26843d08276cef24eadff3c007581ec4d8f2fd8fe47b1a5045c2f6b096?widget_id=7567140&sum={amount}" 
-                                width="100%" height="380" frameborder="0"></iframe>
-                    </div>
+                <div class="widget-frame">
+                    <iframe src="https://widget.donatepay.ru/widgets/page/57db5a26843d08276cef24eadff3c007581ec4d8f2fd8fe47b1a5045c2f6b096?widget_id=7567140&sum={amount}" 
+                            width="100%" height="400" frameborder="0"></iframe>
+                </div>
 
-                    <div class="secure-footer">
-                        <span><span class="pulse-sec">●</span> ENCRYPTED_CORE</span>
-                        <span>TX_ID: #{order_id}</span>
-                    </div>
+                <div class="secure-footer">
+                    <span>STATUS: ENCRYPTED</span>
+                    <span>TX: #{order_id}</span>
                 </div>
             </div>
 
             <script>
                 const canvas = document.getElementById('plexus');
-                const wrap = document.getElementById('monolithWrap');
+                const monolith = document.getElementById('monolith');
                 const ctx = canvas.getContext('2d');
                 let particles = [];
-                const mouse = {{ x: null, y: null, radius: 200 }};
+                let time = 0;
+                const mouse = {{ x: null, y: null, radius: 180 }};
 
                 window.addEventListener('mousemove', (e) => {{
                     mouse.x = e.x;
                     mouse.y = e.y;
-                    
-                    // 3D Tilt Effect
-                    const x = (window.innerWidth / 2 - e.clientX) / 40;
-                    const y = (window.innerHeight / 2 - e.clientY) / 40;
-                    wrap.style.transform = `rotateY(${{-x}}deg) rotateX(${{y}}deg)`;
                 }});
 
                 window.addEventListener('resize', () => {{
@@ -1703,15 +1698,30 @@ async def handle_payment_page(request):
                         this.x = Math.random() * canvas.width;
                         this.y = Math.random() * canvas.height;
                         this.size = Math.random() * 1.5 + 0.5;
-                        this.speedX = (Math.random() - 0.5) * 1.2;
-                        this.speedY = (Math.random() - 0.5) * 1.2;
+                        this.speedX = (Math.random() - 0.5) * 0.8;
+                        this.speedY = (Math.random() - 0.5) * 0.8;
                     }}
+
                     draw() {{
-                        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                        const rect = monolith.getBoundingClientRect();
+                        const inBubble = this.x >= rect.left && this.x <= rect.right && this.y >= rect.top && this.y <= rect.bottom;
+                        
+                        if (inBubble) {{
+                            ctx.fillStyle = 'rgba(226, 232, 240, 0.8)'; // Бело-серый
+                        }} else {{
+                            // Перелив #4a6865 -> #4a4a68
+                            const shift = (Math.sin(time * 0.5) + 1) / 2;
+                            const r = 74;
+                            const g = 104 - (104 - 74) * shift;
+                            const b = 101 + (104 - 101) * shift;
+                            ctx.fillStyle = `rgba(${{r}}, ${{g}}, ${{b}}, 0.6)`;
+                        }}
+
                         ctx.beginPath();
                         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
                         ctx.fill();
                     }}
+
                     update() {{
                         this.x += this.speedX;
                         this.y += this.speedY;
@@ -1729,20 +1739,36 @@ async def handle_payment_page(request):
                 }}
 
                 function animate() {{
+                    time += 0.02;
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    const rect = monolith.getBoundingClientRect();
+
                     particles.forEach(p => {{
                         p.update();
                         p.draw();
                     }});
 
-                    // Connect logic
+                    // Соединения
                     for (let a = 0; a < particles.length; a++) {{
                         for (let b = a; b < particles.length; b++) {{
                             let dx = particles[a].x - particles[b].x;
                             let dy = particles[a].y - particles[b].y;
                             let dist = Math.sqrt(dx*dx + dy*dy);
-                            if (dist < 130) {{
-                                ctx.strokeStyle = `rgba(255,255,255,${{ (1 - dist/130) * 0.15 }})`;
+                            
+                            if (dist < 120) {{
+                                const midX = (particles[a].x + particles[b].x) / 2;
+                                const midY = (particles[a].y + particles[b].y) / 2;
+                                const inBubble = midX >= rect.left && midX <= rect.right && midY >= rect.top && midY <= rect.bottom;
+
+                                if (inBubble) {{
+                                    ctx.strokeStyle = `rgba(226, 232, 240, ${{ (1 - dist/120) * 0.4 }})`;
+                                }} else {{
+                                    const shift = (Math.sin(time * 0.5) + 1) / 2;
+                                    const r = 74;
+                                    const g = 104 - (104 - 74) * shift;
+                                    const b = 101 + (104 - 101) * shift;
+                                    ctx.strokeStyle = `rgba(${{r}}, ${{g}}, ${{b}}, ${{ (1 - dist/120) * 0.2 }})`;
+                                }}
                                 ctx.beginPath();
                                 ctx.moveTo(particles[a].x, particles[a].y);
                                 ctx.lineTo(particles[b].x, particles[b].y);
@@ -1750,11 +1776,17 @@ async def handle_payment_page(request):
                             }}
                         }}
                         
+                        // Линия к мышке
                         let mdx = particles[a].x - mouse.x;
                         let mdy = particles[a].y - mouse.y;
                         let mdist = Math.sqrt(mdx*mdx + mdy*mdy);
                         if (mdist < mouse.radius) {{
-                            ctx.strokeStyle = `rgba(255,255,255,${{ (1 - mdist/mouse.radius) * 0.4 }})`;
+                            const inBubble = mouse.x >= rect.left && mouse.x <= rect.right && mouse.y >= rect.top && mouse.y <= rect.bottom;
+                            if (inBubble) {{
+                                ctx.strokeStyle = `rgba(226, 232, 240, ${{ (1 - mdist/mouse.radius) * 0.5 }})`;
+                            }} else {{
+                                ctx.strokeStyle = `rgba(74, 104, 101, ${{ (1 - mdist/mouse.radius) * 0.3 }})`;
+                            }}
                             ctx.beginPath();
                             ctx.moveTo(particles[a].x, particles[a].y);
                             ctx.lineTo(mouse.x, mouse.y);
