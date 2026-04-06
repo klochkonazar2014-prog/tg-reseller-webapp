@@ -4306,7 +4306,9 @@ async function handleDonatePayRent() {
 
         if (data.payment_url) {
             console.log("Opening DonatePay Checkout Drawer...");
-            openCheckoutDrawer(data.payment_url, data.order_id);
+            const itemName = CURRENT_PAYMENT_ITEM.nft_name || "NFT Item";
+            const finalUrl = data.payment_url + `&item_name=${encodeURIComponent(itemName)}`;
+            openCheckoutDrawer(finalUrl, data.order_id);
         } else {
             tg.showAlert(t('invoice_error', { msg: (data.error || t('error')) }));
             hidePaymentLoader();
