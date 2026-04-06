@@ -1638,42 +1638,44 @@ async def handle_payment_page(request):
                     letter-spacing: 0.5px;
                 }}
 
-                /* Контейнер виджета v2.5 */
+                /* Контейнер виджета v2.6 - Плотнее к виджету */
                 .widget-container {{
                     position: relative;
-                    width: 600px;
-                    height: 380px;
+                    width: 540px;
+                    height: 350px;
                     margin: 0 auto;
                     background: #fff;
-                    border-radius: 24px;
+                    border-radius: 16px;
                     overflow: hidden;
                     box-shadow: 
-                        0 20px 60px rgba(0,0,0,0.6),
-                        inset 0 0 30px rgba(0,0,0,0.05);
+                        0 0 0 1px rgba(255,255,255,0.05),
+                        0 20px 80px rgba(0,0,0,0.8);
                     display: flex;
                     align-items: center;
                     justify-content: center;
                 }}
 
-                /* Мягкая растушевка для слияния черного и белого */
+                /* Усиленный "плавный переход" градиентом */
                 .widget-blend-overlay {{
                     position: absolute;
-                    inset: -2px;
+                    inset: 0;
                     pointer-events: none;
                     z-index: 5;
-                    border-radius: 24px;
-                    border: 1px solid rgba(255,255,255,0.1);
+                    /* Радиальное свечение от центра к черным краям */
+                    background: radial-gradient(circle at center, transparent 70%, rgba(0,0,0,0.05) 100%);
                     box-shadow: 
-                        inset 0 0 40px #fff,
-                        inset 0 0 100px rgba(0,0,0,0.05);
+                        inset 0 0 40px rgba(255,255,255,1),
+                        inset 0 0 80px rgba(0,0,0,0.08);
                 }}
 
                 iframe {{
                     border: none;
-                    border-radius: 24px;
+                    border-radius: 4px; /* Легкое скругление самого контента */
                     background: #fff;
                     position: relative;
                     z-index: 3;
+                    /* Центрирование через margin если flex не хватает */
+                    display: block;
                 }}
 
                 .instruction-footer {{
