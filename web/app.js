@@ -4444,11 +4444,32 @@ function cancelPayment(reason = "") {
 
 function showPaymentSuccess() {
     const overlay = document.getElementById('payment-loading-overlay');
-    if (overlay) overlay.style.display = 'none';
+    if (!overlay) return;
     
-    tg.showConfirm("Оплата получена! Ваш NFT будет подключен в течение нескольких минут. Перейти в историю?", (ok) => {
-        if (ok) switchTab(4); // Профиль
-    });
+    overlay.innerHTML = `
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 24px; width: 100%; max-width: 320px; text-align: center; padding: 40px 20px; background: rgba(255,255,255,0.03); border-radius: 32px; border: 1px solid rgba(255,255,255,0.05); animation: fadeIn 0.5s ease-out;">
+            <div style="width: 80px; height: 80px; background: #00d488; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 30px rgba(0,212,136,0.3);">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+            
+            <div>
+                <h2 style="color: #fff; font-size: 24px; font-weight: 800; margin: 0 0 10px 0; letter-spacing: -0.5px;">Оплата принята!</h2>
+                <p style="color: #8b9bb4; font-size: 15px; line-height: 1.5; margin: 0;">Ваш NFT успешно арендован. История появится в профиле через несколько минут.</p>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 12px; width: 100%;">
+                <button onclick="switchTab(4); location.reload();" 
+                    style="height: 50px; width: 100%; border-radius: 16px; font-size: 16px; font-weight: 700; background: #00d488; color: #fff; border: none; cursor: pointer; box-shadow: 0 10px 20px rgba(0,212,136,0.2);">
+                    Перейти в профиль
+                </button>
+                <button onclick="location.reload()" 
+                    style="height: 50px; width: 100%; border-radius: 16px; font-size: 16px; font-weight: 700; background: rgba(255,255,255,0.08); color: #fff; border: 1px solid rgba(255,255,255,0.1); cursor: pointer;">
+                    В каталог
+                </button>
+            </div>
+        </div>
+    `;
+    overlay.style.display = 'flex';
 }
 async function handleLavaTopRent() {
     if (!CURRENT_PAYMENT_ITEM) return;
