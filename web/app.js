@@ -4338,8 +4338,15 @@ function openCheckoutDrawer(url, orderId) {
     hidePaymentLoader();
     overlay.style.display = 'flex';
     
-    // Инъекция iframe
-    container.innerHTML = `<iframe src="${url}" style="width:100%; height:100%; border:none;" allow="payment"></iframe>`;
+    // Инъекция iframe с масштабированием (scale) для мобильных устройств
+    // Фиксируем внутреннюю ширину 520px и сжимаем до 0.7, чтобы влезло в экран ~360px
+    container.innerHTML = `
+        <div style="width: 100%; overflow: hidden; display: flex; justify-content: center; background: #fff;">
+            <div style="transform: scale(0.7); transform-origin: top center; width: 520px; height: 770px; flex-shrink: 0;">
+                <iframe src="${url}" style="width: 520px; height: 770px; border:none;" allow="payment"></iframe>
+            </div>
+        </div>
+    `;
     
     // Показываем шторку
     drawer.style.display = 'flex';
