@@ -1541,7 +1541,7 @@ async def handle_payment_page(request):
         <html lang="ru">
         <head>
             <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <meta name="viewport" content="width=620, user-scalable=no">
             <title>SECURE_GATEWAY | OctoRent</title>
             <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
             <style>
@@ -1565,8 +1565,10 @@ async def handle_payment_page(request):
                     font-family: 'Inter', sans-serif;
                     height: 100vh;
                     overflow: hidden;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
                     user-select: none;
-                    position: relative;
                 }}
 
                 /* AURORA SYSTEM (V2: PHOTO-REALISTIC RAYS) */
@@ -1655,10 +1657,7 @@ async def handle_payment_page(request):
                 }}
 
                 .monolith {{
-                    position: absolute;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%) scale(var(--current-scale, 1));
+                    position: relative;
                     width: 580px;
                     background: rgba(4, 4, 4, 0.88);
                     backdrop-filter: blur(40px) saturate(140%);
@@ -1673,8 +1672,8 @@ async def handle_payment_page(request):
                 }}
 
                 @keyframes fadeIn {{ 
-                    from {{ opacity: 0; transform: translate(-50%, calc(-50% + 30px)) scale(var(--current-scale, 1)); filter: blur(10px); }} 
-                    to {{ opacity: 1; transform: translate(-50%, -50%) scale(var(--current-scale, 1)); filter: blur(0); }} 
+                    from {{ opacity: 0; transform: translateY(30px); filter: blur(10px); }} 
+                    to {{ opacity: 1; transform: translateY(0); filter: blur(0); }} 
                 }}
 
                 .payment-header {{
@@ -1792,28 +1791,6 @@ async def handle_payment_page(request):
                     <span>ТОЛЬКО КАРТЫ РФ ИЛИ СБП</span>
                 </div>
             </div>
-
-            <script>
-                function adjustScale() {{
-                    const card = document.getElementById('main-card');
-                    if (!card) return;
-                    
-                    const availableWidth = window.innerWidth;
-                    // Значение 620 = 580px карточка + 40px (по 20px гарантированный минимальный зазор на краях)
-                    const originalWidth = 620; 
-                    
-                    if (availableWidth < originalWidth) {{
-                        const scaleFactor = availableWidth / originalWidth;
-                        card.style.setProperty('--current-scale', scaleFactor);
-                    }} else {{
-                        card.style.setProperty('--current-scale', 1);
-                    }}
-                }}
-
-                window.addEventListener('resize', adjustScale);
-                window.addEventListener('DOMContentLoaded', adjustScale);
-                adjustScale();
-            </script>
         </body>
         </html>
         """
