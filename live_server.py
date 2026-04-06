@@ -1750,10 +1750,15 @@ async def handle_payment_page(request):
                 const mouse = {{ x: -1000, y: -1000 }};
 
                 function resize() {{
+                    // Устанавливаем размеры для фона
                     plexusCanvas.width = window.innerWidth;
                     plexusCanvas.height = window.innerHeight;
-                    liquidCanvas.width = monolith.clientWidth;
-                    liquidCanvas.height = monolith.clientHeight;
+                    
+                    // Устанавливаем размеры для жидкости внутри монолита
+                    const mRect = monolith.getBoundingClientRect();
+                    liquidCanvas.width = mRect.width || 580;
+                    liquidCanvas.height = mRect.height || 400;
+                    
                     init();
                 }}
 
@@ -1790,17 +1795,17 @@ async def handle_payment_page(request):
                     constructor() {{
                         this.x = Math.random() * liquidCanvas.width;
                         this.y = Math.random() * liquidCanvas.height;
-                        this.radius = Math.random() * 60 + 40;
-                        this.vx = (Math.random() - 0.5) * 2;
-                        this.vy = (Math.random() - 0.5) * 2;
+                        this.radius = Math.random() * 70 + 40;
+                        this.vx = (Math.random() - 0.5) * 1.5;
+                        this.vy = (Math.random() - 0.5) * 1.5;
                     }}
                     update(mX, mY) {{
                         let dx = mX - this.x;
                         let dy = mY - this.y;
                         let dist = Math.sqrt(dx*dx + dy*dy);
                         if (dist < 250) {{
-                            this.vx += dx * 0.008;
-                            this.vy += dy * 0.008;
+                            this.vx += dx * 0.006;
+                            this.vy += dy * 0.006;
                         }}
                         this.x += this.vx;
                         this.y += this.vy;
@@ -1811,8 +1816,8 @@ async def handle_payment_page(request):
                     }}
                     draw() {{
                         const grad = lCtx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius);
-                        grad.addColorStop(0, 'rgba(255, 255, 255, 0.35)');
-                        grad.addColorStop(0.5, 'rgba(255, 255, 255, 0.15)');
+                        grad.addColorStop(0, 'rgba(255, 255, 255, 0.3)');
+                        grad.addColorStop(0.5, 'rgba(255, 255, 255, 0.1)');
                         grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
                         lCtx.fillStyle = grad;
                         lCtx.beginPath();
@@ -1824,8 +1829,9 @@ async def handle_payment_page(request):
                 function init() {{
                     particles = [];
                     blobs = [];
-                        blobs.push(new LiquidBlob(Math.random() * liquidCanvas.width, Math.random() * liquidCanvas.height));
-                    }}
+                    const pCount = Math.floor((plexusCanvas.width * plexusCanvas.height) / 16000);
+                    for (let i = 0; i < pCount; i++) particles.push(new PlexusPoint());
+                    for (let i = 0; i < 15; i++) blobs.push(new LiquidBlob());
                 }}
 
                 function animate() {{
