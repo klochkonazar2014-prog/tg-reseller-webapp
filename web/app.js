@@ -4091,7 +4091,8 @@ function updateMethodTotal(baseTotal) {
 
         if (SELECTED_PAY_METHOD === 'CLOUDTIPS') {
             const tonForCard = base + 0.2 + (isCoverFeeChecked ? 0.14 : 0);
-            let rubVal = Math.round(tonForCard * FIAT_RATES.RUB * FIAT_FEE_MULTIPLIER);
+            // Формула: (TON + 0.2 + комиссия сети) * Курс * 1.11 (9% депо + 2% вывод)
+            let rubVal = Math.round(tonForCard * FIAT_RATES.RUB * 1.11);
             total = rubVal > 0 ? rubVal : '...';
             if (totalCurrencyEl) totalCurrencyEl.innerText = '₽';
             
@@ -4323,8 +4324,8 @@ async function handleDonatePayRent() {
         const data = await res.json();
 
         if (data.payment_url) {
-            tg.openLink(data.payment_url);
-            startOrderStatusPolling(data.order_id);
+            console.log("Opening DonatePay Checkout Drawer...");
+            openCheckoutDrawer(data.payment_url, data.order_id);
         } else {
             tg.showAlert(t('invoice_error', { msg: (data.error || t('error')) }));
             hidePaymentLoader();
@@ -4338,6 +4339,135 @@ async function handleDonatePayRent() {
         const btn = document.querySelector('.main-rent-btn');
         if (btn) btn.disabled = false;
     }
+}
+
+let PAYMENT_POLLING_TIMER = null;
+let PAYMENT_COUNTDOWN_TIMER = null;
+let CURRENT_ORDER_ID = null;
+
+function openCheckoutDrawer(url, orderId) {
+    CURRENT_ORDER_ID = orderId;
+    const drawer = document.getElementById('checkout-drawer');
+    const container = document.getElementById('checkout-iframe-container');
+    const overlay = document.getElementById('payment-loading-overlay');
+
+    if (!drawer || !container || !overlay) return;
+
+    // Скрываем обычный лоадер, показываем экран ожидания
+    hidePaymentLoader();
+    overlay.style.display = 'flex';
+    
+    // Инъекция iframe
+    container.innerHTML = `<iframe src="${url}" style="width:100%; height:100%; border:none;" allow="payment"></iframe>`;
+    
+    // Показываем шторку
+    drawer.style.display = 'flex';
+    setTimeout(() => drawer.classList.add('active'), 10);
+
+    // Запускаем таймеры
+    startOrderStatusPolling(orderId);
+    startPaymentCountdown(600); // 10 минут
+}
+
+function closeCheckoutDrawer() {
+    const drawer = document.getElementById('checkout-drawer');
+    if (drawer) {
+        drawer.classList.remove('active');
+        setTimeout(() => {
+            drawer.style.display = 'none';
+            const container = document.getElementById('checkout-iframe-container');
+            if (container) container.innerHTML = '';
+        }, 300);
+    }
+}
+
+function startPaymentCountdown(seconds) {
+    if (PAYMENT_COUNTDOWN_TIMER) clearInterval(PAYMENT_COUNTDOWN_TIMER);
+    
+    let timeLeft = seconds;
+    const timerEl = document.getElementById('payment-timer');
+    
+    const update = () => {
+        const m = Math.floor(timeLeft / 60);
+        const s = timeLeft % 60;
+        if (timerEl) timerEl.innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
+        
+        if (timeLeft <= 0) {
+            clearInterval(PAYMENT_COUNTDOWN_TIMER);
+            cancelPayment("Время на оплату истекло");
+        }
+        timeLeft--;
+    };
+    
+    update();
+    PAYMENT_COUNTDOWN_TIMER = setInterval(update, 1000);
+}
+
+function startOrderStatusPolling(orderId) {
+    if (PAYMENT_POLLING_TIMER) clearInterval(PAYMENT_POLLING_TIMER);
+    
+    let countdown = 10;
+    const countEl = document.getElementById('polling-count');
+    
+    const poll = async () => {
+        try {
+            const res = await apiFetch(`${BACKEND_URL}/api/order_status/${orderId}`);
+            const data = await res.json();
+            
+            if (data.status === 'paid' || data.status === 'rented' || data.status === 'active') {
+                stopAllPaymentTimers();
+                showPaymentSuccess();
+                closeCheckoutDrawer();
+            } else if (data.status === 'expired') {
+                cancelPayment("Срок действия счета истек");
+            }
+        } catch (e) {
+            console.warn("Polling error:", e);
+        }
+    };
+
+    PAYMENT_POLLING_TIMER = setInterval(async () => {
+        countdown--;
+        if (countEl) countEl.innerText = countdown;
+        
+        if (countdown <= 0) {
+            countdown = 10;
+            await poll();
+        }
+    }, 1000);
+    
+    // Первый опрос сразу
+    poll();
+}
+
+function stopAllPaymentTimers() {
+    if (PAYMENT_POLLING_TIMER) clearInterval(PAYMENT_POLLING_TIMER);
+    if (PAYMENT_COUNTDOWN_TIMER) clearInterval(PAYMENT_COUNTDOWN_TIMER);
+    PAYMENT_POLLING_TIMER = null;
+    PAYMENT_COUNTDOWN_TIMER = null;
+}
+
+function cancelPayment(reason = "") {
+    stopAllPaymentTimers();
+    closeCheckoutDrawer();
+    const overlay = document.getElementById('payment-loading-overlay');
+    if (overlay) overlay.style.display = 'none';
+    
+    if (reason) {
+        tg.showAlert(reason);
+    }
+    
+    const btn = document.querySelector('.main-rent-btn');
+    if (btn) btn.disabled = false;
+}
+
+function showPaymentSuccess() {
+    const overlay = document.getElementById('payment-loading-overlay');
+    if (overlay) overlay.style.display = 'none';
+    
+    tg.showConfirm("Оплата получена! Ваш NFT будет подключен в течение нескольких минут. Перейти в историю?", (ok) => {
+        if (ok) switchTab(4); // Профиль
+    });
 }
 async function handleLavaTopRent() {
     if (!CURRENT_PAYMENT_ITEM) return;

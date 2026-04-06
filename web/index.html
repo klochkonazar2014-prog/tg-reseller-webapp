@@ -864,7 +864,7 @@
                                 <div class="pm-header">
                                     <div class="pm-name" data-i18n="card_rf_sbp">Карта РФ / СБП</div>
                                     <div class="pay-method-badge"
-                                        style="background: rgba(0, 212, 136, 0.1); color: #00d488;">+5% комиссии</div>
+                                        style="background: rgba(0, 212, 136, 0.1); color: #00d488;">+11.5% комиссии</div>
                                 </div>
                                 <div class="pm-row-bottom">
                                     <div class="pm-desc" data-i18n="cloudtips_desc">Мгновенная оплата через CloudTips
@@ -892,7 +892,7 @@
 
                         <div
                             style="margin-top: 12px; font-size: 11px; color: #8b9bb4; line-height: 1.4; padding: 0 4px;">
-                            * Цена включает комиссию сервиса за перевод.
+                            * Цена включает комиссию 9% на прием и 2% на вывод.
                         </div>
                     </div>
 
@@ -985,7 +985,7 @@
             <div id="ct-step-2" class="ct-instruction-step" style="display: none;">
                 <div class="ct-fragment-box">
                     <p class="ct-fragment-text" data-i18n="ct_instruction_desc_new">Вы можете отключить этот ползунок,
-                        так как комиссия 5% уже включена в цену.</p>
+                        так как комиссия 11% уже включена в цену.</p>
                 </div>
 
                 <div class="ct-image-preview-box" onclick="zoomCTImage()">
@@ -1028,12 +1028,36 @@
     <div id="image-zoom-overlay" class="zoom-overlay" style="display: none;" onclick="closeCTZoom()">
         <img id="zoomed-ct-img" src="pictures/cover_fee_warning.png" alt="Zoomed Instruction">
     </div>
-    <!-- Payment Loading Overlay -->
+    <!-- Payment Loading Overlay (Status Screen) -->
     <div id="payment-loading-overlay"
-        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 10000; flex-direction: column; align-items: center; justify-content: center; gap: 20px; backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);">
-        <div class="spinner-loader"></div>
-        <div style="color: #fff; font-size: 18px; font-weight: 700; letter-spacing: 0.5px;">Ожидаем оплаты...</div>
-        <div style="color: #8b9bb4; font-size: 13px;">Пожалуйста, не закрывайте окно</div>
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10000; flex-direction: column; align-items: center; justify-content: center; gap: 20px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);">
+        <div class="premium-spinner" style="width: 60px; height: 60px; border-width: 4px;"></div>
+        <div style="text-align: center;">
+            <div id="payment-status-text" style="color: #fff; font-size: 20px; font-weight: 800; letter-spacing: 0.5px; margin-bottom: 8px;">Ожидаем оплаты...</div>
+            <div id="payment-timer" style="color: var(--accent-blue); font-family: 'Courier New', monospace; font-size: 24px; font-weight: 900;">10:00</div>
+        </div>
+        <div style="color: #8b9bb4; font-size: 13px; text-align: center; max-width: 250px; line-height: 1.5;">
+            Пожалуйста, совершите оплату в открывшемся окне.<br>
+            Проверка статуса: <span id="polling-count">10</span> сек.
+        </div>
+        <button class="btn-gray" onclick="cancelPayment()" style="margin-top: 20px; padding: 10px 20px; border-radius: 12px; font-size: 14px;">Отменить заказ</button>
+    </div>
+
+    <!-- Checkout Drawer (Iframe Sheet) -->
+    <div id="checkout-drawer" class="bottom-sheet" style="display: none; z-index: 10001;">
+        <div class="bottom-sheet-backdrop" onclick="closeCheckoutDrawer()"></div>
+        <div class="bottom-sheet-content" style="height: 85vh; border-radius: 24px 24px 0 0; background: #fff;">
+            <div class="bottom-sheet-header" style="background: #f8f9fa; border-bottom: 1px solid #eee; padding: 10px 20px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 8px; height: 8px; background: #00d488; border-radius: 50%; box-shadow: 0 0 10px #00d488;"></div>
+                    <span style="color: #1a1a1a; font-weight: 700; font-size: 14px;">Безопасная оплата OctoRent</span>
+                </div>
+                <button onclick="closeCheckoutDrawer()" style="background:none; border:none; color:#aaa; font-size:24px; cursor:pointer;">✕</button>
+            </div>
+            <div id="checkout-iframe-container" style="width: 100%; height: calc(100% - 45px); overflow: hidden; -webkit-overflow-scrolling: touch;">
+                <!-- Iframe will be injected here -->
+            </div>
+        </div>
     </div>
 </body>
 

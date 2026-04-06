@@ -1576,7 +1576,7 @@ app.add_routes([
     web.get('/api/get_usdt_payload', handle_get_usdt_payload),
     web.get('/api/bot_balance', handle_get_bot_balance),
     web.get('/api/operator_contacts', handle_operator_contacts),
-    web.get('/api/order_status', handle_get_order_status),
+    web.get('/api/order_status/{order_id}', handle_get_order_status),
     web.post('/api/webhooks/freekassa', handle_freekassa_webhook),
     web.post('/api/webhooks/xrocket', handle_xrocket_webhook),
     web.post(f'/api/webhooks/ct/{os.getenv("CLOUDTIPS_WEBHOOK_PATH", "cloudtips")}', handle_cloudtips_webhook),
@@ -1596,41 +1596,35 @@ async def handle_create_donatepay_invoice(request):
         nft_address = data.get("nft_address")
         days = int(data.get("days", 1))
         
-        # Create order in DB
+        # 1. Создание заказа в БД (уже учитывает 0.2 TON gas fee в total_price)
         res, err = await create_rental_order(user_id, nft_address, days)
         if err: return web.json_response({"error": err}, status=404)
         
         order_id = res['order_id']
         total_ton = res['total_price']
         
-        # Convert TON price to RUB (we'll use a fixed rate or fetch)
-        # For simplicity, 1 TON = 450 RUB (user can adjust)
-        # Better: fetch from @rates or similar
-        ton_rate = 550.0 # Placeholder, should be dynamic
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get("https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=rub") as r:
-                    rate_data = await r.json()
-                    ton_rate = float(rate_data["the-open-network"]["rub"])
-        except:
-            pass
+        # 2. Получение актуального курса
+        rates = await fetch_fiat_rates()
+        ton_rate = rates.get('RUB', 230)
             
-        amount_rub = round(total_ton * ton_rate, 2)
+        # 3. Расчет в рублях с учетом 11% комиссии сервиса (новые тарифы DonatePay + вывод)
+        # Формула: Total_TON * Курс * 1.11
+        amount_rub = round(total_ton * ton_rate * 1.11)
         
-        # Our custom payment page with Iframe
+        # 4. Ссылка на нашу кастомную страницу оплаты (чекаут)
         base_url = os.getenv("WEB_APP_URL", "")
-        # Remove trailing slash if exists
         base_url = base_url.rstrip('/')
         payment_url = f"{base_url}/pay.html?amount={amount_rub}&order_id={order_id}"
         
-        # Update order with gateway
+        # 5. Обновление заказа в БД данными чекаута
         async with db.aiosqlite.connect(db.DB_PATH) as conn:
             await conn.execute(
-                "UPDATE orders SET payment_gateway = ?, currency = ?, external_id = ? WHERE id = ?",
-                ("DONATEPAY", "RUB", str(order_id), order_id)
+                "UPDATE orders SET payment_gateway = ?, currency = ?, fiat_amount = ?, external_id = ? WHERE id = ?",
+                ("DONATEPAY", "RUB", amount_rub, str(order_id), order_id)
             )
             await conn.commit()
             
+        logging.info(f"✅ [DonatePay] Инвойс создан: order_id={order_id}, fiat={amount_rub}₽")
         return web.json_response({"payment_url": payment_url, "order_id": order_id})
     except Exception as e:
         logging.error(f"Error creating DonatePay invoice: {e}")
