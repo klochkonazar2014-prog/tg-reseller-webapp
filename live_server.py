@@ -1739,58 +1739,132 @@ async def handle_payment_page(request):
             </div>
 
             <script>
-                /* --- Vision Fluid Engine v4.1 (Elite Stability) --- */
-                const canvas = document.getElementById('liquidCanvas');
-                const monolith = document.querySelector('.monolith');
+                // --- Vision Fluid Nebula v4.2 (Ultra Stability) ---
                 const plexusCanvas = document.getElementById('plexus');
+                const liquidCanvas = document.getElementById('liquidCanvas');
                 const pCtx = plexusCanvas.getContext('2d');
-
-                // --- 1. Safe Plexus Animation ---
+                const lCtx = liquidCanvas.getContext('2d');
+                const monolith = document.querySelector('.monolith');
+                
                 let particles = [];
+                let ooze = [];
+                const mouse = {{ x: -1000, y: -1000 }};
+
                 function init() {{
+                    // Ресайз фонового холста
+                    plexusCanvas.width = window.innerWidth;
+                    plexusCanvas.height = window.innerHeight;
+                    
+                    // Ресайз внутреннего холста (жижа)
+                    const mRect = monolith.getBoundingClientRect();
+                    liquidCanvas.width = mRect.width || 580;
+                    liquidCanvas.height = mRect.height || 400;
+
+                    // Создаем созвездия
                     particles = [];
-                    blobs = [];
-                    const pCount = Math.floor((plexusCanvas.width * plexusCanvas.height) / 16000);
-                    for (let i = 0; i < pCount; i++) particles.push(new PlexusPoint());
-                    for (let i = 0; i < 15; i++) blobs.push(new LiquidBlob());
+                    const pCount = Math.floor((plexusCanvas.width * plexusCanvas.height) / 18000);
+                    for (let i = 0; i < pCount; i++) {{
+                        particles.push({{
+                            x: Math.random() * plexusCanvas.width,
+                            y: Math.random() * plexusCanvas.height,
+                            size: Math.random() * 1.5 + 0.5,
+                            vx: (Math.random() - 0.5) * 0.3,
+                            vy: (Math.random() - 0.5) * 0.3
+                        }});
+                    }}
+
+                    // Создаем "жижу" (мета-сферы)
+                    ooze = [];
+                    for (let i = 0; i < 18; i++) {{
+                        ooze.push({{
+                            x: Math.random() * liquidCanvas.width,
+                            y: Math.random() * liquidCanvas.height,
+                            r: Math.random() * 80 + 60,
+                            vx: (Math.random() - 0.5) * 1.5,
+                            vy: (Math.random() - 0.5) * 1.5,
+                            color: Math.random() > 0.5 ? 'rgba(255, 255, 255, 0.4)' : 'rgba(93, 122, 151, 0.3)'
+                        }});
+                    }}
                 }}
 
+                window.addEventListener('mousemove', (e) => {{
+                    mouse.x = e.clientX;
+                    mouse.y = e.clientY;
+                }});
+
+                window.addEventListener('resize', init);
+
                 function animate() {{
-                    // 1. Рендерим Созвездия
+                    // 1. Отрисовка Созвездий (Plexus)
                     pCtx.clearRect(0, 0, plexusCanvas.width, plexusCanvas.height);
                     particles.forEach(p => {{
-                        p.update();
-                        p.draw();
+                        p.x += p.vx; p.y += p.vy;
+                        if (p.x < 0 || p.x > plexusCanvas.width) p.vx *= -1;
+                        if (p.y < 0 || p.y > plexusCanvas.height) p.vy *= -1;
+                        
+                        pCtx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                        pCtx.beginPath();
+                        pCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                        pCtx.fill();
                     }});
+
                     for (let i = 0; i < particles.length; i++) {{
-                        for (let j = i; j < particles.length; j++) {{
+                        for (let j = i + 1; j < particles.length; j++) {{
                             let dx = particles[i].x - particles[j].x;
                             let dy = particles[i].y - particles[j].y;
-                            let dist = Math.sqrt(dx*dx + dy*dy);
-                            if (dist < 150) {{
-                                pCtx.strokeStyle = `rgba(93, 122, 151, ${{ (1 - dist/150) * 0.1 }})`;
+                            let d = Math.sqrt(dx*dx + dy*dy);
+                            if (d < 150) {{
+                                pCtx.strokeStyle = `rgba(150, 180, 210, ${{ (1 - d/150) * 0.15 }})`;
+                                pCtx.lineWidth = 0.5;
                                 pCtx.beginPath(); pCtx.moveTo(particles[i].x, particles[i].y);
                                 pCtx.lineTo(particles[j].x, particles[j].y); pCtx.stroke();
                             }}
                         }}
                     }}
 
-                    // 2. Рендерим Жидкость
+                    // 2. Отрисовка Жижи (Liquid Ooze)
                     lCtx.clearRect(0, 0, liquidCanvas.width, liquidCanvas.height);
                     const rect = monolith.getBoundingClientRect();
                     const relX = mouse.x - rect.left;
                     const relY = mouse.y - rect.top;
 
-                    blobs.forEach(b => {{
-                        b.update(relX, relY);
-                        b.draw();
+                    ooze.forEach(b => {{
+                        // Магнитное притяжение к курсору
+                        let dx = relX - b.x;
+                        let dy = relY - b.y;
+                        let d = Math.sqrt(dx*dx + dy*dy);
+                        if (d < 300) {{
+                            let f = (1 - d/300) * 0.15;
+                            b.vx += dx * f;
+                            b.vy += dy * f;
+                        }}
+
+                        b.x += b.vx;
+                        b.y += b.vy;
+                        b.vx *= 0.96;
+                        b.vy *= 0.96;
+
+                        if (b.x < 0 || b.x > liquidCanvas.width) b.vx *= -1;
+                        if (b.y < 0 || b.y > liquidCanvas.height) b.vy *= -1;
+
+                        // Отрисовка градиентной капли
+                        const grad = lCtx.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.r);
+                        grad.addColorStop(0, b.color);
+                        grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                        
+                        lCtx.fillStyle = grad;
+                        lCtx.beginPath();
+                        lCtx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+                        lCtx.fill();
                     }});
 
                     requestAnimationFrame(animate);
                 }}
 
-                resize();
-                animate();
+                setTimeout(() => {{
+                    init();
+                    animate();
+                }}, 200);
             </script>
         </body>
         </html>
