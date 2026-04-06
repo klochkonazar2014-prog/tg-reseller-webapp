@@ -1555,7 +1555,8 @@ async def handle_payment_page(request):
             <style>
                 :root {{
                     --bg: #000000;
-                    --monolith-bg: rgba(8, 8, 8, 0.9);
+                    --monolith-bg: rgba(10, 10, 10, 0.75);
+                    --accent: #ffffff;
                 }}
 
                 * {{ box-sizing: border-box; margin: 0; padding: 0; }}
@@ -1581,86 +1582,91 @@ async def handle_payment_page(request):
 
                 .monolith {{
                     position: relative;
-                    width: 480px; /* Фиксированная ширина под виджет */
+                    width: 480px;
                     background: var(--monolith-bg);
-                    backdrop-filter: blur(40px);
-                    -webkit-backdrop-filter: blur(40px);
-                    border: 1px solid rgba(255, 255, 255, 0.1);
-                    border-radius: 32px;
-                    padding: 45px 25px 25px 25px;
-                    box-shadow: 0 50px 150px rgba(0,0,0,1);
+                    backdrop-filter: blur(50px);
+                    -webkit-backdrop-filter: blur(50px);
+                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    border-radius: 36px;
+                    padding: 50px 30px 30px 30px;
+                    box-shadow: 0 60px 180px rgba(0,0,0,1);
                     text-align: center;
                     z-index: 10;
                 }}
 
                 .top-info {{
-                    font-family: 'JetBrains Mono', monospace;
-                    font-size: 8px;
-                    letter-spacing: 4px;
-                    color: rgba(255, 255, 255, 0.2);
+                    font-size: 13px;
+                    font-weight: 500;
+                    letter-spacing: 1px;
+                    color: rgba(255, 255, 255, 0.4);
                     margin-bottom: 25px;
-                    text-transform: uppercase;
                 }}
 
                 .amount-container h1 {{
-                    font-size: 72px;
+                    font-size: 82px;
                     font-weight: 900;
-                    letter-spacing: -3px;
-                    background: linear-gradient(to bottom, #fff 20%, rgba(255,255,255,0.2) 100%);
-                    -webkit-background-clip: text;
-                    -webkit-text-fill-color: transparent;
+                    color: #fff;
+                    letter-spacing: -2px;
                     line-height: 1;
                 }}
 
                 .amount-container span {{
                     display: block;
-                    font-family: 'JetBrains Mono', monospace;
-                    font-size: 10px;
-                    color: rgba(255,255,255,0.3);
-                    margin-bottom: 35px;
-                    letter-spacing: 2px;
+                    font-size: 14px;
+                    font-weight: 400;
+                    color: rgba(255,255,255,0.4);
+                    margin-top: 5px;
+                    margin-bottom: 40px;
                 }}
 
                 /* Статичный контейнер для виджета */
                 .widget-frame {{
                     background: #fff;
-                    border-radius: 20px;
+                    border-radius: 24px;
                     overflow: hidden;
                     height: 400px;
                     width: 100%;
-                    box-shadow: inset 0 0 40px rgba(0,0,0,0.1);
                     position: relative;
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
                 }}
 
-                /* Мягкий градиент-переход к белому виджету */
+                /* Мягкий градиент-переход */
                 .widget-frame::after {{
                     content: "";
                     position: absolute;
                     inset: 0;
-                    box-shadow: inset 0 0 15px rgba(0,0,0,0.2);
+                    box-shadow: inset 0 0 15px rgba(0,0,0,0.1);
                     pointer-events: none;
-                    border-radius: 20px;
+                    border-radius: 24px;
                 }}
 
                 .secure-footer {{
-                    margin-top: 25px;
-                    font-family: 'JetBrains Mono', monospace;
-                    font-size: 8px;
-                    color: rgba(255,255,255,0.1);
+                    margin-top: 30px;
+                    font-size: 11px;
+                    color: rgba(255,255,255,0.25);
                     display: flex;
                     justify-content: space-between;
+                    align-items: center;
                 }}
+
+                .status-badge {{
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                    color: rgba(255,255,255,0.4);
+                }}
+                .dot {{ width: 6px; height: 6px; background: #00ff9d; border-radius: 50%; box-shadow: 0 0 10px #00ff9d; }}
             </style>
         </head>
         <body>
             <canvas id="plexus"></canvas>
 
             <div class="monolith" id="monolith">
-                <div class="top-info">OCTO_PAYMENT_GATE_2.0</div>
+                <div class="top-info">Оплата аренды</div>
                 
                 <div class="amount-container">
-                    <h1>{amount}</h1>
-                    <span>RUB AUTHORIZATION</span>
+                    <h1>{amount} ₽</h1>
+                    <span>Сумма к оплате</span>
                 </div>
 
                 <div class="widget-frame">
@@ -1669,8 +1675,8 @@ async def handle_payment_page(request):
                 </div>
 
                 <div class="secure-footer">
-                    <span>STATUS: ENCRYPTED</span>
-                    <span>TX: #{order_id}</span>
+                    <div class="status-badge"><div class="dot"></div> Безопасная транзакция</div>
+                    <span>№ заказа: {order_id}</span>
                 </div>
             </div>
 
