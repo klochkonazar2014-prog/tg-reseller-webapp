@@ -1630,6 +1630,23 @@ async def donatepay_poller():
             
         await asyncio.sleep(20) # Poll every 20 seconds
 
+@web.middleware
+async def cors_middleware(request, handler):
+    if request.method == "OPTIONS":
+        return web.Response(status=204, headers={
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+            'Access-Control-Allow-Headers': '*'
+        })
+    resp = await handler(request)
+    resp.headers.update({
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': '*',
+        'Cache-Control': 'no-cache, no-store, must-revalidate'
+    })
+    return resp
+
 app = web.Application(middlewares=[cors_middleware])
 app.add_routes([
     web.get('/', handle_index),
