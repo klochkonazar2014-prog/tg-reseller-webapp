@@ -1558,7 +1558,6 @@ async def handle_payment_page(request):
                 :root {{
                     --accent-blue: #5d7a97;
                     --bg: #000000;
-                    --glass: rgba(255, 255, 255, 0.05);
                 }}
 
                 * {{ box-sizing: border-box; margin: 0; padding: 0; }}
@@ -1576,25 +1575,29 @@ async def handle_payment_page(request):
 
                 #plexus {{
                     position: fixed;
-                    inset: 0;
+                    top: 0;
+                    left: 0;
+                    width: 100vw;
+                    height: 100vh;
                     z-index: 0;
                     background: #000;
+                    pointer-events: none;
                 }}
 
                 .monolith {{
                     position: relative;
                     width: 580px;
-                    background: rgba(8, 8, 8, 0.94);
-                    backdrop-filter: blur(45px);
-                    -webkit-backdrop-filter: blur(45px);
-                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    background: rgba(10, 10, 10, 0.95);
+                    backdrop-filter: blur(40px);
+                    -webkit-backdrop-filter: blur(40px);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
                     border-radius: 40px;
                     padding: 45px;
                     z-index: 10;
                     box-shadow: 0 40px 140px rgba(0,0,0,1);
                     text-align: center;
                     animation: fadeIn 0.8s ease-out;
-                    overflow: hidden; /* Чтобы жидкость не выходила за края */
+                    overflow: hidden;
                 }}
                 @keyframes fadeIn {{ from {{ opacity: 0; transform: translateY(20px); }} to {{ opacity: 1; }} }}
 
@@ -1602,8 +1605,8 @@ async def handle_payment_page(request):
                 #liquidCanvas {{
                     position: absolute;
                     inset: 0;
-                    width: 100%;
-                    height: 100%;
+                    width: 100% !important;
+                    height: 100% !important;
                     z-index: 1;
                     pointer-events: none;
                 }}
@@ -1612,7 +1615,6 @@ async def handle_payment_page(request):
                 .monolith-content {{
                     position: relative;
                     z-index: 2;
-                    pointer-events: auto;
                 }}
 
                 .payment-header {{
@@ -1621,7 +1623,6 @@ async def handle_payment_page(request):
                     align-items: flex-end;
                     margin-bottom: 25px;
                     padding: 0 15px;
-                    font-family: 'JetBrains Mono', monospace;
                 }}
 
                 .header-col {{ text-align: left; }}
@@ -1629,6 +1630,7 @@ async def handle_payment_page(request):
 
                 .label-small {{
                     font-size: 10px;
+                    font-family: 'JetBrains Mono', monospace;
                     color: var(--accent-blue);
                     letter-spacing: 2px;
                     text-transform: uppercase;
@@ -1639,24 +1641,21 @@ async def handle_payment_page(request):
                     font-size: 15px;
                     font-weight: 700;
                     color: #fff;
-                    text-transform: uppercase;
                 }}
 
                 .item-name-box {{
                     margin-bottom: 30px;
-                    padding: 12px;
-                    background: rgba(255,255,255,0.02);
+                    padding: 15px;
+                    background: rgba(255,255,255,0.03);
                     border-radius: 12px;
-                    border: 1px solid rgba(255,255,255,0.05);
                 }}
                 .item-name-box .val {{
                     font-size: 13px;
-                    font-weight: 600;
+                    font-weight: 700;
                     color: #fff;
-                    letter-spacing: 0.5px;
+                    text-transform: uppercase;
                 }}
 
-                /* Контейнер виджета v3.4 - Liquid Layer */
                 .widget-container {{
                     position: relative;
                     width: 510px;
@@ -1682,7 +1681,6 @@ async def handle_payment_page(request):
 
                 .instruction-footer {{
                     margin-top: 40px;
-                    font-family: 'Inter', sans-serif;
                     font-size: 13px;
                     font-weight: 900;
                     color: rgba(255, 255, 255, 0.7);
@@ -1691,13 +1689,13 @@ async def handle_payment_page(request):
                     align-items: center;
                     justify-content: center;
                     gap: 12px;
-                    background: rgba(255, 255, 255, 0.03);
+                    background: rgba(255, 255, 255, 0.05);
                     border-radius: 50px;
                     padding: 10px 25px;
                     width: fit-content;
                     margin-left: auto;
                     margin-right: auto;
-                    border: 1px solid rgba(255, 255, 255, 0.05);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
                     z-index: 20;
                     position: relative;
                 }}
@@ -1710,35 +1708,37 @@ async def handle_payment_page(request):
             <canvas id="plexus"></canvas>
 
             <div class="monolith">
-                <div class="payment-header">
-                    <div class="header-col">
-                        <div class="label-small" style="font-weight: 900; opacity: 1;">ID ЗАКАЗА</div>
-                        <div class="label-value">#{order_id}</div>
+                <canvas id="liquidCanvas"></canvas>
+                <div class="monolith-content">
+                    <div class="payment-header">
+                        <div class="header-col">
+                            <div class="label-small">ID ЗАКАЗА</div>
+                            <div class="label-value">#{order_id}</div>
+                        </div>
+                        <div class="header-col right">
+                            <div class="label-small">СУММА К ОПЛАТЕ</div>
+                            <div class="label-value">{amount} RUB</div>
+                        </div>
                     </div>
-                    <div class="header-col right">
-                        <div class="label-small" style="font-weight: 900; opacity: 1;">СУММА К ОПЛАТЕ</div>
-                        <div class="label-value">{amount} RUB</div>
+
+                    <div class="item-name-box">
+                        <div class="label-small" style="margin-bottom:2px;">ПРЕДМЕТ АРЕНДЫ</div>
+                        <div class="val">{item_name}</div>
                     </div>
-                </div>
 
-                <div class="item-name-box">
-                    <div class="label-small" style="margin-bottom:2px; font-weight: 900; opacity: 1;">ПРЕДМЕТ АРЕНДЫ</div>
-                    <div class="val">{item_name}</div>
-                </div>
+                    <div class="widget-container" id="widgetWell">
+                        <iframe src="https://widget.donatepay.ru/widgets/page/57db5a26843d08276cef24eadff3c007581ec4d8f2fd8fe47b1a5045c2f6b096?widget_id=7567140&sum={amount}" 
+                                width="510" height="220" frameborder="0"></iframe>
+                    </div>
 
-                <div class="widget-container" id="widgetWell">
-                    <iframe src="https://widget.donatepay.ru/widgets/page/57db5a26843d08276cef24eadff3c007581ec4d8f2fd8fe47b1a5045c2f6b096?widget_id=7567140&sum={amount}" 
-                            width="510" height="220" frameborder="0"></iframe>
-                </div>
-
-                <div class="instruction-footer">
-                    <span class="pulse-dot">●</span>
-                    <span>ВЫБИРАЙТЕ ТОЛЬКО МЕТОД ОПЛАТЫ КАРТАМИ ИЛИ СБП</span>
+                    <div class="instruction-footer">
+                        <span class="pulse-dot">●</span>
+                        <span>ВЫБИРАЙТЕ ТОЛЬКО МЕТОД ОПЛАТЫ КАРТАМИ ИЛИ СБП</span>
+                    </div>
                 </div>
             </div>
 
             <script>
-                // --- Глобальные настройки ---
                 const plexusCanvas = document.getElementById('plexus');
                 const liquidCanvas = document.getElementById('liquidCanvas');
                 const pCtx = plexusCanvas.getContext('2d');
@@ -1749,29 +1749,28 @@ async def handle_payment_page(request):
                 let blobs = [];
                 const mouse = {{ x: -1000, y: -1000 }};
 
-                // --- Инициализация холстов ---
                 function resize() {{
                     plexusCanvas.width = window.innerWidth;
                     plexusCanvas.height = window.innerHeight;
-                    liquidCanvas.width = monolith.offsetWidth;
-                    liquidCanvas.height = monolith.offsetHeight;
+                    liquidCanvas.width = monolith.clientWidth;
+                    liquidCanvas.height = monolith.clientHeight;
                     init();
                 }}
 
-                window.addEventListener('resize', resize);
                 window.addEventListener('mousemove', (e) => {{
                     mouse.x = e.clientX;
                     mouse.y = e.clientY;
                 }});
 
-                // --- Логика Созвездий (Plexus) ---
+                window.addEventListener('resize', resize);
+
                 class PlexusPoint {{
                     constructor() {{
                         this.x = Math.random() * plexusCanvas.width;
                         this.y = Math.random() * plexusCanvas.height;
                         this.size = Math.random() * 1.5 + 0.5;
-                        this.speedX = (Math.random() - 0.5) * 0.5;
-                        this.speedY = (Math.random() - 0.5) * 0.5;
+                        this.speedX = (Math.random() - 0.5) * 0.4;
+                        this.speedY = (Math.random() - 0.5) * 0.4;
                     }}
                     update() {{
                         this.x += this.speedX;
@@ -1780,50 +1779,41 @@ async def handle_payment_page(request):
                         if (this.y > plexusCanvas.height || this.y < 0) this.speedY *= -1;
                     }}
                     draw() {{
-                        pCtx.fillStyle = 'rgba(93, 122, 151, 0.3)';
+                        pCtx.fillStyle = 'rgba(93, 122, 151, 0.4)';
                         pCtx.beginPath();
                         pCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
                         pCtx.fill();
                     }}
                 }}
 
-                // --- Логика Жидкости (Liquid) ---
                 class LiquidBlob {{
-                    constructor(x, y) {{
-                        this.x = x;
-                        this.y = y;
-                        this.baseRadius = Math.random() * 40 + 30;
-                        this.radius = this.baseRadius;
+                    constructor() {{
+                        this.x = Math.random() * liquidCanvas.width;
+                        this.y = Math.random() * liquidCanvas.height;
+                        this.radius = Math.random() * 60 + 40;
                         this.vx = (Math.random() - 0.5) * 2;
                         this.vy = (Math.random() - 0.5) * 2;
-                        this.life = 1.0;
                     }}
                     update(mX, mY) {{
-                        // Движение к мыши
                         let dx = mX - this.x;
                         let dy = mY - this.y;
                         let dist = Math.sqrt(dx*dx + dy*dy);
-                        
-                        if (dist < 200) {{
-                            this.vx += dx * 0.005;
-                            this.vy += dy * 0.01;
+                        if (dist < 250) {{
+                            this.vx += dx * 0.008;
+                            this.vy += dy * 0.008;
                         }}
-                        
                         this.x += this.vx;
                         this.y += this.vy;
-                        this.vx *= 0.95;
-                        this.vy *= 0.95;
-
-                        // Ограничение границами монолита
+                        this.vx *= 0.94;
+                        this.vy *= 0.94;
                         if (this.x < 0 || this.x > liquidCanvas.width) this.vx *= -1;
                         if (this.y < 0 || this.y > liquidCanvas.height) this.vy *= -1;
                     }}
                     draw() {{
                         const grad = lCtx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius);
-                        grad.addColorStop(0, 'rgba(255, 255, 255, 0.4)');
-                        grad.addColorStop(0.6, 'rgba(255, 255, 255, 0.1)');
+                        grad.addColorStop(0, 'rgba(255, 255, 255, 0.35)');
+                        grad.addColorStop(0.5, 'rgba(255, 255, 255, 0.15)');
                         grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
-                        
                         lCtx.fillStyle = grad;
                         lCtx.beginPath();
                         lCtx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
@@ -1834,11 +1824,6 @@ async def handle_payment_page(request):
                 function init() {{
                     particles = [];
                     blobs = [];
-                    const pDensity = (plexusCanvas.width * plexusCanvas.height) / 15000;
-                    for (let i = 0; i < pDensity; i++) particles.push(new PlexusPoint());
-                    
-                    // Начальные капли жидкости
-                    for (let i = 0; i < 8; i++) {{
                         blobs.push(new LiquidBlob(Math.random() * liquidCanvas.width, Math.random() * liquidCanvas.height));
                     }}
                 }}
