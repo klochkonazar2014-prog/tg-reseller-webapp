@@ -1551,17 +1551,19 @@ async def handle_payment_page(request):
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Безопасная оплата | OctoRent</title>
-            <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+            <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
             <style>
                 :root {{
-                    --bg: #f8fafc;
-                    --card: #ffffff;
                     --primary: #00d488;
-                    --text: #0f172a;
-                    --text-muted: #64748b;
+                    --primary-glow: rgba(0, 212, 136, 0.3);
+                    --text: #1e293b;
+                    --text-light: #64748b;
                 }}
+
+                * {{ box-sizing: border-box; -webkit-tap-highlight-color: transparent; }}
+
                 body {{
-                    background: linear-gradient(165deg, #ffffff 0%, #f1f4f8 100%);
+                    background: #f1f5f9;
                     color: var(--text);
                     font-family: 'Outfit', sans-serif;
                     margin: 0;
@@ -1569,110 +1571,152 @@ async def handle_payment_page(request):
                     align-items: center;
                     justify-content: center;
                     min-height: 100vh;
-                    overflow-x: hidden;
+                    overflow: hidden;
+                    position: relative;
                 }}
-                .glow {{
+
+                /* Живой анимированный фон */
+                .bg-blob {{
                     position: fixed;
-                    width: 500px;
-                    height: 500px;
-                    background: var(--primary);
-                    filter: blur(180px);
-                    opacity: 0.1;
+                    width: 60vw;
+                    height: 60vw;
+                    background: radial-gradient(circle, var(--primary-glow) 0%, rgba(241, 245, 249, 0) 70%);
                     z-index: -1;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
+                    filter: blur(80px);
+                    animation: move 20s infinite alternate;
                 }}
+                .bg-blob-2 {{
+                    position: fixed;
+                    bottom: -10%;
+                    right: -10%;
+                    width: 50vw;
+                    height: 50vw;
+                    background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, rgba(241, 245, 249, 0) 70%);
+                    z-index: -1;
+                    filter: blur(100px);
+                    animation: move 25s infinite alternate-reverse;
+                }}
+                @keyframes move {{
+                    from {{ transform: translate(-20%, -20%) scale(1); }}
+                    to {{ transform: translate(20%, 20%) scale(1.1); }}
+                }}
+
                 .payment-card {{
-                    background: var(--card);
+                    background: rgba(255, 255, 255, 0.7);
+                    backdrop-filter: blur(30px) saturate(180%);
+                    -webkit-backdrop-filter: blur(30px) saturate(180%);
                     padding: 40px;
                     border-radius: 48px;
-                    box-shadow: 0 40px 100px rgba(15, 23, 42, 0.08);
+                    box-shadow: 
+                        0 25px 50px -12px rgba(0, 0, 0, 0.1),
+                        inset 0 0 0 1px rgba(255, 255, 255, 0.6);
                     text-align: center;
                     max-width: 480px;
-                    width: 90%;
-                    border: 1px solid rgba(255,255,255,1);
-                    animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+                    width: 92%;
+                    position: relative;
+                    animation: cardEntry 1s cubic-bezier(0.16, 1, 0.3, 1);
                 }}
-                @keyframes slideUp {{
-                    from {{ opacity: 0; transform: translateY(30px); }}
-                    to {{ opacity: 1; transform: translateY(0); }}
+
+                @keyframes cardEntry {{
+                    from {{ opacity: 0; transform: scale(0.95) translateY(20px); }}
+                    to {{ opacity: 1; transform: scale(1) translateY(0); }}
                 }}
-                .logo-container {{
-                    margin-bottom: 24px;
-                }}
-                .logo {{
+
+                .logo-box {{
                     width: 72px;
                     height: 72px;
-                    background: linear-gradient(135deg, var(--primary) 0%, #00a56a 100%);
+                    background: linear-gradient(135deg, #00d488 0%, #00a56a 100%);
                     border-radius: 22px;
                     display: inline-flex;
                     align-items: center;
                     justify-content: center;
-                    font-size: 34px;
-                    box-shadow: 0 12px 30px rgba(0,212,136,0.2);
+                    margin-bottom: 24px;
+                    box-shadow: 0 15px 30px rgba(0, 212, 136, 0.25);
                     color: white;
+                    font-size: 34px;
                 }}
-                h1 {{ font-weight: 900; font-size: 26px; margin: 0; letter-spacing: -0.8px; color: var(--text); }}
-                p {{ color: var(--text-muted); font-size: 15px; margin-top: 8px; font-weight: 500; }}
-                
-                .order-info {{
-                    background: #f1f5f9;
-                    padding: 12px 24px;
-                    border-radius: 100px;
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 10px;
-                    margin: 24px 0;
-                    border: 1px solid rgba(0,0,0,0.02);
-                    font-size: 14px;
-                    font-weight: 700;
-                    color: var(--text);
-                }}
-                .dot {{ width: 6px; height: 6px; background: var(--primary); border-radius: 50%; }}
-                
-                .widget-container {{
-                    margin-top: 10px;
+
+                h1 {{ font-weight: 900; font-size: 28px; margin: 0; letter-spacing: -1px; }}
+                .subtitle {{ color: var(--text-light); font-size: 15px; margin: 8px 0 32px; font-weight: 500; }}
+
+                .price-tag {{
+                    background: rgba(15, 23, 42, 0.04);
+                    padding: 16px 28px;
                     border-radius: 24px;
-                    overflow: hidden;
-                    background: #ffffff;
-                    border: 2px solid #f1f5f9;
-                    box-shadow: inset 0 2px 10px rgba(0,0,0,0.02);
+                    display: inline-flex;
+                    flex-direction: column;
+                    align-items: center;
+                    margin-bottom: 32px;
+                    border: 1px solid rgba(0,0,0,0.03);
                 }}
-                .footer {{ 
-                    margin-top: 32px; 
-                    font-size: 13px; 
-                    color: var(--text-muted); 
-                    font-weight: 600;
+                .price-label {{ font-size: 12px; color: var(--text-light); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }}
+                .price-value {{ font-size: 28px; font-weight: 900; color: var(--primary); }}
+
+                .widget-wrapper {{
+                    border-radius: 28px;
+                    overflow: hidden;
+                    background: #fff;
+                    border: 1px solid rgba(0,0,0,0.05);
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+                }}
+
+                .secure-footer {{
+                    margin-top: 32px;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 16px;
+                }}
+                .trust-badges {{
+                    display: flex;
+                    gap: 20px;
+                    opacity: 0.4;
+                    filter: grayscale(1);
+                }}
+                .trust-badges img {{ height: 18px; }}
+                
+                .security-info {{
                     display: flex;
                     align-items: center;
-                    justify-content: center;
                     gap: 6px;
+                    font-size: 13px;
+                    color: var(--text-light);
+                    font-weight: 600;
                 }}
+                .security-info svg {{ color: var(--primary); }}
+
             </style>
         </head>
         <body>
-            <div class="glow"></div>
+            <div class="bg-blob"></div>
+            <div class="bg-blob-2"></div>
+            
             <div class="payment-card">
-                <div class="logo-container">
-                    <div class="logo">⚡</div>
+                <div class="logo-box">⚡</div>
+                <h1>Оплата подписки</h1>
+                <p class="subtitle">Безопасный эквайринг OctoRent</p>
+
+                <div class="price-tag">
+                    <div class="price-label">К оплате</div>
+                    <div class="price-value">{amount} RUB</div>
+                    <div style="font-size: 12px; color: var(--text-light); margin-top: 4px;">Счёт №{order_id}</div>
                 </div>
-                <h1>Завершите оплату</h1>
-                <p>Официальный шлюз OctoRent</p>
-                
-                <div class="order-info">
-                    <span>Счёт №{order_id}</span>
-                    <div class="dot"></div>
-                    <span style="color: var(--primary)">{amount} RUB</span>
-                </div>
-                
-                <div class="widget-container">
+
+                <div class="widget-wrapper">
                     <iframe src="https://widget.donatepay.ru/widgets/page/57db5a26843d08276cef24eadff3c007581ec4d8f2fd8fe47b1a5045c2f6b096?widget_id=7567140&sum={amount}" 
                             width="100%" height="220" frameborder="0"></iframe>
                 </div>
-                
-                <div class="footer">
-                    <span style="font-size: 16px;">🔒</span> Безопасное соединение активно
+
+                <div class="secure-footer">
+                    <div class="trust-badges">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/b/b9/Mir-logo.svg" alt="Mir">
+                    </div>
+                    <div class="security-info">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                        Защищено SSL-шифрованием 256-бит
+                    </div>
                 </div>
             </div>
         </body>
