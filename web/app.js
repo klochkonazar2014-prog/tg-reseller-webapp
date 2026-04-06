@@ -422,7 +422,8 @@ const TRANSLATIONS = {
         total: "Итого:",
         pay_button: "Оплатить",
         about_network_fee: "О комиссии сети",
-        network_fee_desc_default: "Сеть TON взимает небольшую оплату за каждую транзакцию."
+        network_fee_desc_default: "Сеть TON взимает небольшую оплату за каждую транзакцию.",
+        max_days_warn: "Максимум {days} дней"
     },
     en: {
 
@@ -705,7 +706,8 @@ const TRANSLATIONS = {
         total: "Total:",
         pay_button: "Pay",
         about_network_fee: "About network fee",
-        network_fee_desc_default: "The TON network charges a small fee for each transaction."
+        network_fee_desc_default: "The TON network charges a small fee for each transaction.",
+        max_days_warn: "Maximum {days} days"
     }
 };
 
@@ -4146,6 +4148,14 @@ function updateMethodTotal(baseTotal) {
     if (ctPriceIcon) ctPriceIcon.innerText = Math.round(commonTon * currentRubRate * 1.05);
     if (lpPriceIcon) lpPriceIcon.innerText = Math.round(commonTon * currentRubRate * 1.115);
 
+    // Compact mode: уменьшаем паддинги если предупреждение видно
+    const selView = document.getElementById('payment-selection-view');
+    if (selView) {
+        const warningVisible = (amountWarning && amountWarning.style.display !== 'none') ||
+                               (limitWarning && limitWarning.style.display !== 'none');
+        selView.classList.toggle('compact-mode', warningVisible);
+    }
+
     totalAmountEl.innerText = total;
 }
 
@@ -4817,6 +4827,17 @@ window.zoomCTImage = zoomCTImage;
 window.closeCTZoom = closeCTZoom;
 window.showInsufficientBalanceModal = showInsufficientBalanceModal;
 window.closeInsufficientBalanceModal = closeInsufficientBalanceModal;
+
+function contactAdmin() {
+    const admin = OPERATOR_CONTACTS.admin || '@nerksqq';
+    const url = 'https://t.me/' + admin.replace('@', '');
+    if (window.Telegram?.WebApp?.openTelegramLink) {
+        window.Telegram.WebApp.openTelegramLink(url);
+    } else {
+        window.open(url, '_blank');
+    }
+    closeInsufficientBalanceModal();
+}
 window.contactAdmin = contactAdmin;
 window.toggleHistory = toggleHistory;
 window.getOperatorContacts = getOperatorContacts;
