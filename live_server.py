@@ -1865,8 +1865,6 @@ async def handle_payment_page(request):
             </script>
         </body>
         </html>
-        """        </body>
-        </html>
         """
         return web.Response(text=html, content_type='text/html')
     except Exception as e:
