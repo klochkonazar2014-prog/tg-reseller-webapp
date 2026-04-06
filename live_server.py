@@ -1565,10 +1565,8 @@ async def handle_payment_page(request):
                     font-family: 'Inter', sans-serif;
                     height: 100vh;
                     overflow: hidden;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
                     user-select: none;
+                    position: relative;
                 }}
 
                 /* AURORA SYSTEM (V2: PHOTO-REALISTIC RAYS) */
@@ -1657,7 +1655,10 @@ async def handle_payment_page(request):
                 }}
 
                 .monolith {{
-                    position: relative;
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%) scale(var(--current-scale, 1));
                     width: 580px;
                     background: rgba(4, 4, 4, 0.88);
                     backdrop-filter: blur(40px) saturate(140%);
@@ -1668,13 +1669,12 @@ async def handle_payment_page(request):
                     z-index: 10;
                     box-shadow: 0 60px 180px rgba(0,0,0,1);
                     text-align: center;
-                    transform-origin: center center;
                     animation: fadeIn 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
                 }}
 
                 @keyframes fadeIn {{ 
-                    from {{ opacity: 0; transform: translateY(30px); filter: blur(10px); }} 
-                    to {{ opacity: 1; transform: translateY(0); filter: blur(0); }} 
+                    from {{ opacity: 0; transform: translate(-50%, calc(-50% + 30px)) scale(var(--current-scale, 1)); filter: blur(10px); }} 
+                    to {{ opacity: 1; transform: translate(-50%, -50%) scale(var(--current-scale, 1)); filter: blur(0); }} 
                 }}
 
                 .payment-header {{
@@ -1799,23 +1799,14 @@ async def handle_payment_page(request):
                     if (!card) return;
                     
                     const availableWidth = window.innerWidth;
-                    const originalWidth = 600; // 580 ширина + безопасный отступ краев
+                    // Значение 620 = 580px карточка + 40px (по 20px гарантированный минимальный зазор на краях)
+                    const originalWidth = 620; 
                     
                     if (availableWidth < originalWidth) {{
                         const scaleFactor = availableWidth / originalWidth;
-                        // Свойство zoom физически уменьшает размер блока для браузера
-                        // Это решает баги с обрезкой краев при использовании Flexbox в Safari/Chrome
-                        card.style.zoom = scaleFactor;
-                        // Фолбэк для старых устройств
-                        if (-1 !== navigator.userAgent.indexOf('Firefox')) {{
-                            card.style.transform = `scale(${{scaleFactor}})`;
-                            card.style.transformOrigin = 'center center';
-                        }}
+                        card.style.setProperty('--current-scale', scaleFactor);
                     }} else {{
-                        card.style.zoom = 1;
-                        if (-1 !== navigator.userAgent.indexOf('Firefox')) {{
-                            card.style.transform = 'scale(1)';
-                        }}
+                        card.style.setProperty('--current-scale', 1);
                     }}
                 }}
 
