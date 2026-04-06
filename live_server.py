@@ -1550,203 +1550,223 @@ async def handle_payment_page(request):
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Premium Checkout | OctoRent</title>
-            <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
+            <title>SECURE_STATION | OctoRent</title>
+            <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
             <style>
                 :root {{
-                    --p: #00d488;
-                    --p-g: rgba(0, 212, 136, 0.4);
-                    --accent: #3b82f6;
-                    --t: #0f172a;
-                    --t-l: #64748b;
+                    --accent: #ffffff;
+                    --bg: #000000;
                 }}
 
-                * {{ box-sizing: border-box; -webkit-tap-highlight-color: transparent; }}
+                * {{ box-sizing: border-box; margin: 0; padding: 0; }}
 
                 body {{
-                    background: #f8fafc;
-                    color: var(--t);
+                    background: var(--bg);
+                    color: #fff;
                     font-family: 'Outfit', sans-serif;
-                    margin: 0;
+                    height: 100vh;
+                    overflow: hidden;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    min-height: 100vh;
-                    overflow: hidden;
-                    perspective: 1000px;
+                    perspective: 1500px;
                 }}
 
-                /* Aurora Background */
-                .aurora {{
+                #plexus {{
                     position: fixed;
-                    top: 0; left: 0; width: 100%; height: 100%;
-                    z-index: -1;
-                    background: 
-                        radial-gradient(circle at 0% 0%, rgba(0, 212, 136, 0.15) 0%, transparent 50%),
-                        radial-gradient(circle at 100% 0%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
-                        radial-gradient(circle at 100% 100%, rgba(0, 212, 136, 0.1) 0%, transparent 50%),
-                        radial-gradient(circle at 0% 100%, rgba(59, 130, 246, 0.12) 0%, transparent 50%);
-                    animation: auroraMove 15s ease infinite alternate;
+                    inset: 0;
+                    z-index: 0;
+                    background: #000;
                 }}
 
-                @keyframes auroraMove {{
-                    0% {{ transform: scale(1); }}
-                    100% {{ transform: scale(1.1); }}
+                .monolith-wrap {{
+                    position: relative;
+                    z-index: 10;
+                    transition: transform 0.1s ease-out;
+                    transform-style: preserve-3d;
                 }}
 
-                /* Holographic Glass Card */
-                .card {{
-                    background: rgba(255, 255, 255, 0.75);
-                    backdrop-filter: blur(25px) saturate(160%);
-                    -webkit-backdrop-filter: blur(25px) saturate(160%);
-                    padding: 48px 40px;
-                    border-radius: 56px;
-                    box-shadow: 
-                        0 30px 100px -20px rgba(0, 0, 0, 0.15),
-                        inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+                .monolith {{
+                    width: 520px;
+                    background: rgba(8, 8, 8, 0.85);
+                    backdrop-filter: blur(30px);
+                    -webkit-backdrop-filter: blur(30px);
+                    border: 1px solid rgba(255, 255, 255, 0.12);
+                    border-radius: 44px;
+                    padding: 55px 40px;
+                    box-shadow: 0 50px 120px rgba(0,0,0,0.9);
                     text-align: center;
-                    max-width: 500px;
-                    width: 94%;
-                    position: relative;
-                    overflow: hidden;
-                    animation: cardBorn 1.2s cubic-bezier(0.19, 1, 0.22, 1);
+                    transform: translateZ(50px);
                 }}
 
-                /* Shimmer Effect */
-                .card::after {{
-                    content: "";
-                    position: absolute;
-                    top: -50%; left: -50%; width: 200%; height: 200%;
-                    background: linear-gradient(
-                        45deg,
-                        transparent 45%,
-                        rgba(255, 255, 255, 0.4) 50%,
-                        transparent 55%
-                    );
-                    animation: shimmer 6s infinite;
-                    pointer-events: none;
+                .top-info {{
+                    font-family: 'JetBrains Mono', monospace;
+                    font-size: 9px;
+                    letter-spacing: 5px;
+                    color: rgba(255, 255, 255, 0.25);
+                    margin-bottom: 35px;
+                    text-transform: uppercase;
                 }}
 
-                @keyframes shimmer {{
-                    0% {{ transform: translateX(-100%) translateY(-100%) rotate(0deg); }}
-                    100% {{ transform: translateX(100%) translateY(100%) rotate(0deg); }}
+                .amount-container h1 {{
+                    font-size: 88px;
+                    font-weight: 900;
+                    letter-spacing: -4px;
+                    background: linear-gradient(to bottom, #fff 30%, rgba(255,255,255,0.2) 100%);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    filter: drop-shadow(0 0 15px rgba(255,255,255,0.1));
                 }}
 
-                @keyframes cardBorn {{
-                    from {{ opacity: 0; transform: translateY(40px) scale(0.9) rotateX(10deg); }}
-                    to {{ opacity: 1; transform: translateY(0) scale(1) rotateX(0); }}
-                }}
-
-                .logo-wrap {{
-                    width: 80px;
-                    height: 80px;
-                    background: linear-gradient(135deg, #00d488, #00a56a);
-                    border-radius: 26px;
-                    display: inline-flex;
-                    align-items: center;
-                    justify-content: center;
-                    margin-bottom: 28px;
-                    box-shadow: 0 20px 40px var(--p-g);
-                    position: relative;
-                }}
-                .logo-wrap::before {{
-                    content: "";
-                    position: absolute;
-                    inset: -8px;
-                    border: 2px solid var(--p-g);
-                    border-radius: 34px;
-                    animation: pulse 3s infinite;
-                }}
-                @keyframes pulse {{
-                    0% {{ transform: scale(1); opacity: 0.8; }}
-                    100% {{ transform: scale(1.3); opacity: 0; }}
-                }}
-
-                h1 {{ font-weight: 900; font-size: 30px; margin: 0; letter-spacing: -1.2px; }}
-                .sub {{ color: var(--t-l); font-size: 16px; margin: 10px 0 36px; font-weight: 600; }}
-
-                .bill-box {{
-                    background: rgba(15, 23, 42, 0.05);
-                    padding: 24px;
-                    border-radius: 32px;
-                    margin-bottom: 36px;
-                    border: 1px solid rgba(0,0,0,0.03);
-                    position: relative;
-                }}
-                .bill-label {{ font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: var(--t-l); font-weight: 800; margin-bottom: 8px; }}
-                .bill-amount {{ font-size: 32px; font-weight: 900; color: var(--p); letter-spacing: -0.5px; animation: glowPulse 2s infinite ease-in-out; }}
-                @keyframes glowPulse {{
-                    0%, 100% {{ text-shadow: 0 0 0px var(--p-g); }}
-                    50% {{ text-shadow: 0 0 20px var(--p-g); }}
+                .amount-container span {{
+                    display: block;
+                    font-family: 'JetBrains Mono', monospace;
+                    font-size: 11px;
+                    color: rgba(255,255,255,0.4);
+                    letter-spacing: 2px;
+                    margin-top: -8px;
+                    margin-bottom: 45px;
                 }}
 
                 .widget-frame {{
-                    border-radius: 32px;
-                    overflow: hidden;
                     background: #fff;
-                    box-shadow: 0 15px 45px rgba(0,0,0,0.04);
-                    height: 380px; /* Увеличено для полного отображения */
+                    border-radius: 28px;
+                    overflow: hidden;
+                    height: 380px;
+                    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+                    border: 1px solid rgba(255,255,255,0.05);
                 }}
 
-                .final-footer {{ margin-top: 40px; }}
-                .badge-row {{
+                .secure-footer {{
+                    margin-top: 45px;
+                    font-family: 'JetBrains Mono', monospace;
+                    font-size: 8.5px;
+                    color: rgba(255,255,255,0.15);
                     display: flex;
-                    justify-content: center;
-                    gap: 30px;
-                    margin-bottom: 24px;
-                    opacity: 0.5;
-                    transition: opacity 0.3s;
+                    justify-content: space-between;
+                    letter-spacing: 2px;
                 }}
-                .badge-row:hover {{ opacity: 1; }}
-                .badge-row svg {{ height: 20px; width: auto; fill: var(--t); }}
                 
-                .secure-line {{
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 8px;
-                    padding: 8px 16px;
-                    background: rgba(0, 212, 136, 0.08);
-                    border-radius: 100px;
-                    color: var(--p);
-                    font-size: 13px;
-                    font-weight: 800;
-                    letter-spacing: 0.5px;
-                }}
+                .pulse-sec {{ color: #00ff9d; animation: blink 1s infinite alternate; }}
+                @keyframes blink {{ from {{ opacity: 0.3; }} to {{ opacity: 1; }} }}
             </style>
         </head>
         <body>
-            <div class="aurora"></div>
-            
-            <div class="card">
-                <div class="logo-wrap">
-                    <span style="font-size: 38px; color: white;">⚡</span>
-                </div>
-                <h1>Оплата активов</h1>
-                <p class="sub">Crypto & Fiat Gateway OctoRent</p>
+            <canvas id="plexus"></canvas>
 
-                <div class="bill-box">
-                    <div class="bill-label">К зачислению</div>
-                    <div class="bill-amount">{amount} RUB</div>
-                    <div style="font-size: 13px; color: var(--t-l); margin-top: 6px; font-weight: 600;">Счёт #{order_id}</div>
-                </div>
-
-                <div class="widget-frame">
-                    <iframe src="https://widget.donatepay.ru/widgets/page/57db5a26843d08276cef24eadff3c007581ec4d8f2fd8fe47b1a5045c2f6b096?widget_id=7567140&sum={amount}" 
-                            width="100%" height="380" frameborder="0"></iframe>
-                </div>
-
-                <div class="final-footer">
-                    <div class="badge-row">
-                        <svg viewBox="0 0 24 24" height="20"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"></path></svg>
-                        <svg viewBox="0 0 24 24" height="20"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"></path></svg>
-                        <svg viewBox="0 0 24 24" height="20"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-1 15.41L7.12 12.5l1.41-1.41L11 13.59l5.47-5.47 1.41 1.41L11 16.41z"></path></svg>
+            <div class="monolith-wrap" id="monolithWrap">
+                <div class="monolith">
+                    <div class="top-info">CRYPTO_GATEWAY_V4</div>
+                    
+                    <div class="amount-container">
+                        <h1>{amount}</h1>
+                        <span>RUB PAYLOAD</span>
                     </div>
-                    <div class="secure-line">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                        ULTRA-SECURE TRANSACTION
+
+                    <div class="widget-frame">
+                        <iframe src="https://widget.donatepay.ru/widgets/page/57db5a26843d08276cef24eadff3c007581ec4d8f2fd8fe47b1a5045c2f6b096?widget_id=7567140&sum={amount}" 
+                                width="100%" height="380" frameborder="0"></iframe>
+                    </div>
+
+                    <div class="secure-footer">
+                        <span><span class="pulse-sec">●</span> ENCRYPTED_CORE</span>
+                        <span>TX_ID: #{order_id}</span>
                     </div>
                 </div>
             </div>
+
+            <script>
+                const canvas = document.getElementById('plexus');
+                const wrap = document.getElementById('monolithWrap');
+                const ctx = canvas.getContext('2d');
+                let particles = [];
+                const mouse = {{ x: null, y: null, radius: 200 }};
+
+                window.addEventListener('mousemove', (e) => {{
+                    mouse.x = e.x;
+                    mouse.y = e.y;
+                    
+                    // 3D Tilt Effect
+                    const x = (window.innerWidth / 2 - e.clientX) / 40;
+                    const y = (window.innerHeight / 2 - e.clientY) / 40;
+                    wrap.style.transform = `rotateY(${{-x}}deg) rotateX(${{y}}deg)`;
+                }});
+
+                window.addEventListener('resize', () => {{
+                    canvas.width = window.innerWidth;
+                    canvas.height = window.innerHeight;
+                    init();
+                }});
+
+                class Particle {{
+                    constructor() {{
+                        this.x = Math.random() * canvas.width;
+                        this.y = Math.random() * canvas.height;
+                        this.size = Math.random() * 1.5 + 0.5;
+                        this.speedX = (Math.random() - 0.5) * 1.2;
+                        this.speedY = (Math.random() - 0.5) * 1.2;
+                    }}
+                    draw() {{
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                        ctx.beginPath();
+                        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                        ctx.fill();
+                    }}
+                    update() {{
+                        this.x += this.speedX;
+                        this.y += this.speedY;
+                        if (this.x > canvas.width || this.x < 0) this.speedX *= -1;
+                        if (this.y > canvas.height || this.y < 0) this.speedY *= -1;
+                    }}
+                }}
+
+                function init() {{
+                    canvas.width = window.innerWidth;
+                    canvas.height = window.innerHeight;
+                    particles = [];
+                    const density = (canvas.width * canvas.height) / 10000;
+                    for (let i = 0; i < density; i++) particles.push(new Particle());
+                }}
+
+                function animate() {{
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    particles.forEach(p => {{
+                        p.update();
+                        p.draw();
+                    }});
+
+                    // Connect logic
+                    for (let a = 0; a < particles.length; a++) {{
+                        for (let b = a; b < particles.length; b++) {{
+                            let dx = particles[a].x - particles[b].x;
+                            let dy = particles[a].y - particles[b].y;
+                            let dist = Math.sqrt(dx*dx + dy*dy);
+                            if (dist < 130) {{
+                                ctx.strokeStyle = `rgba(255,255,255,${{ (1 - dist/130) * 0.15 }})`;
+                                ctx.beginPath();
+                                ctx.moveTo(particles[a].x, particles[a].y);
+                                ctx.lineTo(particles[b].x, particles[b].y);
+                                ctx.stroke();
+                            }}
+                        }}
+                        
+                        let mdx = particles[a].x - mouse.x;
+                        let mdy = particles[a].y - mouse.y;
+                        let mdist = Math.sqrt(mdx*mdx + mdy*mdy);
+                        if (mdist < mouse.radius) {{
+                            ctx.strokeStyle = `rgba(255,255,255,${{ (1 - mdist/mouse.radius) * 0.4 }})`;
+                            ctx.beginPath();
+                            ctx.moveTo(particles[a].x, particles[a].y);
+                            ctx.lineTo(mouse.x, mouse.y);
+                            ctx.stroke();
+                        }}
+                    }}
+                    requestAnimationFrame(animate);
+                }}
+
+                init();
+                animate();
+            </script>
         </body>
         </html>
         """
