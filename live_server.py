@@ -1638,7 +1638,7 @@ async def handle_payment_page(request):
                     letter-spacing: 0.5px;
                 }}
 
-                /* Контейнер виджета v3.1 - Прецизионные линейные направляющие */
+                /* Контейнер виджета v3.2 - Мягкий прямоугольный ореол */
                 .widget-container {{
                     position: relative;
                     width: 510px;
@@ -1652,23 +1652,16 @@ async def handle_payment_page(request):
                     z-index: 5;
                 }}
 
-                /* Создаем градиентную рамку "от каждой стороны" через псевдоэлемент */
+                /* Единый световой контур за виджетом */
                 .widget-container::before {{
                     content: '';
                     position: absolute;
-                    inset: -35px; /* Размер свечения */
+                    inset: -20px; /* Размер ореола */
+                    background: #fff;
+                    filter: blur(25px); /* Создаем тот самый плавный переход "от каждой стороны" */
                     z-index: -1;
-                    border-radius: 20px;
-                    /* 4 линейных градиента для каждой стороны */
-                    background: 
-                        linear-gradient(to top, #fff, transparent 35px),
-                        linear-gradient(to bottom, #fff, transparent 35px),
-                        linear-gradient(to left, #fff, transparent 35px),
-                        linear-gradient(to right, #fff, transparent 35px);
-                    background-repeat: no-repeat;
-                    background-position: center top, center bottom, left center, right center;
-                    background-size: 100% 35px, 100% 35px, 35px 100%, 35px 100%;
-                    opacity: 0.8; /* Чтобы не было ярче виджета */
+                    opacity: 0.7; /* Контролируем яркость, чтобы не слепило */
+                    border-radius: 10px;
                 }}
 
                 iframe {{
