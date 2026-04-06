@@ -1673,8 +1673,8 @@ async def handle_payment_page(request):
                 }}
 
                 @keyframes fadeIn {{ 
-                    from {{ opacity: 0; transform: translateY(30px) scale(0.9); filter: blur(10px); }} 
-                    to {{ opacity: 1; transform: translateY(0) scale(var(--current-scale, 1)); filter: blur(0); }} 
+                    from {{ opacity: 0; transform: translateY(30px); filter: blur(10px); }} 
+                    to {{ opacity: 1; transform: translateY(0); filter: blur(0); }} 
                 }}
 
                 .payment-header {{
@@ -1798,21 +1798,30 @@ async def handle_payment_page(request):
                     const card = document.getElementById('main-card');
                     if (!card) return;
                     
-                    // Безопасная ширина на 20px меньше ширины экрана, чтобы не прилипало к краям
-                    const availableWidth = window.innerWidth - 20; 
-                    const originalWidth = 580;
+                    const availableWidth = window.innerWidth;
+                    const originalWidth = 600; // 580 ширина + безопасный отступ краев
                     
-                    // Рассчитываем коэффициент сжатия (если экран меньше 580px)
-                    const scaleFactor = Math.min(1, availableWidth / originalWidth);
-                    
-                    // Применяем scale напрямую без искажения внутренних элементов
-                    card.style.setProperty('--current-scale', scaleFactor);
-                    card.style.transform = `scale(${{scaleFactor}})`;
+                    if (availableWidth < originalWidth) {{
+                        const scaleFactor = availableWidth / originalWidth;
+                        // Свойство zoom физически уменьшает размер блока для браузера
+                        // Это решает баги с обрезкой краев при использовании Flexbox в Safari/Chrome
+                        card.style.zoom = scaleFactor;
+                        // Фолбэк для старых устройств
+                        if (-1 !== navigator.userAgent.indexOf('Firefox')) {{
+                            card.style.transform = `scale(${{scaleFactor}})`;
+                            card.style.transformOrigin = 'center center';
+                        }}
+                    }} else {{
+                        card.style.zoom = 1;
+                        if (-1 !== navigator.userAgent.indexOf('Firefox')) {{
+                            card.style.transform = 'scale(1)';
+                        }}
+                    }}
                 }}
 
                 window.addEventListener('resize', adjustScale);
                 window.addEventListener('DOMContentLoaded', adjustScale);
-                adjustScale(); // Вызов сразу при загрузке
+                adjustScale();
             </script>
         </body>
         </html>
