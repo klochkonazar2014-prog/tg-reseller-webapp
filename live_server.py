@@ -1712,121 +1712,93 @@ async def handle_payment_page(request):
                 <div class="monolith-content">
                     <div class="payment-header">
                         <div class="header-col">
-                            <div class="label-small">ID ЗАКАЗА</div>
-                            <div class="label-value">#{order_id}</div>
-                        </div>
-                        <div class="header-col right">
-                            <div class="label-small">СУММА К ОПЛАТЕ</div>
-                            <div class="label-value">{amount} RUB</div>
-                        </div>
+                <div class="payment-header">
+                    <div class="header-col">
+                        <div class="label-small">ID ЗАКАЗА</div>
+                        <div class="label-value">#{order_id}</div>
                     </div>
+                    <div class="header-col right">
+                        <div class="label-small">СУММА К ОПЛАТЕ</div>
+                        <div class="label-value">{amount} RUB</div>
+                    </div>
+                </div>
 
-                    <div class="item-name-box">
-                        <div class="label-small" style="margin-bottom:2px;">ПРЕДМЕТ АРЕНДЫ</div>
-                        <div class="val">{item_name}</div>
-                    </div>
+                <div class="item-name-box">
+                    <div class="label-small" style="margin-bottom:2px;">ПРЕДМЕТ АРЕНДЫ</div>
+                    <div class="val">{item_name}</div>
+                </div>
 
-                    <div class="widget-container" id="widgetWell">
-                        <iframe src="https://widget.donatepay.ru/widgets/page/57db5a26843d08276cef24eadff3c007581ec4d8f2fd8fe47b1a5045c2f6b096?widget_id=7567140&sum={amount}" 
-                                width="510" height="220" frameborder="0"></iframe>
-                    </div>
+                <div class="widget-container" id="widgetWell">
+                    <iframe src="https://widget.donatepay.ru/widgets/page/57db5a26843d08276cef24eadff3c007581ec4d8f2fd8fe47b1a5045c2f6b096?widget_id=7567140&sum={amount}" 
+                            width="510" height="220" frameborder="0"></iframe>
+                </div>
 
-                    <div class="instruction-footer">
-                        <span class="pulse-dot">●</span>
-                        <span>ВЫБИРАЙТЕ ТОЛЬКО МЕТОД ОПЛАТЫ КАРТАМИ ИЛИ СБП</span>
-                    </div>
+                <div class="instruction-footer">
+                    <span class="pulse-dot">●</span>
+                    <span>ВЫБИРАЙТЕ ТОЛЬКО МЕТОД ОПЛАТЫ КАРТАМИ ИЛИ СБП</span>
                 </div>
             </div>
 
             <style>
-                #plexus {{
-                    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-                    z-index: 0; background: #000; pointer-events: none;
-                }}
-                /* Секретный фильтр для эффекта "Жижи" */
+                body, html {{ margin: 0; padding: 0; background: #000; overflow: hidden; }}
                 #liquidCanvas {{
-                    position: absolute; inset: 0; width: 100% !important; height: 100% !important;
-                    z-index: 1; pointer-events: none;
-                    filter: url("#gooey"); // Используем SVG фильтр для идеального слияния
+                    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+                    z-index: 0; pointer-events: none;
+                    background: #000;
+                    filter: url("#gooey"); // Магия слияния для жижи
                 }}
-                .monolith {{ z-index: 10; position: relative; overflow: hidden; }}
+                /* Премиальное зерно (Grain/Noise) поверх всего */
+                .noise-overlay {{
+                    position: fixed; inset: 0; z-index: 5; pointer-events: none; opacity: 0.12;
+                    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+                }}
+                .monolith {{ z-index: 10; position: relative; }}
             </style>
+
+            <div class="noise-overlay"></div>
+            <canvas id="liquidCanvas"></canvas>
 
             <svg style="position:fixed; top:-100%;" xmlns="http://www.w3.org/2000/svg" version="1.1">
                 <defs>
                     <filter id="gooey">
-                        <feGaussianBlur in="SourceGraphic" stdDeviation="15" result="blur" />
-                        <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 45 -15" result="goo" />
+                        <feGaussianBlur in="SourceGraphic" stdDeviation="40" result="blur" />
+                        <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 80 -25" result="goo" />
                         <feComposite in="SourceGraphic" in2="goo" operator="atop" />
                     </filter>
                 </defs>
             </svg>
 
             <script>
-                /* --- Vision Fluid v4.4 (Gooey Edition) --- */
-                const plexusCanvas = document.getElementById('plexus');
-                const liquidCanvas = document.getElementById('liquidCanvas');
-                const pCtx = plexusCanvas.getContext('2d');
-                const lCtx = liquidCanvas.getContext('2d');
-                const monolith = document.querySelector('.monolith');
-                
-                let particles = [];
-                let blobs = [];
+                /* --- Vision Liquid: Pure Organic v4.5 (Henri Heymans Style) --- */
+                const canvas = document.getElementById('liquidCanvas');
+                const ctx = canvas.getContext('2d');
                 const mouse = {{ x: -1000, y: -1000 }};
+                let blobs = [];
 
                 function init() {{
-                    plexusCanvas.width = window.innerWidth;
-                    plexusCanvas.height = window.innerHeight;
-                    const mRect = monolith.getBoundingClientRect();
-                    liquidCanvas.width = mRect.width;
-                    liquidCanvas.height = mRect.height;
-
-                    particles = [];
-                    const pCount = Math.floor((plexusCanvas.width * plexusCanvas.height) / 12000);
-                    for (let i = 0; i < pCount; i++) {{
-                        particles.push({{
-                            x: Math.random() * plexusCanvas.width,
-                            y: Math.random() * plexusCanvas.height,
-                            vx: (Math.random() - 0.5) * 0.4,
-                            vy: (Math.random() - 0.5) * 0.4,
-                            size: Math.random() * 0.7 + 0.3
-                        }});
-                    }}
-
+                    canvas.width = window.innerWidth;
+                    canvas.height = window.innerHeight;
                     blobs = [];
-                    for (let i = 0; i < 12; i++) {{
+                    // 6 гигантских масс для фона
+                    for (let i = 0; i < 6; i++) {{
                         blobs.push({{
-                            x: Math.random() * liquidCanvas.width,
-                            y: Math.random() * liquidCanvas.height,
-                            vx: (Math.random() - 0.5) * 2,
-                            vy: (Math.random() - 0.5) * 2,
-                            r: Math.random() * 40 + 35
+                            x: Math.random() * canvas.width,
+                            y: Math.random() * canvas.height,
+                            r: Math.random() * 250 + 200, // Гигантский размер
+                            vx: (Math.random() - 0.5) * 1.0,
+                            vy: (Math.random() - 0.5) * 1.0,
+                            pulse: Math.random() * Math.PI,
+                            speed: 0.005 + Math.random() * 0.01
                         }});
                     }}
                 }}
 
-                window.addEventListener('mousemove', e => {{ mouse.x = e.clientX; mouse.y = e.clientY; }});
+                window.addEventListener('mousemove', e => {{
+                    mouse.x = e.clientX; mouse.y = e.clientY;
+                }});
                 window.addEventListener('resize', init);
 
                 function draw() {{
-                    // 1. Созвездия (Plexus)
-                    pCtx.clearRect(0,0,plexusCanvas.width, plexusCanvas.height);
-                    particles.forEach(p => {{
-                        p.x += p.vx; p.y += p.vy;
-                        let dx = mouse.x - p.x, dy = mouse.y - p.y;
-                        let dist = Math.sqrt(dx*dx + dy*dy);
-                        if(dist < 150) {{
-                            let f = (150 - dist) * 0.02;
-                            p.x -= (dx/dist) * f; p.y -= (dy/dist) * f;
-                        }}
-                        if(p.x<0||p.x>plexusCanvas.width) p.vx*=-1;
-                        if(p.y<0||p.y>plexusCanvas.height) p.vy*=-1;
-                        pCtx.fillStyle = '#fff';
-                        pCtx.beginPath(); pCtx.arc(p.x, p.y, p.size, 0, Math.PI*2); pCtx.fill();
-                    }});
-                    for(let i=0; i<particles.length; i++) {{
-                        for(let j=i+1; j<particles.length; j++) {{
-                            let dx=particles[i].x-particles[j].x, dy=particles[i].y-particles[j].y;
                             let d=Math.sqrt(dx*dx+dy*dx); // Ошибка была тут в v4.3 (dy*dx)
                             d = Math.sqrt(dx*dx + dy*dy);
                             if(d < 160) {{
