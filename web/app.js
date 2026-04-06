@@ -4387,7 +4387,7 @@ function startPaymentCountdown(seconds) {
 function startOrderStatusPolling(orderId) {
     if (PAYMENT_POLLING_TIMER) clearInterval(PAYMENT_POLLING_TIMER);
     
-    let countdown = 10;
+    let countdown = 20;
     const countEl = document.getElementById('polling-count');
     
     const poll = async () => {
@@ -4412,7 +4412,7 @@ function startOrderStatusPolling(orderId) {
         if (countEl) countEl.innerText = countdown;
         
         if (countdown <= 0) {
-            countdown = 10;
+            countdown = 20;
             await poll();
         }
     }, 1000);

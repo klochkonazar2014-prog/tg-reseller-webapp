@@ -1030,32 +1030,43 @@
     </div>
     <!-- Payment Loading Overlay (Status Screen) -->
     <div id="payment-loading-overlay"
-        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10000; flex-direction: column; align-items: center; justify-content: center; gap: 20px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);">
-        <div class="premium-spinner" style="width: 60px; height: 60px; border-width: 4px;"></div>
-        <div style="text-align: center;">
-            <div id="payment-status-text" style="color: #fff; font-size: 20px; font-weight: 800; letter-spacing: 0.5px; margin-bottom: 8px;">Ожидаем оплаты...</div>
-            <div id="payment-timer" style="color: var(--accent-blue); font-family: 'Courier New', monospace; font-size: 24px; font-weight: 900;">10:00</div>
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 15, 19, 0.95); z-index: 10010; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); transition: all 0.3s ease;">
+        
+        <!-- Status Content Wrapper (Prevents horizontal/vertical stretching) -->
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 20px; width: 100%; max-width: 320px; text-align: center; padding: 20px;">
+            <div class="premium-spinner" style="width: 50px; height: 50px; border-width: 3px; margin: 0;"></div>
+            
+            <div style="margin-top: 10px;">
+                <div id="payment-status-text" style="color: #fff; font-size: 22px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 6px;">Ожидаем оплаты...</div>
+                <div id="payment-timer" style="color: var(--accent-blue); font-family: 'Courier New', monospace; font-size: 26px; font-weight: 900;">10:00</div>
+            </div>
+            
+            <div style="color: #8b9bb4; font-size: 14px; line-height: 1.5; padding: 0 10px;">
+                Пожалуйста, проведите оплату в открывшемся окне.<br>
+                Проверка статуса через: <span id="polling-count" style="color: #fff; font-weight: 700;">20</span> сек.
+            </div>
+
+            <!-- Compact Cancel Button -->
+            <button class="btn-gray" onclick="cancelPayment()" 
+                style="margin-top: 30px; height: 44px; width: 100%; border-radius: 12px; font-size: 15px; font-weight: 700; background: rgba(255,255,255,0.08); color: #fff; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">
+                Отменить заказ
+            </button>
         </div>
-        <div style="color: #8b9bb4; font-size: 13px; text-align: center; max-width: 250px; line-height: 1.5;">
-            Пожалуйста, совершите оплату в открывшемся окне.<br>
-            Проверка статуса: <span id="polling-count">10</span> сек.
-        </div>
-        <button class="btn-gray" onclick="cancelPayment()" style="margin-top: 20px; padding: 10px 20px; border-radius: 12px; font-size: 14px;">Отменить заказ</button>
     </div>
 
-    <!-- Checkout Drawer (Iframe Sheet) -->
-    <div id="checkout-drawer" class="bottom-sheet" style="display: none; z-index: 10001;">
+    <!-- Checkout Drawer (Iframe Sheet) - LIGHT VERSION FOR DONATEPAY -->
+    <div id="checkout-drawer" class="bottom-sheet" style="display: none; z-index: 10020;">
         <div class="bottom-sheet-backdrop" onclick="closeCheckoutDrawer()"></div>
-        <div class="bottom-sheet-content" style="height: auto; min-height: 320px; border-radius: 24px 24px 0 0; background: #1a1f26; transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);">
-            <div class="bottom-sheet-header" style="background: #000; border-bottom: 1px solid rgba(255,255,255,0.1); padding: 12px 20px;">
+        <div class="bottom-sheet-content" style="height: auto; min-height: 320px; border-radius: 24px 24px 0 0; background: #ffffff; transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1); box-shadow: 0 -10px 40px rgba(0,0,0,0.2);">
+            <div class="bottom-sheet-header" style="background: #f8f9fa; border-bottom: 1px solid #eeeeee; padding: 12px 20px;">
                 <div style="display: flex; align-items: center; gap: 10px;">
-                    <div style="width: 8px; height: 8px; background: #00d488; border-radius: 50%; box-shadow: 0 0 10px #00d488;"></div>
-                    <span style="color: #fff; font-weight: 700; font-size: 14px;">Безопасная оплата OctoRent</span>
+                    <div style="width: 8px; height: 8px; background: #00d488; border-radius: 50%; box-shadow: 0 0 10px rgba(0,212,136,0.5);"></div>
+                    <span style="color: #1a1a1a; font-weight: 700; font-size: 15px; letter-spacing: -0.3px;">Безопасная оплата OctoRent</span>
                 </div>
                 <button onclick="closeCheckoutDrawer()" style="background:none; border:none; color:#8b9bb4; font-size:24px; cursor:pointer;">✕</button>
             </div>
-            <div id="checkout-iframe-container" style="width: 100%; height: 260px; overflow: hidden; -webkit-overflow-scrolling: touch; background: #000;">
-                <!-- Iframe will be injected here -->
+            <div id="checkout-iframe-container" style="width: 100%; height: 260px; overflow: hidden; -webkit-overflow-scrolling: touch; background: #fff;">
+                <!-- Iframe injected here -->
             </div>
         </div>
     </div>
