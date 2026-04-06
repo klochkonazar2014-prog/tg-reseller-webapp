@@ -1583,19 +1583,37 @@ async def handle_payment_page(request):
 
                 .monolith {{
                     position: relative;
-                    width: 680px; /* Больше ширины под виджет */
-                    background: rgba(10, 10, 10, 0.92);
+                    width: 580px;
+                    background: rgba(8, 8, 8, 0.94);
                     backdrop-filter: blur(45px);
                     -webkit-backdrop-filter: blur(45px);
-                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    border: 1px solid rgba(255, 255, 255, 0.08);
                     border-radius: 40px;
                     padding: 45px;
                     z-index: 10;
                     box-shadow: 0 40px 140px rgba(0,0,0,1);
                     text-align: center;
                     animation: fadeIn 0.8s ease-out;
+                    overflow: hidden; /* Чтобы жидкость не выходила за края */
                 }}
-                @keyframes fadeIn {{ from {{ opacity: 0; transform: translateY(20px); }} to {{ opacity: 1; transform: translateY(0); }} }}
+                @keyframes fadeIn {{ from {{ opacity: 0; transform: translateY(20px); }} to {{ opacity: 1; }} }}
+
+                /* Внутренний холст для жидкости */
+                #liquidCanvas {{
+                    position: absolute;
+                    inset: 0;
+                    width: 100%;
+                    height: 100%;
+                    z-index: 1;
+                    pointer-events: none;
+                }}
+
+                /* Обертка для контента, чтобы он был НАД жидкостью */
+                .monolith-content {{
+                    position: relative;
+                    z-index: 2;
+                    pointer-events: auto;
+                }}
 
                 .payment-header {{
                     display: flex;
@@ -1610,12 +1628,12 @@ async def handle_payment_page(request):
                 .header-col.right {{ text-align: right; }}
 
                 .label-small {{
-                    font-size: 9px;
+                    font-size: 10px;
                     color: var(--accent-blue);
                     letter-spacing: 2px;
                     text-transform: uppercase;
                     margin-bottom: 4px;
-                    opacity: 0.8;
+                    font-weight: 900;
                  }}
                 .label-value {{
                     font-size: 15px;
@@ -1627,7 +1645,7 @@ async def handle_payment_page(request):
                 .item-name-box {{
                     margin-bottom: 30px;
                     padding: 12px;
-                    background: linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+                    background: rgba(255,255,255,0.02);
                     border-radius: 12px;
                     border: 1px solid rgba(255,255,255,0.05);
                 }}
@@ -1638,7 +1656,7 @@ async def handle_payment_page(request):
                     letter-spacing: 0.5px;
                 }}
 
-                /* Контейнер виджета v3.3 - Liquid Smoke Interface */
+                /* Контейнер виджета v3.4 - Liquid Layer */
                 .widget-container {{
                     position: relative;
                     width: 510px;
@@ -1666,9 +1684,9 @@ async def handle_payment_page(request):
                     margin-top: 40px;
                     font-family: 'Inter', sans-serif;
                     font-size: 13px;
-                    font-weight: 700;
+                    font-weight: 900;
                     color: rgba(255, 255, 255, 0.7);
-                    letter-spacing: 0.5px;
+                    letter-spacing: 1px;
                     display: flex;
                     align-items: center;
                     justify-content: center;
@@ -1720,139 +1738,146 @@ async def handle_payment_page(request):
             </div>
 
             <script>
-                const canvas = document.getElementById('plexus');
-                const ctx = canvas.getContext('2d');
+                // --- Глобальные настройки ---
+                const plexusCanvas = document.getElementById('plexus');
+                const liquidCanvas = document.getElementById('liquidCanvas');
+                const pCtx = plexusCanvas.getContext('2d');
+                const lCtx = liquidCanvas.getContext('2d');
+                const monolith = document.querySelector('.monolith');
                 
                 let particles = [];
-                let smokeParticles = [];
-                const mouse = {{ x: null, y: null, radius: 180 }};
+                let blobs = [];
+                const mouse = {{ x: -1000, y: -1000 }};
 
-                window.addEventListener('mousemove', (e) => {{
-                    mouse.x = e.x;
-                    mouse.y = e.y;
-                    
-                    // Создаем дым только если мышка двигается в области монолита
-                    const mono = document.querySelector('.monolith').getBoundingClientRect();
-                    if (e.x > mono.left && e.x < mono.right && e.y > mono.top && e.y < mono.bottom) {{
-                        for (let i = 0; i < 3; i++) {{
-                            smokeParticles.push(new Smoke(e.x, e.y));
-                        }}
-                    }}
-                }});
-
-                window.addEventListener('resize', () => {{
-                    canvas.width = window.innerWidth;
-                    canvas.height = window.innerHeight;
+                // --- Инициализация холстов ---
+                function resize() {{
+                    plexusCanvas.width = window.innerWidth;
+                    plexusCanvas.height = window.innerHeight;
+                    liquidCanvas.width = monolith.offsetWidth;
+                    liquidCanvas.height = monolith.offsetHeight;
                     init();
+                }}
+
+                window.addEventListener('resize', resize);
+                window.addEventListener('mousemove', (e) => {{
+                    mouse.x = e.clientX;
+                    mouse.y = e.clientY;
                 }});
 
-                class Smoke {{
-                    constructor(x, y) {{
-                        this.x = x;
-                        this.y = y;
-                        this.size = Math.random() * 5 + 2;
-                        this.speedX = (Math.random() - 0.5) * 2;
-                        this.speedY = (Math.random() - 0.5) * 2;
-                        this.life = 1.0;
-                        this.growth = Math.random() * 1.5 + 0.5;
-                    }}
-                    draw() {{
-                        ctx.fillStyle = `rgba(255, 255, 255, ${{this.life * 0.4}})`;
-                        ctx.beginPath();
-                        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                        ctx.fill();
+                // --- Логика Созвездий (Plexus) ---
+                class PlexusPoint {{
+                    constructor() {{
+                        this.x = Math.random() * plexusCanvas.width;
+                        this.y = Math.random() * plexusCanvas.height;
+                        this.size = Math.random() * 1.5 + 0.5;
+                        this.speedX = (Math.random() - 0.5) * 0.5;
+                        this.speedY = (Math.random() - 0.5) * 0.5;
                     }}
                     update() {{
                         this.x += this.speedX;
                         this.y += this.speedY;
-                        this.size += this.growth;
-                        this.life -= 0.015;
+                        if (this.x > plexusCanvas.width || this.x < 0) this.speedX *= -1;
+                        if (this.y > plexusCanvas.height || this.y < 0) this.speedY *= -1;
+                    }}
+                    draw() {{
+                        pCtx.fillStyle = 'rgba(93, 122, 151, 0.3)';
+                        pCtx.beginPath();
+                        pCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                        pCtx.fill();
                     }}
                 }}
 
-                class Particle {{
-                    constructor() {{
-                        this.x = Math.random() * canvas.width;
-                        this.y = Math.random() * canvas.height;
-                        this.size = Math.random() * 1.5 + 0.5;
-                        this.speedX = (Math.random() - 0.5) * 0.6;
-                        this.speedY = (Math.random() - 0.5) * 0.6;
+                // --- Логика Жидкости (Liquid) ---
+                class LiquidBlob {{
+                    constructor(x, y) {{
+                        this.x = x;
+                        this.y = y;
+                        this.baseRadius = Math.random() * 40 + 30;
+                        this.radius = this.baseRadius;
+                        this.vx = (Math.random() - 0.5) * 2;
+                        this.vy = (Math.random() - 0.5) * 2;
+                        this.life = 1.0;
+                    }}
+                    update(mX, mY) {{
+                        // Движение к мыши
+                        let dx = mX - this.x;
+                        let dy = mY - this.y;
+                        let dist = Math.sqrt(dx*dx + dy*dy);
+                        
+                        if (dist < 200) {{
+                            this.vx += dx * 0.005;
+                            this.vy += dy * 0.01;
+                        }}
+                        
+                        this.x += this.vx;
+                        this.y += this.vy;
+                        this.vx *= 0.95;
+                        this.vy *= 0.95;
+
+                        // Ограничение границами монолита
+                        if (this.x < 0 || this.x > liquidCanvas.width) this.vx *= -1;
+                        if (this.y < 0 || this.y > liquidCanvas.height) this.vy *= -1;
                     }}
                     draw() {{
-                        const mono = document.querySelector('.monolith').getBoundingClientRect();
-                        const isUnder = (this.x > mono.left && this.x < mono.right && this.y > mono.top && this.y < mono.bottom);
-                        ctx.fillStyle = isUnder ? 'rgba(230, 230, 230, 0.4)' : 'rgba(93, 122, 151, 0.2)';
-                        ctx.beginPath();
-                        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                        ctx.fill();
-                    }}
-                    update() {{
-                        this.x += this.speedX;
-                        this.y += this.speedY;
-                        if (this.x > canvas.width || this.x < 0) this.speedX *= -1;
-                        if (this.y > canvas.height || this.y < 0) this.speedY *= -1;
+                        const grad = lCtx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius);
+                        grad.addColorStop(0, 'rgba(255, 255, 255, 0.4)');
+                        grad.addColorStop(0.6, 'rgba(255, 255, 255, 0.1)');
+                        grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                        
+                        lCtx.fillStyle = grad;
+                        lCtx.beginPath();
+                        lCtx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                        lCtx.fill();
                     }}
                 }}
 
                 function init() {{
-                    canvas.width = window.innerWidth;
-                    canvas.height = window.innerHeight;
                     particles = [];
-                    smokeParticles = [];
-                    const density = (canvas.width * canvas.height) / 15000;
-                    for (let i = 0; i < density; i++) particles.push(new Particle());
+                    blobs = [];
+                    const pDensity = (plexusCanvas.width * plexusCanvas.height) / 15000;
+                    for (let i = 0; i < pDensity; i++) particles.push(new PlexusPoint());
+                    
+                    // Начальные капли жидкости
+                    for (let i = 0; i < 8; i++) {{
+                        blobs.push(new LiquidBlob(Math.random() * liquidCanvas.width, Math.random() * liquidCanvas.height));
+                    }}
                 }}
 
                 function animate() {{
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    
-                    const monoRect = document.querySelector('.monolith').getBoundingClientRect();
-
-                    // Рендерим дым
-                    for (let i = 0; i < smokeParticles.length; i++) {{
-                        smokeParticles[i].update();
-                        smokeParticles[i].draw();
-                        if (smokeParticles[i].life <= 0) {{
-                            smokeParticles.splice(i, 1);
-                            i--;
-                        }}
-                    }}
-
+                    // 1. Рендерим Созвездия
+                    pCtx.clearRect(0, 0, plexusCanvas.width, plexusCanvas.height);
                     particles.forEach(p => {{
                         p.update();
                         p.draw();
                     }});
-
-                    for (let a = 0; a < particles.length; a++) {{
-                        for (let b = a; b < particles.length; b++) {{
-                            let dx = particles[a].x - particles[b].x;
-                            let dy = particles[a].y - particles[b].y;
+                    for (let i = 0; i < particles.length; i++) {{
+                        for (let j = i; j < particles.length; j++) {{
+                            let dx = particles[i].x - particles[j].x;
+                            let dy = particles[i].y - particles[j].y;
                             let dist = Math.sqrt(dx*dx + dy*dy);
-                            
-                            if (dist < 140) {{
-                                const midX = (particles[a].x + particles[b].x) / 2;
-                                const midY = (particles[a].y + particles[b].y) / 2;
-                                const isUnder = (midX > monoRect.left && midX < monoRect.right && midY > monoRect.top && midY < monoRect.bottom);
-                                
-                                if (isUnder) {{
-                                    ctx.strokeStyle = `rgba(220, 220, 220, ${{ (1 - dist/140) * 0.4 }})`;
-                                    ctx.lineWidth = 1.2;
-                                }} else {{
-                                    ctx.strokeStyle = `rgba(93, 122, 151, ${{ (1 - dist/140) * 0.12 }})`;
-                                    ctx.lineWidth = 0.8;
-                                }}
-                                
-                                ctx.beginPath();
-                                ctx.moveTo(particles[a].x, particles[a].y);
-                                ctx.lineTo(particles[b].x, particles[b].y);
-                                ctx.stroke();
+                            if (dist < 150) {{
+                                pCtx.strokeStyle = `rgba(93, 122, 151, ${{ (1 - dist/150) * 0.1 }})`;
+                                pCtx.beginPath(); pCtx.moveTo(particles[i].x, particles[i].y);
+                                pCtx.lineTo(particles[j].x, particles[j].y); pCtx.stroke();
                             }}
                         }}
                     }}
+
+                    // 2. Рендерим Жидкость
+                    lCtx.clearRect(0, 0, liquidCanvas.width, liquidCanvas.height);
+                    const rect = monolith.getBoundingClientRect();
+                    const relX = mouse.x - rect.left;
+                    const relY = mouse.y - rect.top;
+
+                    blobs.forEach(b => {{
+                        b.update(relX, relY);
+                        b.draw();
+                    }});
+
                     requestAnimationFrame(animate);
                 }}
 
-                init();
+                resize();
                 animate();
             </script>
         </body>
