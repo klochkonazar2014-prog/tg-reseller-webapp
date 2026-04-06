@@ -4095,9 +4095,12 @@ function updateMethodTotal(baseTotal) {
         }
     } else if (SELECTED_PAY_METHOD === 'LAVATOP') {
         const tonForCard = base + 0.2 + (isCoverFeeChecked ? 0.14 : 0);
+        // DonatePay (на месте Lava): +11.5% комиссии
         let rubVal = Math.round(tonForCard * FIAT_RATES.RUB * 1.115);
         total = rubVal > 0 ? rubVal : '...';
         if (totalCurrencyEl) totalCurrencyEl.innerText = '₽';
+        
+        // ДЛЯ ТЕСТОВ: Кнопка всегда активна
         if (continueBtn) {
             continueBtn.disabled = false;
             continueBtn.style.opacity = '1';
