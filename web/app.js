@@ -4336,31 +4336,24 @@ function openCheckoutDrawer(url, orderId) {
     if (drawer) drawer.style.display = 'none';
     
     // ОТКРЫВАЕМ ВНЕШНЮЮ ВКЛАДКУ (CHROME/SAFARI)
-    // Там будет наша новая красивая страница /payment без ошибок 405
     window.Telegram.WebApp.openLink(url);
     
-    // ПОКАЗЫВАЕМ ЭКРАН ОЖИДАНИЯ ВНУТРИ БОТА
-    const statusOverlay = document.getElementById('payment-status-overlay');
-    if (statusOverlay) {
-        statusOverlay.style.display = 'flex';
-        // Обновляем текст статуса (опционально)
-        const statusText = statusOverlay.querySelector('.status-text');
-        if (statusText) statusText.innerText = 'Ожидаем подтверждения оплаты...';
+    // ПОКАЗЫВАЕМ ЭКРАН ОЖИДАНИЯ ВНУТРИ БОТА (СКРЫВАЕМ КАТАЛОГ)
+    const activeOverlay = document.getElementById('payment-loading-overlay');
+    if (activeOverlay) {
+        activeOverlay.style.display = 'flex';
+        activeOverlay.style.backgroundColor = 'rgba(15, 15, 19, 0.98)'; // Почти черный фон
+        
+        const statusText = document.getElementById('payment-status-text');
+        if (statusText) statusText.innerText = 'Ожидаем подтверждения...';
     }
     
-    // ЗАПУСКАЕМ ТАЙМЕР ПРОВЕРКИ (ПОЛЛИНГ)
-    // Очищаем старые интервалы, если они были
+    // ЗАПУСКАЕМ ТАЙМЕРЫ И ПОЛЛИНГ
     if (window.donatePayPollInterval) clearInterval(window.donatePayPollInterval);
-    
     window.donatePayPollInterval = setInterval(() => {
         checkDonatePayStatus(orderId);
-    }, 15000); // Проверяем каждые 15 секунд
-    
-    // Показываем шторку
-    drawer.style.display = 'flex';
-    setTimeout(() => drawer.classList.add('active'), 10);
+    }, 15000); 
 
-    // Запускаем таймеры
     startOrderStatusPolling(orderId);
     startPaymentCountdown(600); // 10 минут
 }

@@ -1768,6 +1768,7 @@ async def cors_middleware(request, handler):
 
 app = web.Application(middlewares=[cors_middleware])
 app.add_routes([
+    web.get('/payment', handle_payment_page), # СТРАНИЦА ОПЛАТЫ - ВЫСШИЙ ПРИОРИТЕТ
     web.get('/', handle_index),
     web.get('/api/items', handle_live_items),
     web.get('/api/filters', handle_filter_data),
@@ -1790,7 +1791,6 @@ app.add_routes([
     web.get('/api/bot_balance', handle_get_bot_balance),
     web.get('/api/operator_contacts', handle_operator_contacts),
     web.get('/api/order_status/{order_id}', handle_get_order_status),
-    web.get('/payment', handle_payment_page), # Наша новая элитная страница
     web.post('/api/webhooks/freekassa', handle_freekassa_webhook),
     web.post('/api/webhooks/xrocket', handle_xrocket_webhook),
     web.post(f'/api/webhooks/ct/{os.getenv("CLOUDTIPS_WEBHOOK_PATH", "cloudtips")}', handle_cloudtips_webhook),
