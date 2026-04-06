@@ -1550,21 +1550,22 @@ async def handle_payment_page(request):
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Безопасная оплата | OctoRent</title>
+            <title>Premium Checkout | OctoRent</title>
             <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
             <style>
                 :root {{
-                    --primary: #00d488;
-                    --primary-glow: rgba(0, 212, 136, 0.3);
-                    --text: #1e293b;
-                    --text-light: #64748b;
+                    --p: #00d488;
+                    --p-g: rgba(0, 212, 136, 0.4);
+                    --accent: #3b82f6;
+                    --t: #0f172a;
+                    --t-l: #64748b;
                 }}
 
                 * {{ box-sizing: border-box; -webkit-tap-highlight-color: transparent; }}
 
                 body {{
-                    background: #f1f5f9;
-                    color: var(--text);
+                    background: #f8fafc;
+                    color: var(--t);
                     font-family: 'Outfit', sans-serif;
                     margin: 0;
                     display: flex;
@@ -1572,150 +1573,177 @@ async def handle_payment_page(request):
                     justify-content: center;
                     min-height: 100vh;
                     overflow: hidden;
-                    position: relative;
+                    perspective: 1000px;
                 }}
 
-                /* Живой анимированный фон */
-                .bg-blob {{
+                /* Aurora Background */
+                .aurora {{
                     position: fixed;
-                    width: 60vw;
-                    height: 60vw;
-                    background: radial-gradient(circle, var(--primary-glow) 0%, rgba(241, 245, 249, 0) 70%);
+                    top: 0; left: 0; width: 100%; height: 100%;
                     z-index: -1;
-                    filter: blur(80px);
-                    animation: move 20s infinite alternate;
-                }}
-                .bg-blob-2 {{
-                    position: fixed;
-                    bottom: -10%;
-                    right: -10%;
-                    width: 50vw;
-                    height: 50vw;
-                    background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, rgba(241, 245, 249, 0) 70%);
-                    z-index: -1;
-                    filter: blur(100px);
-                    animation: move 25s infinite alternate-reverse;
-                }}
-                @keyframes move {{
-                    from {{ transform: translate(-20%, -20%) scale(1); }}
-                    to {{ transform: translate(20%, 20%) scale(1.1); }}
+                    background: 
+                        radial-gradient(circle at 0% 0%, rgba(0, 212, 136, 0.15) 0%, transparent 50%),
+                        radial-gradient(circle at 100% 0%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 100% 100%, rgba(0, 212, 136, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 0% 100%, rgba(59, 130, 246, 0.12) 0%, transparent 50%);
+                    animation: auroraMove 15s ease infinite alternate;
                 }}
 
-                .payment-card {{
-                    background: rgba(255, 255, 255, 0.7);
-                    backdrop-filter: blur(30px) saturate(180%);
-                    -webkit-backdrop-filter: blur(30px) saturate(180%);
-                    padding: 40px;
-                    border-radius: 48px;
+                @keyframes auroraMove {{
+                    0% {{ transform: scale(1); }}
+                    100% {{ transform: scale(1.1); }}
+                }}
+
+                /* Holographic Glass Card */
+                .card {{
+                    background: rgba(255, 255, 255, 0.75);
+                    backdrop-filter: blur(25px) saturate(160%);
+                    -webkit-backdrop-filter: blur(25px) saturate(160%);
+                    padding: 48px 40px;
+                    border-radius: 56px;
                     box-shadow: 
-                        0 25px 50px -12px rgba(0, 0, 0, 0.1),
-                        inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+                        0 30px 100px -20px rgba(0, 0, 0, 0.15),
+                        inset 0 0 0 1px rgba(255, 255, 255, 0.8);
                     text-align: center;
-                    max-width: 480px;
-                    width: 92%;
+                    max-width: 500px;
+                    width: 94%;
                     position: relative;
-                    animation: cardEntry 1s cubic-bezier(0.16, 1, 0.3, 1);
+                    overflow: hidden;
+                    animation: cardBorn 1.2s cubic-bezier(0.19, 1, 0.22, 1);
                 }}
 
-                @keyframes cardEntry {{
-                    from {{ opacity: 0; transform: scale(0.95) translateY(20px); }}
-                    to {{ opacity: 1; transform: scale(1) translateY(0); }}
+                /* Shimmer Effect */
+                .card::after {{
+                    content: "";
+                    position: absolute;
+                    top: -50%; left: -50%; width: 200%; height: 200%;
+                    background: linear-gradient(
+                        45deg,
+                        transparent 45%,
+                        rgba(255, 255, 255, 0.4) 50%,
+                        transparent 55%
+                    );
+                    animation: shimmer 6s infinite;
+                    pointer-events: none;
                 }}
 
-                .logo-box {{
-                    width: 72px;
-                    height: 72px;
-                    background: linear-gradient(135deg, #00d488 0%, #00a56a 100%);
-                    border-radius: 22px;
+                @keyframes shimmer {{
+                    0% {{ transform: translateX(-100%) translateY(-100%) rotate(0deg); }}
+                    100% {{ transform: translateX(100%) translateY(100%) rotate(0deg); }}
+                }}
+
+                @keyframes cardBorn {{
+                    from {{ opacity: 0; transform: translateY(40px) scale(0.9) rotateX(10deg); }}
+                    to {{ opacity: 1; transform: translateY(0) scale(1) rotateX(0); }}
+                }}
+
+                .logo-wrap {{
+                    width: 80px;
+                    height: 80px;
+                    background: linear-gradient(135deg, #00d488, #00a56a);
+                    border-radius: 26px;
                     display: inline-flex;
                     align-items: center;
                     justify-content: center;
-                    margin-bottom: 24px;
-                    box-shadow: 0 15px 30px rgba(0, 212, 136, 0.25);
-                    color: white;
-                    font-size: 34px;
+                    margin-bottom: 28px;
+                    box-shadow: 0 20px 40px var(--p-g);
+                    position: relative;
+                }}
+                .logo-wrap::before {{
+                    content: "";
+                    position: absolute;
+                    inset: -8px;
+                    border: 2px solid var(--p-g);
+                    border-radius: 34px;
+                    animation: pulse 3s infinite;
+                }}
+                @keyframes pulse {{
+                    0% {{ transform: scale(1); opacity: 0.8; }}
+                    100% {{ transform: scale(1.3); opacity: 0; }}
                 }}
 
-                h1 {{ font-weight: 900; font-size: 28px; margin: 0; letter-spacing: -1px; }}
-                .subtitle {{ color: var(--text-light); font-size: 15px; margin: 8px 0 32px; font-weight: 500; }}
+                h1 {{ font-weight: 900; font-size: 30px; margin: 0; letter-spacing: -1.2px; }}
+                .sub {{ color: var(--t-l); font-size: 16px; margin: 10px 0 36px; font-weight: 600; }}
 
-                .price-tag {{
-                    background: rgba(15, 23, 42, 0.04);
-                    padding: 16px 28px;
-                    border-radius: 24px;
-                    display: inline-flex;
-                    flex-direction: column;
-                    align-items: center;
-                    margin-bottom: 32px;
+                .bill-box {{
+                    background: rgba(15, 23, 42, 0.05);
+                    padding: 24px;
+                    border-radius: 32px;
+                    margin-bottom: 36px;
                     border: 1px solid rgba(0,0,0,0.03);
+                    position: relative;
                 }}
-                .price-label {{ font-size: 12px; color: var(--text-light); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }}
-                .price-value {{ font-size: 28px; font-weight: 900; color: var(--primary); }}
+                .bill-label {{ font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: var(--t-l); font-weight: 800; margin-bottom: 8px; }}
+                .bill-amount {{ font-size: 32px; font-weight: 900; color: var(--p); letter-spacing: -0.5px; animation: glowPulse 2s infinite ease-in-out; }}
+                @keyframes glowPulse {{
+                    0%, 100% {{ text-shadow: 0 0 0px var(--p-g); }}
+                    50% {{ text-shadow: 0 0 20px var(--p-g); }}
+                }}
 
-                .widget-wrapper {{
-                    border-radius: 28px;
+                .widget-frame {{
+                    border-radius: 32px;
                     overflow: hidden;
                     background: #fff;
-                    border: 1px solid rgba(0,0,0,0.05);
-                    box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+                    box-shadow: 0 15px 45px rgba(0,0,0,0.04);
+                    height: 380px; /* Увеличено для полного отображения */
                 }}
 
-                .secure-footer {{
-                    margin-top: 32px;
+                .final-footer {{ margin-top: 40px; }}
+                .badge-row {{
                     display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    gap: 16px;
+                    justify-content: center;
+                    gap: 30px;
+                    margin-bottom: 24px;
+                    opacity: 0.5;
+                    transition: opacity 0.3s;
                 }}
-                .trust-badges {{
-                    display: flex;
-                    gap: 20px;
-                    opacity: 0.4;
-                    filter: grayscale(1);
-                }}
-                .trust-badges img {{ height: 18px; }}
+                .badge-row:hover {{ opacity: 1; }}
+                .badge-row svg {{ height: 20px; width: auto; fill: var(--t); }}
                 
-                .security-info {{
-                    display: flex;
+                .secure-line {{
+                    display: inline-flex;
                     align-items: center;
-                    gap: 6px;
+                    gap: 8px;
+                    padding: 8px 16px;
+                    background: rgba(0, 212, 136, 0.08);
+                    border-radius: 100px;
+                    color: var(--p);
                     font-size: 13px;
-                    color: var(--text-light);
-                    font-weight: 600;
+                    font-weight: 800;
+                    letter-spacing: 0.5px;
                 }}
-                .security-info svg {{ color: var(--primary); }}
-
             </style>
         </head>
         <body>
-            <div class="bg-blob"></div>
-            <div class="bg-blob-2"></div>
+            <div class="aurora"></div>
             
-            <div class="payment-card">
-                <div class="logo-box">⚡</div>
-                <h1>Оплата подписки</h1>
-                <p class="subtitle">Безопасный эквайринг OctoRent</p>
+            <div class="card">
+                <div class="logo-wrap">
+                    <span style="font-size: 38px; color: white;">⚡</span>
+                </div>
+                <h1>Оплата активов</h1>
+                <p class="sub">Crypto & Fiat Gateway OctoRent</p>
 
-                <div class="price-tag">
-                    <div class="price-label">К оплате</div>
-                    <div class="price-value">{amount} RUB</div>
-                    <div style="font-size: 12px; color: var(--text-light); margin-top: 4px;">Счёт №{order_id}</div>
+                <div class="bill-box">
+                    <div class="bill-label">К зачислению</div>
+                    <div class="bill-amount">{amount} RUB</div>
+                    <div style="font-size: 13px; color: var(--t-l); margin-top: 6px; font-weight: 600;">Счёт #{order_id}</div>
                 </div>
 
-                <div class="widget-wrapper">
+                <div class="widget-frame">
                     <iframe src="https://widget.donatepay.ru/widgets/page/57db5a26843d08276cef24eadff3c007581ec4d8f2fd8fe47b1a5045c2f6b096?widget_id=7567140&sum={amount}" 
-                            width="100%" height="220" frameborder="0"></iframe>
+                            width="100%" height="380" frameborder="0"></iframe>
                 </div>
 
-                <div class="secure-footer">
-                    <div class="trust-badges">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/b/b9/Mir-logo.svg" alt="Mir">
+                <div class="final-footer">
+                    <div class="badge-row">
+                        <svg viewBox="0 0 24 24" height="20"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"></path></svg>
+                        <svg viewBox="0 0 24 24" height="20"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"></path></svg>
+                        <svg viewBox="0 0 24 24" height="20"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-1 15.41L7.12 12.5l1.41-1.41L11 13.59l5.47-5.47 1.41 1.41L11 16.41z"></path></svg>
                     </div>
-                    <div class="security-info">
+                    <div class="secure-line">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                        Защищено SSL-шифрованием 256-бит
+                        ULTRA-SECURE TRANSACTION
                     </div>
                 </div>
             </div>
