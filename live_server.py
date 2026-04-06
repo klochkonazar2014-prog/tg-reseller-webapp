@@ -1536,14 +1536,12 @@ async def handle_operator_contacts(request):
     })
 
 
-
 async def handle_payment_page(request):
-    """Генерация ПРЕМИУМ страницы оплаты с виджетом DonatePay"""
+    """Генерация ПРЕМИУМ страницы оплаты с 'жидким' фоном"""
     try:
         logging.info(f"🚀 [Checkout] Запрос страницы оплаты: {request.rel_url}")
         amount = request.query.get('sum', '0')
         order_id = request.query.get('order_id', 'UNKNOWN')
-        
         item_name = request.query.get('item_name', 'NFT Item')
         
         html = f"""
@@ -1556,8 +1554,10 @@ async def handle_payment_page(request):
             <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
             <style>
                 :root {{
-                    --accent-blue: #5d7a97;
+                    --accent: #ffffff;
                     --bg: #000000;
+                    --glass: rgba(255, 255, 255, 0.03);
+                    --border: rgba(255, 255, 255, 0.1);
                 }}
 
                 * {{ box-sizing: border-box; margin: 0; padding: 0; }}
@@ -1573,48 +1573,57 @@ async def handle_payment_page(request):
                     justify-content: center;
                 }}
 
-                #plexus {{
+                /* LIQUID BACKGROUND */
+                .liquid-container {{
                     position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100vw;
-                    height: 100vh;
+                    inset: 0;
                     z-index: 0;
                     background: #000;
+                    filter: blur(80px) contrast(1.2);
+                    opacity: 0.8;
+                }}
+
+                .blob {{
+                    position: absolute;
+                    width: 50vw;
+                    height: 50vw;
+                    border-radius: 50%;
+                    mix-blend-mode: screen;
+                    opacity: 0.6;
+                }}
+
+                .blob-1 {{ background: #ffffff; top: -10%; left: -10%; }}
+                .blob-2 {{ background: #5d7a97; bottom: -10%; right: -10%; width: 60vw; height: 60vw; }}
+                .blob-3 {{ background: #222; top: 20%; right: 10%; width: 40vw; height: 40vw; }}
+
+                /* NOISE OVERLAY */
+                .noise {{
+                    position: fixed;
+                    inset: 0;
+                    z-index: 1;
+                    opacity: 0.12;
                     pointer-events: none;
+                    background: url('https://grainy-gradients.vercel.app/noise.svg');
                 }}
 
                 .monolith {{
                     position: relative;
-                    width: 580px;
-                    background: rgba(10, 10, 10, 0.95);
-                    backdrop-filter: blur(40px);
-                    -webkit-backdrop-filter: blur(40px);
-                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    width: 680px;
+                    background: rgba(8, 8, 8, 0.85);
+                    backdrop-filter: blur(60px) saturate(150%);
+                    -webkit-backdrop-filter: blur(60px) saturate(150%);
+                    border: 1px solid var(--border);
                     border-radius: 40px;
                     padding: 45px;
                     z-index: 10;
-                    box-shadow: 0 40px 140px rgba(0,0,0,1);
+                    box-shadow: 0 50px 150px rgba(0,0,0,0.9);
                     text-align: center;
-                    animation: fadeIn 0.8s ease-out;
-                    overflow: hidden;
-                }}
-                @keyframes fadeIn {{ from {{ opacity: 0; transform: translateY(20px); }} to {{ opacity: 1; }} }}
-
-                /* Внутренний холст для жидкости */
-                #liquidCanvas {{
-                    position: absolute;
-                    inset: 0;
-                    width: 100% !important;
-                    height: 100% !important;
-                    z-index: 1;
-                    pointer-events: none;
+                    animation: fadeIn 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
                 }}
 
-                /* Обертка для контента, чтобы он был НАД жидкостью */
-                .monolith-content {{
-                    position: relative;
-                    z-index: 2;
+                @keyframes fadeIn {{ 
+                    from {{ opacity: 0; transform: translateY(30px); filter: blur(10px); }} 
+                    to {{ opacity: 1; transform: translateY(0); filter: blur(0); }} 
                 }}
 
                 .payment-header {{
@@ -1623,6 +1632,7 @@ async def handle_payment_page(request):
                     align-items: flex-end;
                     margin-bottom: 25px;
                     padding: 0 15px;
+                    font-family: 'JetBrains Mono', monospace;
                 }}
 
                 .header-col {{ text-align: left; }}
@@ -1630,146 +1640,149 @@ async def handle_payment_page(request):
 
                 .label-small {{
                     font-size: 10px;
-                    font-family: 'JetBrains Mono', monospace;
-                    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-                    width: 580px; height: 500px; background: rgba(10, 10, 10, 0.4);
-                    backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1);
-                    border-radius: 40px; z-index: 10; display: flex; flex-direction: column;
-                    padding: 30px; box-sizing: border-box; box-shadow: 0 30px 100px rgba(0,0,0,0.9);
+                    color: rgba(255,255,255,0.4);
+                    letter-spacing: 2px;
+                    text-transform: uppercase;
+                    margin-bottom: 4px;
+                 }}
+                .label-value {{
+                    font-size: 16px;
+                    font-weight: 700;
+                    color: #fff;
                 }}
-                .payment-header {{ display: flex; justify-content: space-between; margin-bottom: 25px; }}
-                .label-small {{ font-size: 11px; font-weight: 700; color: rgba(255, 255, 255, 0.4); letter-spacing: 2px; text-transform: uppercase; }}
-                .label-value {{ font-size: 24px; font-weight: 900; color: #fff; margin-top: 5px; }}
-                .item-name-box {{ background: rgba(255, 255, 255, 0.03); padding: 15px 25px; border-radius: 12px; margin-bottom: 25px; }}
-                .item-name-box .val {{ font-size: 14px; font-weight: 900; color: #fff; text-transform: uppercase; }}
+
+                .item-name-box {{
+                    margin-bottom: 30px;
+                    padding: 15px;
+                    background: rgba(255, 255, 255, 0.02);
+                    border-radius: 16px;
+                    border: 1px solid rgba(255,255,255,0.05);
+                }}
+                .item-name-box .val {{
+                    font-size: 14px;
+                    font-weight: 600;
+                    color: #fff;
+                    letter-spacing: 0.5px;
+                }}
+
+                /* Контейнер виджета */
                 .widget-container {{
-                    width: 510px; height: 220px; background: #fff; border-radius: 12px;
-                    display: flex; align-items: center; justify-content: center; margin: 0 auto;
-                    box-shadow: 0 15px 45px rgba(0,0,0,0.5); overflow: hidden;
+                    position: relative;
+                    width: 600px;
+                    height: 380px;
+                    margin: 0 auto;
+                    background: #fff;
+                    border-radius: 28px;
+                    overflow: hidden;
+                    box-shadow: 0 25px 70px rgba(0,0,0,0.5);
                 }}
+
+                .widget-blend-overlay {{
+                    position: absolute;
+                    inset: 0;
+                    pointer-events: none;
+                    z-index: 5;
+                    border-radius: 28px;
+                    box-shadow: inset 0 0 40px rgba(255,255,255,0.8);
+                }}
+
+                iframe {{
+                    border: none;
+                    border-radius: 28px;
+                    background: #fff;
+                    position: relative;
+                    z-index: 3;
+                }}
+
                 .instruction-footer {{
-                    margin-top: auto; font-size: 12px; font-weight: 900; color: rgba(255, 255, 255, 0.6);
-                    text-align: center; letter-spacing: 1.5px; opacity: 0.8;
+                    margin-top: 40px;
+                    font-size: 12px;
+                    font-weight: 700;
+                    color: rgba(255, 255, 255, 0.5);
+                    letter-spacing: 1px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 12px;
+                    background: rgba(255, 255, 255, 0.03);
+                    border-radius: 50px;
+                    padding: 12px 30px;
+                    width: fit-content;
+                    margin: 40px auto 0;
+                    border: 1px solid rgba(255, 255, 255, 0.05);
+                    text-transform: uppercase;
                 }}
-                .pulse-dot {{ color: #00ff9d; margin-right: 8px; }}
+                .pulse-dot {{ color: #ffffff; animation: blink 1.5s infinite alternate; }}
+                @keyframes blink {{ from {{ opacity: 0.2; }} to {{ opacity: 1; }} }}
+
             </style>
         </head>
         <body>
-            <canvas id="liquidCanvas"></canvas>
-            <div class="noise-overlay"></div>
+            <div class="liquid-container" id="background">
+                <div class="blob blob-1" id="b1"></div>
+                <div class="blob blob-2" id="b2"></div>
+                <div class="blob blob-3" id="b3"></div>
+            </div>
+            <div class="noise"></div>
 
             <div class="monolith">
                 <div class="payment-header">
-                    <div>
-                        <div class="label-small">ID ЗАКАЗА</div>
+                    <div class="header-col">
+                        <div class="label-small">ORDER_ID</div>
                         <div class="label-value">#{order_id}</div>
                     </div>
-                    <div style="text-align: right;">
-                        <div class="label-small">СУММА К ОПЛАТЕ</div>
+                    <div class="header-col right">
+                        <div class="label-small">TOTAL_PAY</div>
                         <div class="label-value">{amount} RUB</div>
                     </div>
                 </div>
 
                 <div class="item-name-box">
-                    <div class="label-small">ПРЕДМЕТ АРЕНДЫ</div>
+                    <div class="label-small" style="margin-bottom:4px;">RENTAL_SUBJECT</div>
                     <div class="val">{item_name}</div>
                 </div>
 
                 <div class="widget-container">
+                    <div class="widget-blend-overlay"></div>
                     <iframe src="https://widget.donatepay.ru/widgets/page/57db5a26843d08276cef24eadff3c007581ec4d8f2fd8fe47b1a5045c2f6b096?widget_id=7567140&sum={amount}" 
-                            width="510" height="220" frameborder="0"></iframe>
+                            width="600" height="380" frameborder="0"></iframe>
                 </div>
 
                 <div class="instruction-footer">
-                    <span class="pulse-dot">●</span> ВЫБИРАЙТЕ ТОЛЬКО МЕТОД ОПЛАТЫ КАРТАМИ ИЛИ СБП
+                    <span class="pulse-dot">●</span>
+                    <span>ИСПОЛЬЗУЙТЕ ТОЛЬКО КАРТЫ РФ ИЛИ СБП</span>
                 </div>
             </div>
 
-            <canvas id="liquidCanvas"></canvas>
-
-            <svg style="position:fixed; top:-100%;" xmlns="http://www.w3.org/2000/svg" version="1.1">
-                <defs>
-                    <filter id="gooey">
-                        <feGaussianBlur in="SourceGraphic" stdDeviation="40" result="blur" />
-                        <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 80 -25" result="goo" />
-                        <feComposite in="SourceGraphic" in2="goo" operator="atop" />
-                    </filter>
-                </defs>
-            </svg>
-
             <script>
-                /* --- Vision Liquid: Pure Organic v4.5 (Henri Heymans Style) --- */
-                const canvas = document.getElementById('liquidCanvas');
-                const ctx = canvas.getContext('2d');
-                const mouse = {{ x: -1000, y: -1000 }};
-                let blobs = [];
+                const b1 = document.getElementById('b1');
+                const b2 = document.getElementById('b2');
+                const b3 = document.getElementById('b3');
 
-                function init() {{
-                    canvas.width = window.innerWidth;
-                    canvas.height = window.innerHeight;
-                    blobs = [];
-                    // 6 гигантских масс для фона
-                    for (let i = 0; i < 6; i++) {{
-                        blobs.push({{
-                            x: Math.random() * canvas.width,
-                            y: Math.random() * canvas.height,
-                            r: Math.random() * 250 + 200, // Гигантский размер
-                            vx: (Math.random() - 0.5) * 1.0,
-                            vy: (Math.random() - 0.5) * 1.0,
-                            pulse: Math.random() * Math.PI,
-                            speed: 0.005 + Math.random() * 0.01
-                        }});
-                    }}
+                let time = 0;
+                function move() {{
+                    time += 0.002;
+                    
+                    const x1 = Math.sin(time * 0.7) * 25 + 20;
+                    const y1 = Math.cos(time * 0.5) * 25 + 20;
+                    b1.style.transform = `translate(${{x1}}vw, ${{y1}}vh)`;
+
+                    const x2 = Math.cos(time * 0.4) * 30 + 50;
+                    const y2 = Math.sin(time * 0.6) * 30 + 50;
+                    b2.style.transform = `translate(${{-x2}}vw, ${{y2}}vh)`;
+
+                    const x3 = Math.sin(time * 0.3) * 20 + 30;
+                    const y3 = Math.cos(time * 0.8) * 20 + 60;
+                    b3.style.transform = `translate(${{x3}}vw, ${{y3}}vh)`;
+
+                    requestAnimationFrame(move);
                 }}
-
-                window.addEventListener('mousemove', e => {{
-                    mouse.x = e.clientX; mouse.y = e.clientY;
-                }});
-                window.addEventListener('resize', init);
-
-                function draw() {{
-                            let d=Math.sqrt(dx*dx+dy*dx); // Ошибка была тут в v4.3 (dy*dx)
-                            d = Math.sqrt(dx*dx + dy*dy);
-                            if(d < 160) {{
-                                pCtx.strokeStyle = `rgba(200, 220, 255, ${{ (1 - d/160) * 0.25 }})`;
-                                pCtx.lineWidth = 0.5;
-                                pCtx.beginPath(); pCtx.moveTo(particles[i].x, particles[i].y);
-                                pCtx.lineTo(particles[j].x, particles[j].y); pCtx.stroke();
-                            }}
-                        }}
-                    }}
-
-                    // 2. Жижа (Liquid Gooey)
-                    lCtx.clearRect(0,0,liquidCanvas.width, liquidCanvas.height);
-                    const rect = monolith.getBoundingClientRect();
-                    const rx = mouse.x - rect.left, ry = mouse.y - rect.top;
-
-                    blobs.forEach(b => {{
-                        let dx = rx - b.x, dy = ry - b.y;
-                        let d = Math.sqrt(dx*dx+dy*dy);
-                        if(d < 250) {{
-                            b.vx += dx * 0.005; b.vy += dy * 0.005;
-                        }}
-                        b.x += b.vx; b.y += b.vy;
-                        b.vx *= 0.95; b.vy *= 0.95;
-                        if(b.x<0||b.x>liquidCanvas.width) b.vx*=-1;
-                        if(b.y<0||b.y>liquidCanvas.height) b.vy*=-1;
-
-                        lCtx.fillStyle = '#fff';
-                        lCtx.beginPath(); lCtx.arc(b.x, b.y, b.r, 0, Math.PI*2); lCtx.fill();
-                    }});
-
-                    requestAnimationFrame(draw);
-                }}
-
-                setTimeout(() => {{ init(); draw(); }}, 200);
+                move();
             </script>
         </body>
         </html>
         """
         return web.Response(text=html, content_type='text/html')
-    except Exception as e:
-        return web.Response(text=f"Error: {{e}}", status=500)
 
 async def handle_create_donatepay_invoice(request):
 
