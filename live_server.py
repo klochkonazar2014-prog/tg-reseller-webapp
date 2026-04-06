@@ -1668,12 +1668,13 @@ async def handle_payment_page(request):
                     z-index: 10;
                     box-shadow: 0 60px 180px rgba(0,0,0,1);
                     text-align: center;
+                    transform-origin: center center;
                     animation: fadeIn 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
                 }}
 
                 @keyframes fadeIn {{ 
-                    from {{ opacity: 0; transform: translateY(30px); filter: blur(10px); }} 
-                    to {{ opacity: 1; transform: translateY(0); filter: blur(0); }} 
+                    from {{ opacity: 0; transform: translateY(30px) scale(0.9); filter: blur(10px); }} 
+                    to {{ opacity: 1; transform: translateY(0) scale(var(--current-scale, 1)); filter: blur(0); }} 
                 }}
 
                 .payment-header {{
@@ -1709,9 +1710,10 @@ async def handle_payment_page(request):
                     font-weight: 600;
                     color: #fff;
                     letter-spacing: 0.5px;
+                    word-break: break-word;
                 }}
 
-                /* Widget 510x220 */
+                /* Widget Fixed Size */
                 .widget-container {{
                     position: relative;
                     width: 510px;
@@ -1763,7 +1765,7 @@ async def handle_payment_page(request):
             </div>
             <div class="noiseBox"></div>
 
-            <div class="monolith">
+            <div class="monolith" id="main-card">
                 <div class="payment-header">
                     <div class="header-col" style="text-align: left;">
                         <div class="label-small">ID ЗАКАЗА</div>
@@ -1790,6 +1792,28 @@ async def handle_payment_page(request):
                     <span>ТОЛЬКО КАРТЫ РФ ИЛИ СБП</span>
                 </div>
             </div>
+
+            <script>
+                function adjustScale() {{
+                    const card = document.getElementById('main-card');
+                    if (!card) return;
+                    
+                    // Безопасная ширина на 20px меньше ширины экрана, чтобы не прилипало к краям
+                    const availableWidth = window.innerWidth - 20; 
+                    const originalWidth = 580;
+                    
+                    // Рассчитываем коэффициент сжатия (если экран меньше 580px)
+                    const scaleFactor = Math.min(1, availableWidth / originalWidth);
+                    
+                    // Применяем scale напрямую без искажения внутренних элементов
+                    card.style.setProperty('--current-scale', scaleFactor);
+                    card.style.transform = `scale(${{scaleFactor}})`;
+                }}
+
+                window.addEventListener('resize', adjustScale);
+                window.addEventListener('DOMContentLoaded', adjustScale);
+                adjustScale(); // Вызов сразу при загрузке
+            </script>
         </body>
         </html>
         """
