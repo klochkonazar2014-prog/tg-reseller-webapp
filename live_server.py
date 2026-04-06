@@ -1739,92 +1739,14 @@ async def handle_payment_page(request):
             </div>
 
             <script>
-                const plexusCanvas = document.getElementById('plexus');
-                const liquidCanvas = document.getElementById('liquidCanvas');
-                const pCtx = plexusCanvas.getContext('2d');
-                const lCtx = liquidCanvas.getContext('2d');
+                /* --- Vision Fluid Engine v4.0 (Nebula) --- */
+                const canvas = document.getElementById('liquidCanvas');
                 const monolith = document.querySelector('.monolith');
-                
+                const outerCanvas = document.getElementById('plexus');
+                const pCtx = outerCanvas.getContext('2d');
+
+                // --- 1. Plexus (Background) remains as is for elite feel ---
                 let particles = [];
-                let blobs = [];
-                const mouse = {{ x: -1000, y: -1000 }};
-
-                function resize() {{
-                    // Устанавливаем размеры для фона
-                    plexusCanvas.width = window.innerWidth;
-                    plexusCanvas.height = window.innerHeight;
-                    
-                    // Устанавливаем размеры для жидкости внутри монолита
-                    const mRect = monolith.getBoundingClientRect();
-                    liquidCanvas.width = mRect.width || 580;
-                    liquidCanvas.height = mRect.height || 400;
-                    
-                    init();
-                }}
-
-                window.addEventListener('mousemove', (e) => {{
-                    mouse.x = e.clientX;
-                    mouse.y = e.clientY;
-                }});
-
-                window.addEventListener('resize', resize);
-
-                class PlexusPoint {{
-                    constructor() {{
-                        this.x = Math.random() * plexusCanvas.width;
-                        this.y = Math.random() * plexusCanvas.height;
-                        this.size = Math.random() * 1.5 + 0.5;
-                        this.speedX = (Math.random() - 0.5) * 0.4;
-                        this.speedY = (Math.random() - 0.5) * 0.4;
-                    }}
-                    update() {{
-                        this.x += this.speedX;
-                        this.y += this.speedY;
-                        if (this.x > plexusCanvas.width || this.x < 0) this.speedX *= -1;
-                        if (this.y > plexusCanvas.height || this.y < 0) this.speedY *= -1;
-                    }}
-                    draw() {{
-                        pCtx.fillStyle = 'rgba(93, 122, 151, 0.4)';
-                        pCtx.beginPath();
-                        pCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                        pCtx.fill();
-                    }}
-                }}
-
-                class LiquidBlob {{
-                    constructor() {{
-                        this.x = Math.random() * liquidCanvas.width;
-                        this.y = Math.random() * liquidCanvas.height;
-                        this.radius = Math.random() * 70 + 40;
-                        this.vx = (Math.random() - 0.5) * 1.5;
-                        this.vy = (Math.random() - 0.5) * 1.5;
-                    }}
-                    update(mX, mY) {{
-                        let dx = mX - this.x;
-                        let dy = mY - this.y;
-                        let dist = Math.sqrt(dx*dx + dy*dy);
-                        if (dist < 250) {{
-                            this.vx += dx * 0.006;
-                            this.vy += dy * 0.006;
-                        }}
-                        this.x += this.vx;
-                        this.y += this.vy;
-                        this.vx *= 0.94;
-                        this.vy *= 0.94;
-                        if (this.x < 0 || this.x > liquidCanvas.width) this.vx *= -1;
-                        if (this.y < 0 || this.y > liquidCanvas.height) this.vy *= -1;
-                    }}
-                    draw() {{
-                        const grad = lCtx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius);
-                        grad.addColorStop(0, 'rgba(255, 255, 255, 0.3)');
-                        grad.addColorStop(0.5, 'rgba(255, 255, 255, 0.1)');
-                        grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
-                        lCtx.fillStyle = grad;
-                        lCtx.beginPath();
-                        lCtx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                        lCtx.fill();
-                    }}
-                }}
 
                 function init() {{
                     particles = [];
