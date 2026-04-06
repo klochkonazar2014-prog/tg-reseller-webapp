@@ -1638,28 +1638,42 @@ async def handle_payment_page(request):
                     letter-spacing: 0.5px;
                 }}
 
-                /* Контейнер виджета v3.0 - Свечение от каждой стороны */
+                /* Контейнер виджета v3.1 - Прецизионные линейные направляющие */
                 .widget-container {{
                     position: relative;
-                    width: 510px; /* Размер в размер виджета */
+                    width: 510px;
                     height: 220px;
                     margin: 0 auto;
                     background: #fff;
-                    border-radius: 8px;
+                    border-radius: 4px;
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     z-index: 5;
-                    
-                    /* Массивное свечение строго от граней */
-                    box-shadow: 
-                        0 0 40px 10px #fff,
-                        0 0 100px 30px rgba(255, 255, 255, 0.1);
+                }}
+
+                /* Создаем градиентную рамку "от каждой стороны" через псевдоэлемент */
+                .widget-container::before {{
+                    content: '';
+                    position: absolute;
+                    inset: -35px; /* Размер свечения */
+                    z-index: -1;
+                    border-radius: 20px;
+                    /* 4 линейных градиента для каждой стороны */
+                    background: 
+                        linear-gradient(to top, #fff, transparent 35px),
+                        linear-gradient(to bottom, #fff, transparent 35px),
+                        linear-gradient(to left, #fff, transparent 35px),
+                        linear-gradient(to right, #fff, transparent 35px);
+                    background-repeat: no-repeat;
+                    background-position: center top, center bottom, left center, right center;
+                    background-size: 100% 35px, 100% 35px, 35px 100%, 35px 100%;
+                    opacity: 0.8; /* Чтобы не было ярче виджета */
                 }}
 
                 iframe {{
                     border: none;
-                    border-radius: 4px;
+                    border-radius: 2px;
                     background: #fff;
                     position: relative;
                     z-index: 10;
