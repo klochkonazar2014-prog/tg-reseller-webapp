@@ -4332,14 +4332,29 @@ function openCheckoutDrawer(url, orderId) {
     const container = document.getElementById('checkout-iframe-container');
     const overlay = document.getElementById('payment-loading-overlay');
 
-    if (!drawer || !container || !overlay) return;
-
-    // Скрываем обычный лоадер, показываем экран ожидания
-    hidePaymentLoader();
-    overlay.style.display = 'flex';
+    // ЗАКРЫВАЕМ ШТОРКУ, ЕСЛИ ОНА БЫЛА ОТКРЫТА (теперь используем внешний браузер)
+    if (drawer) drawer.style.display = 'none';
     
-    // ФИНАЛЬНЫЙ ТЕСТ: Чистый iframe от DonatePay
-    container.innerHTML = `<iframe src="${url}" width="510" height="220" frameborder="0"></iframe>`;
+    // ОТКРЫВАЕМ ВНЕШНЮЮ ВКЛАДКУ (CHROME/SAFARI)
+    // Там будет наша новая красивая страница /payment без ошибок 405
+    window.Telegram.WebApp.openLink(url);
+    
+    // ПОКАЗЫВАЕМ ЭКРАН ОЖИДАНИЯ ВНУТРИ БОТА
+    const statusOverlay = document.getElementById('payment-status-overlay');
+    if (statusOverlay) {
+        statusOverlay.style.display = 'flex';
+        // Обновляем текст статуса (опционально)
+        const statusText = statusOverlay.querySelector('.status-text');
+        if (statusText) statusText.innerText = 'Ожидаем подтверждения оплаты...';
+    }
+    
+    // ЗАПУСКАЕМ ТАЙМЕР ПРОВЕРКИ (ПОЛЛИНГ)
+    // Очищаем старые интервалы, если они были
+    if (window.donatePayPollInterval) clearInterval(window.donatePayPollInterval);
+    
+    window.donatePayPollInterval = setInterval(() => {
+        checkDonatePayStatus(orderId);
+    }, 15000); // Проверяем каждые 15 секунд
     
     // Показываем шторку
     drawer.style.display = 'flex';

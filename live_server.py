@@ -1537,7 +1537,127 @@ async def handle_operator_contacts(request):
 
 
 
+async def handle_payment_page(request):
+    """Генерация ПРЕМИУМ страницы оплаты с виджетом DonatePay"""
+    try:
+        amount = request.query.get('sum', '0')
+        order_id = request.query.get('order_id', 'UNKNOWN')
+        
+        html = f"""
+        <!DOCTYPE html>
+        <html lang="ru">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Безопасная оплата | OctoRent</title>
+            <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
+            <style>
+                :root {{
+                    --bg: #0f172a;
+                    --card: #1e293b;
+                    --primary: #00d488;
+                    --text: #ffffff;
+                }}
+                body {{
+                    background: var(--bg);
+                    color: var(--text);
+                    font-family: 'Outfit', sans-serif;
+                    margin: 0;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    min-height: 100vh;
+                    overflow: hidden;
+                }}
+                .glow {{
+                    position: fixed;
+                    width: 300px;
+                    height: 300px;
+                    background: var(--primary);
+                    filter: blur(150px);
+                    opacity: 0.15;
+                    z-index: -1;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                }}
+                .payment-card {{
+                    background: var(--card);
+                    padding: 40px;
+                    border-radius: 40px;
+                    box-shadow: 0 40px 100px rgba(0,0,0,0.5);
+                    text-align: center;
+                    max-width: 520px;
+                    width: 90%;
+                    border: 1px solid rgba(255,255,255,0.05);
+                    animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+                }}
+                @keyframes slideUp {{
+                    from {{ opacity: 0; transform: translateY(40px); }}
+                    to {{ opacity: 1; transform: translateY(0); }}
+                }}
+                .logo-container {{
+                    margin-bottom: 30px;
+                }}
+                .logo {{
+                    width: 80px;
+                    height: 80px;
+                    background: linear-gradient(135deg, var(--primary) 0%, #00a56a 100%);
+                    border-radius: 24px;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 40px;
+                    box-shadow: 0 15px 35px rgba(0,212,136,0.25);
+                }}
+                h1 {{ font-weight: 900; font-size: 28px; margin: 0; letter-spacing: -1px; }}
+                p {{ color: #94a3b8; font-size: 16px; margin-top: 10px; }}
+                .order-info {{
+                    background: rgba(15, 23, 42, 0.5);
+                    padding: 15px;
+                    border-radius: 20px;
+                    display: inline-block;
+                    margin: 20px 0;
+                    border: 1px solid rgba(255,255,255,0.03);
+                }}
+                .widget-container {{
+                    margin-top: 10px;
+                    border-radius: 20px;
+                    overflow: hidden;
+                    background: #fff;
+                    height: 220px;
+                }}
+                .footer {{ margin-top: 30px; font-size: 14px; color: #64748b; }}
+            </style>
+        </head>
+        <body>
+            <div class="glow"></div>
+            <div class="payment-card">
+                <div class="logo-container">
+                    <div class="logo">⚡</div>
+                </div>
+                <h1>Оплатите ваш заказ</h1>
+                <p>Безопасный эквайринг OctoRent</p>
+                <div class="order-info">Счёт №{order_id} • <b>{amount} RUB</b></div>
+                
+                <div class="widget-container">
+                    <iframe src="https://widget.donatepay.ru/widgets/page/57db5a26843d08276cef24eadff3c007581ec4d8f2fd8fe47b1a5045c2f6b096?widget_id=7567140&sum={amount}" 
+                            width="100%" height="220" frameborder="0"></iframe>
+                </div>
+                
+                <div class="footer">
+                    🔒 Шифрование платежных данных активно
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        return web.Response(text=html, content_type='text/html')
+    except Exception as e:
+        return web.Response(text=f"Error: {{e}}", status=500)
+
 async def handle_create_donatepay_invoice(request):
+
     try:
         data = await request.json()
         user_id = get_authenticated_user_id(request)
@@ -1562,8 +1682,9 @@ async def handle_create_donatepay_invoice(request):
         # Формула: Total_TON * Курс * 1.115
         amount_rub = round(total_ton * ton_rate * 1.115)
         
-        # 4. Ссылка на виджет DonatePay (как в примере пользователя)
-        payment_url = f"https://widget.donatepay.ru/widgets/page/57db5a26843d08276cef24eadff3c007581ec4d8f2fd8fe47b1a5045c2f6b096?widget_id=7567140&sum={amount_rub}"
+        # 4. Ссылка на НАШУ новую страницу хаба (вместо прямого виджета)
+        host = os.getenv("BASE_URL", "https://octorent.duckdns.org")
+        payment_url = f"{host}/payment?sum={amount_rub}&order_id={order_id}"
         
         # 5. Обновление заказа в БД данными чекаута
         async with db.aiosqlite.connect(db.DB_PATH) as conn:
@@ -1669,6 +1790,7 @@ app.add_routes([
     web.get('/api/bot_balance', handle_get_bot_balance),
     web.get('/api/operator_contacts', handle_operator_contacts),
     web.get('/api/order_status/{order_id}', handle_get_order_status),
+    web.get('/payment', handle_payment_page), # Наша новая элитная страница
     web.post('/api/webhooks/freekassa', handle_freekassa_webhook),
     web.post('/api/webhooks/xrocket', handle_xrocket_webhook),
     web.post(f'/api/webhooks/ct/{os.getenv("CLOUDTIPS_WEBHOOK_PATH", "cloudtips")}', handle_cloudtips_webhook),
