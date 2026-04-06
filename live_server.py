@@ -1529,7 +1529,7 @@ async def handle_operator_contacts(request):
     })
 
 async def handle_payment_page(request):
-    """Генерация ПРЕМИУМ страницы оплаты с эффектом 'Северное сияние' (Aurora Borealis)"""
+    """Генерация ФОТОРЕАЛИСТИЧНОГО северного сияния (в стиле Sony World Photo)"""
     try:
         logging.info(f"🚀 [Checkout] Запрос страницы оплаты: {request.rel_url}")
         amount = request.query.get('sum', '0')
@@ -1546,9 +1546,8 @@ async def handle_payment_page(request):
             <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
             <style>
                 :root {{
-                    --accent: #ffffff;
+                    --accent: #00ff87;
                     --bg: #000000;
-                    --glass: rgba(255, 255, 255, 0.03);
                     --border: rgba(255, 255, 255, 0.1);
                 }}
 
@@ -1572,63 +1571,87 @@ async def handle_payment_page(request):
                     user-select: none;
                 }}
 
-                /* AURORA BOREALIS EFFECT (CSS ONLY) */
-                .aurora-container {{
+                /* AURORA SYSTEM (V2: PHOTO-REALISTIC RAYS) */
+                .scene {{
                     position: fixed;
                     inset: 0;
                     z-index: 0;
+                    background: radial-gradient(ellipse at bottom, #0d1b2a 0%, #000 70%);
                     overflow: hidden;
-                    pointer-events: none;
-                    background: #000;
                 }}
 
-                .aurora-layer {{
+                /* STARS LAYER */
+                .stars {{
+                   position: absolute;
+                   inset: 0;
+                   background: url('https://www.transparenttextures.com/patterns/stardust.png');
+                   opacity: 0.3;
+                   filter: brightness(2);
+                }}
+
+                .aurora-container {{
                     position: absolute;
-                    width: 200%;
-                    height: 200%;
-                    top: -50%;
-                    left: -50%;
-                    background-image: radial-gradient(circle at 50% 50%, var(--aurora-color) 0%, transparent 60%);
-                    opacity: 0.3;
-                    filter: blur(80px);
+                    inset: 0;
+                    filter: blur(15px);
                     mix-blend-mode: screen;
+                    opacity: 0.6;
+                }}
+
+                .aurora-curtain {{
+                    position: absolute;
+                    width: 250%;
+                    height: 120%;
+                    top: -10%;
+                    left: -75%;
+                    background: repeating-linear-gradient(90deg, 
+                        transparent 0%, 
+                        var(--aurora-clr) 2%, 
+                        transparent 4%, 
+                        var(--aurora-clr-alt) 7%, 
+                        transparent 10%);
+                    mask-image: radial-gradient(ellipse at 50% 50%, black 40%, transparent 90%);
+                    -webkit-mask-image: radial-gradient(ellipse at 50% 50%, black 40%, transparent 90%);
                     will-change: transform;
-                    animation: aurora-drift var(--aurora-duration) infinite alternate ease-in-out;
+                    animation: aurora-wave var(--aurora-dur) infinite linear;
                 }}
 
-                .aurora-1 {{
-                    --aurora-color: #00ff87;
-                    --aurora-duration: 25s;
-                    animation-delay: -5s;
+                .curtain-1 {{
+                    --aurora-clr: rgba(0, 255, 135, 0.4);
+                    --aurora-clr-alt: rgba(0, 210, 255, 0.2);
+                    --aurora-dur: 40s;
+                    opacity: 0.5;
                 }}
-                .aurora-2 {{
-                    --aurora-color: #00d2ff;
-                    --aurora-duration: 35s;
-                    animation-delay: -15s;
-                }}
-                .aurora-3 {{
-                    --aurora-color: #3a7bd5;
-                    --aurora-duration: 45s;
-                    animation-delay: -25s;
-                }}
-                .aurora-4 {{
-                    --aurora-color: #bc4e9c;
-                    --aurora-duration: 30s;
+                .curtain-2 {{
+                    --aurora-clr: rgba(0, 255, 135, 0.3);
+                    --aurora-clr-alt: rgba(188, 78, 156, 0.2);
+                    --aurora-dur: 55s;
                     animation-delay: -10s;
+                    opacity: 0.4;
+                    transform: scaleY(1.2);
                 }}
 
-                @keyframes aurora-drift {{
-                    0% {{ transform: rotate(0deg) scale(1) translate(0, 0) skew(0); }}
-                    50% {{ transform: rotate(10deg) scale(1.2) translate(5%, 5%) skew(10deg, 5deg); }}
-                    100% {{ transform: rotate(-5deg) scale(1.1) translate(-5%, -2%) skew(-5deg, -10deg); }}
+                @keyframes aurora-wave {{
+                    from {{ transform: translateX(-10%) skewX(-15deg); }}
+                    to {{ transform: translateX(10%) skewX(15deg); }}
+                }}
+
+                /* HORIZON FADE */
+                .horizon {{
+                    position: absolute;
+                    bottom: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 40vh;
+                    background: linear-gradient(to top, #000 20%, transparent 100%);
+                    z-index: 1;
                 }}
 
                 /* NOISE OVERLAY */
-                .noise {{
+                .noiseBox {{
                     position: fixed;
                     inset: 0;
-                    z-index: 1;
-                    opacity: 0.08;
+                    z-index: 2;
+                    opacity: 0.1;
                     pointer-events: none;
                     background: url('https://grainy-gradients.vercel.app/noise.svg');
                 }}
@@ -1636,14 +1659,14 @@ async def handle_payment_page(request):
                 .monolith {{
                     position: relative;
                     width: 580px;
-                    background: rgba(8, 8, 8, 0.82);
-                    backdrop-filter: blur(50px) saturate(160%);
-                    -webkit-backdrop-filter: blur(50px) saturate(160%);
-                    border: 1px solid var(--border);
+                    background: rgba(4, 4, 4, 0.88);
+                    backdrop-filter: blur(40px) saturate(140%);
+                    -webkit-backdrop-filter: blur(40px) saturate(140%);
+                    border: 1px solid rgba(255, 255, 255, 0.08);
                     border-radius: 40px;
                     padding: 40px 35px;
                     z-index: 10;
-                    box-shadow: 0 50px 150px rgba(0,0,0,1);
+                    box-shadow: 0 60px 180px rgba(0,0,0,1);
                     text-align: center;
                     animation: fadeIn 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
                 }}
@@ -1661,10 +1684,6 @@ async def handle_payment_page(request):
                     padding: 0 10px;
                     font-family: 'JetBrains Mono', monospace;
                 }}
-
-                .header-col {{ text-align: left; }}
-                .header-col.right {{ text-align: right; }}
-
                 .label-small {{
                     font-size: 10px;
                     color: rgba(255,255,255,0.4);
@@ -1692,7 +1711,7 @@ async def handle_payment_page(request):
                     letter-spacing: 0.5px;
                 }}
 
-                /* Контейнер виджета 510x220 */
+                /* Widget 510x220 */
                 .widget-container {{
                     position: relative;
                     width: 510px;
@@ -1703,11 +1722,9 @@ async def handle_payment_page(request):
                     overflow: hidden;
                     box-shadow: 0 25px 70px rgba(0,0,0,0.5);
                 }}
-
                 iframe {{
                     border: none;
                     border-radius: 24px;
-                    background: #fff;
                     width: 510px;
                     height: 220px;
                     display: block;
@@ -1731,26 +1748,28 @@ async def handle_payment_page(request):
                     border: 1px solid rgba(255, 255, 255, 0.05);
                     text-transform: uppercase;
                 }}
-                .pulse-dot {{ color: #ffffff; animation: blink 1.5s infinite alternate; }}
+                .pulse-dot {{ color: var(--accent); animation: blink 1.5s infinite alternate; }}
                 @keyframes blink {{ from {{ opacity: 0.2; }} to {{ opacity: 1; }} }}
             </style>
         </head>
         <body>
-            <div class="aurora-container">
-                <div class="aurora-layer aurora-1"></div>
-                <div class="aurora-layer aurora-2"></div>
-                <div class="aurora-layer aurora-3"></div>
-                <div class="aurora-layer aurora-4"></div>
+            <div class="scene">
+                <div class="stars"></div>
+                <div class="aurora-container">
+                    <div class="aurora-curtain curtain-1"></div>
+                    <div class="aurora-curtain curtain-2"></div>
+                </div>
+                <div class="horizon"></div>
             </div>
-            <div class="noise"></div>
+            <div class="noiseBox"></div>
 
             <div class="monolith">
                 <div class="payment-header">
-                    <div class="header-col">
+                    <div class="header-col" style="text-align: left;">
                         <div class="label-small">ID ЗАКАЗА</div>
                         <div class="label-value">#{order_id}</div>
                     </div>
-                    <div class="header-col right">
+                    <div class="header-col" style="text-align: right;">
                         <div class="label-small">К ОПЛАТЕ</div>
                         <div class="label-value">{amount} RUB</div>
                     </div>
