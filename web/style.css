@@ -3749,7 +3749,7 @@ body.hide-filters .header-column {
 .bottom-sheet-content {
     position: relative;
     width: 100%;
-    max-width: 500px;
+    /* Max-width removed to allow full screen width for payment widgets */
     background: #111418;
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 22px 22px 0 0;
