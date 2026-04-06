@@ -3942,16 +3942,38 @@ const FIAT_RATES = { USD: 0, RUB: 0 };
 
 async function fetchFiatRates() {
     try {
-        const response = await fetch('https://tonapi.io/v2/rates?tokens=ton&currencies=usd,rub');
+        // Приоритетно запрашиваем курсы с нашего бэкенда (чтобы избежать CORS и ограничений API)
+        const response = await apiFetch(`${BACKEND_URL}/api/rates`);
         const data = await response.json();
-        if (data && data.rates && data.rates.TON) {
+        
+        if (data && typeof data.RUB === 'number') {
+            FIAT_RATES.USD = parseFloat(data.USD);
+            FIAT_RATES.RUB = parseFloat(data.RUB);
+        } else if (data && data.rates && data.rates.TON) {
             FIAT_RATES.USD = parseFloat(data.rates.TON.prices.USD);
             FIAT_RATES.RUB = parseFloat(data.rates.TON.prices.RUB);
         }
+        
+        // Автоматически обновляем UI с новой ценой
+        if (CURRENT_PAYMENT_ITEM) {
+            updateTotalPrice();
+        }
     } catch (e) {
-        console.error("Fiat rates error:", e);
+        console.error("Fiat rates error from backend, trying fallback. Error:", e);
+        try {
+            const fallbackResponse = await fetch('https://tonapi.io/v2/rates?tokens=ton&currencies=usd,rub');
+            const fallbackData = await fallbackResponse.json();
+            if (fallbackData && fallbackData.rates && fallbackData.rates.TON) {
+                FIAT_RATES.USD = parseFloat(fallbackData.rates.TON.prices.USD);
+                FIAT_RATES.RUB = parseFloat(fallbackData.rates.TON.prices.RUB);
+                if (CURRENT_PAYMENT_ITEM) updateTotalPrice();
+            }
+        } catch (fallbackError) {
+            console.error("Fiat rates fallback completely failed:", fallbackError);
+        }
     }
 }
+
 
 function openPaymentModal() {
     const modal = document.getElementById('payment-modal');
@@ -4080,9 +4102,12 @@ function updateMethodTotal(baseTotal) {
     if (amountWarning) amountWarning.style.display = 'none';
     if (feeWarning) feeWarning.style.display = isCoverFeeChecked ? 'flex' : 'none';
 
+    // Подстраховка курса
+    const currentRubRate = FIAT_RATES.RUB || 230;
+
     if (SELECTED_PAY_METHOD === 'CLOUDTIPS') {
         const tonForCard = base + 0.2 + (isCoverFeeChecked ? 0.14 : 0);
-        let rubVal = Math.round(tonForCard * FIAT_RATES.RUB * 1.05);
+        let rubVal = Math.round(tonForCard * currentRubRate * 1.05);
         total = rubVal > 0 ? rubVal : '...';
         if (totalCurrencyEl) totalCurrencyEl.innerText = '₽';
         const overLimit = typeof rubVal === 'number' && rubVal > 3000;
@@ -4096,7 +4121,7 @@ function updateMethodTotal(baseTotal) {
     } else if (SELECTED_PAY_METHOD === 'LAVATOP') {
         const tonForCard = base + 0.2 + (isCoverFeeChecked ? 0.14 : 0);
         // DonatePay (на месте Lava): +11.5% комиссии
-        let rubVal = Math.round(tonForCard * FIAT_RATES.RUB * 1.115);
+        let rubVal = Math.round(tonForCard * currentRubRate * 1.115);
         total = rubVal > 0 ? rubVal : '...';
         if (totalCurrencyEl) totalCurrencyEl.innerText = '₽';
         
@@ -4112,6 +4137,15 @@ function updateMethodTotal(baseTotal) {
         if (SELECTED_PAY_METHOD === 'XROCKET') total = ((tonTotal + 0.1) * 1.03).toFixed(2);
         else total = tonTotal.toFixed(2);
     }
+
+    // Явное обновление цен во всех карточках (устранение "0 руб")
+    const commonTon = base + 0.2 + (isCoverFeeChecked ? 0.14 : 0);
+    const ctPriceIcon = document.getElementById('pay-price-rub');
+    const lpPriceIcon = document.getElementById('pay-price-rub-lavatop');
+    
+    if (ctPriceIcon) ctPriceIcon.innerText = Math.round(commonTon * currentRubRate * 1.05);
+    if (lpPriceIcon) lpPriceIcon.innerText = Math.round(commonTon * currentRubRate * 1.115);
+
     totalAmountEl.innerText = total;
 }
 
