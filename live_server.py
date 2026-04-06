@@ -1536,55 +1536,6 @@ async def handle_operator_contacts(request):
     })
 
 
-@web.middleware
-async def cors_middleware(request, handler):
-    if request.method == "OPTIONS":
-        return web.Response(status=204, headers={
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-            'Access-Control-Allow-Headers': '*'
-        })
-    resp = await handler(request)
-    resp.headers.update({
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': '*',
-        'Cache-Control': 'no-cache, no-store, must-revalidate'
-    })
-    return resp
-
-app = web.Application(middlewares=[cors_middleware])
-app.add_routes([
-    web.get('/', handle_index),
-    web.get('/api/items', handle_live_items),
-    web.get('/api/filters', handle_filter_data),
-    web.post('/api/prepare_rent', handle_prepare_rent),
-    web.post('/api/submit_tc_link', handle_submit_tc_link),
-    web.get('/api/my_orders', handle_get_orders),
-    web.post('/api/toggle_notification', handle_toggle_notification),
-    web.get('/api/check_notification_status', handle_check_notification_status),
-    web.get('/api/referral/stats', handle_referral_stats),
-    web.get('/api/referral/friends', handle_referral_friends),
-    web.post('/api/referral/withdraw', handle_referral_withdraw),
-    web.post('/api/referral/prepare_share', handle_prepare_referral_share),
-    web.get('/api/nft_details', handle_nft_details),
-    web.get('/api/user-avatar', handle_user_avatar),
-    web.get('/api/rates', handle_get_rates),
-    web.post('/api/create_fiat_invoice', handle_create_fiat_invoice),
-    web.post('/api/create_bot_invoice', handle_create_bot_invoice),
-    web.post('/api/create_cloudtips_invoice', handle_create_cloudtips_invoice),
-    web.get('/api/get_usdt_payload', handle_get_usdt_payload),
-    web.get('/api/bot_balance', handle_get_bot_balance),
-    web.get('/api/operator_contacts', handle_operator_contacts),
-    web.get('/api/order_status/{order_id}', handle_get_order_status),
-    web.post('/api/webhooks/freekassa', handle_freekassa_webhook),
-    web.post('/api/webhooks/xrocket', handle_xrocket_webhook),
-    web.post(f'/api/webhooks/ct/{os.getenv("CLOUDTIPS_WEBHOOK_PATH", "cloudtips")}', handle_cloudtips_webhook),
-    web.post('/api/create_lavatop_invoice', handle_create_lavatop_invoice),
-    web.post('/api/webhooks/lavatop', handle_lavatop_webhook),
-    web.post('/api/create_donatepay_invoice', handle_create_donatepay_invoice),
-])
-
 
 async def handle_create_donatepay_invoice(request):
     try:
@@ -1678,6 +1629,39 @@ async def donatepay_poller():
             logging.error(f"DonatePay poller error: {e}")
             
         await asyncio.sleep(20) # Poll every 20 seconds
+
+app = web.Application(middlewares=[cors_middleware])
+app.add_routes([
+    web.get('/', handle_index),
+    web.get('/api/items', handle_live_items),
+    web.get('/api/filters', handle_filter_data),
+    web.post('/api/prepare_rent', handle_prepare_rent),
+    web.post('/api/submit_tc_link', handle_submit_tc_link),
+    web.get('/api/my_orders', handle_get_orders),
+    web.post('/api/toggle_notification', handle_toggle_notification),
+    web.get('/api/check_notification_status', handle_check_notification_status),
+    web.get('/api/referral/stats', handle_referral_stats),
+    web.get('/api/referral/friends', handle_referral_friends),
+    web.post('/api/referral/withdraw', handle_referral_withdraw),
+    web.post('/api/referral/prepare_share', handle_prepare_referral_share),
+    web.get('/api/nft_details', handle_nft_details),
+    web.get('/api/user-avatar', handle_user_avatar),
+    web.get('/api/rates', handle_get_rates),
+    web.post('/api/create_fiat_invoice', handle_create_fiat_invoice),
+    web.post('/api/create_bot_invoice', handle_create_bot_invoice),
+    web.post('/api/create_cloudtips_invoice', handle_create_cloudtips_invoice),
+    web.get('/api/get_usdt_payload', handle_get_usdt_payload),
+    web.get('/api/bot_balance', handle_get_bot_balance),
+    web.get('/api/operator_contacts', handle_operator_contacts),
+    web.get('/api/order_status/{order_id}', handle_get_order_status),
+    web.post('/api/webhooks/freekassa', handle_freekassa_webhook),
+    web.post('/api/webhooks/xrocket', handle_xrocket_webhook),
+    web.post(f'/api/webhooks/ct/{os.getenv("CLOUDTIPS_WEBHOOK_PATH", "cloudtips")}', handle_cloudtips_webhook),
+    web.post('/api/create_lavatop_invoice', handle_create_lavatop_invoice),
+    web.post('/api/webhooks/lavatop', handle_lavatop_webhook),
+    web.post('/api/create_donatepay_invoice', handle_create_donatepay_invoice),
+])
+
 
 # Serve static files from 'web' directory at root
 app.router.add_static('/', './web', name='static', follow_symlinks=True)
