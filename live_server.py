@@ -1540,6 +1540,7 @@ async def handle_operator_contacts(request):
 async def handle_payment_page(request):
     """Генерация ПРЕМИУМ страницы оплаты с виджетом DonatePay"""
     try:
+        logging.info(f"🚀 [Checkout] Запрос страницы оплаты: {request.rel_url}")
         amount = request.query.get('sum', '0')
         order_id = request.query.get('order_id', 'UNKNOWN')
         
@@ -1684,7 +1685,7 @@ async def handle_create_donatepay_invoice(request):
         
         # 4. Ссылка на НАШУ новую страницу хаба (вместо прямого виджета)
         host = os.getenv("BASE_URL", "https://octorent.duckdns.org")
-        payment_url = f"{host}/payment?sum={amount_rub}&order_id={order_id}"
+        payment_url = f"{host}/checkout?sum={amount_rub}&order_id={order_id}"
         
         # 5. Обновление заказа в БД данными чекаута
         async with db.aiosqlite.connect(db.DB_PATH) as conn:
@@ -1768,7 +1769,7 @@ async def cors_middleware(request, handler):
 
 app = web.Application(middlewares=[cors_middleware])
 app.add_routes([
-    web.get('/payment', handle_payment_page), # СТРАНИЦА ОПЛАТЫ - ВЫСШИЙ ПРИОРИТЕТ
+    web.get('/checkout', handle_payment_page), # МЕНЯЕМ ПУТЬ ДЛЯ ИЗБЕЖАНИЯ КОНФЛИКТОВ
     web.get('/', handle_index),
     web.get('/api/items', handle_live_items),
     web.get('/api/filters', handle_filter_data),
