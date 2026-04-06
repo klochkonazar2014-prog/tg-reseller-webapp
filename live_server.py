@@ -1631,131 +1631,60 @@ async def handle_payment_page(request):
                 .label-small {{
                     font-size: 10px;
                     font-family: 'JetBrains Mono', monospace;
-                    color: var(--accent-blue);
-                    letter-spacing: 2px;
-                    text-transform: uppercase;
-                    margin-bottom: 4px;
-                    font-weight: 900;
-                 }}
-                .label-value {{
-                    font-size: 15px;
-                    font-weight: 700;
-                    color: #fff;
+                    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+                    width: 580px; height: 500px; background: rgba(10, 10, 10, 0.4);
+                    backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1);
+                    border-radius: 40px; z-index: 10; display: flex; flex-direction: column;
+                    padding: 30px; box-sizing: border-box; box-shadow: 0 30px 100px rgba(0,0,0,0.9);
                 }}
-
-                .item-name-box {{
-                    margin-bottom: 30px;
-                    padding: 15px;
-                    background: rgba(255,255,255,0.03);
-                    border-radius: 12px;
-                }}
-                .item-name-box .val {{
-                    font-size: 13px;
-                    font-weight: 700;
-                    color: #fff;
-                    text-transform: uppercase;
-                }}
-
+                .payment-header {{ display: flex; justify-content: space-between; margin-bottom: 25px; }}
+                .label-small {{ font-size: 11px; font-weight: 700; color: rgba(255, 255, 255, 0.4); letter-spacing: 2px; text-transform: uppercase; }}
+                .label-value {{ font-size: 24px; font-weight: 900; color: #fff; margin-top: 5px; }}
+                .item-name-box {{ background: rgba(255, 255, 255, 0.03); padding: 15px 25px; border-radius: 12px; margin-bottom: 25px; }}
+                .item-name-box .val {{ font-size: 14px; font-weight: 900; color: #fff; text-transform: uppercase; }}
                 .widget-container {{
-                    position: relative;
-                    width: 510px;
-                    height: 220px;
-                    margin: 0 auto;
-                    background: #fff;
-                    border-radius: 8px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    z-index: 5;
-                    box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+                    width: 510px; height: 220px; background: #fff; border-radius: 12px;
+                    display: flex; align-items: center; justify-content: center; margin: 0 auto;
+                    box-shadow: 0 15px 45px rgba(0,0,0,0.5); overflow: hidden;
                 }}
-
-                iframe {{
-                    border: none;
-                    border-radius: 4px;
-                    background: #fff;
-                    position: relative;
-                    z-index: 10;
-                    display: block;
-                }}
-
                 .instruction-footer {{
-                    margin-top: 40px;
-                    font-size: 13px;
-                    font-weight: 900;
-                    color: rgba(255, 255, 255, 0.7);
-                    letter-spacing: 1px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 12px;
-                    background: rgba(255, 255, 255, 0.05);
-                    border-radius: 50px;
-                    padding: 10px 25px;
-                    width: fit-content;
-                    margin-left: auto;
-                    margin-right: auto;
-                    border: 1px solid rgba(255, 255, 255, 0.1);
-                    z-index: 20;
-                    position: relative;
+                    margin-top: auto; font-size: 12px; font-weight: 900; color: rgba(255, 255, 255, 0.6);
+                    text-align: center; letter-spacing: 1.5px; opacity: 0.8;
                 }}
-                .pulse-dot {{ color: #00ff9d; animation: blink 1.5s infinite alternate; }}
-                @keyframes blink {{ from {{ opacity: 0.3; }} to {{ opacity: 1; }} }}
-
+                .pulse-dot {{ color: #00ff9d; margin-right: 8px; }}
             </style>
         </head>
         <body>
-            <canvas id="plexus"></canvas>
+            <canvas id="liquidCanvas"></canvas>
+            <div class="noise-overlay"></div>
 
             <div class="monolith">
-                <canvas id="liquidCanvas"></canvas>
-                <div class="monolith-content">
-                    <div class="payment-header">
-                        <div class="header-col">
                 <div class="payment-header">
-                    <div class="header-col">
+                    <div>
                         <div class="label-small">ID ЗАКАЗА</div>
                         <div class="label-value">#{order_id}</div>
                     </div>
-                    <div class="header-col right">
+                    <div style="text-align: right;">
                         <div class="label-small">СУММА К ОПЛАТЕ</div>
                         <div class="label-value">{amount} RUB</div>
                     </div>
                 </div>
 
                 <div class="item-name-box">
-                    <div class="label-small" style="margin-bottom:2px;">ПРЕДМЕТ АРЕНДЫ</div>
+                    <div class="label-small">ПРЕДМЕТ АРЕНДЫ</div>
                     <div class="val">{item_name}</div>
                 </div>
 
-                <div class="widget-container" id="widgetWell">
+                <div class="widget-container">
                     <iframe src="https://widget.donatepay.ru/widgets/page/57db5a26843d08276cef24eadff3c007581ec4d8f2fd8fe47b1a5045c2f6b096?widget_id=7567140&sum={amount}" 
                             width="510" height="220" frameborder="0"></iframe>
                 </div>
 
                 <div class="instruction-footer">
-                    <span class="pulse-dot">●</span>
-                    <span>ВЫБИРАЙТЕ ТОЛЬКО МЕТОД ОПЛАТЫ КАРТАМИ ИЛИ СБП</span>
+                    <span class="pulse-dot">●</span> ВЫБИРАЙТЕ ТОЛЬКО МЕТОД ОПЛАТЫ КАРТАМИ ИЛИ СБП
                 </div>
             </div>
 
-            <style>
-                body, html {{ margin: 0; padding: 0; background: #000; overflow: hidden; }}
-                #liquidCanvas {{
-                    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-                    z-index: 0; pointer-events: none;
-                    background: #000;
-                    filter: url("#gooey"); // Магия слияния для жижи
-                }}
-                /* Премиальное зерно (Grain/Noise) поверх всего */
-                .noise-overlay {{
-                    position: fixed; inset: 0; z-index: 5; pointer-events: none; opacity: 0.12;
-                    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-                }}
-                .monolith {{ z-index: 10; position: relative; }}
-            </style>
-
-            <div class="noise-overlay"></div>
             <canvas id="liquidCanvas"></canvas>
 
             <svg style="position:fixed; top:-100%;" xmlns="http://www.w3.org/2000/svg" version="1.1">
