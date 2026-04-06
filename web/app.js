@@ -4306,7 +4306,8 @@ async function handleDonatePayRent() {
 
         if (data.payment_url) {
             console.log("Opening DonatePay Checkout Drawer...");
-            const itemName = CURRENT_PAYMENT_ITEM.nft_name || "NFT Item";
+            // Улучшенный выбор названия: проверяем nft_name, затем name, затем model
+            const itemName = CURRENT_PAYMENT_ITEM.nft_name || CURRENT_PAYMENT_ITEM.name || CURRENT_PAYMENT_ITEM.model || "NFT Item";
             const finalUrl = data.payment_url + `&item_name=${encodeURIComponent(itemName)}`;
             openCheckoutDrawer(finalUrl, data.order_id);
         } else {

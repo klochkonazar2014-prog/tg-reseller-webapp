@@ -1553,7 +1553,7 @@ async def handle_payment_page(request):
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>SECURE_GATEWAY | OctoRent</title>
-            <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
             <style>
                 :root {{
                     --accent-blue: #5d7a97;
@@ -1566,7 +1566,7 @@ async def handle_payment_page(request):
                 body {{
                     background: var(--bg);
                     color: #fff;
-                    font-family: 'Outfit', sans-serif;
+                    font-family: 'Inter', sans-serif;
                     height: 100vh;
                     overflow: hidden;
                     display: flex;
@@ -1583,25 +1583,26 @@ async def handle_payment_page(request):
 
                 .monolith {{
                     position: relative;
-                    width: 580px; /* Немного шире виджета для полей */
-                    background: rgba(10, 10, 10, 0.9);
-                    backdrop-filter: blur(40px);
-                    -webkit-backdrop-filter: blur(40px);
+                    width: 680px; /* Больше ширины под виджет */
+                    background: rgba(10, 10, 10, 0.92);
+                    backdrop-filter: blur(45px);
+                    -webkit-backdrop-filter: blur(45px);
                     border: 1px solid rgba(255, 255, 255, 0.1);
                     border-radius: 40px;
-                    padding: 40px;
+                    padding: 45px;
                     z-index: 10;
-                    box-shadow: 0 40px 120px rgba(0,0,0,1);
+                    box-shadow: 0 40px 140px rgba(0,0,0,1);
                     text-align: center;
+                    animation: fadeIn 0.8s ease-out;
                 }}
+                @keyframes fadeIn {{ from {{ opacity: 0; transform: translateY(20px); }} to {{ opacity: 1; transform: translateY(0); }} }}
 
-                /* Хедер с данными заказа */
                 .payment-header {{
                     display: flex;
                     justify-content: space-between;
                     align-items: flex-end;
                     margin-bottom: 25px;
-                    padding: 0 10px;
+                    padding: 0 15px;
                     font-family: 'JetBrains Mono', monospace;
                 }}
 
@@ -1609,14 +1610,15 @@ async def handle_payment_page(request):
                 .header-col.right {{ text-align: right; }}
 
                 .label-small {{
-                    font-size: 8px;
+                    font-size: 9px;
                     color: var(--accent-blue);
                     letter-spacing: 2px;
                     text-transform: uppercase;
                     margin-bottom: 4px;
+                    opacity: 0.8;
                  }}
                 .label-value {{
-                    font-size: 14px;
+                    font-size: 15px;
                     font-weight: 700;
                     color: #fff;
                     text-transform: uppercase;
@@ -1624,58 +1626,77 @@ async def handle_payment_page(request):
 
                 .item-name-box {{
                     margin-bottom: 30px;
-                    padding: 10px;
-                    background: rgba(255,255,255,0.03);
+                    padding: 12px;
+                    background: linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.04), rgba(255,255,255,0.01));
                     border-radius: 12px;
                     border: 1px solid rgba(255,255,255,0.05);
                 }}
                 .item-name-box .val {{
-                    font-size: 11px;
+                    font-size: 13px;
+                    font-weight: 600;
                     color: #fff;
-                    letter-spacing: 1px;
+                    letter-spacing: 0.5px;
                 }}
 
-                /* Контейнер виджета */
+                /* Контейнер виджета v2.5 */
                 .widget-container {{
                     position: relative;
-                    width: 510px;
-                    height: 220px;
+                    width: 600px;
+                    height: 380px;
                     margin: 0 auto;
                     background: #fff;
-                    border-radius: 20px;
+                    border-radius: 24px;
                     overflow: hidden;
                     box-shadow: 
-                        0 10px 40px rgba(0,0,0,0.5),
-                        inset 0 0 15px rgba(0,0,0,0.1);
+                        0 20px 60px rgba(0,0,0,0.6),
+                        inset 0 0 30px rgba(0,0,0,0.05);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
                 }}
 
-                /* Мягкий градиент для "вживления" виджета */
-                .widget-blend {{
+                /* Мягкая растушевка для слияния черного и белого */
+                .widget-blend-overlay {{
                     position: absolute;
-                    inset: 0;
+                    inset: -2px;
                     pointer-events: none;
-                    background: linear-gradient(to bottom, rgba(0,0,0,0.02), transparent 10%, transparent 90%, rgba(0,0,0,0.02));
                     z-index: 5;
-                    border-radius: 20px;
+                    border-radius: 24px;
+                    border: 1px solid rgba(255,255,255,0.1);
+                    box-shadow: 
+                        inset 0 0 40px #fff,
+                        inset 0 0 100px rgba(0,0,0,0.05);
                 }}
 
                 iframe {{
                     border: none;
-                    border-radius: 20px;
+                    border-radius: 24px;
+                    background: #fff;
+                    position: relative;
+                    z-index: 3;
                 }}
 
-                .secure-footer {{
-                    margin-top: 35px;
-                    font-family: 'JetBrains Mono', monospace;
-                    font-size: 9px;
-                    color: rgba(255,255,255,0.2);
+                .instruction-footer {{
+                    margin-top: 40px;
+                    font-family: 'Inter', sans-serif;
+                    font-size: 13px;
+                    font-weight: 700;
+                    color: rgba(255, 255, 255, 0.7);
+                    letter-spacing: 0.5px;
                     display: flex;
+                    align-items: center;
                     justify-content: center;
-                    gap: 20px;
-                    letter-spacing: 2px;
+                    gap: 12px;
+                    background: rgba(255, 255, 255, 0.03);
+                    border-radius: 50px;
+                    padding: 10px 25px;
+                    width: fit-content;
+                    margin-left: auto;
+                    margin-right: auto;
+                    border: 1px solid rgba(255, 255, 255, 0.05);
                 }}
                 .pulse-dot {{ color: #00ff9d; animation: blink 1.5s infinite alternate; }}
-                @keyframes blink {{ from {{ opacity: 0.2; }} to {{ opacity: 1; }} }}
+                @keyframes blink {{ from {{ opacity: 0.3; }} to {{ opacity: 1; }} }}
 
             </style>
         </head>
@@ -1685,29 +1706,29 @@ async def handle_payment_page(request):
             <div class="monolith">
                 <div class="payment-header">
                     <div class="header-col">
-                        <div class="label-small">ORDER_ID</div>
+                        <div class="label-small">ID_Заказа</div>
                         <div class="label-value">#{order_id}</div>
                     </div>
                     <div class="header-col right">
-                        <div class="label-small">TOTAL_AMOUNT</div>
+                        <div class="label-small">Сумма_К_Оплате</div>
                         <div class="label-value">{amount} RUB</div>
                     </div>
                 </div>
 
                 <div class="item-name-box">
-                    <div class="label-small" style="margin-bottom:2px;">RENTAL_SUBJECT</div>
+                    <div class="label-small" style="margin-bottom:2px;">Предмет_Аренды</div>
                     <div class="val">{item_name}</div>
                 </div>
 
                 <div class="widget-container" id="widgetWell">
-                    <div class="widget-blend"></div>
+                    <div class="widget-blend-overlay"></div>
                     <iframe src="https://widget.donatepay.ru/widgets/page/57db5a26843d08276cef24eadff3c007581ec4d8f2fd8fe47b1a5045c2f6b096?widget_id=7567140&sum={amount}" 
-                            width="510" height="220" frameborder="0"></iframe>
+                            width="600" height="380" frameborder="0"></iframe>
                 </div>
 
-                <div class="secure-footer">
-                    <span><span class="pulse-dot">●</span> SECURE_GATEWAY_ACTIVE</span>
-                    <span>PROTOCOL: V2.1_BETA</span>
+                <div class="instruction-footer">
+                    <span class="pulse-dot">●</span>
+                    <span>ВЫБИРАЙТЕ ТОЛЬКО МЕТОД ОПЛАТЫ КАРТАМИ ИЛИ СБП</span>
                 </div>
             </div>
 
@@ -1735,15 +1756,15 @@ async def handle_payment_page(request):
                         this.x = Math.random() * canvas.width;
                         this.y = Math.random() * canvas.height;
                         this.size = Math.random() * 1.5 + 0.5;
-                        this.speedX = (Math.random() - 0.5) * 1.0;
-                        this.speedY = (Math.random() - 0.5) * 1.0;
+                        this.speedX = (Math.random() - 0.5) * 0.8;
+                        this.speedY = (Math.random() - 0.5) * 0.8;
                     }}
                     draw() {{
-                        // Проверка: находится ли частица за виджетом
-                        const rect = widgetWell.getBoundingClientRect();
+                        // Проверка: находится ли частица ВНУТРИ всей модалки monolith
+                        const rect = document.querySelector('.monolith').getBoundingClientRect();
                         const isUnder = (this.x > rect.left && this.x < rect.right && this.y > rect.top && this.y < rect.bottom);
                         
-                        ctx.fillStyle = isUnder ? 'rgba(255, 255, 255, 0.8)' : 'rgba(93, 122, 151, 0.4)';
+                        ctx.fillStyle = isUnder ? 'rgba(230, 230, 230, 0.7)' : 'rgba(93, 122, 151, 0.3)';
                         ctx.beginPath();
                         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
                         ctx.fill();
@@ -1760,14 +1781,14 @@ async def handle_payment_page(request):
                     canvas.width = window.innerWidth;
                     canvas.height = window.innerHeight;
                     particles = [];
-                    const density = (canvas.width * canvas.height) / 11000;
+                    const density = (canvas.width * canvas.height) / 12000;
                     for (let i = 0; i < density; i++) particles.push(new Particle());
                 }}
 
                 function animate() {{
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
                     
-                    const rect = widgetWell.getBoundingClientRect();
+                    const monoRect = document.querySelector('.monolith').getBoundingClientRect();
 
                     particles.forEach(p => {{
                         p.update();
@@ -1780,17 +1801,20 @@ async def handle_payment_page(request):
                             let dy = particles[a].y - particles[b].y;
                             let dist = Math.sqrt(dx*dx + dy*dy);
                             
-                            if (dist < 130) {{
-                                // Цвет линии зависит от того, находится ли середина под виджетом
+                            if (dist < 140) {{
+                                // Эффект созвездия в области модалки
                                 const midX = (particles[a].x + particles[b].x) / 2;
                                 const midY = (particles[a].y + particles[b].y) / 2;
-                                const isUnder = (midX > rect.left && midX < rect.right && midY > rect.top && midY < rect.bottom);
+                                const isUnder = (midX > monoRect.left && midX < monoRect.right && midY > monoRect.top && midY < monoRect.bottom);
                                 
-                                ctx.strokeStyle = isUnder 
-                                    ? `rgba(255, 255, 255, ${{ (1 - dist/130) * 0.6 }})` 
-                                    : `rgba(93, 122, 151, ${{ (1 - dist/130) * 0.2 }})`;
+                                if (isUnder) {{
+                                    ctx.strokeStyle = `rgba(220, 220, 220, ${{ (1 - dist/140) * 0.55 }})`;
+                                    ctx.lineWidth = 1.6;
+                                }} else {{
+                                    ctx.strokeStyle = `rgba(93, 122, 151, ${{ (1 - dist/140) * 0.18 }})`;
+                                    ctx.lineWidth = 1;
+                                }}
                                 
-                                ctx.lineWidth = isUnder ? 1.5 : 1;
                                 ctx.beginPath();
                                 ctx.moveTo(particles[a].x, particles[a].y);
                                 ctx.lineTo(particles[b].x, particles[b].y);
@@ -1802,8 +1826,8 @@ async def handle_payment_page(request):
                         let mdy = particles[a].y - mouse.y;
                         let mdist = Math.sqrt(mdx*mdx + mdy*mdy);
                         if (mdist < mouse.radius) {{
-                            const isUnder = (mouse.x > rect.left && mouse.x < rect.right && mouse.y > rect.top && mouse.y < rect.bottom);
-                            ctx.strokeStyle = `rgba(255, 255, 255, ${{ (1 - mdist/mouse.radius) * (isUnder ? 0.6 : 0.4) }})`;
+                            const isInside = (mouse.x > monoRect.left && mouse.x < monoRect.right && mouse.y > monoRect.top && mouse.y < monoRect.bottom);
+                            ctx.strokeStyle = `rgba(255, 255, 255, ${{ (1 - mdist/mouse.radius) * (isInside ? 0.6 : 0.3) }})`;
                             ctx.beginPath();
                             ctx.moveTo(particles[a].x, particles[a].y);
                             ctx.lineTo(mouse.x, mouse.y);
