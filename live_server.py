@@ -1783,6 +1783,9 @@ async def handle_payment_page(request):
         </html>
         """
         return web.Response(text=html, content_type='text/html')
+    except Exception as e:
+        logging.error(f"Error serving payment page: {e}")
+        return web.Response(text=f"Error: {e}", status=500)
 
 async def handle_create_donatepay_invoice(request):
 
