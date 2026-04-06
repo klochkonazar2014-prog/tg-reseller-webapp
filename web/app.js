@@ -3993,7 +3993,6 @@ function initModalSwipeClose(modal) {
     const header = modal.querySelector('.bottom-sheet-header');
     if (!content || !header) return;
 
-    // Prevent multiple attachments
     if (header.dataset.swipeInitialized) return;
     header.dataset.swipeInitialized = "true";
 
@@ -4012,7 +4011,6 @@ function initModalSwipeClose(modal) {
         currentY = e.touches[0].clientY;
         const diff = currentY - startY;
         if (diff > 0) {
-            // Add a bit of resistance/limit if needed, but diff is fine
             content.style.transform = `translateY(${diff}px)`;
         }
     };
@@ -4023,7 +4021,7 @@ function initModalSwipeClose(modal) {
         content.style.transition = 'transform 0.3s cubic-bezier(0.19, 1, 0.22, 1)';
         const diff = currentY - startY;
 
-        if (diff > 80) { // Even lower threshold for "easy" closing
+        if (diff > 80) {
             tg.HapticFeedback.impactOccurred('light');
             closePaymentModal();
         } else {
@@ -4061,18 +4059,11 @@ function selectPayMethod(method) {
             card.classList.add('active');
         }
     });
-    // Update total price when method changes
     if (CURRENT_PAYMENT_ITEM) {
         updateTotalPrice();
     }
 }
 
-/**
- * Итого для выбранного метода оплаты.
- * total_price с бэкенда уже включает 0.2 TON газ (см. create_rental_order: +0.2).
- * TON:        total_price  (0.2 уже внутри)
- * CryptoBot:  (total_price + 0.1) * 1.03  (бот фи + 3% комиссия CryptoBot)
- */
 function updateMethodTotal(baseTotal) {
     const totalAmountEl = document.getElementById('pay-total-amount');
     const totalCurrencyEl = document.getElementById('pay-total-currency');
@@ -4089,129 +4080,80 @@ function updateMethodTotal(baseTotal) {
     if (amountWarning) amountWarning.style.display = 'none';
     if (feeWarning) feeWarning.style.display = isCoverFeeChecked ? 'flex' : 'none';
 
-        if (SELECTED_PAY_METHOD === 'CLOUDTIPS') {
-            const tonForCard = base + 0.2 + (isCoverFeeChecked ? 0.14 : 0);
-            // Формула: (TON + 0.2 + комиссия сети) * Курс * 1.11 (9% депо + 2% вывод)
-            let rubVal = Math.round(tonForCard * FIAT_RATES.RUB * 1.11);
-            total = rubVal > 0 ? rubVal : '...';
-            if (totalCurrencyEl) totalCurrencyEl.innerText = '₽';
-            
-            const overLimit = typeof rubVal === 'number' && rubVal > 3000;
-            const belowMin = typeof rubVal === 'number' && rubVal < 49; // CloudTips min 49 RUB
-
-            if (overLimit && limitWarning) {
-                limitWarning.style.display = 'flex';
-            }
-            if (belowMin && amountWarning) {
-                amountWarning.style.display = 'flex';
-            }
-
-            const totalRow = document.querySelector('.payment-total-row');
-            if (totalRow) totalRow.classList.toggle('compact-total', !!belowMin);
-
-            if (continueBtn) {
-                const isDisabled = belowMin || overLimit;
-                continueBtn.disabled = isDisabled;
-                continueBtn.style.opacity = isDisabled ? '0.4' : '1';
-                continueBtn.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
-            }
-        } else if (SELECTED_PAY_METHOD === 'LAVATOP') {
-            const tonForCard = base + 0.2 + (isCoverFeeChecked ? 0.14 : 0);
-            let rubVal = Math.round(tonForCard * FIAT_RATES.RUB * FIAT_FEE_MULTIPLIER);
-            total = rubVal > 0 ? rubVal : '...';
-            if (totalCurrencyEl) totalCurrencyEl.innerText = '₽';
-
-            const overLimit = typeof rubVal === 'number' && rubVal > LAVATOP_MAX_RUB;
-            const belowMin = typeof rubVal === 'number' && rubVal < 50; // Lava.top min 50 RUB
-
-            if (overLimit && limitWarning) {
-                limitWarning.style.display = 'flex';
-            }
-            if (belowMin && amountWarning) {
-                amountWarning.style.display = 'flex';
-            }
-
-            const totalRow = document.querySelector('.payment-total-row');
-            if (totalRow) totalRow.classList.toggle('compact-total', !!belowMin);
-
-            if (continueBtn) {
-                const isDisabled = belowMin || overLimit;
-                continueBtn.disabled = isDisabled;
-                continueBtn.style.opacity = isDisabled ? '0.4' : '1';
-                continueBtn.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
-            }
-        } else {
+    if (SELECTED_PAY_METHOD === 'CLOUDTIPS') {
+        const tonForCard = base + 0.2 + (isCoverFeeChecked ? 0.14 : 0);
+        let rubVal = Math.round(tonForCard * FIAT_RATES.RUB * 1.05);
+        total = rubVal > 0 ? rubVal : '...';
+        if (totalCurrencyEl) totalCurrencyEl.innerText = '₽';
+        const overLimit = typeof rubVal === 'number' && rubVal > 3000;
+        const belowMin = typeof rubVal === 'number' && rubVal < 49;
+        if (limitWarning) limitWarning.style.display = overLimit ? 'flex' : 'none';
+        if (amountWarning) amountWarning.style.display = belowMin ? 'flex' : 'none';
+        if (continueBtn) {
+            continueBtn.disabled = belowMin || overLimit;
+            continueBtn.style.opacity = (belowMin || overLimit) ? '0.4' : '1';
+        }
+    } else if (SELECTED_PAY_METHOD === 'LAVATOP') {
+        const tonForCard = base + 0.2 + (isCoverFeeChecked ? 0.14 : 0);
+        let rubVal = Math.round(tonForCard * FIAT_RATES.RUB * 1.115);
+        total = rubVal > 0 ? rubVal : '...';
+        if (totalCurrencyEl) totalCurrencyEl.innerText = '₽';
+        if (continueBtn) {
+            continueBtn.disabled = false;
+            continueBtn.style.opacity = '1';
+        }
+    } else {
         if (totalCurrencyEl) totalCurrencyEl.innerText = 'TON';
         const tonTotal = base + 0.2 + (isCoverFeeChecked ? 0.14 : 0);
-        
-        if (continueBtn) { 
-            continueBtn.disabled = false; 
-            continueBtn.style.opacity = '1'; 
-            continueBtn.style.cursor = 'pointer'; 
-        }
-
-        if (SELECTED_PAY_METHOD === 'XROCKET') {
-            total = ((tonTotal + 0.1) * 1.03).toFixed(2);
-        } else {
-            total = tonTotal.toFixed(2);
-        }
+        if (continueBtn) { continueBtn.disabled = false; continueBtn.style.opacity = '1'; }
+        if (SELECTED_PAY_METHOD === 'XROCKET') total = ((tonTotal + 0.1) * 1.03).toFixed(2);
+        else total = tonTotal.toFixed(2);
     }
     totalAmountEl.innerText = total;
 }
 
 async function handleContinuePayment() {
     const method = SELECTED_PAY_METHOD;
-    console.log("handleContinuePayment for method:", method);
-
     tg.HapticFeedback.impactOccurred('medium');
 
     if (method === 'RUB') {
         await handleRubRent();
-    } else {
-        const btn = document.querySelector('.main-rent-btn');
-        if (btn) btn.disabled = true;
+        return;
+    }
 
-        if (['CLOUDTIPS', 'LAVATOP', 'USDT'].includes(method)) {
-            try {
-                const bResp = await apiFetch(`${BACKEND_URL}/api/bot_balance`);
-                const bData = await bResp.json();
-                
-                const dur = parseInt(document.getElementById('rent-duration-input').value) || 1;
-                // Используем оригинальную цену (без наценки сервиса), так как это то, что бот платит МаркетАппу
-                const origPrice = parseFloat(CURRENT_PAYMENT_ITEM.original_price) || 0;
-                const requiredTon = origPrice * dur + 0.20; // Чистая цена + 0.2 TON (оригинальная комиссия)
-                
-                // Проверка на 49 рублей: так как баланс в TON, переводим 49 RUB в TON
-                const minRubTon = (FIAT_RATES.RUB > 0) ? (49 / FIAT_RATES.RUB) : 0.1;
-                
-                if (bData && typeof bData.balance === 'number') {
-                    if (bData.balance < requiredTon || bData.balance < minRubTon) {
-                        showInsufficientBalanceModal();
-                        return;
-                    }
+    const btn = document.querySelector('.main-rent-btn');
+    if (btn) btn.disabled = true;
+
+    // Проверка баланса ТОЛЬКО для CloudTips и USDT (LAVATOP временно исключен для теста)
+    if (['CLOUDTIPS', 'USDT'].includes(method)) {
+        try {
+            const bResp = await apiFetch(`${BACKEND_URL}/api/bot_balance`);
+            const bData = await bResp.json();
+            const dur = parseInt(document.getElementById('rent-duration-input').value) || 1;
+            const origPrice = parseFloat(CURRENT_PAYMENT_ITEM.original_price) || 0;
+            const requiredTon = origPrice * dur + 0.20;
+            const minRubTon = (FIAT_RATES.RUB > 0) ? (49 / FIAT_RATES.RUB) : 0.1;
+            if (bData && typeof bData.balance === 'number') {
+                if (bData.balance < requiredTon || bData.balance < minRubTon) {
+                    showInsufficientBalanceModal();
+                    if (btn) btn.disabled = false;
+                    return;
                 }
-            } catch (e) {
-                console.warn("Failed to check bot balance:", e);
             }
-        }
+        } catch (e) { console.warn("Balance check failed", e); }
+    }
 
-        if (method === 'TON') {
-            if (!tonConnectUI.connected) {
-                tonConnectUI.connectWallet().catch(e => console.error(e));
-                return;
-            }
-            await handleTonRent();
-        } else if (method === 'USDT') {
-            await handleUsdtRent();
-        } else if (method === 'XROCKET') {
-            await handleBotRent(method);
-        } else if (method === 'CLOUDTIPS') {
-            await handleDonatePayRent();
-        } else if (method === 'LAVATOP') {
-            await handleLavaTopRent();
-        } else {
-            showToast(t('select_payment_method'));
-        }
+    if (method === 'TON') {
+        if (!tonConnectUI.connected) { tonConnectUI.connectWallet(); if (btn) btn.disabled = false; return; }
+        await handleTonRent();
+    } else if (method === 'USDT') {
+        await handleUsdtRent();
+    } else if (method === 'XROCKET') {
+        await handleBotRent(method);
+    } else if (method === 'CLOUDTIPS') {
+        showCTInstructions();
+    } else if (method === 'LAVATOP') {
+        await handleDonatePayRent();
     }
 }
 
@@ -4296,15 +4238,32 @@ function closeInsufficientBalanceModal() {
     if (modal) modal.style.display = 'none';
 }
 
-function contactAdmin() {
-    const message = "Здраствуйте пожалуйста пополните баланс кошелька бота";
-    // Используем актуальный юзернейм из кэша (без @)
-    const adminUname = (OPERATOR_CONTACTS.admin || "@nerksqq").replace('@', '');
-    const link = `https://t.me/${adminUname}?text=${encodeURIComponent(message)}`;
-    if (window.Telegram && window.Telegram.WebApp) {
-        window.Telegram.WebApp.openTelegramLink(link);
+async function handleContinuePayment() {
+    if (!CURRENT_PAY_ITEM) return;
+    
+    // Haptic feedback
+    tg.HapticFeedback.impactOccurred('medium');
+    
+    const method = SELECTED_PAY_METHOD;
+    
+    if (method === 'TON') {
+        if (!tonConnectUI.connected) {
+            tonConnectUI.connectWallet().catch(e => console.error(e));
+            return;
+        }
+        await handleTonRent();
+    } else if (method === 'USDT') {
+        await handleUsdtRent();
+    } else if (method === 'XROCKET') {
+        await handleBotRent(method);
+    } else if (method === 'CLOUDTIPS') {
+        // CloudTips - показываем инструкцию
+        showCTInstructions();
+    } else if (method === 'LAVATOP') {
+        // DonatePay (на месте LAVA) - сразу открываем шторку
+        await handleDonatePayRent();
     } else {
-        window.open(link, '_blank');
+        showToast(t('select_payment_method'));
     }
 }
 
