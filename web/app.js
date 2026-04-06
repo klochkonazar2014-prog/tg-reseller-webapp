@@ -1383,10 +1383,7 @@ function closeHelp() {
     if (modal) modal.classList.remove('active');
 }
 
-function closeTcModal() {
-    document.getElementById('tc-modal-overlay').classList.remove('active');
-    document.getElementById('tc-modal').classList.remove('active');
-}
+
 async function submitTcLink() {
     const orderId = document.getElementById('tc-current-order-id').value;
     const link = document.getElementById('tc-link-input').value.trim();
@@ -3489,12 +3486,7 @@ function closeLightbox() {
     document.body.style.overflow = '';
 }
 
-function closeTcModal() {
-    if (isTcModalMandatory) return; // Prevent closing if mandatory
-    if (progressTimer) clearInterval(progressTimer);
-    document.getElementById('tc-modal-overlay').classList.remove('active');
-    document.getElementById('tc-modal').classList.remove('active');
-}
+
 const trigger = document.getElementById('loader-trigger');
 if (trigger) {
     const so = new IntersectionObserver((e) => {
@@ -3504,18 +3496,7 @@ if (trigger) {
 }
 
 // --- Profile & History Logic ---
-function toggleHistory() {
-    const content = document.getElementById('history-content');
-    const arrow = document.getElementById('history-arrow');
-    const isHidden = content.style.display === 'none';
 
-    content.style.display = isHidden ? 'block' : 'none';
-    arrow.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
-
-    if (isHidden) {
-        loadHistoryContent(); // Load data when opening
-    }
-}
 
 async function loadHistoryContent() {
     const list = document.getElementById('history-list');
@@ -4148,12 +4129,28 @@ function updateMethodTotal(baseTotal) {
     if (ctPriceIcon) ctPriceIcon.innerText = Math.round(commonTon * currentRubRate * 1.05);
     if (lpPriceIcon) lpPriceIcon.innerText = Math.round(commonTon * currentRubRate * 1.115);
 
-    // Compact mode: уменьшаем паддинги если предупреждение видно
     const selView = document.getElementById('payment-selection-view');
     if (selView) {
         const warningVisible = (amountWarning && amountWarning.style.display !== 'none') ||
                                (limitWarning && limitWarning.style.display !== 'none');
         selView.classList.toggle('compact-mode', warningVisible);
+        
+        const footer = selView.querySelector('.selection-view-footer');
+        const totalRow = selView.querySelector('.payment-total-row');
+        
+        if (warningVisible) {
+            if (footer) footer.style.setProperty('padding', '2px 10px 4px', 'important');
+            if (totalRow) {
+                totalRow.style.setProperty('padding', '1px 0', 'important');
+                totalRow.style.setProperty('margin-top', '2px', 'important');
+            }
+        } else {
+            if (footer) footer.style.padding = '';
+            if (totalRow) {
+                totalRow.style.padding = '';
+                totalRow.style.marginTop = '';
+            }
+        }
     }
 
     totalAmountEl.innerText = total;
@@ -4161,6 +4158,7 @@ function updateMethodTotal(baseTotal) {
 
 async function handleContinuePayment() {
     const method = SELECTED_PAY_METHOD;
+    console.log("handleContinuePayment triggered. Method:", method, "Item:", !!CURRENT_PAYMENT_ITEM);
     tg.HapticFeedback.impactOccurred('medium');
 
     if (method === 'RUB') {
@@ -4168,7 +4166,7 @@ async function handleContinuePayment() {
         return;
     }
 
-    const btn = document.querySelector('.main-rent-btn');
+    const btn = document.querySelector('#payment-selection-view .main-rent-btn');
     if (btn) btn.disabled = true;
 
     // СТРОГО: Проверка баланса ТОЛЬКО для CloudTips и USDT.
@@ -4289,34 +4287,7 @@ function closeInsufficientBalanceModal() {
     if (modal) modal.style.display = 'none';
 }
 
-async function handleContinuePayment() {
-    if (!CURRENT_PAY_ITEM) return;
-    
-    // Haptic feedback
-    tg.HapticFeedback.impactOccurred('medium');
-    
-    const method = SELECTED_PAY_METHOD;
-    
-    if (method === 'TON') {
-        if (!tonConnectUI.connected) {
-            tonConnectUI.connectWallet().catch(e => console.error(e));
-            return;
-        }
-        await handleTonRent();
-    } else if (method === 'USDT') {
-        await handleUsdtRent();
-    } else if (method === 'XROCKET') {
-        await handleBotRent(method);
-    } else if (method === 'CLOUDTIPS') {
-        // CloudTips - показываем инструкцию
-        showCTInstructions();
-    } else if (method === 'LAVATOP') {
-        // DonatePay (на месте LAVA) - сразу открываем шторку
-        await handleDonatePayRent();
-    } else {
-        showToast(t('select_payment_method'));
-    }
-}
+
 
 async function handleDonatePayRent() {
     if (!CURRENT_PAYMENT_ITEM) return;
@@ -4801,9 +4772,7 @@ async function handleRubRent() {
 }
 
 
-function toggleHistory() {
-    const botUsername = "OctoRent_bot";
-    const link = `https://t.me/${botUsername}?start=history`;
+?start=history`;
     if (window.Telegram && window.Telegram.WebApp) {
         window.Telegram.WebApp.openTelegramLink(link);
         window.Telegram.WebApp.close();
@@ -4853,22 +4822,7 @@ function hidePaymentLoader() {
     if (overlay) overlay.style.display = 'none';
 }
 
-function startOrderStatusPolling(orderId) {
-    console.log("Starting polling for order:", orderId);
-    const interval = setInterval(async () => {
-        try {
-            const resp = await apiFetch(`${BACKEND_URL}/api/order_status?order_id=${orderId}`);
-            const data = await resp.json();
-            if (data.status === 'paid' || data.status === 'rented') {
-                clearInterval(interval);
-                hidePaymentLoader();
-                showPostPaymentSuccessUI(orderId);
-            }
-        } catch (e) {
-            console.warn("Polling error:", e);
-        }
-    }, 4000);
-}
+
 
 function showPostPaymentSuccessUI(orderId) {
     const selView = document.getElementById('payment-selection-view');
