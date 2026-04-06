@@ -507,7 +507,6 @@ async def support_details(callback: CallbackQuery):
     text = (
         "<tg-emoji emoji-id='5362079447136610876'>👨‍💻</tg-emoji> <b>Поддержка OctoRent:</b>\n\n"
         "По всем вопросам работы сервиса, проблемам с оплатой или арендой — пишите напрямую.\n"
-        "<i>Отвечает живой человек.</i>"
     ) if lang == 'ru' else (
         "<tg-emoji emoji-id='5362079447136610876'>👨‍💻</tg-emoji> <b>OctoRent Support:</b>\n\n"
         "For any questions regarding the service, payment or rental issues — write to us directly.\n"
