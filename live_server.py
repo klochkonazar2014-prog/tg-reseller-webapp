@@ -1638,40 +1638,37 @@ async def handle_payment_page(request):
                     letter-spacing: 0.5px;
                 }}
 
-                /* Контейнер виджета v2.8 - Технология Маскирования (Masking) */
+                /* Контейнер виджета v2.9 - Компактный световой короб */
                 .widget-container {{
                     position: relative;
-                    width: 620px; /* Увеличиваем область для маски */
-                    height: 400px;
+                    width: 560px; /* Немного больше виджета (510+50) */
+                    height: 270px; /* Немного больше виджета (220+50) */
                     margin: 0 auto;
-                    background: #fff;
                     border-radius: 20px;
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     z-index: 5;
                     
-                    /* Магия маскирования: центр непрозрачный, края плавно исчезают */
-                    -webkit-mask-image: radial-gradient(circle at center, black 40%, rgba(0,0,0,0.8) 60%, transparent 95%);
-                    mask-image: radial-gradient(circle at center, black 40%, rgba(0,0,0,0.8) 60%, transparent 95%);
-                }}
-
-                /* Дополнительное свечение под маской */
-                .widget-blend-overlay {{
-                    position: absolute;
-                    inset: -20px;
-                    pointer-events: none;
-                    z-index: -1;
-                    background: radial-gradient(circle at center, rgba(255,255,255,0.15) 0%, transparent 70%);
+                    /* Градиент СУГУБО до границ виджета */
+                    background: radial-gradient(
+                        ellipse at center, 
+                        #ffffff 45%, 
+                        rgba(10,10,10,0.8) 75%, 
+                        rgba(10,10,10,1) 100%
+                    );
+                    box-shadow: 0 15px 45px rgba(0,0,0,0.5);
+                    border: 1px solid rgba(255,255,255,0.05);
                 }}
 
                 iframe {{
                     border: none;
-                    border-radius: 12px;
+                    border-radius: 8px;
                     background: #fff;
                     position: relative;
                     z-index: 10;
                     display: block;
+                    box-shadow: 0 0 20px rgba(255,255,255,0.2);
                 }}
 
                 .instruction-footer {{
@@ -1719,9 +1716,8 @@ async def handle_payment_page(request):
                 </div>
 
                 <div class="widget-container" id="widgetWell">
-                    <div class="widget-blend-overlay"></div>
                     <iframe src="https://widget.donatepay.ru/widgets/page/57db5a26843d08276cef24eadff3c007581ec4d8f2fd8fe47b1a5045c2f6b096?widget_id=7567140&sum={amount}" 
-                            width="600" height="380" frameborder="0"></iframe>
+                            width="510" height="220" frameborder="0"></iframe>
                 </div>
 
                 <div class="instruction-footer">
