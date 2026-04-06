@@ -1739,15 +1739,14 @@ async def handle_payment_page(request):
             </div>
 
             <script>
-                /* --- Vision Fluid Engine v4.0 (Nebula) --- */
+                /* --- Vision Fluid Engine v4.1 (Elite Stability) --- */
                 const canvas = document.getElementById('liquidCanvas');
                 const monolith = document.querySelector('.monolith');
-                const outerCanvas = document.getElementById('plexus');
-                const pCtx = outerCanvas.getContext('2d');
+                const plexusCanvas = document.getElementById('plexus');
+                const pCtx = plexusCanvas.getContext('2d');
 
-                // --- 1. Plexus (Background) remains as is for elite feel ---
+                // --- 1. Safe Plexus Animation ---
                 let particles = [];
-
                 function init() {{
                     particles = [];
                     blobs = [];
