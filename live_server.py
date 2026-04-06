@@ -1638,43 +1638,39 @@ async def handle_payment_page(request):
                     letter-spacing: 0.5px;
                 }}
 
-                /* Контейнер виджета v2.6 - Плотнее к виджету */
+                /* Контейнер виджета v2.8 - Технология Маскирования (Masking) */
                 .widget-container {{
                     position: relative;
-                    width: 540px;
-                    height: 350px;
+                    width: 620px; /* Увеличиваем область для маски */
+                    height: 400px;
                     margin: 0 auto;
                     background: #fff;
-                    border-radius: 16px;
-                    overflow: hidden;
-                    box-shadow: 
-                        0 0 0 1px rgba(255,255,255,0.05),
-                        0 20px 80px rgba(0,0,0,0.8);
+                    border-radius: 20px;
                     display: flex;
                     align-items: center;
                     justify-content: center;
+                    z-index: 5;
+                    
+                    /* Магия маскирования: центр непрозрачный, края плавно исчезают */
+                    -webkit-mask-image: radial-gradient(circle at center, black 40%, rgba(0,0,0,0.8) 60%, transparent 95%);
+                    mask-image: radial-gradient(circle at center, black 40%, rgba(0,0,0,0.8) 60%, transparent 95%);
                 }}
 
-                /* Усиленный "плавный переход" градиентом */
+                /* Дополнительное свечение под маской */
                 .widget-blend-overlay {{
                     position: absolute;
-                    inset: 0;
+                    inset: -20px;
                     pointer-events: none;
-                    z-index: 5;
-                    /* Радиальное свечение от центра к черным краям */
-                    background: radial-gradient(circle at center, transparent 70%, rgba(0,0,0,0.05) 100%);
-                    box-shadow: 
-                        inset 0 0 40px rgba(255,255,255,1),
-                        inset 0 0 80px rgba(0,0,0,0.08);
+                    z-index: -1;
+                    background: radial-gradient(circle at center, rgba(255,255,255,0.15) 0%, transparent 70%);
                 }}
 
                 iframe {{
                     border: none;
-                    border-radius: 4px; /* Легкое скругление самого контента */
+                    border-radius: 12px;
                     background: #fff;
                     position: relative;
-                    z-index: 3;
-                    /* Центрирование через margin если flex не хватает */
+                    z-index: 10;
                     display: block;
                 }}
 
