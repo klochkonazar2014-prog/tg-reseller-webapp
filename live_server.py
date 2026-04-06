@@ -1454,13 +1454,10 @@ async def handle_xrocket_webhook(request):
 async def handle_cloudtips_webhook(request):
     """Обработчик вебхуков CloudTips"""
     try:
-        # CloudTips шлет POST с JSON или формой. Проверяем сигнатуру если есть ключ.
         data = await request.json()
         logging.info(f"☁️ CloudTips Webhook received: {data}")
         
-        # Параметры из доки: amount, invoiceid, transactionid
         invoice_id_raw = data.get("invoiceid") or data.get("invoiceId") or data.get("InvoiceId")
-        status = data.get("status", "Success") 
         
         if invoice_id_raw:
             try:
@@ -1476,12 +1473,10 @@ async def handle_cloudtips_webhook(request):
                         logging.error(f"[CloudTips] Order {order_id} not found in webhook")
                         return web.Response(text="Order not found", status=404)
                     
-                    # Если уже оплачен — просто ок
                     if order['status'] == 'paid':
                         return web.Response(text="OK")
                         
                     expected = order['fiat_amount']
-                    # Даем погрешность в 0.01 руб из-за округлений
                     if expected and paid_amount < (expected - 0.01):
                         logging.error(f"❌ [CloudTips] Underpayment for order {order_id}: expected {expected}, got {paid_amount}")
                         return web.Response(text="Insufficient amount", status=400)
@@ -1496,7 +1491,6 @@ async def handle_cloudtips_webhook(request):
     except Exception as e:
         logging.error(f"CloudTips Webhook Error: {e}")
         return web.Response(text="Error", status=500)
-
 
 async def handle_get_order_status(request):
     """Проверка статуса заказа по ID (для поллинга с фронтенда)"""
@@ -1518,7 +1512,6 @@ async def handle_get_order_status(request):
         logging.error(f"Error checking order status: {e}")
         return web.json_response({"error": str(e)}, status=500)
 
-
 async def handle_operator_contacts(request):
     """Возвращает актуальные контакты операторов для Mini App"""
     admin_id = 7868560541
@@ -1535,9 +1528,8 @@ async def handle_operator_contacts(request):
         "support": support_uname
     })
 
-
 async def handle_payment_page(request):
-    """Генерация ПРЕМИУМ страницы оплаты с 'жидким' фоном"""
+    """Генерация ПРЕМИУМ страницы оплаты с интерактивным 'жидким' фоном"""
     try:
         logging.info(f"🚀 [Checkout] Запрос страницы оплаты: {request.rel_url}")
         amount = request.query.get('sum', '0')
@@ -1558,9 +1550,16 @@ async def handle_payment_page(request):
                     --bg: #000000;
                     --glass: rgba(255, 255, 255, 0.03);
                     --border: rgba(255, 255, 255, 0.1);
+                    --reference-font: min(19px, 2.6666666667vw);
                 }}
 
-                * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+                * {{ 
+                    box-sizing: border-box; 
+                    margin: 0; 
+                    padding: 0; 
+                    -webkit-font-smoothing: antialiased;
+                    text-rendering: optimizeLegibility;
+                }}
 
                 body {{
                     background: var(--bg);
@@ -1571,6 +1570,7 @@ async def handle_payment_page(request):
                     display: flex;
                     align-items: center;
                     justify-content: center;
+                    user-select: none;
                 }}
 
                 /* LIQUID BACKGROUND */
@@ -1581,6 +1581,7 @@ async def handle_payment_page(request):
                     background: #000;
                     filter: blur(80px) contrast(1.2);
                     opacity: 0.8;
+                    mix-blend-mode: exclusion;
                 }}
 
                 .blob {{
@@ -1590,6 +1591,7 @@ async def handle_payment_page(request):
                     border-radius: 50%;
                     mix-blend-mode: screen;
                     opacity: 0.6;
+                    will-change: transform;
                 }}
 
                 .blob-1 {{ background: #ffffff; top: -10%; left: -10%; }}
@@ -1608,13 +1610,13 @@ async def handle_payment_page(request):
 
                 .monolith {{
                     position: relative;
-                    width: 680px;
+                    width: 580px;
                     background: rgba(8, 8, 8, 0.85);
                     backdrop-filter: blur(60px) saturate(150%);
                     -webkit-backdrop-filter: blur(60px) saturate(150%);
                     border: 1px solid var(--border);
                     border-radius: 40px;
-                    padding: 45px;
+                    padding: 40px 35px;
                     z-index: 10;
                     box-shadow: 0 50px 150px rgba(0,0,0,0.9);
                     text-align: center;
@@ -1630,8 +1632,8 @@ async def handle_payment_page(request):
                     display: flex;
                     justify-content: space-between;
                     align-items: flex-end;
-                    margin-bottom: 25px;
-                    padding: 0 15px;
+                    margin-bottom: 20px;
+                    padding: 0 10px;
                     font-family: 'JetBrains Mono', monospace;
                 }}
 
@@ -1646,69 +1648,61 @@ async def handle_payment_page(request):
                     margin-bottom: 4px;
                  }}
                 .label-value {{
-                    font-size: 16px;
+                    font-size: 15px;
                     font-weight: 700;
                     color: #fff;
                 }}
 
                 .item-name-box {{
-                    margin-bottom: 30px;
+                    margin-bottom: 25px;
                     padding: 15px;
                     background: rgba(255, 255, 255, 0.02);
                     border-radius: 16px;
                     border: 1px solid rgba(255,255,255,0.05);
                 }}
                 .item-name-box .val {{
-                    font-size: 14px;
+                    font-size: 13px;
                     font-weight: 600;
                     color: #fff;
                     letter-spacing: 0.5px;
                 }}
 
-                /* Контейнер виджета */
+                /* Контейнер виджета 510x220 */
                 .widget-container {{
                     position: relative;
-                    width: 600px;
-                    height: 380px;
+                    width: 510px;
+                    height: 220px;
                     margin: 0 auto;
                     background: #fff;
-                    border-radius: 28px;
+                    border-radius: 24px;
                     overflow: hidden;
                     box-shadow: 0 25px 70px rgba(0,0,0,0.5);
                 }}
 
-                .widget-blend-overlay {{
-                    position: absolute;
-                    inset: 0;
-                    pointer-events: none;
-                    z-index: 5;
-                    border-radius: 28px;
-                    box-shadow: inset 0 0 40px rgba(255,255,255,0.8);
-                }}
-
                 iframe {{
                     border: none;
-                    border-radius: 28px;
+                    border-radius: 24px;
                     background: #fff;
-                    position: relative;
-                    z-index: 3;
+                    width: 510px;
+                    height: 220px;
+                    display: block;
                 }}
 
                 .instruction-footer {{
-                    margin-top: 40px;
-                    font-size: 12px;
+                    margin-top: 30px;
+                    font-size: 11px;
                     font-weight: 700;
-                    color: rgba(255, 255, 255, 0.5);
+                    color: rgba(255, 255, 255, 0.4);
                     letter-spacing: 1px;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    gap: 12px;
+                    gap: 10px;
                     background: rgba(255, 255, 255, 0.03);
                     border-radius: 50px;
-                    padding: 12px 30px;
+                    padding: 10px 25px;
                     width: fit-content;
-                    margin: 40px auto 0;
+                    margin: 30px auto 0;
                     border: 1px solid rgba(255, 255, 255, 0.05);
                     text-transform: uppercase;
                 }}
@@ -1728,29 +1722,28 @@ async def handle_payment_page(request):
             <div class="monolith">
                 <div class="payment-header">
                     <div class="header-col">
-                        <div class="label-small">ORDER_ID</div>
+                        <div class="label-small">ID ЗАКАЗА</div>
                         <div class="label-value">#{order_id}</div>
                     </div>
                     <div class="header-col right">
-                        <div class="label-small">TOTAL_PAY</div>
+                        <div class="label-small">К ОПЛАТЕ</div>
                         <div class="label-value">{amount} RUB</div>
                     </div>
                 </div>
 
                 <div class="item-name-box">
-                    <div class="label-small" style="margin-bottom:4px;">RENTAL_SUBJECT</div>
+                    <div class="label-small" style="margin-bottom:4px;">ОБЪЕКТ АРЕНДЫ</div>
                     <div class="val">{item_name}</div>
                 </div>
 
                 <div class="widget-container">
-                    <div class="widget-blend-overlay"></div>
                     <iframe src="https://widget.donatepay.ru/widgets/page/57db5a26843d08276cef24eadff3c007581ec4d8f2fd8fe47b1a5045c2f6b096?widget_id=7567140&sum={amount}" 
-                            width="600" height="380" frameborder="0"></iframe>
+                            width="510" height="220" frameborder="0"></iframe>
                 </div>
 
                 <div class="instruction-footer">
                     <span class="pulse-dot">●</span>
-                    <span>ИСПОЛЬЗУЙТЕ ТОЛЬКО КАРТЫ РФ ИЛИ СБП</span>
+                    <span>ТОЛЬКО КАРТЫ РФ ИЛИ СБП</span>
                 </div>
             </div>
 
@@ -1759,20 +1752,34 @@ async def handle_payment_page(request):
                 const b2 = document.getElementById('b2');
                 const b3 = document.getElementById('b3');
 
+                let mouseX = 0;
+                let mouseY = 0;
+                let curX = 0; 
+                let curY = 0;
+
+                window.addEventListener('mousemove', (e) => {{
+                    mouseX = (e.clientX / window.innerWidth - 0.5) * 45;
+                    mouseY = (e.clientY / window.innerHeight - 0.5) * 45;
+                }});
+
                 let time = 0;
                 function move() {{
-                    time += 0.002;
+                    time += 0.003;
                     
-                    const x1 = Math.sin(time * 0.7) * 25 + 20;
-                    const y1 = Math.cos(time * 0.5) * 25 + 20;
+                    // Плавное следование за мышью
+                    curX += (mouseX - curX) * 0.05;
+                    curY += (mouseY - curY) * 0.05;
+
+                    const x1 = Math.sin(time * 0.7) * 20 + 20 + curX;
+                    const y1 = Math.cos(time * 0.5) * 20 + 20 + curY;
                     b1.style.transform = `translate(${{x1}}vw, ${{y1}}vh)`;
 
-                    const x2 = Math.cos(time * 0.4) * 30 + 50;
-                    const y2 = Math.sin(time * 0.6) * 30 + 50;
+                    const x2 = Math.cos(time * 0.4) * 25 + 50 - curX;
+                    const y2 = Math.sin(time * 0.6) * 25 + 50 - curY;
                     b2.style.transform = `translate(${{-x2}}vw, ${{y2}}vh)`;
 
-                    const x3 = Math.sin(time * 0.3) * 20 + 30;
-                    const y3 = Math.cos(time * 0.8) * 20 + 60;
+                    const x3 = Math.sin(time * 0.3) * 15 + 30 + curX * 0.5;
+                    const y3 = Math.cos(time * 0.8) * 15 + 60 + curY * 0.5;
                     b3.style.transform = `translate(${{x3}}vw, ${{y3}}vh)`;
 
                     requestAnimationFrame(move);
