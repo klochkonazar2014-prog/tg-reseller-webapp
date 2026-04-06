@@ -1738,158 +1738,134 @@ async def handle_payment_page(request):
                 </div>
             </div>
 
-            <script>
-                /* --- Vision Fluid v4.3 (Pro Liquid Edition) --- */
-                const canvas = document.getElementById('liquidCanvas');
-                const monolith = document.querySelector('.monolith');
-                const plexusCanvas = document.getElementById('plexus');
-                const pCtx = plexusCanvas.getContext('2d');
-                const mouse = {{ x: -1000, y: -1000, active: false }};
+            <style>
+                #plexus {{
+                    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+                    z-index: 0; background: #000; pointer-events: none;
+                }}
+                /* Секретный фильтр для эффекта "Жижи" */
+                #liquidCanvas {{
+                    position: absolute; inset: 0; width: 100% !important; height: 100% !important;
+                    z-index: 1; pointer-events: none;
+                    filter: url("#gooey"); // Используем SVG фильтр для идеального слияния
+                }}
+                .monolith {{ z-index: 10; position: relative; overflow: hidden; }}
+            </style>
 
-                // --- 1. Interactive Elite Plexus (Constellations) ---
+            <svg style="position:fixed; top:-100%;" xmlns="http://www.w3.org/2000/svg" version="1.1">
+                <defs>
+                    <filter id="gooey">
+                        <feGaussianBlur in="SourceGraphic" stdDeviation="15" result="blur" />
+                        <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 45 -15" result="goo" />
+                        <feComposite in="SourceGraphic" in2="goo" operator="atop" />
+                    </filter>
+                </defs>
+            </svg>
+
+            <script>
+                /* --- Vision Fluid v4.4 (Gooey Edition) --- */
+                const plexusCanvas = document.getElementById('plexus');
+                const liquidCanvas = document.getElementById('liquidCanvas');
+                const pCtx = plexusCanvas.getContext('2d');
+                const lCtx = liquidCanvas.getContext('2d');
+                const monolith = document.querySelector('.monolith');
+                
                 let particles = [];
-                function initPlexus() {{
+                let blobs = [];
+                const mouse = {{ x: -1000, y: -1000 }};
+
+                function init() {{
                     plexusCanvas.width = window.innerWidth;
                     plexusCanvas.height = window.innerHeight;
+                    const mRect = monolith.getBoundingClientRect();
+                    liquidCanvas.width = mRect.width;
+                    liquidCanvas.height = mRect.height;
+
                     particles = [];
-                    const pCount = Math.floor((window.innerWidth * window.innerHeight) / 16000);
+                    const pCount = Math.floor((plexusCanvas.width * plexusCanvas.height) / 12000);
                     for (let i = 0; i < pCount; i++) {{
                         particles.push({{
                             x: Math.random() * plexusCanvas.width,
                             y: Math.random() * plexusCanvas.height,
-                            originX: 0, originY: 0,
-                            size: Math.random() * 0.8 + 0.2, // Почти невидимые точки
-                            vx: (Math.random() - 0.5) * 0.5,
-                            vy: (Math.random() - 0.5) * 0.5
+                            vx: (Math.random() - 0.5) * 0.4,
+                            vy: (Math.random() - 0.5) * 0.4,
+                            size: Math.random() * 0.7 + 0.3
+                        }});
+                    }}
+
+                    blobs = [];
+                    for (let i = 0; i < 12; i++) {{
+                        blobs.push({{
+                            x: Math.random() * liquidCanvas.width,
+                            y: Math.random() * liquidCanvas.height,
+                            vx: (Math.random() - 0.5) * 2,
+                            vy: (Math.random() - 0.5) * 2,
+                            r: Math.random() * 40 + 35
                         }});
                     }}
                 }}
-                function drawPlexus() {{
-                    pCtx.clearRect(0, 0, plexusCanvas.width, plexusCanvas.height);
+
+                window.addEventListener('mousemove', e => {{ mouse.x = e.clientX; mouse.y = e.clientY; }});
+                window.addEventListener('resize', init);
+
+                function draw() {{
+                    // 1. Созвездия (Plexus)
+                    pCtx.clearRect(0,0,plexusCanvas.width, plexusCanvas.height);
                     particles.forEach(p => {{
-                        // Движение
                         p.x += p.vx; p.y += p.vy;
-                        
-                        // Реакция на мышь (Разлетание)
-                        let dx = mouse.x - p.x;
-                        let dy = mouse.y - p.y;
+                        let dx = mouse.x - p.x, dy = mouse.y - p.y;
                         let dist = Math.sqrt(dx*dx + dy*dy);
-                        if (dist < 150) {{
-                            let ang = Math.atan2(dy, dx);
-                            let force = (150 - dist) * 0.02;
-                            p.x -= Math.cos(ang) * force;
-                            p.y -= Math.sin(ang) * force;
+                        if(dist < 150) {{
+                            let f = (150 - dist) * 0.02;
+                            p.x -= (dx/dist) * f; p.y -= (dy/dist) * f;
                         }}
-
-                        if(p.x < 0 || p.x > plexusCanvas.width) p.vx *= -1;
-                        if(p.y < 0 || p.y > plexusCanvas.height) p.vy *= -1;
-                        
-                        pCtx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-                        pCtx.beginPath(); pCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2); pCtx.fill();
+                        if(p.x<0||p.x>plexusCanvas.width) p.vx*=-1;
+                        if(p.y<0||p.y>plexusCanvas.height) p.vy*=-1;
+                        pCtx.fillStyle = '#fff';
+                        pCtx.beginPath(); pCtx.arc(p.x, p.y, p.size, 0, Math.PI*2); pCtx.fill();
                     }});
-
-                    for (let i = 0; i < particles.length; i++) {{
-                        for (let j = i + 1; j < particles.length; j++) {{
-                            let dx = particles[i].x - particles[j].x, dy = particles[i].y - particles[j].y;
-                            let d = Math.sqrt(dx * dx + dy * dy);
-                            if (d < 140) {{
-                                pCtx.strokeStyle = `rgba(150, 180, 210, ${{ (1 - d / 140) * 0.15 }})`;
+                    for(let i=0; i<particles.length; i++) {{
+                        for(let j=i+1; j<particles.length; j++) {{
+                            let dx=particles[i].x-particles[j].x, dy=particles[i].y-particles[j].y;
+                            let d=Math.sqrt(dx*dx+dy*dx); // Ошибка была тут в v4.3 (dy*dx)
+                            d = Math.sqrt(dx*dx + dy*dy);
+                            if(d < 160) {{
+                                pCtx.strokeStyle = `rgba(200, 220, 255, ${{ (1 - d/160) * 0.25 }})`;
                                 pCtx.lineWidth = 0.5;
                                 pCtx.beginPath(); pCtx.moveTo(particles[i].x, particles[i].y);
                                 pCtx.lineTo(particles[j].x, particles[j].y); pCtx.stroke();
                             }}
                         }}
                     }}
-                    requestAnimationFrame(drawPlexus);
+
+                    // 2. Жижа (Liquid Gooey)
+                    lCtx.clearRect(0,0,liquidCanvas.width, liquidCanvas.height);
+                    const rect = monolith.getBoundingClientRect();
+                    const rx = mouse.x - rect.left, ry = mouse.y - rect.top;
+
+                    blobs.forEach(b => {{
+                        let dx = rx - b.x, dy = ry - b.y;
+                        let d = Math.sqrt(dx*dx+dy*dy);
+                        if(d < 250) {{
+                            b.vx += dx * 0.005; b.vy += dy * 0.005;
+                        }}
+                        b.x += b.vx; b.y += b.vy;
+                        b.vx *= 0.95; b.vy *= 0.95;
+                        if(b.x<0||b.x>liquidCanvas.width) b.vx*=-1;
+                        if(b.y<0||b.y>liquidCanvas.height) b.vy*=-1;
+
+                        lCtx.fillStyle = '#fff';
+                        lCtx.beginPath(); lCtx.arc(b.x, b.y, b.r, 0, Math.PI*2); lCtx.fill();
+                    }});
+
+                    requestAnimationFrame(draw);
                 }}
-                window.addEventListener('resize', initPlexus);
-                window.addEventListener('mousemove', e => {{ mouse.x = e.clientX; mouse.y = e.clientY; mouse.active = true; }});
-                initPlexus(); drawPlexus();
 
-                // --- 2. Professional WebGL Fluid Simulation ---
-                try {{
-                    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-                    if (!gl) throw new Error("WebGL Fail");
-
-                    const config = {{ RES: 128, DYE: 512, DISS: 0.97, PRES: 0.8, ITER: 20 }};
-                    const baseV = `attribute vec2 a;varying vec2 v;void main(){{v=a*.5+.5;gl_Position=vec4(a,0,1);}}`;
-                    const splatF = `precision highp float;varying vec2 v;uniform sampler2D t;uniform float r;uniform vec2 p;uniform vec3 c;void main(){{vec2 d=v-p;d.x*=r;gl_FragColor=vec4(texture2D(t,v).rgb+exp(-dot(d,d)/.0005)*c,1);}}`;
-                    const advectF = `precision highp float;varying vec2 v;uniform sampler2D u;uniform sampler2D s;uniform vec2 sz;uniform float diss;void main(){{gl_FragColor=diss*texture2D(s,v-0.016*texture2D(u,v).xy*sz);}}`;
-                    const displayF = `precision highp float;varying vec2 v;uniform sampler2D d;void main(){{vec3 c=texture2D(d,v).rgb;gl_FragColor=vec4(c,dot(c,vec3(.3,.6,.1))*.8);}}`;
-                    const divF = `precision highp float;varying vec2 v;uniform sampler2D u;uniform vec2 s;void main(){{float L=texture2D(u,v-vec2(s.x,0)).x;float R=texture2D(u,v+vec2(s.x,0)).x;float B=texture2D(u,v-vec2(0,s.y)).y;float T=texture2D(u,v+vec2(0,s.y)).y;gl_FragColor=vec4(.5*(R-L+T-B),0,0,1);}}`;
-                    const pressF = `precision highp float;varying vec2 v;uniform sampler2D p;uniform sampler2D d;void main(){{float L=texture2D(p,v-vec2(1./128.,0)).x;float R=texture2D(p,v+vec2(1./128.,0)).x;float B=texture2D(p,v-vec2(0,1./128.)).x;float T=texture2D(p,v+vec2(0,1./128.)).x;gl_FragColor=vec4(.25*(L+R+B+T-texture2D(d,v).x),0,0,1);}}`;
-
-                    function createP(v, f) {{
-                        const p = gl.createProgram(), vs = gl.createShader(gl.VERTEX_SHADER), fs = gl.createShader(gl.FRAGMENT_SHADER);
-                        gl.shaderSource(vs, v); gl.compileShader(vs); gl.shaderSource(fs, f); gl.compileShader(fs);
-                        gl.attachShader(p, vs); gl.attachShader(p, fs); gl.linkProgram(p); return p;
-                    }}
-                    const progs = {{ splat: createP(baseV, splatF), advect: createP(baseV, advectF), disp: createP(baseV, displayF), div: createP(baseV, divF), pres: createP(baseV, pressF) }};
-                    function tex(w, h) {{
-                        const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
-                        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-                        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-                        const f = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, f);
-                        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0); return {{ t, f }};
-                    }}
-                    function dbl(w, h) {{ let f1=tex(w,h), f2=tex(w,h); return {{ get read(){{return f1;}}, get write(){{return f2;}}, swap(){{[f1,f2]=[f2,f1];}} }} }}
-
-                    let vel=dbl(config.RES,config.RES), dye=dbl(config.DYE,config.DYE), 
-                        pr=dbl(config.RES,config.RES), dv=tex(config.RES,config.RES);
-                    const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-                    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,1,1]), gl.STATIC_DRAW);
-
-                    function blit(p, t) {{
-                        gl.useProgram(p); gl.bindFramebuffer(gl.FRAMEBUFFER, t ? t.f : null);
-                        const l = gl.getAttribLocation(p, "a"); gl.enableVertexAttribArray(l);
-                        gl.vertexAttribPointer(l, 2, gl.FLOAT, false, 0, 0); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-                    }}
-
-                    function splat(x, y, c) {{
-                        gl.useProgram(progs.splat); gl.uniform1f(gl.getUniformLocation(progs.splat, "r"), canvas.width/canvas.height);
-                        gl.uniform2f(gl.getUniformLocation(progs.splat, "p"), x, y); gl.uniform3fv(gl.getUniformLocation(progs.splat, "c"), c);
-                        gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, vel.read.t);
-                        gl.uniform1i(gl.getUniformLocation(progs.splat, "t"), 0); blit(progs.splat, vel.write); vel.swap();
-                        gl.bindTexture(gl.TEXTURE_2D, dye.read.t); blit(progs.splat, dye.write); dye.swap();
-                    }}
-
-                    function step() {{
-                        canvas.width = monolith.clientWidth; canvas.height = monolith.clientHeight;
-                        const r = monolith.getBoundingClientRect();
-                        if(mouse.active) {{
-                            const x = (mouse.x-r.left)/r.width, y = 1.0-(mouse.y-r.top)/r.height;
-                            if(x>=0&&x<=1&&y>=0&&y<=1) splat(x, y, [1,1,1]);
-                        }}
-                        gl.useProgram(progs.advect);
-                        gl.uniform2f(gl.getUniformLocation(progs.advect, "sz"), 1/config.RES, 1/config.RES);
-                        gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, vel.read.t);
-                        gl.uniform1i(gl.getUniformLocation(progs.advect, "u"), 0);
-                        gl.uniform1i(gl.getUniformLocation(progs.advect, "s"), 0);
-                        gl.uniform1f(gl.getUniformLocation(progs.advect, "diss"), 0.98); blit(progs.advect, vel.write); vel.swap();
-
-                        gl.uniform2f(gl.getUniformLocation(progs.advect, "sz"), 1/config.DYE, 1/config.DYE);
-                        gl.bindTexture(gl.TEXTURE_2D, dye.read.t);
-                        gl.uniform1f(gl.getUniformLocation(progs.advect, "diss"), config.DISS); blit(progs.advect, dye.write); dye.swap();
-
-                        gl.useProgram(progs.div); gl.uniform2f(gl.getUniformLocation(progs.div, "s"), 1/config.RES, 1/config.RES);
-                        gl.bindTexture(gl.TEXTURE_2D, vel.read.t); blit(progs.div, dv);
-
-                        gl.useProgram(progs.pres); gl.uniform1i(gl.getUniformLocation(progs.pres, "d"), 0);
-                        gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, dv.t);
-                        for(let i=0; i<config.ITER; i++) {{
-                            gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, pr.read.t);
-                            gl.uniform1i(gl.getUniformLocation(progs.press, "p"), 1); blit(progs.pres, pr.write); pr.swap();
-                        }}
-                        gl.viewport(0, 0, canvas.width, canvas.height); blit(progs.disp, null);
-                        requestAnimationFrame(step);
-                    }}
-                    setTimeout(() => {{ 
-                        for(let i=0; i<3; i++) splat(Math.random(), Math.random(), [1,1,1]);
-                        step(); 
-                    }}, 400);
-                }} catch(e) {{ console.error(e); }}
+                setTimeout(() => {{ init(); draw(); }}, 200);
             </script>
         </body>
+        </html>
+        """        </body>
         </html>
         """
         return web.Response(text=html, content_type='text/html')
