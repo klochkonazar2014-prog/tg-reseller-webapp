@@ -4127,8 +4127,10 @@ async function handleContinuePayment() {
     const btn = document.querySelector('.main-rent-btn');
     if (btn) btn.disabled = true;
 
-    // Проверка баланса ТОЛЬКО для CloudTips и USDT (LAVATOP временно исключен для теста)
-    if (['CLOUDTIPS', 'USDT'].includes(method)) {
+    // СТРОГО: Проверка баланса ТОЛЬКО для CloudTips и USDT.
+    // LAVATOP (DonatePay) исключен полностью для теста визуальной части!
+    if (method === 'CLOUDTIPS' || method === 'USDT') {
+        console.log("Checking bot balance for method:", method);
         try {
             const bResp = await apiFetch(`${BACKEND_URL}/api/bot_balance`);
             const bData = await bResp.json();
@@ -4143,7 +4145,9 @@ async function handleContinuePayment() {
                     return;
                 }
             }
-        } catch (e) { console.warn("Balance check failed", e); }
+        } catch (e) {
+            console.warn("Balance check failed", e);
+        }
     }
 
     if (method === 'TON') {
