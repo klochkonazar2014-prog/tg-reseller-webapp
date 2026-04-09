@@ -2968,7 +2968,7 @@ function updateTotalPrice() {
 
     const priceSpan = document.getElementById('rent-btn-price');
     if (priceSpan) {
-        priceSpan.innerText = total !== "0.00" ? total : dp.toFixed(2);
+        const rubValMain = Math.round((parseFloat(total) + 0.06) * (FIAT_RATES.RUB || 230) * 1.05); priceSpan.innerText = rubValMain + " ₽";
     }
 
     // Update USD price
