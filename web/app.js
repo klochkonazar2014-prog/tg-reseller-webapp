@@ -2802,13 +2802,18 @@ async function openProductView(item) {
         if (stepper) stepper.style.display = 'flex';
         if (feeNotice) feeNotice.style.display = 'block';
 
-        updateTotalPrice();
-        const rentBtnTextEl = rentBtn.querySelector('#rent-btn-text');
-        if (rentBtnTextEl) rentBtnTextEl.textContent = t('rent_button', { amount: '' }).replace('{amount}', '').trim();
-
+        // Assign onclick FIRST so button always works even if price update throws
         rentBtn.onclick = () => {
             openPaymentModal();
         };
+
+        try {
+            updateTotalPrice();
+        } catch(e) {
+            console.warn('[updateTotalPrice] Error:', e);
+        }
+        const rentBtnTextEl = rentBtn.querySelector('#rent-btn-text');
+        if (rentBtnTextEl) rentBtnTextEl.textContent = t('rent_button', { amount: '' }).replace('{amount}', '').trim();
     }
 
     const warningBox = document.getElementById('listing-warning-box');
@@ -3017,9 +3022,8 @@ function updateTotalPrice() {
             if (payPriceLava) payPriceLava.innerText = subtotal;
 
             const minVal = 49;
-            if (rubVal < minVal) {
+            if (subtotal < minVal) {
                 if (cardWarning) cardWarning.style.display = 'flex';
-                // Dynamic update of warning text
                 const warningTextNode = document.querySelector('[data-i18n="min_card_payment"]');
                 if (warningTextNode) warningTextNode.innerHTML = t('min_card_payment', { min: minVal });
             } else {
