@@ -43,15 +43,11 @@ function updateDynamicTexts() {
 }
 
 function handleSupportClick() {
-    const url = OPERATOR_CONTACTS.support;
-    if (!url) return;
-    
-    if (url.startsWith('https://')) {
-        window.Telegram.WebApp.openTelegramLink(url);
-    } else {
-        // Если вдруг вернулся юзернейм
-        window.Telegram.WebApp.openTelegramLink('https://t.me/' + url.replace('@', ''));
+    if (window.Telegram && window.Telegram.WebApp) {
+        window.Telegram.WebApp.close();
     }
+    // Deep link directly to the bot's support handler
+    window.location.href = 'https://t.me/OctoRent_bot?start=support';
 }
 
 /**

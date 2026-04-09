@@ -193,6 +193,23 @@ async def start_cmd(message: Message, command: CommandObject):
             await show_history_internal(message, user_id)
             return
 
+        if args == "support":
+            lang = await db.get_user_language(user_id)
+            text = (
+                "<tg-emoji emoji-id='5362079447136610876'>👨‍💻</tg-emoji> <b>Поддержка OctoRent:</b>\n\n"
+                "По всем вопросам работы сервиса, проблемам с оплатой или арендой — пишите напрямую.\n"
+            ) if lang == 'ru' else (
+                "<tg-emoji emoji-id='5362079447136610876'>👨‍💻</tg-emoji> <b>OctoRent Support:</b>\n\n"
+                "For any questions regarding the service, payment or rental issues — write to us directly.\n"
+                "<i>A real person responds.</i>"
+            )
+            await message.answer(
+                text,
+                reply_markup=kb.support_keyboard(lang=lang),
+                parse_mode="HTML"
+            )
+            return
+
         if args.startswith("ref_"):
             parts = args.split("_")
             if len(parts) >= 2:
