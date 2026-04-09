@@ -1125,9 +1125,9 @@ function switchTab(index) {
     closeMrktModal(); // Ensure filters are closed when switching tabs
 
     // Toggle Search & Filters visibility via JS as well for safety
-    const searchWrapper = document.querySelector('.search-wrapper');
+    const searchRow = document.querySelector('.search-row');
     const chipsRow = document.querySelector('.chips-row');
-    if (searchWrapper) searchWrapper.style.display = (index >= 3) ? 'none' : 'block';
+    if (searchRow) searchRow.style.display = (index >= 3) ? 'none' : 'flex';
     if (chipsRow) chipsRow.style.display = (index >= 3) ? 'none' : 'flex';
 
     if (index < 3) { // Market tabs
@@ -3595,8 +3595,22 @@ function loadProfileData() {
             if (avaEl) avaEl.src = u.photo_url;
             if (headerAva) headerAva.src = u.photo_url;
             if (headerAvaLeft) headerAvaLeft.src = u.photo_url;
+        } else {
+            // Фолбэк, если нет фотки, но юзер есть
+            const initialsUrl = `https://ui-avatars.com/api/?name=${u.first_name}&background=0088cc&color=fff`;
+            if (avaEl) avaEl.src = initialsUrl;
+            if (headerAva) headerAva.src = initialsUrl;
+            if (headerAvaLeft) headerAvaLeft.src = initialsUrl;
+        }
+    } else {
+        // Если initDataUnsafe.user почему-то пуст внутри Telegram
+        if (tg) {
+            tg.showAlert("Debug Info: Telegram user data is missing: " + JSON.stringify(tg.initDataUnsafe || {}));
+        } else {
+            console.error("Not opened in Telegram");
         }
     }
+
 
     // 2. Sync Wallet State
     updateWalletBtnState();
