@@ -175,6 +175,18 @@ async def init_db():
                 UNIQUE(user_id, nft_address)
             )
         """)
+
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS reviews (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER,
+                nft_name TEXT,
+                review_text TEXT,
+                rating INTEGER DEFAULT 5,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                is_approved INTEGER DEFAULT 1
+            )
+        """)
         
         await db.commit()
 
@@ -675,3 +687,33 @@ async def get_cache(key):
         async with db.execute("SELECT value FROM cache WHERE key = ?", (key,)) as cursor:
             row = await cursor.fetchone()
             return row[0] if row else None
+async def add_review(user_id, nft_name, review_text, rating):
+    async with aiosqlite.connect(DB_PATH, timeout=30) as db:
+        await db.execute("PRAGMA journal_mode=WAL")
+        await db.execute(
+            "INSERT INTO reviews (user_id, nft_name, review_text, rating) VALUES (?, ?, ?, ?)",
+            (user_id, nft_name, review_text, rating)
+        )
+        await db.commit()
+
+async def get_public_reviews(limit=20):
+    async with aiosqlite.connect(DB_PATH, timeout=30) as db:
+        await db.execute("PRAGMA journal_mode=WAL")
+        db.row_factory = aiosqlite.Row
+        async with db.execute(
+            "SELECT r.*, u.username, u.full_name FROM reviews r JOIN users u ON r.user_id = u.user_id WHERE r.is_approved = 1 ORDER BY r.created_at DESC LIMIT ?",
+            (limit,)
+        ) as cursor:
+            return await cursor.fetchall()
+
+async def get_rented_items_for_review(user_id):
+    """Возвращает список уникальных NFT, которые пользователь арендовал успешно"""
+    async with aiosqlite.connect(DB_PATH, timeout=30) as db:
+        await db.execute("PRAGMA journal_mode=WAL")
+        db.row_factory = aiosqlite.Row
+        async with db.execute(
+            "SELECT DISTINCT nft_name FROM orders WHERE user_id = ? AND status IN ('rented', 'active', 'paid')",
+            (user_id,)
+        ) as cursor:
+            rows = await cursor.fetchall()
+            return [row['nft_name'] for row in rows]

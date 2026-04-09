@@ -9,7 +9,7 @@
     <!-- RuKassa Verification -->
     <meta name="verification" content="6754e06e46dfa419d5afe3c9781cecad" />
     <script src="https://telegram.org/js/telegram-web-app.js?v=1771626502"></script>
-    <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+    <!-- <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script> -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;800;900&display=swap" rel="stylesheet">
     <script src="lottie.min.js"></script>
     <script>
@@ -314,7 +314,7 @@
             </div>
 
 
-            <!-- Unified Header Badge (Pill) -->
+            <!-- Unified Header Badge (Pill) - HIDDEN FOR MODERATION
             <div id="header-unified-badge" class="header-unified-badge" onclick="handleHeaderBadgeClick()">
                 <div id="header-wallet-pill" class="header-pill-content" style="display:none;">
                     <span class="icon-ton"></span>
@@ -327,6 +327,7 @@
                 <img id="header-mini-avatar" src="https://ui-avatars.com/api/?name=U&background=2c2c2e&color=fff"
                     class="header-badge-avatar">
             </div>
+            -->
         </div>
 
         <!-- Chips -->
@@ -480,6 +481,16 @@
             <div id="items-view" class="grid"></div>
             <div id="scroll-loader" class="premium-spinner" style="display:none; margin: 20px auto;"></div>
             <div id="loader-trigger" style="height: 40px;"></div>
+
+            <!-- Public Reviews Section -->
+            <div id="public-reviews-section" class="public-reviews-section" style="display: none;">
+                <div class="section-title-row">
+                    <h3 class="section-title">Отзывы пользователей</h3>
+                </div>
+                <div id="public-reviews-scroll" class="reviews-scroll">
+                    <!-- Loaded via JS -->
+                </div>
+            </div>
         </div>
 
         <!-- Profile Tab -->
@@ -804,16 +815,15 @@
                         style="background:none; border:none; color:#8b9bb4; font-size:24px; padding:0; cursor:pointer;">✕</button>
                 </div>
 
-                <div class="payment-tabs">
-                    <div class="pay-tab active" onclick="switchPayTab('crypto')" data-i18n="pay_crypto">Криптой</div>
-                    <div class="pay-tab" onclick="switchPayTab('card')" data-i18n="pay_card">Картой</div>
+                <div class="payment-tabs" style="display: none !important;">
+                    <div class="pay-tab" onclick="switchPayTab('crypto')" data-i18n="pay_crypto">Криптой</div>
+                    <div class="pay-tab active" onclick="switchPayTab('card')" data-i18n="pay_card">Картой</div>
                 </div>
 
                 <div style="padding: 0 24px 30px;">
-                    <!-- Crypto Tab Pane -->
-                    <div id="pane-crypto" class="pay-tab-pane active">
-                        <!-- TON -->
-                        <div class="pay-method-card active" onclick="selectPayMethod('TON')">
+                    <!-- Crypto Tab Pane - HIDDEN FOR MODERATION
+                    <div id="pane-crypto" class="pay-tab-pane">
+                        <div class="pay-method-card" onclick="selectPayMethod('TON')">
                             <div class="pm-check"></div>
                             <div class="pm-info">
                                 <div class="pm-header">
@@ -826,7 +836,6 @@
                             </div>
                         </div>
 
-                        <!-- xRocket -->
                         <div class="pay-method-card" onclick="selectPayMethod('XROCKET')">
                             <div class="pm-check"></div>
                             <div class="pm-info">
@@ -842,9 +851,10 @@
                             </div>
                         </div>
                     </div>
+                    -->
 
                     <!-- Card Tab Pane -->
-                    <div id="pane-card" class="pay-tab-pane">
+                    <div id="pane-card" class="pay-tab-pane active">
                         <div id="card-limit-warning"
                             style="display: none; background: rgba(255, 149, 0, 0.08); border: 1px solid rgba(255, 149, 0, 0.25); border-radius: 14px; padding: 14px 16px; margin-bottom: 12px; gap: 10px;">
                             <span style="font-size: 20px;">⚠️</span>
@@ -863,23 +873,24 @@
                             <div class="pm-info">
                                 <div class="pm-header">
                                     <div class="pm-name" data-i18n="card_rf_sbp">Карта РФ / СБП</div>
-                                    <div class="pay-method-badge" style="background: rgba(0, 212, 136, 0.1); color: #00d488;">+5% комиссии</div>
+                                    <div class="pay-method-badge"
+                                        style="background: rgba(0, 212, 136, 0.1); color: #00d488;">+5% комиссии</div>
                                 </div>
                                 <div class="pm-row-bottom">
-                                    <div class="pm-desc" data-i18n="cloudtips_desc">Мгновенная оплата через CloudTips</div>
+                                    <div class="pm-desc" data-i18n="cloudtips_desc">Мгновенная оплата через CloudTips
+                                    </div>
                                     <div class="pm-price"><span id="pay-price-rub">0</span> ₽</div>
                                 </div>
                             </div>
                         </div>
 
-                        <div id="pay-method-lavatop" class="pay-method-card"
-                            onclick="selectPayMethod('LAVATOP')">
+                        <div id="pay-method-lavatop" class="pay-method-card" onclick="selectPayMethod('LAVATOP')">
                             <div class="pm-check"></div>
                             <div class="pm-info">
                                 <div class="pm-header">
                                     <div class="pm-name">Рф карты + Крипта</div>
                                     <div class="pay-method-badge"
-                                         style="background: rgba(0, 136, 204, 0.15); border: 1px solid rgba(0, 136, 204, 0.4); color: #0088cc;">
+                                        style="background: rgba(0, 136, 204, 0.15); border: 1px solid rgba(0, 136, 204, 0.4); color: #0088cc;">
                                         +11.5% комиссии
                                     </div>
                                 </div>
@@ -1031,23 +1042,28 @@
     <!-- Payment Loading Overlay (Status Screen) -->
     <div id="payment-loading-overlay"
         style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 15, 19, 0.95); z-index: 10010; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); transition: all 0.3s ease;">
-        
+
         <!-- Status Content Wrapper (Prevents horizontal/vertical stretching) -->
-        <div style="display: flex; flex-direction: column; align-items: center; gap: 20px; width: 100%; max-width: 320px; text-align: center; padding: 20px;">
+        <div
+            style="display: flex; flex-direction: column; align-items: center; gap: 20px; width: 100%; max-width: 320px; text-align: center; padding: 20px;">
             <div class="premium-spinner" style="width: 50px; height: 50px; border-width: 3px; margin: 0;"></div>
-            
+
             <div style="margin-top: 10px;">
-                <div id="payment-status-text" style="color: #fff; font-size: 22px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 6px;">Ожидаем оплаты...</div>
-                <div id="payment-timer" style="color: var(--accent-blue); font-family: 'Courier New', monospace; font-size: 26px; font-weight: 900;">10:00</div>
+                <div id="payment-status-text"
+                    style="color: #fff; font-size: 22px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 6px;">
+                    Ожидаем оплаты...</div>
+                <div id="payment-timer"
+                    style="color: var(--accent-blue); font-family: 'Courier New', monospace; font-size: 26px; font-weight: 900;">
+                    10:00</div>
             </div>
-            
+
             <div style="color: #8b9bb4; font-size: 14px; line-height: 1.5; padding: 0 10px;">
                 Пожалуйста, проведите оплату в открывшемся окне.<br>
                 Проверка статуса через: <span id="polling-count" style="color: #fff; font-weight: 700;">20</span> сек.
             </div>
 
             <!-- Compact Cancel Button -->
-            <button class="btn-gray" onclick="cancelPayment()" 
+            <button class="btn-gray" onclick="cancelPayment()"
                 style="margin-top: 30px; height: 44px; width: 100%; border-radius: 12px; font-size: 15px; font-weight: 700; background: rgba(255,255,255,0.08); color: #fff; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">
                 Отменить заказ
             </button>
@@ -1056,20 +1072,65 @@
 
     <!-- Checkout Drawer (Iframe Sheet) - FLOATING PREMIUM CARD -->
     <div id="checkout-drawer" class="bottom-sheet" style="display: none; z-index: 10020;">
-        <div class="bottom-sheet-backdrop" onclick="closeCheckoutDrawer()" style="backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); background: rgba(0,0,0,0.6);"></div>
-        <div class="bottom-sheet-content" style="height: auto; min-height: 520px; border-radius: 32px; background: linear-gradient(165deg, #ffffff 0%, #f1f4f8 100%); transition: transform 0.45s cubic-bezier(0.19, 1, 0.22, 1); box-shadow: 0 30px 80px rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.8); overflow: hidden; margin-bottom: 20px;">
-            <div class="bottom-sheet-header" style="background: transparent; border-bottom: 1px solid rgba(0,0,0,0.05); padding: 18px 20px;">
+        <div class="bottom-sheet-backdrop" onclick="closeCheckoutDrawer()"
+            style="backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); background: rgba(0,0,0,0.6);"></div>
+        <div class="bottom-sheet-content"
+            style="height: auto; min-height: 520px; border-radius: 32px; background: linear-gradient(165deg, #ffffff 0%, #f1f4f8 100%); transition: transform 0.45s cubic-bezier(0.19, 1, 0.22, 1); box-shadow: 0 30px 80px rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.8); overflow: hidden; margin-bottom: 20px;">
+            <div class="bottom-sheet-header"
+                style="background: transparent; border-bottom: 1px solid rgba(0,0,0,0.05); padding: 18px 20px;">
                 <div style="display: flex; align-items: center; gap: 12px;">
-                    <div style="width: 10px; height: 10px; background: #00d488; border-radius: 50%; box-shadow: 0 0 15px rgba(0,212,136,0.6);"></div>
-                    <span style="color: #1a1a1a; font-weight: 800; font-size: 16px; letter-spacing: -0.4px;">Безопасная оплата OctoRent</span>
+                    <div
+                        style="width: 10px; height: 10px; background: #00d488; border-radius: 50%; box-shadow: 0 0 15px rgba(0,212,136,0.6);">
+                    </div>
+                    <span style="color: #1a1a1a; font-weight: 800; font-size: 16px; letter-spacing: -0.4px;">Безопасная
+                        оплата OctoRent</span>
                 </div>
-                <button onclick="closeCheckoutDrawer()" 
+                <button onclick="closeCheckoutDrawer()"
                     style="background: rgba(0,0,0,0.04); border: none; color: #1a1a1a; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; transition: all 0.2s;">✕</button>
             </div>
             <!-- Container for pure iframe (minimal height) -->
-            <div id="checkout-iframe-container" style="width: 100%; height: 220px; overflow: hidden; background: transparent;">
+            <div id="checkout-iframe-container"
+                style="width: 100%; height: 220px; overflow: hidden; background: transparent;">
                 <!-- Pure Iframe injected here via app.js -->
             </div>
+        </div>
+    </div>
+
+    <!-- Review Rating Strip -->
+    <div id="review-strip" class="review-strip">
+        <div class="review-strip-text">Не хотите оставить отзыв нашему сервису?</div>
+        <div class="review-strip-btns">
+            <button class="review-strip-btn-yes" onclick="openReviewModal()">Да</button>
+            <button class="review-strip-btn-close" onclick="closeReviewStrip()">✕</button>
+        </div>
+    </div>
+
+    <!-- Review Submission Modal -->
+    <div id="review-modal" class="generic-modal" style="display: none;">
+        <div class="modal-overlay" onclick="closeReviewModal()"></div>
+        <div class="modal-content" style="padding: 24px; border-radius: 28px; background: #1c1c1e; border: 1px solid rgba(0, 136, 204, 0.4); width: 92%; max-width: 400px;">
+            <h3 style="color: #fff; font-size: 20px; font-weight: 800; margin-bottom: 20px; text-align: center;">Оставить отзыв</h3>
+            
+            <div id="review-item-selector-container" style="margin-bottom: 20px;">
+                <label style="display: block; color: #8b9bb4; font-size: 13px; font-weight: 700; margin-bottom: 8px;">Выберите предмет:</label>
+                <select id="review-nft-name" style="width: 100%; background: #2c2c2e; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; padding: 12px; font-size: 14px; outline: none;">
+                    <!-- Options populated via JS -->
+                </select>
+            </div>
+
+            <label style="display: block; color: #8b9bb4; font-size: 13px; font-weight: 700; margin-bottom: 8px; text-align: center;">Ваша оценка:</label>
+            <div class="star-rating-input">
+                <input type="radio" name="rating" id="star5" value="5" checked><label for="star5">★</label>
+                <input type="radio" name="rating" id="star4" value="4"><label for="star4">★</label>
+                <input type="radio" name="rating" id="star3" value="3"><label for="star3">★</label>
+                <input type="radio" name="rating" id="star2" value="2"><label for="star2">★</label>
+                <input type="radio" name="rating" id="star1" value="1"><label for="star1">★</label>
+            </div>
+
+            <textarea id="review-text-input" placeholder="Напишите пару слов о вашем опыте..." 
+                style="width: 100%; height: 120px; background: #2c2c2e; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; color: #fff; padding: 16px; font-size: 14px; outline: none; margin-bottom: 24px; resize: none;"></textarea>
+
+            <button class="blue-btn" onclick="submitReview()" style="width: 100%; height: 50px; font-weight: 800; border-radius: 16px;">Отправить отзыв</button>
         </div>
     </div>
 </body>

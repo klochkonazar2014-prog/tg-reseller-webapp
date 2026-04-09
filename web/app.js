@@ -15,7 +15,7 @@ const MY_MARKUP = 0.20;
 const FIAT_FEE_MULTIPLIER = 1.05; // +5% commission for bank transfer
 const LAVATOP_MAX_RUB = 50000; // Lava.top practical limit per transaction
 const MANIFEST_URL = BACKEND_URL + "/tonconnect-manifest.json";
-let SELECTED_PAY_METHOD = 'TON';
+let SELECTED_PAY_METHOD = 'CLOUDTIPS';
 let OPERATOR_CONTACTS = { admin: "@nerksqq", coder: "@Paulie_Gualtiery", support: "@Octorent_Support_bot" };
 
 async function getOperatorContacts() {
@@ -978,6 +978,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         loadProfileData();
         // ✅ Await filter data first so ACTIVE_FILTERS state is stable before catalog loads
         await loadFilterData();
+
+        // 🚀 Social Proof & Reviews
+        loadPublicReviews();
+        checkUserRentalsForReview();
 
         // 🚀 NON-BLOCKING: Start loading but don't AWAIT here
         const catalogPromise = loadLiveItems(true);
@@ -4040,6 +4044,9 @@ function initModalSwipeClose(modal) {
 }
 
 function switchPayTab(tab) {
+    // Hidden for moderation
+    return;
+    /*
     document.querySelectorAll('.pay-tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.pay-tab-pane').forEach(p => p.classList.remove('active'));
 
@@ -4054,6 +4061,7 @@ function switchPayTab(tab) {
         document.getElementById('pay-total-currency').innerText = '₽';
         selectPayMethod('CLOUDTIPS');
     }
+    */
 }
 
 function selectPayMethod(method) {
@@ -4885,3 +4893,148 @@ function showPostPaymentSuccessUI(orderId) {
 
 // Инициализация: получить актуальные контакты
 getOperatorContacts();
+
+/* ==================== REVIEW SYSTEM LOGIC ==================== */
+
+async function loadPublicReviews() {
+    try {
+        const resp = await apiFetch(`${BACKEND_URL}/api/public_reviews`);
+        const reviews = await resp.json();
+        const container = document.getElementById('public-reviews-scroll');
+        const section = document.getElementById('public-reviews-section');
+        
+        if (!container || !reviews.length) {
+            if (section) section.style.display = 'none';
+            return;
+        }
+
+        if (section) section.style.display = 'block';
+        container.innerHTML = reviews.map(r => {
+            const date = new Date(r.created_at).toLocaleDateString('ru-RU');
+            const stars = '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating);
+            const avatar = `${BACKEND_URL}/api/user-avatar?user_id=${r.user_id}`;
+            const displayName = r.username ? `@${r.username}` : (r.full_name || `User ${r.user_id}`);
+            
+            return `
+                <div class="review-card">
+                    <div class="review-header">
+                        <img src="${avatar}" class="review-user-avatar" onerror="this.src='https://ui-avatars.com/api/?name=U&background=2c2c2e&color=fff'">
+                        <div class="review-user-info">
+                            <div class="review-username">${displayName}</div>
+                            <div class="review-date">${date}</div>
+                        </div>
+                        <div class="review-rating">${stars}</div>
+                    </div>
+                    <div class="review-text">${r.review_text}</div>
+                    <div class="review-item-tag">${r.nft_name}</div>
+                </div>
+            `;
+        }).join('');
+    } catch (e) {
+        console.error("Failed to load reviews:", e);
+    }
+}
+
+async function checkUserRentalsForReview() {
+    try {
+        const strip = document.getElementById('review-strip');
+        if (!strip) return;
+
+        // Don't show if dismissed in this session
+        if (sessionStorage.getItem('review_strip_dismissed')) return;
+
+        const resp = await apiFetch(`${BACKEND_URL}/api/user_rental_history`);
+        const data = await resp.json();
+        
+        if (data.items && data.items.length > 0) {
+            setTimeout(() => {
+                strip.classList.add('active');
+            }, 3000); // Wait 3s after load
+        }
+    } catch (e) {
+        console.error("Failed to check rental history:", e);
+    }
+}
+
+function closeReviewStrip() {
+    const strip = document.getElementById('review-strip');
+    if (strip) strip.classList.remove('active');
+    sessionStorage.setItem('review_strip_dismissed', 'true');
+}
+
+async function openReviewModal() {
+    const modal = document.getElementById('review-modal');
+    const select = document.getElementById('review-nft-name');
+    if (!modal || !select) return;
+
+    try {
+        const resp = await apiFetch(`${BACKEND_URL}/api/user_rental_history`);
+        const data = await resp.json();
+        
+        if (!data.items || !data.items.length) {
+            tg.showConfirm("У вас еще нет арендованных предметов для отзыва. Хотите перейти в каталог?", (ok) => {
+                if (ok) switchTab('market');
+            });
+            return;
+        }
+
+        select.innerHTML = data.items.map(name => `<option value="${name}">${name}</option>`).join('');
+        
+        modal.style.display = 'flex';
+        setTimeout(() => modal.classList.add('active'), 10);
+        closeReviewStrip();
+    } catch (e) {
+        console.error("Failed to open review modal:", e);
+    }
+}
+
+function closeReviewModal() {
+    const modal = document.getElementById('review-modal');
+    if (modal) {
+        modal.classList.remove('active');
+        setTimeout(() => modal.style.display = 'none', 300);
+    }
+}
+
+async function submitReview() {
+    const nftName = document.getElementById('review-nft-name').value;
+    const reviewText = document.getElementById('review-text-input').value.trim();
+    const ratingEl = document.querySelector('input[name="rating"]:checked');
+    const rating = ratingEl ? ratingEl.value : 5;
+
+    if (!reviewText) {
+        tg.showAlert("Пожалуйста, напишите пару слов о вашем опыте.");
+        return;
+    }
+
+    try {
+        const resp = await apiFetch(`${BACKEND_URL}/api/submit_review`, {
+            method: 'POST',
+            body: JSON.stringify({
+                nft_name: nftName,
+                review_text: reviewText,
+                rating: rating
+            })
+        });
+        
+        const res = await resp.json();
+        if (res.status === 'ok') {
+            tg.showAlert("Сердечно благодарим за ваш отзыв! Он появится в ленте после быстрой проверки.");
+            closeReviewModal();
+        } else {
+            tg.showAlert("Ошибка при отправке: " + (res.error || "неизвестно"));
+        }
+    } catch (e) {
+        console.error("Failed to submit review:", e);
+        tg.showAlert("Сетевая ошибка при отправке отзыва.");
+    }
+}
+
+// Global exports
+window.loadPublicReviews = loadPublicReviews;
+window.checkUserRentalsForReview = checkUserRentalsForReview;
+window.closeReviewStrip = closeReviewStrip;
+window.openReviewModal = openReviewModal;
+window.closeReviewModal = closeReviewModal;
+window.submitReview = submitReview;
+

@@ -1,0 +1,53 @@
+# Aura
+
+- [Главная](https://aurapay.tech/)
+- [Преимущества](https://aurapay.tech/#advantages)
+- [Интеграция](https://aurapay.tech/#contact)
+- [FAQ](https://aurapay.tech/#faq)
+- [Контакты](https://aurapay.tech/#footer)
+[Главная](https://aurapay.tech/)
+[Преимущества](https://aurapay.tech/#advantages)
+[Интеграция](https://aurapay.tech/#contact)
+[FAQ](https://aurapay.tech/#faq)
+[Контакты](https://aurapay.tech/#footer)
+[Войти](https://cabinet.aurapay.tech/login)
+
+# Надежная платежная система для вашего бизнеса
+
+## Наши преимущества
+
+## Как работает сервис
+
+### Онлайн-платежи на вашем сайте - легко, надёжно и быстро!
+[Зарегистрироваться](https://cabinet.aurapay.tech/register)
+
+## Свяжитесь с нами
+[Перейти в чат с менеджером](https://t.me/Preffss)
+
+## FAQ
+- Продажа товаров и услуг, запрещенных законодательством РФ,
+- Спонсорство, взносы и пожертвования без наличия лицензии,
+- Продажа запрещенных препаратов и биологически активных добавок(БАДов),
+- Сбыт алкогольной продукции и табака,
+- Сбыт товаров, которые нарушают права правообладателя,
+- Магические/экстрасенсорные услуги,
+- Продажа ПО без наличия договоров с поставщиками или разработчиками данного ПО,
+- Программное обеспечение для игр,
+- Файловые хостинги,
+- Телемаркетинг,
+- Телефонные розыгрыши,
+- Финансовые пирамиды,
+- Инвестиционные проекты,
+- Пункты обмена валют,
+- Сервисы по подбору займов,
+- Продажа подделок, копий или реплик товаров.
+[AURA](https://aurapay.tech/)
+- [Почта](mailto:support@aurapay.tech)
+- [Telegram](https://t.me/kassaaura)
+[Почта](mailto:support@aurapay.tech)
+[Telegram](https://t.me/kassaaura)
+[Публичная оферта](https://aurapay.tech/docs/Oferta.pdf)
+[Политика конфиденциальности](https://aurapay.tech/docs/Politika_Conf.pdf)
+[Согласие на обработку персональных данных](https://aurapay.tech/docs/Soglasie_na_obrabotku_personalnyh_dannyh.pdf)
+[Политика использования куки](https://aurapay.tech/docs/cookie_policy.pdf)
+[API документация](https://docs.aurapay.tech)

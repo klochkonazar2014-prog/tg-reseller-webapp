@@ -1124,6 +1124,49 @@ async def handle_referral_withdraw(request):
         logging.error(f"Error in handle_referral_withdraw: {e}")
         return web.json_response({'error': str(e)}, status=500)
 
+# ==================== REVIEW SYSTEM API ====================
+
+async def handle_get_public_reviews(request):
+    try:
+        reviews = await db.get_public_reviews(limit=30)
+        return web.json_response([dict(r) for r in reviews])
+    except Exception as e:
+        logging.error(f"Error in handle_get_public_reviews: {e}")
+        return web.json_response({"error": str(e)}, status=500)
+
+async def handle_get_user_rental_history(request):
+    try:
+        user_id = get_authenticated_user_id(request)
+        if not user_id:
+            return web.json_response({"error": "Unauthorized"}, status=401)
+        
+        items = await db.get_rented_items_for_review(user_id)
+        return web.json_response({"items": items})
+    except Exception as e:
+        logging.error(f"Error in handle_get_user_rental_history: {e}")
+        return web.json_response({"error": str(e)}, status=500)
+
+async def handle_submit_review(request):
+    try:
+        data = await request.json()
+        user_id = get_authenticated_user_id(request)
+        if not user_id:
+            return web.json_response({"error": "Unauthorized"}, status=401)
+        
+        nft_name = data.get("nft_name")
+        review_text = data.get("review_text")
+        rating = int(data.get("rating", 5))
+        
+        if not nft_name or not review_text:
+            return web.json_response({"error": "Missing fields"}, status=400)
+            
+        await db.add_review(user_id, nft_name, review_text, rating)
+        return web.json_response({"status": "ok"})
+    except Exception as e:
+        logging.error(f"Error in handle_submit_review: {e}")
+        return web.json_response({"error": str(e)}, status=500)
+
+
 async def handle_user_avatar(request):
     user_id = request.query.get('user_id')
     if not user_id:
@@ -1943,6 +1986,9 @@ app.add_routes([
     web.post('/api/create_lavatop_invoice', handle_create_lavatop_invoice),
     web.post('/api/webhooks/lavatop', handle_lavatop_webhook),
     web.post('/api/create_donatepay_invoice', handle_create_donatepay_invoice),
+    web.get('/api/public_reviews', handle_get_public_reviews),
+    web.get('/api/user_rental_history', handle_get_user_rental_history),
+    web.post('/api/submit_review', handle_submit_review),
 ])
 
 
