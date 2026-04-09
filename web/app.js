@@ -2286,8 +2286,8 @@ function createItemCard(item) {
     const minDays = Math.floor((item.min_duration || 86400) / 86400);
     const maxDaysFinal = Math.floor((item.max_duration || 2592000) / 86400);
 
-    // Total min price for the grid
-    const minTotalPrice = priceVal > 0 ? Math.round(priceVal * minDays * (FIAT_RATES.RUB || 230)) : "---";
+    // Total min price for the grid (Price * Days)
+    const minTotalPrice = priceVal > 0 ? (Math.round(priceVal * (FIAT_RATES.RUB || 230)) * minDays) : "---";
 
     // NEW: Rented status class
     if (item.status === 'rented') {
@@ -2968,7 +2968,10 @@ function updateTotalPrice() {
 
     const priceSpan = document.getElementById('rent-btn-price');
     if (priceSpan) {
-        const rubValMain = Math.round((parseFloat(total) + 0.06) * (FIAT_RATES.RUB || 230) * 1.05); priceSpan.innerText = rubValMain + " ₽";
+        // Total = (DailyPrice * Days) + 4
+        const dailyPriceRub = Math.round(dp * (FIAT_RATES.RUB || 230));
+        const rubValMain = (dailyPriceRub * dur) + 4;
+        priceSpan.innerText = rubValMain + " ₽";
     }
 
     // Update USD price
@@ -2998,8 +3001,9 @@ function updateTotalPrice() {
     if (payPriceRub || payPriceLava) {
         if (FIAT_RATES.RUB) {
             // Оставляем только реальный сгораемый газ (0.06 TON), убирая залог (0.2 TON) для рублевых оплат
-            const tonForCard = parseFloat(total) + 0.06;
-            let rubVal = Math.round(tonForCard * FIAT_RATES.RUB * FIAT_FEE_MULTIPLIER);
+            // Card Total = (DailyPrice * Days) + 4
+            const dailyPriceRub = Math.round(dp * (FIAT_RATES.RUB || 230));
+            let rubVal = (dailyPriceRub * dur) + 4;
 
             if (payPriceRub) payPriceRub.innerText = rubVal;
             if (payPriceLava) payPriceLava.innerText = rubVal;
