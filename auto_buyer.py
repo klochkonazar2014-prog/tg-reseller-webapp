@@ -59,40 +59,6 @@ async def send_telegram_log(message: str):
         logging.error(f"❌ Ошибка отправки лога в Telegram: {e}")
 
 
-async def send_user_notification(user_id: int, nft_name: str, order_id: int):
-    """Отправляет пользователю сообщение об успехе и предлагает оставить отзыв"""
-    if not BOT_TOKEN:
-        return
-    try:
-        text = (
-            f"🎉 <b>Аренда успешно оформлена!</b>\n\n"
-            f"🎁 Предмет: <b>{nft_name}</b>\n"
-            f"✅ Актив успешно подключен к вашему кошельку.\n\n"
-            f"Мы будем очень благодарны, если вы оставите пару слов о нашем сервисе. Это поможет нам стать лучше! 👇"
-        )
-        
-        # Кнопка для начала процесса отзыва прямо в боте
-        kb = {
-            "inline_keyboard": [
-                [{"text": "⭐ Оставить отзыв", "callback_data": f"review_bot_{order_id}"}]
-            ]
-        }
-        
-        async with aiohttp.ClientSession() as session:
-            await session.post(
-                f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
-                json={
-                    "chat_id": user_id, 
-                    "text": text, 
-                    "parse_mode": "HTML",
-                    "reply_markup": kb
-                }
-            )
-        logging.info(f"✉️ Уведомление об успехе отправлено пользователю {user_id}")
-    except Exception as e:
-        logging.error(f"❌ Ошибка отправки уведомления пользователю: {e}")
-
-
 # Глобальный набор для предотвращения двойной обработки одного и того же заказа
 processing_orders = set()
 wallet_lock = asyncio.Lock()
@@ -427,9 +393,6 @@ async def process_payment(order):
             if tc_linked:
                 await send_telegram_log(f"🔗 <b>TonConnect привязан!</b>\nЗаказ: #{order_id}")
                 await send_profit_notification(dict(order), item)
-                
-                # --- НОВОЕ: Уведомление пользователя через бота ---
-                await send_user_notification(order['user_id'], order['nft_name'], order_id)
         except Exception as e:
             logging.error(f"❌ Ошибка авто-привязки ссылки: {e}")
 

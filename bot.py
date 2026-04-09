@@ -14,8 +14,6 @@ from aiogram.types import (
     InputTextMessageContent, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo,
     MenuButtonWebApp, ReplyKeyboardRemove
 )
-from aiogram.fsm.state import State, StatesGroup
-from aiogram.fsm.context import FSMContext
 
 import database as db
 import keyboards as kb
@@ -166,91 +164,13 @@ async def get_nft_full_details(nft_address, col_name):
     }
     return details.get("name"), metadata
 
+import aiosqlite
+
 # --- Обработчики ---
 
-# --- Система отзывов в боте (FSM) ---
-
-class ReviewStates(StatesGroup):
-    waiting_for_rating = State()
-    waiting_for_text = State()
-
-@dp.callback_query(F.data.startswith("review_bot_"))
-async def handle_review_bot_start(callback: CallbackQuery, state: FSMContext):
-    order_id = int(callback.data.replace("review_bot_", ""))
-    order = await db.get_order_by_id(order_id)
-    
-    if not order:
-        await callback.answer("❌ Заказ не найден.", show_alert=True)
-        return
-
-    await state.update_data(review_order_id=order_id, nft_name=order['nft_name'])
-    await state.set_state(ReviewStates.waiting_for_rating)
-    
-    kb_stars = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="⭐", callback_data="rate_1"),
-         InlineKeyboardButton(text="⭐⭐", callback_data="rate_2"),
-         InlineKeyboardButton(text="⭐⭐⭐", callback_data="rate_3")],
-        [InlineKeyboardButton(text="⭐⭐⭐⭐", callback_data="rate_4"),
-         InlineKeyboardButton(text="⭐⭐⭐⭐⭐", callback_data="rate_5")],
-        [InlineKeyboardButton(text="❌ Отмена", callback_data="cancel_review")]
-    ])
-    
-    await callback.message.answer(
-        f"🌟 <b>Оставьте отзыв для {order['nft_name']}</b>\n\n"
-        f"Пожалуйста, выберите вашу оценку:",
-        reply_markup=kb_stars,
-        parse_mode="HTML"
-    )
-    await callback.answer()
-
-@dp.callback_query(ReviewStates.waiting_for_rating, F.data.startswith("rate_"))
-async def handle_rating_selection(callback: CallbackQuery, state: FSMContext):
-    rating = int(callback.data.replace("rate_", ""))
-    await state.update_data(review_rating=rating)
-    
-    await state.set_state(ReviewStates.waiting_for_text)
-    await callback.message.edit_text(
-        f"⭐ Вы выбрали оценку: <b>{rating}/5</b>\n\n"
-        f"Теперь, пожалуйста, напишите пару слов о вашем опыте аренды (отправьте сообщение в чат):",
-        reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="❌ Отмена", callback_data="cancel_review")]]),
-        parse_mode="HTML"
-    )
-    await callback.answer()
-
-@dp.message(ReviewStates.waiting_for_text)
-async def handle_review_text(message: Message, state: FSMContext):
-    data = await state.get_data()
-    order_id = data.get("review_order_id")
-    nft_name = data.get("nft_name")
-    rating = data.get("review_rating")
-    review_text = message.text.strip()
-    
-    if not review_text:
-        await message.answer("⚠️ Пожалуйста, напишите текстовый отзыв.")
-        return
-
-    # Сохраняем в БД
-    success = await db.add_review(message.from_user.id, nft_name, review_text, rating)
-    
-    if success:
-        await message.answer(
-            "✅ <b>Спасибо за ваш отзыв!</b>\n\n"
-            "Он появится в Mini App после быстрой проверки модератором.",
-            parse_mode="HTML"
-        )
-        logging.info(f"New review from {message.from_user.id} for {nft_name} (Rating: {rating})")
-    else:
-        await message.answer("❌ Ошибка при сохранении отзыва. Попробуйте позже.")
-
-    await state.clear()
-
-@dp.callback_query(F.data == "cancel_review")
-async def handle_cancel_review(callback: CallbackQuery, state: FSMContext):
-    await state.clear()
-    await callback.message.edit_text("❌ Оставление отзыва отменено.")
-    await callback.answer()
-
-async def set_default_commands(bot: Bot): pass
+# --- Хранение состояния отзыва в памяти (без FSM) ---
+# { user_id: {'step': 'select_nft'|'input_text', 'nft_name': str, 'review_text': str} }
+_review_state: dict = {}
 
 @dp.message(Command("start"))
 async def start_cmd(message: Message, command: CommandObject):
@@ -587,16 +507,6 @@ async def noop_handler(callback: CallbackQuery):
     # Просто гасим уведомление для информационных кнопок
     await callback.answer()
 
-@dp.callback_query(F.data == "reviews_menu")
-async def reviews_menu_handler(callback: CallbackQuery):
-    await callback.message.edit_text(
-        "📝 <b>Что вас интересует?</b>\n\n"
-        "Вы можете просмотреть отзывы других пользователей прямо в приложении или оставить свой честный отзыв на арендованный подарок.",
-        reply_markup=kb.reviews_options_keyboard(WEB_APP_URL),
-        parse_mode="HTML"
-    )
-    await callback.answer()
-
 @dp.callback_query(F.data == "support")
 async def support_details(callback: CallbackQuery):
     lang = await db.get_user_language(callback.from_user.id)
@@ -732,6 +642,212 @@ async def info_details(callback: CallbackQuery):
         reply_markup=kb.info_keyboard(),
         parse_mode="HTML"
     )
+
+@dp.callback_query(F.data == "reviews_menu")
+async def reviews_menu_handler(callback: CallbackQuery):
+    lang = await db.get_user_language(callback.from_user.id)
+    text = (
+        "<tg-emoji emoji-id='5472239203590888751'>⭐</tg-emoji> <b>Отзывы OctoRent</b>\n\n"
+        "Поделитесь своим опытом аренды и помогите другим пользователям сделать правильный выбор!\n\n"
+        "<i>Отзыв может оставить только пользователь, который уже арендовал подарок.</i>"
+    ) if lang == 'ru' else (
+        "<tg-emoji emoji-id='5472239203590888751'>⭐</tg-emoji> <b>OctoRent Reviews</b>\n\n"
+        "Share your rental experience and help other users make the right choice!\n\n"
+        "<i>Only users who have rented can leave a review.</i>"
+    )
+    await callback.message.edit_text(
+        text,
+        reply_markup=kb.reviews_keyboard(WEB_APP_URL, lang=lang),
+        parse_mode="HTML"
+    )
+    await callback.answer()
+
+
+@dp.callback_query(F.data == "write_review")
+async def write_review_handler(callback: CallbackQuery):
+    user_id = callback.from_user.id
+    lang = await db.get_user_language(user_id)
+
+    # Получаем прошлые аренды юзера
+    orders = await db.get_user_orders(user_id)
+    rented = []
+    seen = set()
+    for o in orders:
+        name = o['nft_name']
+        if name and o['status'] in ('paid', 'rented', 'active', 'expired') and name not in seen:
+            rented.append(name)
+            seen.add(name)
+        if len(rented) >= 10:
+            break
+
+    if not rented:
+        await callback.answer(
+            "❌ У вас пока нет аренды. Оформите аренду — и сможете оставить отзыв!" if lang == 'ru'
+            else "❌ You have no rentals yet. Complete a rental first!",
+            show_alert=True
+        )
+        return
+
+    # Сохраняем список в состоянии
+    _review_state[user_id] = {'step': 'select_nft', 'rentals': rented, 'nft_name': None, 'review_text': None}
+
+    text = (
+        "✍️ <b>Оставить отзыв</b>\n\n"
+        "Выберите подарок из ваших аренд, который хотите упомянуть в отзыве:"
+    ) if lang == 'ru' else (
+        "✍️ <b>Leave a Review</b>\n\nSelect a gift from your rentals to mention:"
+    )
+    await callback.message.edit_text(
+        text,
+        reply_markup=kb.review_nft_select_keyboard(rented, lang=lang),
+        parse_mode="HTML"
+    )
+    await callback.answer()
+
+
+@dp.callback_query(F.data.startswith("review_nft_"))
+async def review_nft_selected(callback: CallbackQuery):
+    user_id = callback.from_user.id
+    lang = await db.get_user_language(user_id)
+
+    state = _review_state.get(user_id)
+    if not state:
+        await callback.answer("Сессия истекла. Начните заново.", show_alert=True)
+        return
+
+    try:
+        idx = int(callback.data.split("_")[-1])
+        nft_name = state['rentals'][idx]
+    except (IndexError, ValueError):
+        await callback.answer("Ошибка выбора.", show_alert=True)
+        return
+
+    state['nft_name'] = nft_name
+    state['step'] = 'input_text'
+    _review_state[user_id] = state
+
+    text = (
+        f"✍️ <b>Отзыв о: {nft_name}</b>\n\n"
+        "Напишите ваш отзыв о сервисе OctoRent (минимум 5 символов, максимум 1000):\n\n"
+        "<i>Просто отправьте текст следующим сообщением.</i>"
+    ) if lang == 'ru' else (
+        f"✍️ <b>Review for: {nft_name}</b>\n\n"
+        "Write your review (min 5, max 1000 chars):\n\n"
+        "<i>Just send the text as the next message.</i>"
+    )
+    await callback.message.edit_text(text, parse_mode="HTML",
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
+            InlineKeyboardButton(text="🏠 Главное меню" if lang == 'ru' else "🏠 Main Menu", callback_data="main_menu")
+        ]])
+    )
+    await callback.answer()
+
+
+@dp.callback_query(F.data == "review_publish")
+async def review_publish_handler(callback: CallbackQuery):
+    user_id = callback.from_user.id
+    lang = await db.get_user_language(user_id)
+    state = _review_state.get(user_id)
+
+    if not state or not state.get('review_text'):
+        await callback.answer("Сессия истекла. Начните заново.", show_alert=True)
+        return
+
+    review_text = state['review_text']
+    nft_name = state.get('nft_name', '')
+
+    try:
+        async with aiosqlite.connect(db.DB_PATH, timeout=30) as conn:
+            # Проверяем что у юзера есть аренда
+            async with conn.execute(
+                "SELECT COUNT(*) FROM orders WHERE user_id = ? AND status IN ('paid','rented','active','expired')",
+                (user_id,)
+            ) as cur:
+                row = await cur.fetchone()
+                if not row or row[0] == 0:
+                    await callback.answer(
+                        "❌ Отзыв можно оставить только после аренды." if lang == 'ru' else "❌ You need to rent first.",
+                        show_alert=True
+                    )
+                    return
+
+            await conn.execute(
+                "INSERT INTO reviews (user_id, nft_name, review_text, rating, is_approved) VALUES (?, ?, ?, 5, 1)",
+                (user_id, nft_name or None, review_text)
+            )
+            await conn.commit()
+
+        _review_state.pop(user_id, None)
+        logging.info(f"[Reviews] User {user_id} published review for '{nft_name}'")
+
+        success_text = (
+            "✅ <b>Отзыв опубликован!</b>\n\nСпасибо, что поделились своим мнением! "
+            "Ваш отзыв уже виден на странице отзывов сервиса. 🙏"
+        ) if lang == 'ru' else (
+            "✅ <b>Review Published!</b>\n\nThank you for sharing your experience!"
+        )
+        await callback.message.edit_text(
+            success_text,
+            reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+                [InlineKeyboardButton(text="🏠 Главное меню" if lang == 'ru' else "🏠 Main Menu", callback_data="main_menu")]
+            ]),
+            parse_mode="HTML"
+        )
+        await callback.answer("✅")
+
+    except Exception as e:
+        logging.error(f"[Reviews] Publish error for user {user_id}: {e}")
+        await callback.answer("❌ Ошибка при публикации. Попробуйте позже.", show_alert=True)
+
+
+@dp.message(F.text & ~F.text.startswith('/'))
+async def handle_text_message(message: Message):
+    """Перехватывает текстовые сообщения — используется для ввода текста отзыва"""
+    user_id = message.from_user.id
+    state = _review_state.get(user_id)
+
+    if not state or state.get('step') != 'input_text':
+        return  # Не наш контекст — игнорируем
+
+    lang = await db.get_user_language(user_id)
+    review_text = message.text.strip()
+
+    if len(review_text) < 5:
+        await message.answer(
+            "⚠️ Отзыв слишком короткий. Напишите хотя бы 5 символов." if lang == 'ru'
+            else "⚠️ Review is too short. Please write at least 5 characters."
+        )
+        return
+
+    if len(review_text) > 1000:
+        await message.answer(
+            "⚠️ Отзыв слишком длинный. Максимум 1000 символов." if lang == 'ru'
+            else "⚠️ Review is too long. Max 1000 characters."
+        )
+        return
+
+    state['review_text'] = review_text
+    state['step'] = 'confirm'
+    _review_state[user_id] = state
+
+    nft_name = state.get('nft_name', '')
+    preview = review_text[:300] + ('...' if len(review_text) > 300 else '')
+
+    text = (
+        f"👀 <b>Предпросмотр отзыва</b>\n\n"
+        f"🎁 <b>Подарок:</b> {nft_name}\n"
+        f"⭐⭐⭐⭐⭐\n\n"
+        f"<i>{preview}</i>\n\n"
+        "Опубликовать этот отзыв?"
+    ) if lang == 'ru' else (
+        f"👀 <b>Review Preview</b>\n\n"
+        f"🎁 <b>Gift:</b> {nft_name}\n"
+        f"⭐⭐⭐⭐⭐\n\n"
+        f"<i>{preview}</i>\n\n"
+        "Publish this review?"
+    )
+    await message.answer(text, reply_markup=kb.confirm_review_keyboard(lang=lang), parse_mode="HTML")
+
 
 @dp.callback_query(F.data.startswith("model_"))
 async def show_items_live(callback: CallbackQuery):

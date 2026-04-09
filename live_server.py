@@ -118,6 +118,141 @@ async def handle_index(request):
         })
     return web.Response(status=404)
 
+async def handle_review_page(request):
+    """Отдаёт страницу отзывов"""
+    path = './web/review.html'
+    if os.path.exists(path):
+        with open(path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        return web.Response(text=content, content_type='text/html', headers={
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+        })
+    return web.Response(status=404, text='Review page not found')
+
+async def handle_get_reviews(request):
+    """GET /api/reviews — получить список одобренных отзывов"""
+    try:
+        limit = min(int(request.query.get('limit', 20)), 50)
+        offset = int(request.query.get('offset', 0))
+
+        async with aiosqlite.connect(db.DB_PATH, timeout=30) as conn:
+            conn.row_factory = aiosqlite.Row
+
+            # Статистика
+            async with conn.execute(
+                "SELECT COUNT(*) as total, AVG(rating) as avg_rating FROM reviews WHERE is_approved = 1"
+            ) as cur:
+                stats_row = await cur.fetchone()
+                stats = {
+                    'total': stats_row['total'] or 0,
+                    'avg_rating': round(float(stats_row['avg_rating'] or 5), 1)
+                }
+
+            # Отзывы с инфой о юзере
+            async with conn.execute("""
+                SELECT r.id, r.user_id, r.nft_name, r.review_text, r.rating, r.created_at,
+                       u.username, u.full_name
+                FROM reviews r
+                LEFT JOIN users u ON r.user_id = u.user_id
+                WHERE r.is_approved = 1
+                ORDER BY r.created_at DESC
+                LIMIT ? OFFSET ?
+            """, (limit, offset)) as cur:
+                rows = await cur.fetchall()
+
+            reviews = []
+            for row in rows:
+                uname = row['username'] or ''
+                fname = row['full_name'] or ''
+                display = f"@{uname}" if uname else (fname[:20] if fname else f"Пользователь #{row['user_id']}")
+                reviews.append({
+                    'id': row['id'],
+                    'user_id': row['user_id'],
+                    'username': display,
+                    'full_name': fname,
+                    'nft_name': row['nft_name'],
+                    'review_text': row['review_text'],
+                    'rating': row['rating'] or 5,
+                    'created_at': row['created_at'],
+                })
+
+        return web.json_response({'reviews': reviews, 'total': stats['total'], 'stats': stats})
+    except Exception as e:
+        logging.error(f'[Reviews] Get error: {e}')
+        return web.json_response({'reviews': [], 'total': 0, 'error': str(e)}, status=500)
+
+async def handle_post_review(request):
+    """POST /api/reviews — сохранить отзыв. Требует X-TG-Data и факт аренды."""
+    try:
+        user_id = get_authenticated_user_id(request)
+        if not user_id:
+            return web.json_response({'error': 'Unauthorized'}, status=401)
+
+        data = await request.json()
+        review_text = (data.get('review_text', '') or '').strip()
+        nft_name = (data.get('nft_name', '') or '').strip()
+        rating = max(1, min(5, int(data.get('rating', 5) or 5)))
+
+        if not review_text or len(review_text) < 5:
+            return web.json_response({'error': 'Отзыв слишком короткий'}, status=400)
+        if len(review_text) > 1000:
+            return web.json_response({'error': 'Отзыв слишком длинный (макс. 1000 символов)'}, status=400)
+
+        async with aiosqlite.connect(db.DB_PATH, timeout=30) as conn:
+            # Проверяем что у пользователя есть хотя бы один завершённый/активный заказ
+            async with conn.execute(
+                "SELECT COUNT(*) FROM orders WHERE user_id = ? AND status IN ('paid','rented','active','expired')",
+                (user_id,)
+            ) as cur:
+                row = await cur.fetchone()
+                if not row or row[0] == 0:
+                    return web.json_response({'error': 'Отзыв можно оставить только после аренды'}, status=403)
+
+            # Проверяем что юзер ещё не оставлял слишком много отзывов (спам-защита)
+            async with conn.execute(
+                "SELECT COUNT(*) FROM reviews WHERE user_id = ?", (user_id,)
+            ) as cur:
+                row = await cur.fetchone()
+                if row and row[0] >= 10:
+                    return web.json_response({'error': 'Достигнут лимит отзывов'}, status=429)
+
+            await conn.execute(
+                "INSERT INTO reviews (user_id, nft_name, review_text, rating, is_approved) VALUES (?, ?, ?, ?, 1)",
+                (user_id, nft_name or None, review_text, rating)
+            )
+            await conn.commit()
+
+        logging.info(f"[Reviews] New review from user {user_id}: '{review_text[:50]}...'")
+        return web.json_response({'ok': True})
+
+    except Exception as e:
+        logging.error(f'[Reviews] Post error: {e}')
+        return web.json_response({'error': str(e)}, status=500)
+
+async def handle_get_rental_history_for_review(request):
+    """GET /api/reviews/my_rentals — список прошлых аренд юзера для выбора в отзыве"""
+    try:
+        user_id = get_authenticated_user_id(request)
+        if not user_id:
+            return web.json_response({'error': 'Unauthorized'}, status=401)
+
+        async with aiosqlite.connect(db.DB_PATH, timeout=30) as conn:
+            conn.row_factory = aiosqlite.Row
+            async with conn.execute(
+                """SELECT DISTINCT nft_name FROM orders 
+                   WHERE user_id = ? AND status IN ('paid','rented','active','expired')
+                   ORDER BY created_at DESC LIMIT 20""",
+                (user_id,)
+            ) as cur:
+                rows = await cur.fetchall()
+
+        names = [row['nft_name'] for row in rows if row['nft_name']]
+        return web.json_response({'rentals': names})
+    except Exception as e:
+        return web.json_response({'error': str(e)}, status=500)
+
 async def handle_get_bot_balance(request):
     """Returns the current TON balance of the bot's owner wallet"""
     try:
@@ -1124,49 +1259,6 @@ async def handle_referral_withdraw(request):
         logging.error(f"Error in handle_referral_withdraw: {e}")
         return web.json_response({'error': str(e)}, status=500)
 
-# ==================== REVIEW SYSTEM API ====================
-
-async def handle_get_public_reviews(request):
-    try:
-        reviews = await db.get_public_reviews(limit=30)
-        return web.json_response([dict(r) for r in reviews])
-    except Exception as e:
-        logging.error(f"Error in handle_get_public_reviews: {e}")
-        return web.json_response({"error": str(e)}, status=500)
-
-async def handle_get_user_rental_history(request):
-    try:
-        user_id = get_authenticated_user_id(request)
-        if not user_id:
-            return web.json_response({"error": "Unauthorized"}, status=401)
-        
-        items = await db.get_rented_items_for_review(user_id)
-        return web.json_response({"items": items})
-    except Exception as e:
-        logging.error(f"Error in handle_get_user_rental_history: {e}")
-        return web.json_response({"error": str(e)}, status=500)
-
-async def handle_submit_review(request):
-    try:
-        data = await request.json()
-        user_id = get_authenticated_user_id(request)
-        if not user_id:
-            return web.json_response({"error": "Unauthorized"}, status=401)
-        
-        nft_name = data.get("nft_name")
-        review_text = data.get("review_text")
-        rating = int(data.get("rating", 5))
-        
-        if not nft_name or not review_text:
-            return web.json_response({"error": "Missing fields"}, status=400)
-            
-        await db.add_review(user_id, nft_name, review_text, rating)
-        return web.json_response({"status": "ok"})
-    except Exception as e:
-        logging.error(f"Error in handle_submit_review: {e}")
-        return web.json_response({"error": str(e)}, status=500)
-
-
 async def handle_user_avatar(request):
     user_id = request.query.get('user_id')
     if not user_id:
@@ -1986,9 +2078,10 @@ app.add_routes([
     web.post('/api/create_lavatop_invoice', handle_create_lavatop_invoice),
     web.post('/api/webhooks/lavatop', handle_lavatop_webhook),
     web.post('/api/create_donatepay_invoice', handle_create_donatepay_invoice),
-    web.get('/api/public_reviews', handle_get_public_reviews),
-    web.get('/api/user_rental_history', handle_get_user_rental_history),
-    web.post('/api/submit_review', handle_submit_review),
+    web.get('/review', handle_review_page),
+    web.get('/api/reviews', handle_get_reviews),
+    web.post('/api/reviews', handle_post_review),
+    web.get('/api/reviews/my_rentals', handle_get_rental_history_for_review),
 ])
 
 

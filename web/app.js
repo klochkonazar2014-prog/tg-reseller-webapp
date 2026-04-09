@@ -15,7 +15,7 @@ const MY_MARKUP = 0.20;
 const FIAT_FEE_MULTIPLIER = 1.05; // +5% commission for bank transfer
 const LAVATOP_MAX_RUB = 50000; // Lava.top practical limit per transaction
 const MANIFEST_URL = BACKEND_URL + "/tonconnect-manifest.json";
-let SELECTED_PAY_METHOD = 'CLOUDTIPS';
+let SELECTED_PAY_METHOD = 'CLOUDTIPS'; // Default to card payment (crypto hidden for AuraPay moderation)
 let OPERATOR_CONTACTS = { admin: "@nerksqq", coder: "@Paulie_Gualtiery", support: "@Octorent_Support_bot" };
 
 async function getOperatorContacts() {
@@ -203,7 +203,7 @@ const TRANSLATIONS = {
         rent_days: "Аренда на {min}–{max} дн.",
         per_day: "В день",
         min_price: "Мин. цена",
-        you_will_send: "Вы дополнительно отправите 19.66 ₽ для обработки транзакции. Остаток (около 13.76 ₽) будет возвращен вам автоматически.",
+        you_will_send: "Вы дополнительно отправите {amount} TON для обработки транзакции. Остаток TON будет возвращен вам.",
         processing: "Подключение...",
         success_tc: "Успешно! Теперь вернитесь на Fragment и нажмите Display in Telegram.",
         tc_link_placeholder: "Вставьте tc:// ссылку с Fragment",
@@ -250,8 +250,8 @@ const TRANSLATIONS = {
         status_rented: "Ожидает ссылку",
         just_now: "Только что",
         hours_ago: "ч. назад",
-        what_is_this_long: "Вы отправляете небольшую сумму (19.66 ₽) для покрытия комиссии сети и работы сервиса. Остаток (13.76 ₽) будет возвращен вам автоматически.",
-        fee_notice_text: "Вы отправляете небольшую сумму (19.66 ₽) для покрытия комиссии сети и работы сервиса. Остаток (13.76 ₽) будет возвращен вам автоматически.",
+        what_is_this_long: "Вы отправляете небольшую сумму TON для покрытия комиссии сети и работы сервиса. Остаток будет возвращен вам автоматически.",
+        fee_notice_text: "Вы отправляете небольшую сумму TON для покрытия комиссии сети и работы сервиса. Остаток будет возвращен вам автоматически.",
         wallet_mgmt: "Управление кошельком",
         copy_address: "Копировать адрес",
         disconnect_wallet: "Отключить кошелек",
@@ -978,10 +978,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         loadProfileData();
         // ✅ Await filter data first so ACTIVE_FILTERS state is stable before catalog loads
         await loadFilterData();
-
-        // 🚀 Social Proof & Reviews
-        loadPublicReviews();
-        checkUserRentalsForReview();
 
         // 🚀 NON-BLOCKING: Start loading but don't AWAIT here
         const catalogPromise = loadLiveItems(true);
@@ -3974,6 +3970,13 @@ function openPaymentModal() {
         selectionView.style.overflowY = 'hidden';
     }
 
+    // Force card tab active (crypto hidden for AuraPay moderation)
+    const paneCard = document.getElementById('pane-card');
+    const paneCrypto = document.getElementById('pane-crypto');
+    if (paneCard) { paneCard.classList.add('active'); }
+    if (paneCrypto) { paneCrypto.classList.remove('active'); paneCrypto.style.display = 'none'; }
+    SELECTED_PAY_METHOD = 'CLOUDTIPS';
+
     // Refresh fiat rates every time modal opens
     fetchFiatRates().then(() => updateTotalPrice());
     updateTotalPrice(); // Sync immediately (cached values)
@@ -4044,9 +4047,6 @@ function initModalSwipeClose(modal) {
 }
 
 function switchPayTab(tab) {
-    // Hidden for moderation
-    return;
-    /*
     document.querySelectorAll('.pay-tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.pay-tab-pane').forEach(p => p.classList.remove('active'));
 
@@ -4061,7 +4061,6 @@ function switchPayTab(tab) {
         document.getElementById('pay-total-currency').innerText = '₽';
         selectPayMethod('CLOUDTIPS');
     }
-    */
 }
 
 function selectPayMethod(method) {
@@ -4779,8 +4778,6 @@ async function submitTCLinkFromModal(orderId) {
         const res = await resp.json();
         if (res.status === 'ok') {
             showToast(t('link_saved_success'));
-            // Устанавливаем флаг для показа полоски отзыва ПОСЛЕ закрытия модалки
-            localStorage.setItem('show_review_strip_now', 'true');
             closePaymentModal();
             loadLiveItems(true);
         } else {
@@ -4895,155 +4892,3 @@ function showPostPaymentSuccessUI(orderId) {
 
 // Инициализация: получить актуальные контакты
 getOperatorContacts();
-
-/* ==================== REVIEW SYSTEM LOGIC ==================== */
-
-async function loadPublicReviews() {
-    try {
-        const resp = await apiFetch(`${BACKEND_URL}/api/public_reviews`);
-        const reviews = await resp.json();
-        const container = document.getElementById('public-reviews-scroll');
-        const section = document.getElementById('public-reviews-section');
-        
-        if (!container || !reviews.length) {
-            if (section) section.style.display = 'none';
-            return;
-        }
-
-        if (section) section.style.display = 'block';
-        container.innerHTML = reviews.map(r => {
-            const date = new Date(r.created_at).toLocaleDateString('ru-RU');
-            const stars = '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating);
-            const avatar = `${BACKEND_URL}/api/user-avatar?user_id=${r.user_id}`;
-            const displayName = r.username ? `@${r.username}` : (r.full_name || `User ${r.user_id}`);
-            
-            return `
-                <div class="review-card">
-                    <div class="review-header">
-                        <img src="${avatar}" class="review-user-avatar" onerror="this.src='https://ui-avatars.com/api/?name=U&background=2c2c2e&color=fff'">
-                        <div class="review-user-info">
-                            <div class="review-username">${displayName}</div>
-                            <div class="review-date">${date}</div>
-                        </div>
-                        <div class="review-rating">${stars}</div>
-                    </div>
-                    <div class="review-text">${r.review_text}</div>
-                    <div class="review-item-tag">${r.nft_name}</div>
-                </div>
-            `;
-        }).join('');
-    } catch (e) {
-        console.error("Failed to load reviews:", e);
-    }
-}
-
-async function checkUserRentalsForReview() {
-    try {
-        const strip = document.getElementById('review-strip');
-        if (!strip) return;
-
-        // Если пользователь уже закрыл полоску навсегда — не показываем
-        if (localStorage.getItem('review_dismissed_forever')) return;
-
-        // Показываем ТОЛЬКО если есть флаг недавней успешной привязки
-        if (localStorage.getItem('show_review_strip_now')) {
-            setTimeout(() => {
-                strip.classList.add('active');
-                // Удаляем флаг, чтобы при следующей загрузке не показывалось само
-                localStorage.removeItem('show_review_strip_now');
-            }, 1000); 
-        }
-    } catch (e) {
-        console.error("Failed to check review strip status:", e);
-    }
-}
-
-function closeReviewStrip() {
-    console.log("Closing review strip manually...");
-    const strip = document.getElementById('review-strip');
-    if (strip) strip.classList.remove('active');
-    
-    // Запоминаем, что пользователь не хочет видеть полоску
-    localStorage.setItem('review_dismissed_forever', 'true');
-}
-
-async function openReviewModal() {
-    console.log("Opening review modal...");
-    const modal = document.getElementById('review-modal');
-    const select = document.getElementById('review-nft-name');
-    if (!modal || !select) return;
-
-    try {
-        // Убрали проверку, так как полоска теперь показывается только после успеха
-        const resp = await apiFetch(`${BACKEND_URL}/api/user_rental_history`);
-        const data = await resp.json();
-        
-        if (data.items && data.items.length > 0) {
-            select.innerHTML = data.items.map(name => `<option value="${name}">${name}</option>`).join('');
-        } else {
-            // Если вдруг данных нет (крайний случай) - закрываем
-            closeReviewStrip();
-            return;
-        }
-        
-        modal.style.display = 'flex';
-        setTimeout(() => modal.classList.add('active'), 10);
-        
-        // Скрываем саму полоску после открытия модалки
-        const strip = document.getElementById('review-strip');
-        if (strip) strip.classList.remove('active');
-    } catch (e) {
-        console.error("Failed to open review modal:", e);
-    }
-}
-
-function closeReviewModal() {
-    const modal = document.getElementById('review-modal');
-    if (modal) {
-        modal.classList.remove('active');
-        setTimeout(() => modal.style.display = 'none', 300);
-    }
-}
-
-async function submitReview() {
-    const nftName = document.getElementById('review-nft-name').value;
-    const reviewText = document.getElementById('review-text-input').value.trim();
-    const ratingEl = document.querySelector('input[name="rating"]:checked');
-    const rating = ratingEl ? ratingEl.value : 5;
-
-    if (!reviewText) {
-        tg.showAlert("Пожалуйста, напишите пару слов о вашем опыте.");
-        return;
-    }
-
-    try {
-        const resp = await apiFetch(`${BACKEND_URL}/api/submit_review`, {
-            method: 'POST',
-            body: JSON.stringify({
-                nft_name: nftName,
-                review_text: reviewText,
-                rating: rating
-            })
-        });
-        
-        const res = await resp.json();
-        if (res.status === 'ok') {
-            tg.showAlert("Сердечно благодарим за ваш отзыв! Он появится в ленте после быстрой проверки.");
-            closeReviewModal();
-        } else {
-            tg.showAlert("Ошибка при отправке: " + (res.error || "неизвестно"));
-        }
-    } catch (e) {
-        console.error("Failed to submit review:", e);
-        tg.showAlert("Сетевая ошибка при отправке отзыва.");
-    }
-}
-
-// Global exports
-window.loadPublicReviews = loadPublicReviews;
-window.checkUserRentalsForReview = checkUserRentalsForReview;
-window.closeReviewStrip = closeReviewStrip;
-window.openReviewModal = openReviewModal;
-window.closeReviewModal = closeReviewModal;
-window.submitReview = submitReview;
-

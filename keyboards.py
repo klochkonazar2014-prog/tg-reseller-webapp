@@ -15,6 +15,7 @@ def main_menu(web_app_url, is_admin=False, lang='ru'):
             'history': "📜 История аренды",
             'info': "ℹ️ Информация",
             'support': "👨‍💻 Поддержка",
+            'reviews': "⭐ Отзывы",
             'admin': "⚙️ Админ-панель"
         },
         'en': {
@@ -23,6 +24,7 @@ def main_menu(web_app_url, is_admin=False, lang='ru'):
             'history': "📜 Rental History",
             'info': "ℹ️ Information",
             'support': "👨‍💻 Support",
+            'reviews': "⭐ Reviews",
             'admin': "⚙️ Admin Panel"
         }
     }
@@ -34,7 +36,7 @@ def main_menu(web_app_url, is_admin=False, lang='ru'):
          InlineKeyboardButton(text=t['history'], callback_data="history")],
         [InlineKeyboardButton(text=t['info'], callback_data="info"),
          InlineKeyboardButton(text=t['support'], callback_data="support")],
-        [InlineKeyboardButton(text="💬 Отзывы и оставить отзыв", callback_data="reviews_menu")]
+        [InlineKeyboardButton(text=t['reviews'], callback_data="reviews_menu")],
     ])
     if is_admin:
         keyboard.inline_keyboard.append([InlineKeyboardButton(text=t['admin'], callback_data="admin_panel")])
@@ -195,13 +197,7 @@ def history_keyboard(orders, web_app_url, page=0):
             InlineKeyboardButton(text="🖼 Посмотреть", url=tg_link)
         ])
 
-    # 4. Кнопка отзыва (только если активен или закончен)
-    if status in ['active', 'expired']:
-        keyboard.inline_keyboard.append([
-            InlineKeyboardButton(text="⭐ Оставить отзыв", callback_data=f"review_bot_{order['id']}")
-        ])
-
-    # 5. Кнопка подключения к Fragment (только если rented)
+    # 4. Кнопка подключения к Fragment (только если rented)
     if status == 'rented':
         sep = "&" if "?" in web_app_url else "?"
         connect_url = f"{web_app_url}{sep}order_id={order['id']}&action=connect"
@@ -233,9 +229,51 @@ def history_keyboard(orders, web_app_url, page=0):
     )])
 
     return keyboard
-def reviews_options_keyboard(web_app_url):
+
+def reviews_keyboard(web_app_url, lang='ru'):
+    """Меню раздела отзывов"""
+    back_text = "Назад" if lang == 'ru' else "Back"
+    review_url = web_app_url.rstrip('/').rsplit('/', 1)[0] + '/review' if '/' in web_app_url else web_app_url + '/review'
+    # Убираем path после домена и добавляем /review
+    import re
+    base = re.match(r'(https?://[^/]+)', web_app_url)
+    if base:
+        review_url = base.group(1) + '/review'
+    
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🔎 Просмотр существующих отзывов", web_app=WebAppInfo(url=web_app_url))],
-        [InlineKeyboardButton(text="⭐ Оставить отзыв", callback_data="history")],
-        [InlineKeyboardButton(text="Назад", callback_data="main_menu")]
+        [InlineKeyboardButton(text="✍️ Оставить отзыв", callback_data="write_review")],
+        [InlineKeyboardButton(text="📋 Посмотреть отзывы сервиса", url=review_url)],
+        [InlineKeyboardButton(
+            text=back_text,
+            callback_data="main_menu",
+            icon_custom_emoji_id="5359511310096672647"
+        )]
     ])
+
+
+def review_nft_select_keyboard(past_rentals: list, lang='ru'):
+    """Клавиатура выбора NFT для отзыва"""
+    back_text = "Назад" if lang == 'ru' else "Back"
+    rows = []
+    for i, nft_name in enumerate(past_rentals[:10]):  # макс 10 кнопок
+        short = nft_name[:30] + '…' if len(nft_name) > 30 else nft_name
+        rows.append([InlineKeyboardButton(text=f"🎁 {short}", callback_data=f"review_nft_{i}")])
+    rows.append([InlineKeyboardButton(
+        text=back_text,
+        callback_data="reviews_menu",
+        icon_custom_emoji_id="5359511310096672647"
+    )])
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+def confirm_review_keyboard(lang='ru'):
+    """Подтверждение публикации отзыва"""
+    publish_text = "✅ Опубликовать" if lang == 'ru' else "✅ Publish"
+    cancel_text = "✏️ Написать заново" if lang == 'ru' else "✏️ Rewrite"
+    back_text = "🏠 Главное меню" if lang == 'ru' else "🏠 Main Menu"
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=publish_text, callback_data="review_publish")],
+        [InlineKeyboardButton(text=cancel_text, callback_data="write_review")],
+        [InlineKeyboardButton(text=back_text, callback_data="main_menu")]
+    ])
+
