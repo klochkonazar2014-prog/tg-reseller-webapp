@@ -3001,8 +3001,8 @@ function updateTotalPrice() {
 
     if (payPriceRub || payPriceLava) {
         if (FIAT_RATES.RUB) {
-            // Считаем как бэкенд: rental + 0.2 TON gas, потом курс * 1.05
-            const tonForCard = parseFloat(total) + 0.2;
+            // Оставляем только реальный сгораемый газ (0.06 TON), убирая залог (0.2 TON) для рублевых оплат
+            const tonForCard = parseFloat(total) + 0.06;
             let rubVal = Math.round(tonForCard * FIAT_RATES.RUB * FIAT_FEE_MULTIPLIER);
 
             if (payPriceRub) payPriceRub.innerText = rubVal;
@@ -3588,6 +3588,7 @@ function loadProfileData() {
         const u = tg.initDataUnsafe.user;
         const avaEl = document.getElementById('profile-avatar');
         const headerAva = document.getElementById('header-mini-avatar');
+        const headerAvaLeft = document.getElementById('header-user-avatar-img');
         const nameEl = document.getElementById('profile-name');
         const idEl = document.getElementById('profile-id');
 
@@ -3597,6 +3598,7 @@ function loadProfileData() {
         if (u.photo_url) {
             if (avaEl) avaEl.src = u.photo_url;
             if (headerAva) headerAva.src = u.photo_url;
+            if (headerAvaLeft) headerAvaLeft.src = u.photo_url;
         }
     }
 
@@ -4096,7 +4098,7 @@ function updateMethodTotal(baseTotal) {
     const currentRubRate = FIAT_RATES.RUB || 230;
 
     if (SELECTED_PAY_METHOD === 'CLOUDTIPS') {
-        const tonForCard = base + 0.2 + (isCoverFeeChecked ? 0.14 : 0);
+        const tonForCard = base + 0.06;
         let rubVal = Math.round(tonForCard * currentRubRate * 1.05);
         total = rubVal > 0 ? rubVal : '...';
         if (totalCurrencyEl) totalCurrencyEl.innerText = '₽';
@@ -4109,7 +4111,7 @@ function updateMethodTotal(baseTotal) {
             continueBtn.style.opacity = (belowMin || overLimit) ? '0.4' : '1';
         }
     } else if (SELECTED_PAY_METHOD === 'LAVATOP') {
-        const tonForCard = base + 0.2 + (isCoverFeeChecked ? 0.14 : 0);
+        const tonForCard = base + 0.06;
         // DonatePay (на месте Lava): +11.5% комиссии
         let rubVal = Math.round(tonForCard * currentRubRate * 1.115);
         total = rubVal > 0 ? rubVal : '...';

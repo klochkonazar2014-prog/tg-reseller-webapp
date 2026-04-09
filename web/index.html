@@ -304,6 +304,11 @@
     <div class="header-column">
         <!-- Search -->
         <div class="search-row">
+            <!-- User Avatar Left -->
+            <div id="header-avatar-left" onclick="switchMainTab('profile')" style="width: 44px; height: 44px; border-radius: 50%; overflow: hidden; cursor: pointer; flex-shrink: 0; border: 1px solid rgba(255, 255, 255, 0.08); background: #1c1c1e;">
+                <img id="header-user-avatar-img" src="https://ui-avatars.com/api/?name=U&background=2c2c2e&color=fff" style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
+
             <div class="search-wrapper">
                 <svg style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #8b9bb4;"
                     width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -804,10 +809,10 @@
                         style="background:none; border:none; color:#8b9bb4; font-size:24px; padding:0; cursor:pointer;">✕</button>
                 </div>
 
-                <!-- CRYPTO TABS HIDDEN - Only card payments active during AuraPay moderation -->
-                <div class="payment-tabs" style="display:none !important;">
-                    <div class="pay-tab active" onclick="switchPayTab('crypto')" data-i18n="pay_crypto">Криптой</div>
-                    <div class="pay-tab" onclick="switchPayTab('card')" data-i18n="pay_card">Картой</div>
+                <!-- CRYPTO TAB HIDDEN - Card payment shown -->
+                <div class="payment-tabs">
+                    <div class="pay-tab" onclick="switchPayTab('crypto')" data-i18n="pay_crypto" style="display:none !important;">Криптой</div>
+                    <div class="pay-tab active" onclick="switchPayTab('card')" data-i18n="pay_card" style="width: 100%; text-align: left; padding-left: 5px;">Картой</div>
                 </div>
 
                 <div style="padding: 0 24px 30px;">

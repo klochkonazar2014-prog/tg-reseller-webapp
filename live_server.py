@@ -447,7 +447,7 @@ async def handle_filter_data(request):
             return web.json_response(json.load(f))
     return web.json_response({"error": "Cache not ready. Run parser.py"}, status=503)
 
-async def create_rental_order(user_id, nft_address, days):
+async def create_rental_order(user_id, nft_address, days, is_fiat=False):
     """Helper to create a rental order with proper markup and total price"""
     item = await db.get_item_by_id_addr(nft_address)
     if not item: return None, "Not found"
@@ -461,7 +461,7 @@ async def create_rental_order(user_id, nft_address, days):
         total_base = 0.23
         logging.info(f"Applying special logic for test NFT: {item['title']}")
     else:
-        total_base = round((item['original_price'] + markup) * days + 0.2, 2)
+        total_base = round((item['original_price'] + markup) * days + (0.06 if is_fiat else 0.2), 2)
     # Calculate referral commission before creating order
     referral_commission = 0.0
     referrer_id = await db.get_referrer_id(user_id)
@@ -700,7 +700,7 @@ async def handle_create_lavatop_invoice(request):
             return web.json_response({"error": "Lava.top not configured"}, status=500)
 
         # 1. Создаём заказ в нашей БД
-        res, err = await create_rental_order(user_id, nft_address, days)
+        res, err = await create_rental_order(user_id, nft_address, days, is_fiat=True)
         if err:
             return web.json_response({"error": err}, status=404)
 
@@ -1945,8 +1945,8 @@ async def handle_create_donatepay_invoice(request):
         nft_address = data.get("nft_address")
         days = int(data.get("days", 1))
         
-        # 1. Создание заказа в БД (уже учитывает 0.2 TON gas fee в total_price)
-        res, err = await create_rental_order(user_id, nft_address, days)
+        # 1. Создание заказа в БД (учитывает 0.06 TON burned gas для фиата)
+        res, err = await create_rental_order(user_id, nft_address, days, is_fiat=True)
         if err: return web.json_response({"error": err}, status=404)
         
         order_id = res['order_id']
