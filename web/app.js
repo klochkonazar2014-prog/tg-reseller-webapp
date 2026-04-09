@@ -2283,8 +2283,11 @@ function createItemCard(item) {
     const minDays = Math.floor((item.min_duration || 86400) / 86400);
 
     const myPrice = priceVal > 0 ? dailyPriceRub : "---";
-    // Min Price = DailyPrice * minDays
     const minTotalPrice = priceVal > 0 ? (dailyPriceRub * minDays) : "---";
+
+    const match = item.nft_name.match(/^(.*?)\s*(#\d+)$/);
+    const baseName = match ? match[1] : item.nft_name;
+    const numStr = match ? match[2] : "";
 
     // NEW: Rented status class
     if (item.status === 'rented') {
@@ -3939,7 +3942,6 @@ const FIAT_RATES = { USD: 0, RUB: 0 };
 
 async function fetchFiatRates() {
     try {
-        // Приоритетно запрашиваем курсы с нашего бэкенда (чтобы избежать CORS и ограничений API)
         const response = await apiFetch(`${BACKEND_URL}/api/rates`);
         const data = await response.json();
         
@@ -3951,7 +3953,6 @@ async function fetchFiatRates() {
             FIAT_RATES.RUB = parseFloat(data.rates.TON.prices.RUB);
         }
         
-        // Автоматически обновляем UI с новой ценой
         if (CURRENT_PAYMENT_ITEM) {
             updateTotalPrice();
         }
@@ -3961,7 +3962,6 @@ async function fetchFiatRates() {
             const fallbackResponse = await fetch('https://tonapi.io/v2/rates?tokens=ton&currencies=usd,rub');
             const fallbackData = await fallbackResponse.json();
             if (fallbackData && fallbackData.rates && fallbackData.rates.TON) {
-                FIAT_RATES.USD = parseFloat(fallbackData.rates.TON.prices.USD);
                 FIAT_RATES.RUB = parseFloat(fallbackData.rates.TON.prices.RUB);
                 if (CURRENT_PAYMENT_ITEM) updateTotalPrice();
             }
