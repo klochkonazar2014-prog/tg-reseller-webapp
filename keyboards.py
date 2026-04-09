@@ -52,20 +52,24 @@ def info_keyboard(lang='ru'):
         )]
     ])
 
-def support_keyboard(lang='ru', **kwargs):
+def support_keyboard(lang='ru', web_app_url=None, **kwargs):
     back_text = "Назад" if lang == 'ru' else "Back"
     support_text = "👨‍💻 Поддержка" if lang == 'ru' else "👨‍💻 Support"
     collab_text = "🤝 Сотрудничество" if lang == 'ru' else "🤝 Cooperation"
+    faq_text = "📖 Открыть FAQ" if lang == 'ru' else "📖 Open FAQ"
     
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text=support_text, url="https://t.me/Paulie_Gualtiery")],
-        [InlineKeyboardButton(text=collab_text, url="tg://user?id=7868560541")],
-        [InlineKeyboardButton(
-            text=back_text, 
-            callback_data="main_menu",
-            icon_custom_emoji_id="5359511310096672647"
-        )]
-    ])
+    keyboard = []
+    if web_app_url:
+        keyboard.append([InlineKeyboardButton(text=faq_text, web_app=WebAppInfo(url=web_app_url))])
+        
+    keyboard.append([InlineKeyboardButton(text=support_text, url="https://t.me/Paulie_Gualtiery")])
+    keyboard.append([InlineKeyboardButton(text=collab_text, url="tg://user?id=7868560541")])
+    keyboard.append([InlineKeyboardButton(
+        text=back_text, 
+        callback_data="main_menu",
+        icon_custom_emoji_id="5359511310096672647"
+    )])
+    return InlineKeyboardMarkup(inline_keyboard=keyboard)
 
 def profile_keyboard(lang='ru'):
     back_text = "Назад" if lang == 'ru' else "Back"
@@ -241,8 +245,8 @@ def reviews_keyboard(web_app_url, lang='ru'):
         review_url = base.group(1) + '/review'
     
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="✍️ Оставить отзыв", callback_data="write_review")],
-        [InlineKeyboardButton(text="📋 Посмотреть отзывы сервиса", url=review_url)],
+        [InlineKeyboardButton(text="💬 Написать отзыв", callback_data="write_review")],
+        [InlineKeyboardButton(text="💬 Посмотреть отзывы сервиса", web_app=WebAppInfo(url=review_url))],
         [InlineKeyboardButton(
             text=back_text,
             callback_data="main_menu",

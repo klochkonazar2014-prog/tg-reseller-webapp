@@ -205,7 +205,7 @@ async def start_cmd(message: Message, command: CommandObject):
             )
             await message.answer(
                 text,
-                reply_markup=kb.support_keyboard(lang=lang),
+                reply_markup=kb.support_keyboard(lang=lang, web_app_url=WEB_APP_URL),
                 parse_mode="HTML"
             )
             return
@@ -537,7 +537,7 @@ async def support_details(callback: CallbackQuery):
     )
     await callback.message.edit_text(
         text,
-        reply_markup=kb.support_keyboard(lang=lang),
+        reply_markup=kb.support_keyboard(lang=lang, web_app_url=WEB_APP_URL),
         parse_mode="HTML"
     )
 
@@ -699,8 +699,8 @@ async def write_review_handler(callback: CallbackQuery):
 
     if not rented:
         await callback.answer(
-            "❌ У вас пока нет аренды. Оформите аренду — и сможете оставить отзыв!" if lang == 'ru'
-            else "❌ You have no rentals yet. Complete a rental first!",
+            "вы никогда ничего не арендовывали - для начала арендуйте что либо чтобы оставить отзыв)" if lang == 'ru'
+            else "You have never rented anything - please rent something first to leave a review)",
             show_alert=True
         )
         return
@@ -1095,9 +1095,9 @@ async def inline_handler(query: InlineQuery):
 
                 # Format price
                 try:
-                    price_rounded = round(float(item['price_per_day']), 4)
+                    price_rub = int(float(item['price_per_day']) * 230)
                 except:
-                    price_rounded = 0.0
+                    price_rub = 0
 
                 bot_username_str = "OctoRent_bot"
                 # 🚀 STABLE BOT LINK: Using ?start= instead of ?startapp= to prevent BOT_INVALID when domain changes
@@ -1133,7 +1133,7 @@ async def inline_handler(query: InlineQuery):
                     f"{title_prefix} <b>{item_title}</b>\n"
                     f"━━━━━━━━━━━━━━━━━━━━\n"
                     f"📁 <b>Тип:</b> <code>{item_type_label}</code>\n"
-                    f"💰 <b>Цена:</b> <code>{price_rounded} TON/день</code>\n"
+                    f"💰 <b>Цена:</b> <code>{price_rub} ₽/день</code>\n"
                     f"{time_info}"
                     f"━━━━━━━━━━━━━━━━━━━━\n"
                     f"✨ <i>OctoRent— Аренда NFT в один клик</i>"
@@ -1148,11 +1148,11 @@ async def inline_handler(query: InlineQuery):
                     photo_url=image_url,
                     thumbnail_url=image_url,
                     title=f"{title_prefix} {item_title}",
-                    description=f"⚡️ {price_rounded} TON/day | Rent Now",
+                    description=f"⚡️ {price_rub} ₽/day | Rent Now",
                     caption=caption_text,
                     parse_mode="HTML",
                     reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
-                        InlineKeyboardButton(text="⚡️ Арендовать за " + str(price_rounded) + " TON", url=share_link)
+                        InlineKeyboardButton(text="⚡️ Арендовать за " + str(price_rub) + " ₽", url=share_link)
                     ]])
                 ))
             except Exception as e:

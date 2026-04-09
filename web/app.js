@@ -43,11 +43,12 @@ function updateDynamicTexts() {
 }
 
 function handleSupportClick() {
-    if (window.Telegram && window.Telegram.WebApp) {
-        window.Telegram.WebApp.close();
+    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openTelegramLink) {
+        window.Telegram.WebApp.openTelegramLink('https://t.me/OctoRent_bot?start=support');
+        setTimeout(() => window.Telegram.WebApp.close(), 100);
+    } else {
+        window.location.href = 'https://t.me/OctoRent_bot?start=support';
     }
-    // Deep link directly to the bot's support handler
-    window.location.href = 'https://t.me/OctoRent_bot?start=support';
 }
 
 /**
@@ -383,12 +384,11 @@ const TRANSLATIONS = {
         connect_fragment_title: "Подключить Fragment",
         help_fee_body: `
             <div style="font-size: 14px; line-height: 1.6; color: #fff;">
-                Для активации <b>смарт-контрактов для оплаты комисии блокчейна</b> необходимо отправить <b>0.2 TON</b>, остаток которых (<b>~0.14 TON</b>) будет возвращен вам автоматически после завершения срока аренды.
+                Для обеспечения работы <b>смарт-контрактов сети</b> в финальную цену уже включён разовый сбор блокчейна за газ (<b>~0.06 TON</b>). Дополнительных депозитов не требуется.
                 <br><br>
                 <div style="display: flex; gap: 8px; align-items: flex-start; background: rgba(52, 199, 89, 0.1); padding: 12px; border-radius: 12px; border: 1px solid rgba(52, 199, 89, 0.2);">
                     <span style="font-size: 18px;">✅</span>
-                    <span style="color: #fff; font-size: 13px;"><b>Возврат работает автоматически:</b><br>
-                    Смарт-контракт заберет только фактическую комиссию сети. Весь неиспользованный остаток моментально и автоматически возвращается на ваш кошелек!</span>
+                    <span style="color: #fff; font-size: 13px;"><b>Оптимизация платежей:</b><br>Мы берем всю техническую логику залогов блокчейна на себя! Вы оплачиваете только саму аренду и фактический сожженный газ.</span>
                 </div>
             </div>
         `,
@@ -2278,7 +2278,7 @@ function createItemCard(item) {
     card.className = "card";
 
     const priceVal = parseFloat(item.price_per_day || 0);
-    const myPrice = priceVal > 0 ? priceVal.toFixed(2) : "---";
+    const myPrice = priceVal > 0 ? Math.round(priceVal * (FIAT_RATES.RUB || 230)) : "---";
     const match = item.nft_name.match(/^(.*?)\s*(#\d+)$/);
     const baseName = match ? match[1] : item.nft_name;
     const numStr = match ? match[2] : "";
@@ -2649,7 +2649,7 @@ async function openProductView(item) {
 
     // Pricing & Duration
     let rawP = parseFloat(item.price_per_day) || 0;
-    const dailyPrice = rawP > 0 ? rawP.toFixed(2) : "---";
+    const dailyPrice = rawP > 0 ? Math.round(rawP * (FIAT_RATES.RUB || 230)) : "---";
     const dailyPriceUsd = (rawP > 0 && GLOBAL_TON_PRICE) ? `~$${(rawP * GLOBAL_TON_PRICE).toFixed(2)}` : (rawP > 0 ? '---' : '');
     const minDays = Math.floor((item.min_duration || 86400) / 86400);
     const maxDays = Math.floor((item.max_duration || 2592000) / 86400);
@@ -2685,12 +2685,8 @@ async function openProductView(item) {
 
     let feeNotice = document.querySelector('.fee-notice-box');
     if (feeNotice) {
-        feeNotice.style.display = 'block';
-        feeNotice.style.width = '100%';
-        feeNotice.style.boxSizing = 'border-box';
-        feeNotice.innerHTML = `
-                <span><span id="fee-notice-text">${t('fee_notice_text')}</span>
-                    <a href="javascript:void(0)" onclick="showHelp('fee')" style="color: #0088cc; text-decoration: none;" id="fee-what-mean" data-i18n="what_is_this">${t('what_is_this')}</a></span>`;
+        feeNotice.style.display = 'none';
+        feeNotice.innerHTML = '';
     }
 
     document.getElementById('rent-duration-input').value = minDays;
@@ -4555,44 +4551,15 @@ function showBlockchainFeeDetails(e) {
 
     const body = document.getElementById('fee-details-body');
     
-    if (SELECTED_PAY_METHOD === 'CLOUDTIPS') {
+    if (SELECTED_PAY_METHOD === 'CLOUDTIPS' || SELECTED_PAY_METHOD === 'DONATEPAY') {
         body.innerHTML = `
-            <div style="font-size: 14px; line-height: 1.6; color: #fff;">
-                <p style="color: #fff; font-weight: 700; margin-bottom: 12px; font-size: 15px;">${t('fee_details_rub_title')}</p>
-                <p style="color: #8b9bb4; margin-bottom: 16px;">${t('fee_details_rub_desc')}</p>
-                
-                <div style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 12px; margin-bottom: 16px;">
-                    <div style="font-family: monospace; font-size: 13px; color: #00d488; margin-bottom: 4px;">${t('fee_details_formula_label')}</div>
-                    <div style="font-size: 15px; font-weight: 700;">${t('fee_details_formula_val')}</div>
-                </div>
-
-                <ul style="color: #8b9bb4; padding-left: 20px; list-style-type: decimal;">
-                    <li style="margin-bottom: 8px;"><b>${t('fee_details_ton_gas')}</b> ${t('fee_details_ton_gas_desc')}</li>
-                    <li style="margin-bottom: 8px;"><b>${t('fee_details_rate')}</b> ${t('fee_details_rate_desc')}</li>
-                    <li style="margin-bottom: 8px;"><b>${t('fee_details_markup')}</b> ${t('fee_details_markup_desc')}</li>
-                </ul>
-
-                <p style="color: #FF9500; font-size: 12px; margin-top: 16px; display: flex; gap: 8px; align-items: flex-start;">
-                    <span>⚠️</span>
-                    <span>${t('fee_details_rub_warning')}</span>
-                </p>
+            <div style="font-size: 15px; text-align: center; color: #fff; padding: 20px;">
+                Дополнительно к получившейся сумме нужно добавить 4 рубля (комиссия платежного шлюза)
             </div>`;
     } else {
         body.innerHTML = `
-            <div style="font-size: 14px; line-height: 1.6; color: #fff;">
-                <p style="color: #8b9bb4;">${t('fee_details_ton_desc')}</p>
-                
-                <p style="margin-top: 14px;"><b>${t('fee_details_xrocket_title')}</b></p>
-                <p style="color: #8b9bb4;">${t('fee_details_xrocket_desc')}</p>
-                
-                <p style="margin-top: 14px;"><b>${t('fee_details_why_external_title')}</b></p>
-                <p style="color: #8b9bb4;">${t('fee_details_why_external_desc')}</p>
-                
-                <p style="margin-top: 14px;"><b>${t('fee_details_total_calc_title')}</b></p>
-                <ul style="color: #8b9bb4; padding-left: 20px; margin-top: 6px;">
-                    <li><b>${t('fee_details_ton_wallet')}</b> ${t('fee_details_ton_wallet_desc')}</li>
-                    <li><b>${t('fee_details_xrocket_label')}</b> ${t('fee_details_xrocket_desc_total')}</li>
-                </ul>
+            <div style="font-size: 15px; text-align: center; color: #fff; padding: 20px;">
+                Дополнительно к получившейся сумме нужно добавить 4 рубля (комиссия платежного шлюза)
             </div>`;
     }
 
