@@ -587,6 +587,16 @@ async def noop_handler(callback: CallbackQuery):
     # Просто гасим уведомление для информационных кнопок
     await callback.answer()
 
+@dp.callback_query(F.data == "reviews_menu")
+async def reviews_menu_handler(callback: CallbackQuery):
+    await callback.message.edit_text(
+        "📝 <b>Что вас интересует?</b>\n\n"
+        "Вы можете просмотреть отзывы других пользователей прямо в приложении или оставить свой честный отзыв на арендованный подарок.",
+        reply_markup=kb.reviews_options_keyboard(WEB_APP_URL),
+        parse_mode="HTML"
+    )
+    await callback.answer()
+
 @dp.callback_query(F.data == "support")
 async def support_details(callback: CallbackQuery):
     lang = await db.get_user_language(callback.from_user.id)

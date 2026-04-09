@@ -33,7 +33,8 @@ def main_menu(web_app_url, is_admin=False, lang='ru'):
         [InlineKeyboardButton(text=t['profile'], callback_data="profile"), 
          InlineKeyboardButton(text=t['history'], callback_data="history")],
         [InlineKeyboardButton(text=t['info'], callback_data="info"),
-         InlineKeyboardButton(text=t['support'], callback_data="support")]
+         InlineKeyboardButton(text=t['support'], callback_data="support")],
+        [InlineKeyboardButton(text="💬 Отзывы и оставить отзыв", callback_data="reviews_menu")]
     ])
     if is_admin:
         keyboard.inline_keyboard.append([InlineKeyboardButton(text=t['admin'], callback_data="admin_panel")])
@@ -232,4 +233,9 @@ def history_keyboard(orders, web_app_url, page=0):
     )])
 
     return keyboard
-
+def reviews_options_keyboard(web_app_url):
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🔎 Просмотр существующих отзывов", web_app=WebAppInfo(url=web_app_url))],
+        [InlineKeyboardButton(text="⭐ Оставить отзыв", callback_data="history")],
+        [InlineKeyboardButton(text="Назад", callback_data="main_menu")]
+    ])

@@ -4779,6 +4779,8 @@ async function submitTCLinkFromModal(orderId) {
         const res = await resp.json();
         if (res.status === 'ok') {
             showToast(t('link_saved_success'));
+            // Устанавливаем флаг для показа полоски отзыва ПОСЛЕ закрытия модалки
+            localStorage.setItem('show_review_strip_now', 'true');
             closePaymentModal();
             loadLiveItems(true);
         } else {
@@ -4940,49 +4942,56 @@ async function checkUserRentalsForReview() {
         const strip = document.getElementById('review-strip');
         if (!strip) return;
 
-        // Don't show if dismissed in this session
-        if (sessionStorage.getItem('review_strip_dismissed')) return;
+        // Если пользователь уже закрыл полоску навсегда — не показываем
+        if (localStorage.getItem('review_dismissed_forever')) return;
 
-        const resp = await apiFetch(`${BACKEND_URL}/api/user_rental_history`);
-        const data = await resp.json();
-        
-        if (data.items && data.items.length > 0) {
+        // Показываем ТОЛЬКО если есть флаг недавней успешной привязки
+        if (localStorage.getItem('show_review_strip_now')) {
             setTimeout(() => {
                 strip.classList.add('active');
-            }, 3000); // Wait 3s after load
+                // Удаляем флаг, чтобы при следующей загрузке не показывалось само
+                localStorage.removeItem('show_review_strip_now');
+            }, 1000); 
         }
     } catch (e) {
-        console.error("Failed to check rental history:", e);
+        console.error("Failed to check review strip status:", e);
     }
 }
 
 function closeReviewStrip() {
+    console.log("Closing review strip manually...");
     const strip = document.getElementById('review-strip');
     if (strip) strip.classList.remove('active');
-    sessionStorage.setItem('review_strip_dismissed', 'true');
+    
+    // Запоминаем, что пользователь не хочет видеть полоску
+    localStorage.setItem('review_dismissed_forever', 'true');
 }
 
 async function openReviewModal() {
+    console.log("Opening review modal...");
     const modal = document.getElementById('review-modal');
     const select = document.getElementById('review-nft-name');
     if (!modal || !select) return;
 
     try {
+        // Убрали проверку, так как полоска теперь показывается только после успеха
         const resp = await apiFetch(`${BACKEND_URL}/api/user_rental_history`);
         const data = await resp.json();
         
-        if (!data.items || !data.items.length) {
-            tg.showConfirm("У вас еще нет арендованных предметов для отзыва. Хотите перейти в каталог?", (ok) => {
-                if (ok) switchTab('market');
-            });
+        if (data.items && data.items.length > 0) {
+            select.innerHTML = data.items.map(name => `<option value="${name}">${name}</option>`).join('');
+        } else {
+            // Если вдруг данных нет (крайний случай) - закрываем
+            closeReviewStrip();
             return;
         }
-
-        select.innerHTML = data.items.map(name => `<option value="${name}">${name}</option>`).join('');
         
         modal.style.display = 'flex';
         setTimeout(() => modal.classList.add('active'), 10);
-        closeReviewStrip();
+        
+        // Скрываем саму полоску после открытия модалки
+        const strip = document.getElementById('review-strip');
+        if (strip) strip.classList.remove('active');
     } catch (e) {
         console.error("Failed to open review modal:", e);
     }
