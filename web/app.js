@@ -753,8 +753,8 @@ function showToast(msg) {
         setTimeout(() => { if (toast.parentNode === container) toast.remove(); }, 300);
     }, 3000);
 }
-const renderTonAmount = (val) => `<span class="icon-before icon-ton tm-amount">${val}</span>`;
-const renderTonAmountNoIcon = (val) => `<span class="tm-amount icon-ton" style="font-size:inherit;">${val}</span>`;
+const renderTonAmount = (val) => `<span class="tm-amount">${val} ₽</span>`;
+const renderTonAmountNoIcon = (val) => `<span class="tm-amount" style="font-size:inherit;">${val} ₽</span>`;
 
 function truncateMiddle(str, maxLength = 9) {
     if (!str || str.length <= maxLength) return str;
@@ -2287,7 +2287,7 @@ function createItemCard(item) {
     const maxDaysFinal = Math.floor((item.max_duration || 2592000) / 86400);
 
     // Total min price for the grid
-    const minTotalPrice = priceVal > 0 ? (priceVal * minDays).toFixed(2) : "---";
+    const minTotalPrice = priceVal > 0 ? Math.round(priceVal * minDays * (FIAT_RATES.RUB || 230)) : "---";
 
     // NEW: Rented status class
     if (item.status === 'rented') {
@@ -2661,7 +2661,7 @@ async function openProductView(item) {
                     <div>
                         <div id="view-label-price" class="pricing-label" style="font-size: 11px; color:#8794a1; font-weight:600; margin-bottom:4px;" data-i18n="price_per_day">${t('price_per_day')}</div>
                         <div class="pricing-value">
-                            <div id="view-daily-price" style="font-size: 16px; font-weight:700; color:#fff;"><span class="icon-before icon-ton tm-amount">${dailyPrice}</span></div>
+                            <div id="view-daily-price" style="font-size: 16px; font-weight:700; color:#fff;"><span class="tm-amount">${dailyPrice} ₽</span></div>
                             <div id="view-daily-price-usd" style="font-size: 11px; color:#8794a1; margin-top:2px;">${dailyPriceUsd}</div>
                         </div>
                     </div>

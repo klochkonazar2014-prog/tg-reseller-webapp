@@ -237,12 +237,7 @@ def history_keyboard(orders, web_app_url, page=0):
 def reviews_keyboard(web_app_url, lang='ru'):
     """Меню раздела отзывов"""
     back_text = "Назад" if lang == 'ru' else "Back"
-    review_url = web_app_url.rstrip('/').rsplit('/', 1)[0] + '/review' if '/' in web_app_url else web_app_url + '/review'
-    # Убираем path после домена и добавляем /review
-    import re
-    base = re.match(r'(https?://[^/]+)', web_app_url)
-    if base:
-        review_url = base.group(1) + '/review'
+    review_url = web_app_url.rstrip('/') + '/review'
     
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="💬 Написать отзыв", callback_data="write_review")],

@@ -175,8 +175,7 @@
                             style="font-size: 11px; color:#8794a1; font-weight:600; margin-bottom:4px;"
                             data-i18n="price_per_day">Цена в день</div>
                         <div class="pricing-value">
-                            <div id="view-daily-price" style="font-size: 16px; font-weight:700; color:#fff;"><span
-                                    class="icon-before icon-ton tm-amount">1.75</span></div>
+                            <div id="view-daily-price" style="font-size: 16px; font-weight:700; color:#fff;"><span class="tm-amount">402 ₽</span></div>
                             <div id="view-daily-price-usd" style="font-size: 11px; color:#8794a1; margin-top:2px;">
                                 ~$349.49</div>
                         </div>
@@ -322,11 +321,11 @@
             <!-- Unified Header Badge (Pill) - TEMPORARILY HIDDEN for AuraPay moderation -->
             <div id="header-unified-badge" class="header-unified-badge" onclick="handleHeaderBadgeClick()" style="display:none !important;">
                 <div id="header-wallet-pill" class="header-pill-content" style="display:none;">
-                    <span class="icon-ton"></span>
+                    <span style="font-weight: 800; margin-right: 4px;">₽</span>
                     <span id="header-wallet-address">Wallet</span>
                 </div>
                 <div id="header-connect-pill" class="header-pill-content" style="display:flex;">
-                    <span class="icon-ton"></span>
+                    <span style="font-weight: 800; margin-right: 4px;">₽</span>
                     <span id="header-wallet-connect-text">Connect Wallet</span>
                 </div>
                 <img id="header-mini-avatar" src="https://ui-avatars.com/api/?name=U&background=2c2c2e&color=fff"
@@ -393,15 +392,13 @@
                 <div class="filter-input-row"
                     style="padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
                     <div class="filter-input-wrapper" style="flex: 1;">
-                        <span class="icon-ton-white"
-                            style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); opacity: 0.6;"></span>
+                        <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); opacity: 0.6; color: #fff; font-weight: 800; font-size: 18px;">₽</span>
                         <input type="number" id="filter-price-from" placeholder="От" data-i18n="filter_price_from"
                             style="padding-left: 42px !important;">
                     </div>
                     <div style="color: rgba(255, 255, 255, 0.2); font-weight: 800; font-size: 18px;">—</div>
                     <div class="filter-input-wrapper" style="flex: 1;">
-                        <span class="icon-ton-white"
-                            style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); opacity: 0.6;"></span>
+                        <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); opacity: 0.6; color: #fff; font-weight: 800; font-size: 18px;">₽</span>
                         <input type="number" id="filter-price-to" placeholder="До" data-i18n="filter_price_to"
                             style="padding-left: 42px !important;">
                     </div>
@@ -641,7 +638,7 @@
         <div id="profile-label-wallet" class="dash-section-title" data-i18n="profile_wallet_title" style="display:none !important;">Wallet</div>
         <div id="wallet-btn-container" style="display:none !important; margin-bottom: 24px; padding: 0 16px;">
             <button id="profile-ton-connect-btn" class="blue-btn" onclick="handleProfileWalletClick()">
-                <span class="icon-ton"></span>
+                <span style="font-weight: 800; margin-right: 4px;">₽</span>
                 <span id="blue-wallet-text" data-i18n="profile_connect_wallet">Connect Wallet</span>
             </button>
         </div>
