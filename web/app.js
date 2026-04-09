@@ -975,6 +975,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         // ✅ Await filter data first so ACTIVE_FILTERS state is stable before catalog loads
         await loadFilterData();
 
+        // 💱 Fetch real TON/RUB rate and WAIT for it before rendering catalog
+        // Timeout 1.5s so a slow API doesn't block the whole app startup
+        await Promise.race([fetchFiatRates(), new Promise(r => setTimeout(r, 1500))]);
+
         // 🚀 NON-BLOCKING: Start loading but don't AWAIT here
         const catalogPromise = loadLiveItems(true);
 
