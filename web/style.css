@@ -4631,7 +4631,7 @@ tc-root>div {
 /* Review Strip (Floating bar) */
 .review-strip {
     position: fixed;
-    bottom: 90px; /* Above nav bar */
+    bottom: 110px; /* Above nav bar */
     left: 16px;
     right: 16px;
     background: rgba(28, 28, 30, 0.85);

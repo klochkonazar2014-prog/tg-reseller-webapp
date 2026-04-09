@@ -14,6 +14,8 @@ from aiogram.types import (
     InputTextMessageContent, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo,
     MenuButtonWebApp, ReplyKeyboardRemove
 )
+from aiogram.fsm.state import State, StatesGroup
+from aiogram.fsm.context import FSMContext
 
 import database as db
 import keyboards as kb
@@ -165,6 +167,90 @@ async def get_nft_full_details(nft_address, col_name):
     return details.get("name"), metadata
 
 # --- Обработчики ---
+
+# --- Система отзывов в боте (FSM) ---
+
+class ReviewStates(StatesGroup):
+    waiting_for_rating = State()
+    waiting_for_text = State()
+
+@dp.callback_query(F.data.startswith("review_bot_"))
+async def handle_review_bot_start(callback: CallbackQuery, state: FSMContext):
+    order_id = int(callback.data.replace("review_bot_", ""))
+    order = await db.get_order_by_id(order_id)
+    
+    if not order:
+        await callback.answer("❌ Заказ не найден.", show_alert=True)
+        return
+
+    await state.update_data(review_order_id=order_id, nft_name=order['nft_name'])
+    await state.set_state(ReviewStates.waiting_for_rating)
+    
+    kb_stars = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="⭐", callback_data="rate_1"),
+         InlineKeyboardButton(text="⭐⭐", callback_data="rate_2"),
+         InlineKeyboardButton(text="⭐⭐⭐", callback_data="rate_3")],
+        [InlineKeyboardButton(text="⭐⭐⭐⭐", callback_data="rate_4"),
+         InlineKeyboardButton(text="⭐⭐⭐⭐⭐", callback_data="rate_5")],
+        [InlineKeyboardButton(text="❌ Отмена", callback_data="cancel_review")]
+    ])
+    
+    await callback.message.answer(
+        f"🌟 <b>Оставьте отзыв для {order['nft_name']}</b>\n\n"
+        f"Пожалуйста, выберите вашу оценку:",
+        reply_markup=kb_stars,
+        parse_mode="HTML"
+    )
+    await callback.answer()
+
+@dp.callback_query(ReviewStates.waiting_for_rating, F.data.startswith("rate_"))
+async def handle_rating_selection(callback: CallbackQuery, state: FSMContext):
+    rating = int(callback.data.replace("rate_", ""))
+    await state.update_data(review_rating=rating)
+    
+    await state.set_state(ReviewStates.waiting_for_text)
+    await callback.message.edit_text(
+        f"⭐ Вы выбрали оценку: <b>{rating}/5</b>\n\n"
+        f"Теперь, пожалуйста, напишите пару слов о вашем опыте аренды (отправьте сообщение в чат):",
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="❌ Отмена", callback_data="cancel_review")]]),
+        parse_mode="HTML"
+    )
+    await callback.answer()
+
+@dp.message(ReviewStates.waiting_for_text)
+async def handle_review_text(message: Message, state: FSMContext):
+    data = await state.get_data()
+    order_id = data.get("review_order_id")
+    nft_name = data.get("nft_name")
+    rating = data.get("review_rating")
+    review_text = message.text.strip()
+    
+    if not review_text:
+        await message.answer("⚠️ Пожалуйста, напишите текстовый отзыв.")
+        return
+
+    # Сохраняем в БД
+    success = await db.add_review(message.from_user.id, nft_name, review_text, rating)
+    
+    if success:
+        await message.answer(
+            "✅ <b>Спасибо за ваш отзыв!</b>\n\n"
+            "Он появится в Mini App после быстрой проверки модератором.",
+            parse_mode="HTML"
+        )
+        logging.info(f"New review from {message.from_user.id} for {nft_name} (Rating: {rating})")
+    else:
+        await message.answer("❌ Ошибка при сохранении отзыва. Попробуйте позже.")
+
+    await state.clear()
+
+@dp.callback_query(F.data == "cancel_review")
+async def handle_cancel_review(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
+    await callback.message.edit_text("❌ Оставление отзыва отменено.")
+    await callback.answer()
+
+async def set_default_commands(bot: Bot): pass
 
 @dp.message(Command("start"))
 async def start_cmd(message: Message, command: CommandObject):

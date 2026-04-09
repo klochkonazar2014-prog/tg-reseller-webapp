@@ -71,10 +71,10 @@ async def send_user_notification(user_id: int, nft_name: str, order_id: int):
             f"Мы будем очень благодарны, если вы оставите пару слов о нашем сервисе. Это поможет нам стать лучше! 👇"
         )
         
-        # Кнопка для открытия Mini App на секции отзывов
+        # Кнопка для начала процесса отзыва прямо в боте
         kb = {
             "inline_keyboard": [
-                [{"text": "⭐ Оставить отзыв", "web_app": {"url": os.getenv("WEB_APP_URL")}}]
+                [{"text": "⭐ Оставить отзыв", "callback_data": f"review_bot_{order_id}"}]
             ]
         }
         

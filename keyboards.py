@@ -194,7 +194,13 @@ def history_keyboard(orders, web_app_url, page=0):
             InlineKeyboardButton(text="🖼 Посмотреть", url=tg_link)
         ])
 
-    # 4. Кнопка подключения к Fragment (только если rented)
+    # 4. Кнопка отзыва (только если активен или закончен)
+    if status in ['active', 'expired']:
+        keyboard.inline_keyboard.append([
+            InlineKeyboardButton(text="⭐ Оставить отзыв", callback_data=f"review_bot_{order['id']}")
+        ])
+
+    # 5. Кнопка подключения к Fragment (только если rented)
     if status == 'rented':
         sep = "&" if "?" in web_app_url else "?"
         connect_url = f"{web_app_url}{sep}order_id={order['id']}&action=connect"
