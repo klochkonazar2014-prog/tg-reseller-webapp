@@ -2277,10 +2277,10 @@ function createItemCard(item) {
     // The design is now unified in CSS, so base 'card' is enough
     card.className = "card";
 
+    // price_per_day already includes markup (added by parser.py)
     const priceVal = parseFloat(item.price_per_day || 0);
-    // Daily Price = round((PriceTON + Markup) * Rate)
-    const markup = priceVal > 0 ? calculateMarkup(priceVal) : 0;
-    const dailyPriceRub = priceVal > 0 ? Math.round((priceVal + markup) * (FIAT_RATES.RUB || 230)) : "---";
+    // Daily Price = price_per_day * Rate (NO extra markup!)
+    const dailyPriceRub = priceVal > 0 ? Math.round(priceVal * (FIAT_RATES.RUB || 230)) : "---";
     const minDays = Math.floor((item.min_duration || 86400) / 86400);
 
     const myPrice = priceVal > 0 ? dailyPriceRub : "---";
@@ -2649,9 +2649,9 @@ async function openProductView(item) {
     if (addrDom) addrDom.style.display = 'none';
 
     // Pricing & Duration
+    // price_per_day already includes markup (added by parser.py) - NO extra markup needed
     let rawP = parseFloat(item.price_per_day) || 0;
-    const markup = rawP > 0 ? calculateMarkup(rawP) : 0;
-    const dailyPrice = rawP > 0 ? Math.round((rawP + markup) * (FIAT_RATES.RUB || 230)) : "---";
+    const dailyPrice = rawP > 0 ? Math.round(rawP * (FIAT_RATES.RUB || 230)) : "---";
     const dailyPriceUsd = (rawP > 0 && GLOBAL_TON_PRICE) ? `~$${(rawP * GLOBAL_TON_PRICE).toFixed(2)}` : (rawP > 0 ? '---' : '');
     const minDays = Math.floor((item.min_duration || 86400) / 86400);
     const maxDays = Math.floor((item.max_duration || 2592000) / 86400);
@@ -2971,9 +2971,8 @@ function updateTotalPrice() {
 
     const priceSpan = document.getElementById('rent-btn-price');
     if (priceSpan) {
-        // Rent Button = DailyPrice * SelectedDays
-        const markup = dp > 0 ? calculateMarkup(dp) : 0;
-        const dailyPriceRub = Math.round((dp + markup) * (FIAT_RATES.RUB || 230));
+        // dp = price_per_day (already includes markup from parser.py)
+        const dailyPriceRub = Math.round(dp * (FIAT_RATES.RUB || 230));
         const rubValSubtotal = dailyPriceRub * dur;
         priceSpan.innerText = rubValSubtotal + " ₽";
     }
@@ -4120,13 +4119,13 @@ function updateMethodTotal(baseTotal) {
     const currentRubRate = FIAT_RATES.RUB || 230;
 
     if (SELECTED_PAY_METHOD === 'CLOUDTIPS') {
+        // dp = price_per_day (already includes markup from parser.py)
         const dp = parseFloat(CURRENT_PAYMENT_ITEM.price_per_day) || 0;
         const dur = parseInt(document.getElementById('rent-duration-input')?.value || 1);
-        const markup = dp > 0 ? calculateMarkup(dp) : 0;
-        const dailyPriceRub = Math.round((dp + markup) * currentRubRate);
+        const dailyPriceRub = Math.round(dp * currentRubRate);
         const subtotal = dailyPriceRub * dur;
         
-        let rubVal = Math.round(subtotal * 1.05);
+        let rubVal = Math.round(subtotal * 1.05); // +5% acquiring fee
         total = rubVal > 0 ? rubVal : '...';
         if (totalAmountEl) totalAmountEl.innerText = total;
         if (totalCurrencyEl) totalCurrencyEl.innerText = '₽';
@@ -4140,13 +4139,13 @@ function updateMethodTotal(baseTotal) {
             continueBtn.style.opacity = (belowMin || overLimit) ? '0.4' : '1';
         }
     } else if (SELECTED_PAY_METHOD === 'LAVATOP') {
+        // dp = price_per_day (already includes markup from parser.py)
         const dp = parseFloat(CURRENT_PAYMENT_ITEM.price_per_day) || 0;
         const dur = parseInt(document.getElementById('rent-duration-input')?.value || 1);
-        const markup = dp > 0 ? calculateMarkup(dp) : 0;
-        const dailyPriceRub = Math.round((dp + markup) * currentRubRate);
+        const dailyPriceRub = Math.round(dp * currentRubRate);
         const subtotal = dailyPriceRub * dur;
         
-        let rubVal = Math.round(subtotal * 1.115);
+        let rubVal = Math.round(subtotal * 1.115); // +11.5% acquiring fee
         total = rubVal > 0 ? rubVal : '...';
         if (totalAmountEl) totalAmountEl.innerText = total;
         if (totalCurrencyEl) totalCurrencyEl.innerText = '₽';
