@@ -127,7 +127,8 @@ async def handle_review_page(request):
         return web.Response(text=content, content_type='text/html', headers={
             'Cache-Control': 'no-cache, no-store, must-revalidate',
             'Pragma': 'no-cache',
-            'Expires': '0'
+            'Expires': '0',
+            'X-Review-Page': 'true'
         })
     return web.Response(status=404, text='Review page not found')
 

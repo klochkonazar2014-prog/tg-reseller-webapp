@@ -223,13 +223,13 @@ body.tab-market:not(.tab-gifts) .chips-row {
     color: #fff;
 }
 
-/* Restored underline as requested */
+/* Restored underline as requested - Shortened version */
 .pay-tab.active::after {
     content: '' !important;
     position: absolute !important;
     bottom: -1px !important;
     left: 0 !important;
-    width: 100% !important;
+    width: 70px !important;
     height: 2px !important;
     background: #0088cc !important;
     border-radius: 2px !important;

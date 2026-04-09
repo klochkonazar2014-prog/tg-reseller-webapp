@@ -699,7 +699,7 @@ async def write_review_handler(callback: CallbackQuery):
 
     if not rented:
         await callback.answer(
-            "вы никогда ничего не арендовывали - для начала арендуйте что либо чтобы оставить отзыв)" if lang == 'ru'
+            "Вы никогда ничего не арендовывали - для начала арендуйте что либо чтобы оставить отзыв" if lang == 'ru'
             else "You have never rented anything - please rent something first to leave a review)",
             show_alert=True
         )
