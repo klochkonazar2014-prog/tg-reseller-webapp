@@ -238,8 +238,8 @@ def reviews_keyboard(web_app_url, lang='ru'):
     """Меню раздела отзывов"""
     back_text = "Назад" if lang == 'ru' else "Back"
     import time
-    # Force a unique URL to bypass Telegram's internal cache
-    review_url = f"{web_app_url.rstrip('/')}/review?v={int(time.time())}"
+    # Point directly to the html file to ensure server serves it correctly and bypass cache
+    review_url = f"{web_app_url.rstrip('/')}/review.html?v={int(time.time())}"
     
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="💬 Написать отзыв", callback_data="write_review")],
