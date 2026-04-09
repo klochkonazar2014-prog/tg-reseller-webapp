@@ -1798,6 +1798,10 @@ async function loadFilterData() {
 }
 
 function initTonConnect() {
+    if (typeof TON_CONNECT_UI === 'undefined') {
+        console.warn('TonConnect is disabled or not loaded.');
+        return;
+    }
     tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
         manifestUrl: MANIFEST_URL,
         uiOptions: {
