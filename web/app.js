@@ -2278,16 +2278,13 @@ function createItemCard(item) {
     card.className = "card";
 
     const priceVal = parseFloat(item.price_per_day || 0);
-    const myPrice = priceVal > 0 ? Math.round(priceVal * (FIAT_RATES.RUB || 230)) : "---";
-    const match = item.nft_name.match(/^(.*?)\s*(#\d+)$/);
-    const baseName = match ? match[1] : item.nft_name;
-    const numStr = match ? match[2] : "";
-
+    // Daily Price = round((PriceTON + 0.06) * Rate)
+    const dailyPriceRub = Math.round((priceVal + 0.06) * (FIAT_RATES.RUB || 230));
     const minDays = Math.floor((item.min_duration || 86400) / 86400);
-    const maxDaysFinal = Math.floor((item.max_duration || 2592000) / 86400);
 
-    // Total min price for the grid (Price * Days)
-    const minTotalPrice = priceVal > 0 ? (Math.round(priceVal * (FIAT_RATES.RUB || 230)) * minDays) : "---";
+    const myPrice = priceVal > 0 ? dailyPriceRub : "---";
+    // Min Price = DailyPrice * minDays
+    const minTotalPrice = priceVal > 0 ? (dailyPriceRub * minDays) : "---";
 
     // NEW: Rented status class
     if (item.status === 'rented') {
@@ -2649,7 +2646,7 @@ async function openProductView(item) {
 
     // Pricing & Duration
     let rawP = parseFloat(item.price_per_day) || 0;
-    const dailyPrice = rawP > 0 ? Math.round(rawP * (FIAT_RATES.RUB || 230)) : "---";
+    const dailyPrice = rawP > 0 ? Math.round((rawP + 0.06) * (FIAT_RATES.RUB || 230)) : "---";
     const dailyPriceUsd = (rawP > 0 && GLOBAL_TON_PRICE) ? `~$${(rawP * GLOBAL_TON_PRICE).toFixed(2)}` : (rawP > 0 ? '---' : '');
     const minDays = Math.floor((item.min_duration || 86400) / 86400);
     const maxDays = Math.floor((item.max_duration || 2592000) / 86400);
@@ -2968,10 +2965,10 @@ function updateTotalPrice() {
 
     const priceSpan = document.getElementById('rent-btn-price');
     if (priceSpan) {
-        // Total = (DailyPrice * Days) + 4
-        const dailyPriceRub = Math.round(dp * (FIAT_RATES.RUB || 230));
-        const rubValMain = (dailyPriceRub * dur) + 4;
-        priceSpan.innerText = rubValMain + " ₽";
+        // Rent Button = DailyPrice * SelectedDays
+        const dailyPriceRub = Math.round((dp + 0.06) * (FIAT_RATES.RUB || 230));
+        const rubValSubtotal = dailyPriceRub * dur;
+        priceSpan.innerText = rubValSubtotal + " ₽";
     }
 
     // Update USD price
@@ -3001,12 +2998,13 @@ function updateTotalPrice() {
     if (payPriceRub || payPriceLava) {
         if (FIAT_RATES.RUB) {
             // Оставляем только реальный сгораемый газ (0.06 TON), убирая залог (0.2 TON) для рублевых оплат
-            // Card Total = (DailyPrice * Days) + 4
+            // Subtotal = DailyPrice * SelectedDays
             const dailyPriceRub = Math.round(dp * (FIAT_RATES.RUB || 230));
-            let rubVal = (dailyPriceRub * dur) + 4;
-
-            if (payPriceRub) payPriceRub.innerText = rubVal;
-            if (payPriceLava) payPriceLava.innerText = rubVal;
+            const subtotal = dailyPriceRub * dur;
+            
+            // Note: Total at bottom of modal will include gateway fees via updateMethodTotal
+            if (payPriceRub) payPriceRub.innerText = subtotal;
+            if (payPriceLava) payPriceLava.innerText = subtotal;
 
             const minVal = 49;
             if (rubVal < minVal) {
