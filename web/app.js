@@ -2278,8 +2278,9 @@ function createItemCard(item) {
     card.className = "card";
 
     const priceVal = parseFloat(item.price_per_day || 0);
-    // Daily Price = round((PriceTON + 0.06) * Rate)
-    const dailyPriceRub = Math.round((priceVal + 0.06) * (FIAT_RATES.RUB || 230));
+    // Daily Price = round((PriceTON + Markup) * Rate)
+    const markup = priceVal > 0 ? calculateMarkup(priceVal) : 0;
+    const dailyPriceRub = priceVal > 0 ? Math.round((priceVal + markup) * (FIAT_RATES.RUB || 230)) : "---";
     const minDays = Math.floor((item.min_duration || 86400) / 86400);
 
     const myPrice = priceVal > 0 ? dailyPriceRub : "---";
@@ -2649,7 +2650,8 @@ async function openProductView(item) {
 
     // Pricing & Duration
     let rawP = parseFloat(item.price_per_day) || 0;
-    const dailyPrice = rawP > 0 ? Math.round((rawP + 0.06) * (FIAT_RATES.RUB || 230)) : "---";
+    const markup = rawP > 0 ? calculateMarkup(rawP) : 0;
+    const dailyPrice = rawP > 0 ? Math.round((rawP + markup) * (FIAT_RATES.RUB || 230)) : "---";
     const dailyPriceUsd = (rawP > 0 && GLOBAL_TON_PRICE) ? `~$${(rawP * GLOBAL_TON_PRICE).toFixed(2)}` : (rawP > 0 ? '---' : '');
     const minDays = Math.floor((item.min_duration || 86400) / 86400);
     const maxDays = Math.floor((item.max_duration || 2592000) / 86400);
@@ -2937,7 +2939,8 @@ function onDurationChange(el) {
 }
 
 function calculateMarkup(price) {
-    if (price <= 0.01) return 0; // matching backend 0.01 TON rule
+    // Matches backend calculate_markup() in live_server.py exactly
+    if (price <= 0.01) return 0.05;
     if (price <= 0.10) return 0.05;
     if (price <= 0.25) return 0.10;
     if (price <= 0.50) return 0.15;
@@ -2969,7 +2972,8 @@ function updateTotalPrice() {
     const priceSpan = document.getElementById('rent-btn-price');
     if (priceSpan) {
         // Rent Button = DailyPrice * SelectedDays
-        const dailyPriceRub = Math.round((dp + 0.06) * (FIAT_RATES.RUB || 230));
+        const markup = dp > 0 ? calculateMarkup(dp) : 0;
+        const dailyPriceRub = Math.round((dp + markup) * (FIAT_RATES.RUB || 230));
         const rubValSubtotal = dailyPriceRub * dur;
         priceSpan.innerText = rubValSubtotal + " ₽";
     }
@@ -3945,16 +3949,21 @@ async function fetchFiatRates() {
         const response = await apiFetch(`${BACKEND_URL}/api/rates`);
         const data = await response.json();
         
+        let rateChanged = false;
         if (data && typeof data.RUB === 'number') {
             FIAT_RATES.USD = parseFloat(data.USD);
             FIAT_RATES.RUB = parseFloat(data.RUB);
+            rateChanged = true;
         } else if (data && data.rates && data.rates.TON) {
             FIAT_RATES.USD = parseFloat(data.rates.TON.prices.USD);
             FIAT_RATES.RUB = parseFloat(data.rates.TON.prices.RUB);
+            rateChanged = true;
         }
         
-        if (CURRENT_PAYMENT_ITEM) {
-            updateTotalPrice();
+        if (rateChanged) {
+            // Re-render catalog to update card prices with the real rate
+            if (typeof renderCatalog === 'function') renderCatalog();
+            if (CURRENT_PAYMENT_ITEM) updateTotalPrice();
         }
     } catch (e) {
         console.error("Fiat rates error from backend, trying fallback. Error:", e);
@@ -3963,6 +3972,7 @@ async function fetchFiatRates() {
             const fallbackData = await fallbackResponse.json();
             if (fallbackData && fallbackData.rates && fallbackData.rates.TON) {
                 FIAT_RATES.RUB = parseFloat(fallbackData.rates.TON.prices.RUB);
+                if (typeof renderCatalog === 'function') renderCatalog();
                 if (CURRENT_PAYMENT_ITEM) updateTotalPrice();
             }
         } catch (fallbackError) {
@@ -4110,26 +4120,36 @@ function updateMethodTotal(baseTotal) {
     const currentRubRate = FIAT_RATES.RUB || 230;
 
     if (SELECTED_PAY_METHOD === 'CLOUDTIPS') {
-        const tonForCard = base + 0.06;
-        let rubVal = Math.round(tonForCard * currentRubRate * 1.05);
+        const dp = parseFloat(CURRENT_PAYMENT_ITEM.price_per_day) || 0;
+        const dur = parseInt(document.getElementById('rent-duration-input')?.value || 1);
+        const markup = dp > 0 ? calculateMarkup(dp) : 0;
+        const dailyPriceRub = Math.round((dp + markup) * currentRubRate);
+        const subtotal = dailyPriceRub * dur;
+        
+        let rubVal = Math.round(subtotal * 1.05);
         total = rubVal > 0 ? rubVal : '...';
+        if (totalAmountEl) totalAmountEl.innerText = total;
         if (totalCurrencyEl) totalCurrencyEl.innerText = '₽';
+        
         const overLimit = typeof rubVal === 'number' && rubVal > 3000;
         const belowMin = typeof rubVal === 'number' && rubVal < 49;
         if (limitWarning) limitWarning.style.display = overLimit ? 'flex' : 'none';
         if (amountWarning) amountWarning.style.display = belowMin ? 'flex' : 'none';
         if (continueBtn) {
-            continueBtn.disabled = belowMin || overLimit;
+            continueBtn.disabled = (belowMin || overLimit);
             continueBtn.style.opacity = (belowMin || overLimit) ? '0.4' : '1';
         }
     } else if (SELECTED_PAY_METHOD === 'LAVATOP') {
-        const tonForCard = base + 0.06;
-        // DonatePay (на месте Lava): +11.5% комиссии
-        let rubVal = Math.round(tonForCard * currentRubRate * 1.115);
-        total = rubVal > 0 ? rubVal : '...';
-        if (totalCurrencyEl) totalCurrencyEl.innerText = '₽';
+        const dp = parseFloat(CURRENT_PAYMENT_ITEM.price_per_day) || 0;
+        const dur = parseInt(document.getElementById('rent-duration-input')?.value || 1);
+        const markup = dp > 0 ? calculateMarkup(dp) : 0;
+        const dailyPriceRub = Math.round((dp + markup) * currentRubRate);
+        const subtotal = dailyPriceRub * dur;
         
-        // ДЛЯ ТЕСТОВ: Кнопка всегда активна
+        let rubVal = Math.round(subtotal * 1.115);
+        total = rubVal > 0 ? rubVal : '...';
+        if (totalAmountEl) totalAmountEl.innerText = total;
+        if (totalCurrencyEl) totalCurrencyEl.innerText = '₽';
         if (continueBtn) {
             continueBtn.disabled = false;
             continueBtn.style.opacity = '1';
