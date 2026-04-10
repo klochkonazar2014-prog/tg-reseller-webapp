@@ -977,15 +977,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
         if (paidOrderId) {
-            const overlay = document.getElementById('payment-loading-overlay');
-            if (overlay) {
-                overlay.style.display = 'flex';
-                overlay.style.opacity = '1';
-            }
-            const screen = document.getElementById('loading-screen');
-            if (screen) screen.style.display = 'none';
-            
-            // Start non-blocking polling
+            // Start non-blocking polling (it handles showing the overlay ONLY if authorized)
             checkPaymentStatus(paidOrderId);
         }
 
