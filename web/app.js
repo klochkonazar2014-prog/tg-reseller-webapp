@@ -15,7 +15,7 @@ const MY_MARKUP = 0.20;
 const FIAT_FEE_MULTIPLIER = 1.05; // +5% commission for bank transfer
 const LAVATOP_MAX_RUB = 50000; // Lava.top practical limit per transaction
 const MANIFEST_URL = BACKEND_URL + "/tonconnect-manifest.json";
-let SELECTED_PAY_METHOD = 'CLOUDTIPS'; // Default to card payment (crypto hidden for AuraPay moderation)
+let SELECTED_PAY_METHOD = 'AURAPAY'; // Default to AuraPay (SBP) for fiat payments
 let OPERATOR_CONTACTS = { admin: "@nerksqq", coder: "@Paulie_Gualtiery", support: "@Octorent_Support_bot" };
 
 async function getOperatorContacts() {
@@ -127,7 +127,6 @@ const isBadUrl = (url) => {
 
 const TRANSLATIONS = {
     ru: {
-
         profile_fragment: "Подключить актив к Fragment",
         price_per_day: "Цена за день",
         period: "Период (Дни)",
@@ -183,7 +182,6 @@ const TRANSLATIONS = {
         wallet_drawer_title: "Управление кошельком",
         copy_address: "Копировать адрес",
         disconnect_wallet: "Отключить кошелек",
-
         gifts: "Подарки",
         usernames: "Ники",
         numbers: "Номера",
@@ -192,12 +190,6 @@ const TRANSLATIONS = {
         search: "Поиск",
         no_items: "Ничего не найдено",
         reset_filters: "Попробуйте сбросить фильтры",
-        price_per_day: "Цена в день",
-        period: "Срок (дни)",
-        discount: "Скидка",
-        days: "Дни",
-        rent: "Арендовать",
-        rent_days: "Аренда на {min}–{max} дн.",
         per_day: "В день",
         min_price: "Мин. цена",
         you_will_send: "Вы дополнительно отправите {amount} TON для обработки транзакции. Остаток TON будет возвращен вам.",
@@ -213,11 +205,8 @@ const TRANSLATIONS = {
         lang_en: "English",
         what_is_this: "Что это значит?",
         settings_support: "Настройки и поддержка",
-        profile_settings: "Настройки и поддержка",
         rental_history: "История аренды",
-        profile_history: "История аренды",
         support_faq: "Поддержка и FAQ",
-        profile_support: "Поддержка и FAQ",
         wallet_mgmt: "Управление кошельком",
         profile_wallet: "Кошелек",
         connect_wallet: "Подключить",
@@ -226,8 +215,6 @@ const TRANSLATIONS = {
         details: "Детали",
         owner: "Владелец",
         address: "Адрес",
-        auto_relist: "Авто-перевыставление",
-        auto_relist_desc: "Этот NFT будет автоматически доступен для аренды после окончания срока.",
         rent_button: "Арендовать за {amount}",
         rent_for: "Арендовать за",
         preorder_for: "Забронировать за",
@@ -248,10 +235,22 @@ const TRANSLATIONS = {
         just_now: "Только что",
         hours_ago: "ч. назад",
         what_is_this_long: "Вы отправляете небольшую сумму TON для покрытия комиссии сети и работы сервиса. Остаток будет возвращен вам автоматически.",
+        payment_failed_cancelled: "Оплата отменена или произошла ошибка ❌",
+        verifying_payment: "Проверяем оплату...",
+        buying_gift_desc: "Выкупаем подарок на Маркете. Это займет около минуты.",
+        payment_received: "Оплата получена! ✅",
+        buying_on_market: "Выкупаем подарок...",
+        payment_success_connecting: "Оплата успешна! Подключаем к Fragment...",
+        manual_verify_required: "Время ожидания истекло. Пожалуйста, напишите в поддержку.",
+        redirecting_to_item: "Оплата прошла! Переходим к товару...",
+        payment_confirmed: "Платеж подтвержден!",
+        server_timeout: "Таймаут сервера",
+        server_error: "Ошибка сервера: {msg}",
+        loading_item: "Загружаем товар...",
+        ready: "Готово",
+        item_not_found: "Товар не найден",
+        redirecting_to_fiat: "Переходим к оплате...",
         fee_notice_text: "Вы отправляете небольшую сумму TON для покрытия комиссии сети и работы сервиса. Остаток будет возвращен вам автоматически.",
-        wallet_mgmt: "Управление кошельком",
-        copy_address: "Копировать адрес",
-        disconnect_wallet: "Отключить кошелек",
         all: "Все",
         select_all: "Выбрать все",
         select_collection_first: "Выберите NFT коллекцию, чтобы увидеть список моделей.",
@@ -267,11 +266,10 @@ const TRANSLATIONS = {
         sort_symbol_rare: "Редкость символа",
         invalid_price: "Некорректная цена",
         price_from_gt_to: "Цена 'от' не может быть больше 'до'",
-        error_insufficient_funds: "Недостаточно средств на кошельке для совершения транзакции.",
+        error_insufficient_funds: "Недостаточно средств на кошельке (нужно +~0.25 TON на комиссию).",
         available_from: "Освободится",
         preorder_warning_no_relist: "Внимание: у этого NFT выключен авто-перевыставление. Предзаказ может не сработать, если владелец не выставит его вручную.",
         error_user_rejected: "Транзакция отменена в кошельке.",
-        error_insufficient_funds: "Недостаточно средств на кошельке (нужно +~0.25 TON на комиссию).",
         error_sdk_init_failed: "Ошибка связи с кошельком. Попробуйте обновить страницу.",
         error_transaction_failed: "Транзакция не удалась. Проверьте баланс и попробуйте снова.",
         error_unknown: "Ошибка: {msg}",
@@ -299,8 +297,6 @@ const TRANSLATIONS = {
         days_label: "Дни",
         day_label: "День",
         days_2_4: "Дня",
-
-        // --- TC Tutorial ---
         tut_step_1: "Перейдите на сайт <a href='#' onclick='copyText(\"fragment.com\", event)' class='copy-link'>fragment.com</a>",
         tut_step_2: "Нажмите на кнопку <b>Connect Ton</b>",
         tut_step_3: "Нажмите на значок <b>копирования</b>, чтобы скопировать ссылку на подключение кошелька, где хранится актив.",
@@ -314,11 +310,6 @@ const TRANSLATIONS = {
         tut_connect: "Подключить актив",
         expired: "СРОК ИСТЕК",
         storage: "Хранилище",
-        loading_item: "Загрузка товара...",
-        ready: "Готово!",
-        item_not_found: "Товар не найден",
-        server_timeout: "Таймаут сервера",
-        server_error: "Ошибка: {msg}",
         share_referral_text: "🎁 Твой подарок уже ждёт тебя в OctoRent!\n\nЗабирай его прямо сейчас — и получай призы на свой аккаунт ✨",
         referral_copy_success: "Реферальная ссылка скопирована!",
         withdraw_success: "Вывод успешно запрошен!",
@@ -422,7 +413,6 @@ const TRANSLATIONS = {
         max_days_warn: "Максимум {days} дней"
     },
     en: {
-
         profile_fragment: "Connect Asset to Fragment",
         price_per_day: "Price per day",
         period: "Period (Days)",
@@ -482,7 +472,6 @@ const TRANSLATIONS = {
         wallet_drawer_title: "Wallet Management",
         copy_address: "Copy Address",
         disconnect_wallet: "Disconnect Wallet",
-
         gifts: "Gifts",
         usernames: "Usernames",
         numbers: "Numbers",
@@ -515,14 +504,13 @@ const TRANSLATIONS = {
         rental_history: "Rental History",
         support_faq: "Support & FAQ",
         wallet_mgmt: "Wallet Management",
+        profile_wallet: "Wallet",
         connect_wallet: "Connect",
         connect_wallet_full: "Connect Wallet",
         connected: "Connected",
         details: "Details",
         owner: "Owner",
         address: "Address",
-        auto_relist: "Auto re-list",
-        auto_relist_desc: "This NFT will be available for rent automatically after the period ends.",
         rent_button: "Rent for {amount}",
         loading: "Loading...",
         filters: "Filters",
@@ -541,6 +529,21 @@ const TRANSLATIONS = {
         just_now: "Just now",
         hours_ago: "h ago",
         what_is_this_long: "You are sending a small amount of TON to cover network fees and service operations. The remainder will be returned to you automatically.",
+        payment_failed_cancelled: "Payment cancelled or failed ❌",
+        verifying_payment: "Verifying payment...",
+        buying_gift_desc: "Buying gift on Market. This takes about a minute.",
+        payment_received: "Payment received! ✅",
+        buying_on_market: "Buying gift...",
+        payment_success_connecting: "Payment success! Connecting to Fragment...",
+        manual_verify_required: "Timeout. Please contact support.",
+        redirecting_to_item: "Payment success! Redirecting to item...",
+        payment_confirmed: "Payment confirmed!",
+        server_timeout: "Server timeout",
+        server_error: "Server error: {msg}",
+        loading_item: "Loading item...",
+        ready: "Ready",
+        item_not_found: "Item not found",
+        redirecting_to_fiat: "Redirecting to payment...",
         all: "All",
         select_all: "Select all",
         select_collection_first: "Select an NFT collection first to see models.",
@@ -556,7 +559,6 @@ const TRANSLATIONS = {
         sort_symbol_rare: "Symbol Rarity",
         invalid_price: "Invalid price",
         price_from_gt_to: "Price 'from' cannot be greater than 'to'",
-        error_insufficient_funds: "Not enough funds in your wallet to complete the transaction.",
         available_from: "Available from",
         preorder: "Pre-order",
         preorder_for: "Pre-order",
@@ -572,8 +574,6 @@ const TRANSLATIONS = {
         days_label: "Days",
         day_label: "Day",
         days_2_4: "Days",
-
-        // --- TC Tutorial ---
         tut_step_1: "Go to <a href='#' onclick='copyText(\"fragment.com\", event)' class='copy-link'>fragment.com</a>",
         tut_step_2: "Click <b>Connect Ton</b>",
         tut_step_3: "Click the <b>copy icon</b> to copy the connection link for the wallet where the asset is stored.",
@@ -984,10 +984,71 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         const urlParams = new URLSearchParams(window.location.search);
         let deepNftAddr = urlParams.get('nft_address');
+        let paidOrderId = urlParams.get('paid_order_id');
+        let failOrderId = urlParams.get('fail_order_id');
 
-        if (!deepNftAddr && tg.initDataUnsafe && tg.initDataUnsafe.start_param) {
+        if (tg.initDataUnsafe && tg.initDataUnsafe.start_param) {
             const sp = tg.initDataUnsafe.start_param;
             if (sp.startsWith('nft_')) deepNftAddr = sp.replace('nft_', '');
+            if (sp.startsWith('paid_')) paidOrderId = sp.replace('paid_', '');
+            if (sp.startsWith('fail_')) failOrderId = sp.replace('fail_', '');
+        }
+
+        if (failOrderId) {
+            showStatusStrip('error', t('payment_failed_cancelled'));
+        }
+
+        if (paidOrderId) {
+            console.log("🚀 Returning from payment for order:", paidOrderId);
+            // Show Loading Overlay immediately
+            const overlay = document.getElementById('payment-loading-overlay');
+            if (overlay) overlay.style.display = 'flex';
+
+            (async () => {
+                let attempts = 0;
+                let maxAttempts = 30; // 60 seconds (2s interval)
+                
+                while (attempts < maxAttempts) {
+                    try {
+                        const r = await apiFetch(`${BACKEND_URL}/api/order_status?order_id=${paidOrderId}`);
+                        const d = await r.json();
+                        
+                        if (d && d.status === 'rented') {
+                            // SUCCESS: Purchased on MarketApp
+                            if (overlay) overlay.style.display = 'none';
+                            showStatusStrip('success', t('payment_success_connecting'));
+                            
+                            // Load item and open view
+                            if (d.nft_address) {
+                                const item = (ALL_MARKET_ITEMS || []).find(x => x.nft_address === d.nft_address);
+                                if (item) {
+                                    openProductView(item);
+                                    // Auto-open Connect to Fragment Modal
+                                    setTimeout(() => showCTInstructions(), 800);
+                                }
+                            }
+                            loadProfileData();
+                            return;
+                        } else if (d && d.status === 'paid') {
+                            // Payment confirmed, still buying...
+                            document.getElementById('overlay-title').innerText = t('payment_received');
+                            document.getElementById('overlay-desc').innerText = t('buying_gift_desc');
+                        } else if (d && d.status === 'failed') {
+                            // FAILURE: Server marked as failed
+                            if (overlay) overlay.style.display = 'none';
+                            showStatusStrip('error', t('payment_failed_cancelled'));
+                            return;
+                        }
+                    } catch (e) { console.error("Poll error:", e); }
+                    
+                    attempts++;
+                    await new Promise(r => setTimeout(r, 2000));
+                }
+                
+                // Timeout
+                if (overlay) overlay.style.display = 'none';
+                showStatusStrip('error', t('manual_verify_required'));
+            })();
         }
 
         if (deepNftAddr) {
@@ -1357,7 +1418,35 @@ async function handleReferralWithdraw() {
 // --- Modal Logic ---
 
 
-// --- Help Modal Logic ---
+window.showStatusStrip = function(type, text) {
+    const strip = document.getElementById('payment-status-strip');
+    const icon = document.getElementById('status-icon');
+    const txt = document.getElementById('status-text');
+    if (!strip || !txt) return;
+
+    strip.className = 'status-strip ' + type;
+    icon.innerText = type === 'success' ? '✅' : '❌';
+    txt.innerText = text;
+    strip.classList.add('visible');
+
+    setTimeout(() => strip.classList.remove('visible'), 6000);
+};
+
+window.showStatusStrip = function(type, text) {
+    const strip = document.getElementById('payment-status-strip');
+    const icon = document.getElementById('status-icon');
+    const txt = document.getElementById('status-text');
+    if (!strip || !txt) return;
+
+    strip.className = 'status-strip ' + type;
+    icon.innerText = type === 'success' ? '✅' : '❌';
+    txt.innerText = text;
+    strip.classList.add('visible');
+
+    setTimeout(() => strip.classList.remove('visible'), 6000);
+};
+
+// --- Modal Logic ---
 function showHelp(amount) {
     const title = document.getElementById('help-title');
     const body = document.getElementById('help-body');
@@ -4090,7 +4179,7 @@ function switchPayTab(tab) {
         document.querySelector('.pay-tab:nth-child(2)').classList.add('active');
         document.getElementById('pane-card').classList.add('active');
         document.getElementById('pay-total-currency').innerText = '₽';
-        selectPayMethod('CLOUDTIPS');
+        selectPayMethod('AURAPAY');
     }
 }
 
@@ -4126,40 +4215,22 @@ function updateMethodTotal(baseTotal) {
     // Подстраховка курса
     const currentRubRate = FIAT_RATES.RUB || 230;
 
-    if (SELECTED_PAY_METHOD === 'CLOUDTIPS') {
-        // dp = price_per_day (already includes markup from parser.py)
+    if (SELECTED_PAY_METHOD === 'AURAPAY') {
         const dp = parseFloat(CURRENT_PAYMENT_ITEM.price_per_day) || 0;
         const dur = parseInt(document.getElementById('rent-duration-input')?.value || 1);
-        const dailyPriceRub = Math.round(dp * currentRubRate);
-        const subtotal = dailyPriceRub * dur;
+        const subtotal = dp * dur * currentRubRate;
         
-        let rubVal = Math.round(subtotal * 1.05); // +5% acquiring fee
+        let rubVal = Math.round(subtotal * 1.09); // Only +9% AuraPay fee (SBP)
         total = rubVal > 0 ? rubVal : '...';
         if (totalAmountEl) totalAmountEl.innerText = total;
         if (totalCurrencyEl) totalCurrencyEl.innerText = '₽';
         
-        const overLimit = typeof rubVal === 'number' && rubVal > 3000;
-        const belowMin = typeof rubVal === 'number' && rubVal < 49;
-        if (limitWarning) limitWarning.style.display = overLimit ? 'flex' : 'none';
+        const belowMin = typeof rubVal === 'number' && rubVal < 10;
         if (amountWarning) amountWarning.style.display = belowMin ? 'flex' : 'none';
-        if (continueBtn) {
-            continueBtn.disabled = (belowMin || overLimit);
-            continueBtn.style.opacity = (belowMin || overLimit) ? '0.4' : '1';
-        }
-    } else if (SELECTED_PAY_METHOD === 'LAVATOP') {
-        // dp = price_per_day (already includes markup from parser.py)
-        const dp = parseFloat(CURRENT_PAYMENT_ITEM.price_per_day) || 0;
-        const dur = parseInt(document.getElementById('rent-duration-input')?.value || 1);
-        const dailyPriceRub = Math.round(dp * currentRubRate);
-        const subtotal = dailyPriceRub * dur;
         
-        let rubVal = Math.round(subtotal * 1.115); // +11.5% acquiring fee
-        total = rubVal > 0 ? rubVal : '...';
-        if (totalAmountEl) totalAmountEl.innerText = total;
-        if (totalCurrencyEl) totalCurrencyEl.innerText = '₽';
         if (continueBtn) {
-            continueBtn.disabled = false;
-            continueBtn.style.opacity = '1';
+            continueBtn.disabled = belowMin;
+            continueBtn.style.opacity = belowMin ? '0.4' : '1';
         }
     } else {
         if (totalCurrencyEl) totalCurrencyEl.innerText = 'TON';
@@ -4171,11 +4242,9 @@ function updateMethodTotal(baseTotal) {
 
     // Явное обновление цен во всех карточках (устранение "0 руб")
     const commonTon = base + 0.2 + (isCoverFeeChecked ? 0.14 : 0);
-    const ctPriceIcon = document.getElementById('pay-price-rub');
-    const lpPriceIcon = document.getElementById('pay-price-rub-lavatop');
+    const auraPriceIcon = document.getElementById('pay-price-rub');
     
-    if (ctPriceIcon) ctPriceIcon.innerText = Math.round(commonTon * currentRubRate * 1.05);
-    if (lpPriceIcon) lpPriceIcon.innerText = Math.round(commonTon * currentRubRate * 1.115);
+    if (auraPriceIcon) auraPriceIcon.innerText = Math.round(commonTon * currentRubRate * 1.09);
 
     const selView = document.getElementById('payment-selection-view');
     if (selView) {
@@ -4247,10 +4316,29 @@ async function handleContinuePayment() {
         await handleUsdtRent();
     } else if (method === 'XROCKET') {
         await handleBotRent(method);
-    } else if (method === 'CLOUDTIPS') {
-        showCTInstructions();
-    } else if (method === 'LAVATOP') {
-        await handleDonatePayRent();
+    } else if (method === 'AURAPAY') {
+        try {
+            const resp = await apiFetch(`${BACKEND_URL}/api/create_aurapay_invoice`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    nft_address: CURRENT_PAYMENT_ITEM.nft_address,
+                    days: parseInt(document.getElementById('rent-duration-input')?.value || 1)
+                })
+            });
+            const res = await resp.json();
+            if (res.status === 'ok' && res.payment_url) {
+                tg.openLink(res.payment_url);
+                closePaymentModal();
+                showToast(t('redirecting_to_fiat'));
+            } else {
+                throw new Error(res.error || "Failed to create invoice");
+            }
+        } catch (e) {
+            console.error("AuraPay Error:", e);
+            showToast(t('server_error', { msg: e.message }));
+        } finally {
+            if (btn) btn.disabled = false;
+        }
     }
 }
 
@@ -4277,7 +4365,6 @@ function nextCTStep() {
     document.getElementById('ct-step-1').style.display = 'none';
     document.getElementById('ct-step-2').style.display = 'block';
     
-    // Start 1.5s timer for Pay button on Step 2
     const payBtn = document.getElementById('ct-pay-btn');
     if (!payBtn) return;
     

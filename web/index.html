@@ -112,6 +112,23 @@
 </head>
 
 <body>
+    <!-- Payment Status Strip (Luxury Notification) -->
+    <div id="payment-status-strip" class="status-strip">
+        <div class="status-strip-content">
+            <span id="status-icon" class="status-icon">✅</span>
+            <span id="status-text" class="status-text">Оплата успешно получена!</span>
+        </div>
+    </div>
+
+    <!-- Global Loading Overlay (Premium) -->
+    <div id="payment-loading-overlay" class="payment-overlay" style="display: none;">
+        <div class="overlay-card">
+            <div class="premium-spinner"></div>
+            <h3 id="overlay-title" data-i18n="verifying_payment">Проверяем оплату...</h3>
+            <p id="overlay-desc" data-i18n="buying_on_market">Выкупаем ваш подарок на Маркете. Это может занять до 1 минуты.</p>
+        </div>
+    </div>
+
     <!-- Full Screen Product View -->
     <div id="product-view" class="product-view" onclick="if(event.target===this){closeProductView()}">
         <div class="product-view-header"
@@ -667,6 +684,12 @@
 
     <!-- Bottom Nav -->
     <div class="bottom-nav">
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Nav -->
+    <div class="bottom-nav">
         <div id="mode-toggle-container" class="mode-toggle-container">
             <button id="mode-toggle-btn" class="mode-toggle-btn" onclick="toggleCatalogMode()">
                 <span id="mode-toggle-text" data-i18n="mode_toggle_rent">Каталог арендованных товаров</span>
@@ -847,7 +870,7 @@
                     </div>
 
                     <!-- Card Tab Pane -->
-                    <div id="pane-card" class="pay-tab-pane">
+                    <div id="pane-card" class="pay-tab-pane active">
                         <div id="card-limit-warning"
                             style="display: none; background: rgba(255, 149, 0, 0.08); border: 1px solid rgba(255, 149, 0, 0.25); border-radius: 14px; padding: 14px 16px; margin-bottom: 12px; gap: 10px;">
                             <span style="font-size: 20px;">⚠️</span>
@@ -855,48 +878,31 @@
                                 <div style="font-weight: 700; color: #FF9500; font-size: 13px; margin-bottom: 2px;"
                                     data-i18n="amount_too_small">Сумма слишком мала</div>
                                 <div style="font-size: 12px; color: #8b9bb4; line-height: 1.4;"
-                                    data-i18n="min_card_payment">Минимальный платеж картой — <b>49 ₽</b>. Пожалуйста,
+                                    data-i18n="min_sbp_payment">Минимальный платеж через СБП — <b>10 ₽</b>. Пожалуйста,
                                     выберите товар подороже или увеличьте срок аренды.</div>
                             </div>
                         </div>
 
-                        <div id="pay-method-cloudtips" class="pay-method-card active"
-                            onclick="selectPayMethod('CLOUDTIPS')">
+                        <div id="pay-method-aurapay" class="pay-method-card active"
+                            onclick="selectPayMethod('AURAPAY')">
                             <div class="pm-check"></div>
+                            <img src="pictures/sbp_logo.png" style="width: 40px; height: 40px; border-radius: 8px; margin-left: 10px; object-fit: contain; background: #fff; padding: 2px;">
                             <div class="pm-info">
                                 <div class="pm-header">
-                                    <div class="pm-name" data-i18n="card_rf_sbp">Карта РФ / СБП</div>
+                                    <div class="pm-name">СБП - 9% комиссия</div>
                                     <div class="pay-method-badge"
-                                        style="background: rgba(0, 212, 136, 0.1); color: #00d488;">+5% комиссии</div>
+                                        style="background: rgba(0, 212, 136, 0.1); color: #00d488;">Рекомендуемо</div>
                                 </div>
                                 <div class="pm-row-bottom">
-                                    <div class="pm-desc" data-i18n="cloudtips_desc">Мгновенная оплата через CloudTips
-                                    </div>
+                                    <div class="pm-desc">Мгновенная оплата через AuraPay</div>
                                     <div class="pm-price"><span id="pay-price-rub">0</span> ₽</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div id="pay-method-lavatop" class="pay-method-card" onclick="selectPayMethod('LAVATOP')">
-                            <div class="pm-check"></div>
-                            <div class="pm-info">
-                                <div class="pm-header">
-                                    <div class="pm-name">Рф карты + Крипта</div>
-                                    <div class="pay-method-badge"
-                                        style="background: rgba(0, 136, 204, 0.15); border: 1px solid rgba(0, 136, 204, 0.4); color: #0088cc;">
-                                        +11.5% комиссии
-                                    </div>
-                                </div>
-                                <div class="pm-row-bottom">
-                                    <div class="pm-desc">Оплата картой РФ, СБП и криптовалютой</div>
-                                    <div class="pm-price"><span id="pay-price-rub-lavatop">0</span> ₽</div>
                                 </div>
                             </div>
                         </div>
 
                         <div
                             style="margin-top: 12px; font-size: 11px; color: #8b9bb4; line-height: 1.4; padding: 0 4px;">
-                            * Цена включает комиссию 9% на прием и 2% на вывод.
+                            * Цена включает комиссию 9% за эквайринг.
                         </div>
                     </div>
 

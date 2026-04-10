@@ -532,57 +532,88 @@ async def handle_get_rates(request):
     rates = await fetch_fiat_rates()
     return web.json_response(rates)
 
-async def handle_create_fiat_invoice(request):
-    """Creates a fiat invoice via FreeKassa"""
+async def handle_create_aurapay_invoice(request):
+    """Генерация ссылки на оплату AuraPay (СБП)"""
     try:
         data = await request.json()
         nft_address = data.get('nft_address')
         days = int(data.get('days', 1))
-        method = data.get('gateway') # 'freekassa'
-        currency = data.get('currency') # 'RUB' or 'USD'
         
         user_id = get_authenticated_user_id(request)
         if not user_id: return web.json_response({"error": "Unauthorized"}, status=401)
         
-        # Create order first
-        res, err = await create_rental_order(user_id, nft_address, days)
+        # 1. Создаем заказ в БД
+        res, err = await create_rental_order(user_id, nft_address, days, is_fiat=True)
         if err: return web.json_response({"error": err}, status=404)
         
         order_id = res['order_id']
         total_ton = res['total_price']
         
+        # 2. Получаем актуальный курс
         rates = await fetch_fiat_rates()
-        ton_price = rates.get(currency, 1)
+        ton_rub = rates.get('RUB', 230)
         
-        # Calculate fiat amount with a small buffer for exchange rate volatility
-        fiat_amount = round(total_ton * ton_price * 1.05, 2)
+        # 3. Считаем сумму в рублях с комиссией 9% (под клиента)
+        # Сумма = (Цена в TON * Курс) * 1.09
+        fiat_amount = round(total_ton * ton_rub * 1.09, 2)
+        if fiat_amount < 10: fiat_amount = 10.0 # Минималка 10 рублей
         
-        payment_url = ""
-        external_id = ""
+        shop_id = os.getenv("AURAPAY_SHOP_ID")
+        api_key = os.getenv("AURAPAY_API_KEY")
         
-        if method == 'freekassa':
-            FK_MERCHANT_ID = os.getenv("FREEKASSA_MERCHANT_ID", "")
-            FK_SECRET_1 = os.getenv("FREEKASSA_SECRET_1", "")
-            external_id = f"o_{order_id}_{int(asyncio.get_event_loop().time())}"
+        if not shop_id or not api_key:
+            return web.json_response({"error": "AuraPay not configured"}, status=500)
             
-            # Signature 1 (MD5): merchant_id:amount:secret1:currency:order_id
-            sign_str = f"{FK_MERCHANT_ID}:{fiat_amount}:{FK_SECRET_1}:{currency}:{external_id}"
-            sign = hashlib.md5(sign_str.encode()).hexdigest()
-            
-            payment_url = f"https://pay.fk.money/?m={FK_MERCHANT_ID}&oa={fiat_amount}&o={external_id}&s={sign}&currency={currency}&lang=ru"
-
-
-        # Update order with fiat info
-        async with db.aiosqlite.connect(db.DB_PATH) as conn:
-            await conn.execute(
-                "UPDATE orders SET currency = ?, payment_gateway = ?, fiat_amount = ?, external_id = ? WHERE id = ?",
-                (currency, method, fiat_amount, external_id, order_id)
-            )
-            await conn.commit()
-            
-        return web.json_response({"status": "ok", "order_id": order_id, "payment_url": payment_url, "fiat_amount": fiat_amount})
+        success_url = f"https://t.me/{os.getenv('BOT_USERNAME', 'OctoRent_bot').replace('@','')}/market?startapp=paid_{order_id}"
+        callback_url = f"{os.getenv('BACKEND_URL', 'https://octorent.duckdns.org')}/api/webhooks/aurapay"
+        
+        payload = {
+            "shop_id": shop_id,
+            "order_id": str(order_id),
+            "amount": float(fiat_amount),
+            "currency": "RUB",
+            "comment": f"OctoRent order #{order_id}",
+            "success_url": success_url,
+            "fail_url": success_url.replace("paid_", "fail_"),
+            "callback_url": callback_url
+        }
+        
+        # URL создания инвойса (на основе документации aurapay.tech)
+        api_url = "https://app.aurapay.tech/invoice/create"
+        headers = {
+            "X-ApiKey": api_key,
+            "X-ShopId": shop_id,
+            "Content-Type": "application/json"
+        }
+        
+        async with aiohttp.ClientSession() as session:
+            async with session.post(api_url, json=payload, headers=headers) as resp:
+                result = await resp.json()
+                if resp.status == 200 and result.get('status') == 'success':
+                    payment_url = result.get('payment_data', {}).get('url')
+                    if not payment_url:
+                        return web.json_response({"error": "No payment URL in response"}, status=500)
+                        
+                    # Обновляем заказ данными об оплате
+                    async with db.aiosqlite.connect(db.DB_PATH) as conn:
+                        await conn.execute(
+                            "UPDATE orders SET currency = 'RUB', payment_gateway = 'aurapay', fiat_amount = ?, external_id = ? WHERE id = ?",
+                            (fiat_amount, str(order_id), order_id)
+                        )
+                        await conn.commit()
+                        
+                    return web.json_response({
+                        "status": "ok", 
+                        "order_id": order_id, 
+                        "payment_url": payment_url, 
+                        "fiat_amount": fiat_amount
+                    })
+                else:
+                    logging.error(f"AuraPay invoice error: {resp.status} - {result}")
+                    return web.json_response({"error": f"Gateway error: {result.get('message', 'Unknown error')}"}, status=400)
+                    
     except Exception as e:
-        logging.error(f"Error creating fiat invoice: {e}")
+        logging.error(f"Error creating AuraPay invoice: {e}")
         return web.json_response({"error": str(e)}, status=500)
 
 async def update_cloudtips_page_text(title: str):
@@ -609,220 +640,51 @@ async def update_cloudtips_page_text(title: str):
         logging.warning(f"[CloudTips] Page text update error: {e}")
 
 
-async def handle_create_cloudtips_invoice(request):
-    """Генерация ссылки на оплату CloudTips"""
+async def handle_aurapay_webhook(request):
+    """Обработчик уведомлений AuraPay"""
     try:
-        data = await request.json()
-        nft_address = data.get('nft_address')
-        days = int(data.get('days', 1))
+        # Получаем данные и подпись
+        body = await request.read()
+        data = json.loads(body)
+        received_sign = request.headers.get("X-Signature")
         
-        user_id = get_authenticated_user_id(request)
-        if not user_id: return web.json_response({"error": "Unauthorized"}, status=401)
-        
-        # 1. Создаем заказ
-        res, err = await create_rental_order(user_id, nft_address, days)
-        if err: return web.json_response({"error": err}, status=404)
-        
-        order_id = res['order_id']
-        total_ton = res['total_price']
-        
-        # 2. Получаем название подарка из базы
-        nft_name = "Аренда подарка"
-        try:
-            async with db.aiosqlite.connect(db.DB_PATH) as conn:
-                conn.row_factory = db.aiosqlite.Row
-                async with conn.execute(
-                    "SELECT title FROM items WHERE nft_address = ?", (nft_address,)
-                ) as cur:
-                    row = await cur.fetchone()
-                    if row and row['title']:
-                        nft_name = f"Аренда: {row['title']} ({days} дн.)"
-        except Exception as e:
-            logging.warning(f"[CloudTips] Could not fetch nft_name: {e}")
-        
-        # 3. Обновляем текст на странице CloudTips (fire-and-forget, не блокируем)
-        await update_cloudtips_page_text(nft_name)
-        
-        # 4. Получаем курс
-        rates = await fetch_fiat_rates()
-        ton_rub = rates.get('RUB', 230)
-        
-        # 5. Считаем сумму в рублях (с запасом 5% на волатильность)
-
-        fiat_amount = round(total_ton * ton_rub * 1.05, 2)
-        if fiat_amount < 49: fiat_amount = 49 # Минимум 49 рублей (лимит CloudTips)
-        
-        ct_id = os.getenv("CLOUDTIPS_ID", "YOUR_CLOUDTIPS_ID")
-        
-        # Возврат к проверенному формату, так как fixed=true сбрасывает сумму на 50р
-        int_fiat = int(fiat_amount)
-        payment_url = f"https://pay.cloudtips.ru/p/{ct_id}?amount={int_fiat}&fixed=1&invoiceId={order_id}"
-        # Обновляем заказ
-        async with db.aiosqlite.connect(db.DB_PATH) as conn:
-            await conn.execute(
-                "UPDATE orders SET currency = 'RUB', payment_gateway = 'cloudtips', fiat_amount = ?, external_id = ? WHERE id = ?",
-                (fiat_amount, str(order_id), order_id)
-            )
-            await conn.commit()
+        secret = os.getenv("AURAPAY_SECRET_KEY")
+        if not secret:
+            logging.error("AURAPAY_SECRET_KEY not set")
+            return web.Response(text="Config error", status=500)
             
-        return web.json_response({"status": "ok", "order_id": order_id, "payment_url": payment_url, "fiat_amount": fiat_amount})
-    except Exception as e:
-        logging.error(f"Error creating CloudTips invoice: {e}")
-        return web.json_response({"error": str(e)}, status=500)
-
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# LAVA.TOP INTEGRATION
-# ─────────────────────────────────────────────────────────────────────────────
-
-LAVATOP_API_URL = "https://gate.lava.top"
-LAVATOP_MIN_RUB = 50  # Минимальная сумма в рублях
-
-# Блокировка для предотвращения гонки при обновлении цены оффера
-_lavatop_price_lock = asyncio.Lock()
-
-
-async def handle_create_lavatop_invoice(request):
-    """Создание инвойса Lava.top для оплаты аренды картой РФ / СБП"""
-    try:
-        data = await request.json()
-        nft_address = data.get('nft_address')
-        days = int(data.get('days', 1))
-
-        user_id = get_authenticated_user_id(request)
-        if not user_id:
-            return web.json_response({"error": "Unauthorized"}, status=401)
-
-        api_key    = os.getenv("LAVATOP_API_KEY", "")
-        product_id = os.getenv("LAVATOP_PRODUCT_ID", "")  # UUID продукта
-
-        if not api_key or not product_id:
-            return web.json_response({"error": "Lava.top not configured"}, status=500)
-
-        # 1. Создаём заказ в нашей БД
-        res, err = await create_rental_order(user_id, nft_address, days, is_fiat=True)
-        if err:
-            return web.json_response({"error": err}, status=404)
-
-        order_id  = res['order_id']
-        total_ton = res['total_price']
-
-        # 2. Считаем сумму в рублях с буфером 5%
-        rates = await fetch_fiat_rates()
-        ton_rub = rates.get('RUB', 230)
-        fiat_amount = round(total_ton * ton_rub * 1.00, 2)
-        if fiat_amount < LAVATOP_MIN_RUB:
-            fiat_amount = float(LAVATOP_MIN_RUB)
-
-        # 3. Выбираем лучший оффер из сетки (LAVATOP_OFFERS в .env)
-        offers_raw = os.getenv("LAVATOP_OFFERS", "{}")
-        try:
-            offers_map = json.loads(offers_raw)
-        except:
-            logging.error(f"[LavaTop] Invalid LAVATOP_OFFERS JSON: {offers_raw}")
-            return web.json_response({"error": "Lava.top offers configuration error"}, status=500)
+        # Проверка подписи: HMAC SHA256 от всего тела (raw body)
+        expected_sign = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
         
-        if not offers_map:
-            return web.json_response({"error": "Lava.top offers not found"}, status=500)
-
-        # Сортируем базовые цены сетки (54, 108, ...)
-        base_prices = sorted([float(k) for k in offers_map.keys()])
-        # Выбираем тот оффер, базовая цена которого ближе всего к искомой
-        best_base = base_prices[0]
-        min_diff = abs(fiat_amount - best_base)
-        for p in base_prices:
-            diff = abs(fiat_amount - p)
-            if diff < min_diff:
-                min_diff = diff
-                best_base = p
+        if received_sign != expected_sign:
+            logging.warning(f"Invalid AuraPay signature. Got {received_sign}, expected {expected_sign}")
+            return web.Response(text="Invalid signature", status=403)
+            
+        order_id_raw = data.get("order_id")
+        status = data.get("status") # 'success'
         
-        selected_offer_id = offers_map[str(int(best_base))]
-        logging.info(f"[LavaTop] Для суммы {fiat_amount}₽ выбран оффер {selected_offer_id} (база {best_base}₽)")
-
-        headers = {
-            "X-Api-Key": api_key,
-            "Content-Type": "application/json"
-        }
-
-        # 4. Обновляем цену оффера + создаём инвойс под локом
-        async with _lavatop_price_lock:
-            # 4a. PATCH — обновляем выбранный оффер, но ПЕРЕДАЕМ ВСЕ (чтобы избежать 404)
-            patch_offers = []
-            for base_p_str, off_id in offers_map.items():
-                price_to_set = fiat_amount if off_id == selected_offer_id else float(base_p_str)
-                patch_offers.append({
-                    "id": off_id,
-                    "prices": [{
-                        "amount": price_to_set,
-                        "currency": "RUB",
-                        "periodicity": "ONE_TIME"
-                    }]
-                })
-
-            async with aiohttp.ClientSession() as session:
-                async with session.patch(
-                    f"{LAVATOP_API_URL}/api/v2/products/{product_id}",
-                    json={"offers": patch_offers},
-                    headers=headers,
-                    timeout=10
-                ) as resp:
-                    if resp.status != 200:
-                        body = await resp.text()
-                        logging.error(f"[LavaTop] Price update failed: {resp.status} — {body}")
-                        return web.json_response({"error": "Failed to update Lava.top price"}, status=500)
-                    logging.info(f"[LavaTop] Цена оффера {selected_offer_id} успешно обновлена: {fiat_amount}₽")
-
-            # 4b. POST /api/v3/invoice — создаём инвойс
-            invoice_payload = {
-                "email": f"user_{user_id}@octorent.app",
-                "offerId": selected_offer_id,
-                "currency": "RUB",
-                "paymentProvider": "SMART_GLOCAL",
-                "paymentMethod": "CARD",
-                "buyerLanguage": "RU",
-                "clientUtm": {"utm_campaign": f"order_{order_id}"}
-            }
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    f"{LAVATOP_API_URL}/api/v3/invoice",
-                    json=invoice_payload,
-                    headers=headers,
-                    timeout=15
-                ) as resp:
-                    resp_data = await resp.json()
-                    logging.info(f"[LavaTop] Invoice response ({resp.status}): {resp_data}")
-
-                    if resp.status != 201:
-                        logging.error(f"[LavaTop] Invoice creation failed: {resp.status}")
-                        return web.json_response(
-                            {"error": f"Lava.top error: {resp_data.get('error', 'Unknown')}"},
-                            status=500
-                        )
-
-                    payment_url      = resp_data.get("paymentUrl", "")
-                    lava_contract_id = resp_data.get("id", "")
-
-        # 5. Сохраняем данные в БД
-        async with db.aiosqlite.connect(db.DB_PATH) as conn:
-            await conn.execute(
-                "UPDATE orders SET currency = 'RUB', payment_gateway = 'lavatop', fiat_amount = ?, external_id = ? WHERE id = ?",
-                (fiat_amount, lava_contract_id, order_id)
-            )
-            await conn.commit()
-
-        logging.info(f"✅ [LavaTop] Инвойс создан: order_id={order_id}, fiat={fiat_amount}₽, contractId={lava_contract_id}")
-        return web.json_response({
-            "status": "ok",
-            "order_id": order_id,
-            "payment_url": payment_url,
-            "fiat_amount": fiat_amount,
-            "lava_invoice_id": lava_contract_id
-        })
-
+        if not order_id_raw:
+            return web.Response(text="Missing order_id", status=400)
+            
+        order_id = int(order_id_raw)
+        
+        if status == 'success':
+            logging.info(f"✅ Order {order_id} paid via AuraPay")
+            await db.update_order_status(order_id, "paid")
+        elif status in ('rejected', 'failed', 'expired', 'canceled'):
+            logging.warning(f"❌ AuraPay order {order_id} failed with status: {status}")
+            await db.update_order_status(order_id, "failed")
+        else:
+            logging.info(f"⚠️ AuraPay order {order_id} status: {status}")
+            
+        return web.Response(text="OK")
     except Exception as e:
-        logging.error(f"[LavaTop] Error creating invoice: {e}")
-        return web.json_response({"error": str(e)}, status=500)
+        logging.error(f"AuraPay Webhook Error: {e}")
+        return web.Response(text="Error", status=500)
+
+
+
+# AuraPay handlers replace legacy fiat logic here (already added in previous turn)
 
 
 async def handle_lavatop_webhook(request):
@@ -1637,13 +1499,19 @@ async def handle_get_order_status(request):
             
         async with db.aiosqlite.connect(db.DB_PATH) as conn:
             conn.row_factory = db.aiosqlite.Row
-            cur = await conn.execute("SELECT status FROM orders WHERE id = ?", (order_id,))
+            cur = await conn.execute("SELECT status, nft_address, nft_name, days, tc_link FROM orders WHERE id = ?", (order_id,))
             order = await cur.fetchone()
             
             if not order:
                 return web.json_response({"error": "Order not found"}, status=404)
                 
-            return web.json_response({"status": order["status"]})
+            return web.json_response({
+                "status": order["status"], 
+                "nft_address": order["nft_address"],
+                "nft_name": order["nft_name"],
+                "days": order["days"],
+                "has_tc": bool(order["tc_link"])
+            })
     except Exception as e:
         logging.error(f"Error checking order status: {e}")
         return web.json_response({"error": str(e)}, status=500)
@@ -2066,19 +1934,14 @@ app.add_routes([
     web.get('/api/nft_details', handle_nft_details),
     web.get('/api/user-avatar', handle_user_avatar),
     web.get('/api/rates', handle_get_rates),
-    web.post('/api/create_fiat_invoice', handle_create_fiat_invoice),
+    web.post('/api/create_aurapay_invoice', handle_create_aurapay_invoice),
     web.post('/api/create_bot_invoice', handle_create_bot_invoice),
-    web.post('/api/create_cloudtips_invoice', handle_create_cloudtips_invoice),
     web.get('/api/get_usdt_payload', handle_get_usdt_payload),
     web.get('/api/bot_balance', handle_get_bot_balance),
     web.get('/api/operator_contacts', handle_operator_contacts),
-    web.get('/api/order_status/{order_id}', handle_get_order_status),
-    web.post('/api/webhooks/freekassa', handle_freekassa_webhook),
+    web.get('/api/order_status', handle_get_order_status),
+    web.post('/api/webhooks/aurapay', handle_aurapay_webhook),
     web.post('/api/webhooks/xrocket', handle_xrocket_webhook),
-    web.post(f'/api/webhooks/ct/{os.getenv("CLOUDTIPS_WEBHOOK_PATH", "cloudtips")}', handle_cloudtips_webhook),
-    web.post('/api/create_lavatop_invoice', handle_create_lavatop_invoice),
-    web.post('/api/webhooks/lavatop', handle_lavatop_webhook),
-    web.post('/api/create_donatepay_invoice', handle_create_donatepay_invoice),
     web.get('/review', handle_review_page),
     web.get('/api/reviews', handle_get_reviews),
     web.post('/api/reviews', handle_post_review),
@@ -2090,14 +1953,4 @@ app.add_routes([
 app.router.add_static('/', './web', name='static', follow_symlinks=True)
 
 if __name__ == '__main__':
-    # Start the DonatePay poller in the background
-    try:
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-             asyncio.create_task(donatepay_poller())
-        else:
-             loop.create_task(donatepay_poller())
-    except:
-        pass
-        
     web.run_app(app, port=PORT)
