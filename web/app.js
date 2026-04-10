@@ -4221,9 +4221,9 @@ function updateMethodTotal(baseTotal) {
     if (SELECTED_PAY_METHOD === 'AURAPAY') {
         const dp = parseFloat(CURRENT_PAYMENT_ITEM.price_per_day) || 0;
         const dur = parseInt(document.getElementById('rent-duration-input')?.value || 1);
-        const subtotal = dp * dur * currentRubRate;
+        const subtotal = (dp * dur) + 0.04; // Add 0.04 TON overhead
         
-        let rubVal = Math.round(subtotal * 1.09); // Only +9% AuraPay fee (SBP)
+        let rubVal = Math.round(subtotal * currentRubRate * 1.09); // Apply 9% AuraPay fee (SBP)
         total = rubVal > 0 ? rubVal : '...';
         if (totalAmountEl) totalAmountEl.innerText = total;
         if (totalCurrencyEl) totalCurrencyEl.innerText = '₽';
@@ -4244,10 +4244,11 @@ function updateMethodTotal(baseTotal) {
     }
 
     // Явное обновление цен во всех карточках (устранение "0 руб")
-    const commonTon = base + 0.2 + (isCoverFeeChecked ? 0.14 : 0);
     const auraPriceIcon = document.getElementById('pay-price-rub');
-    
-    if (auraPriceIcon) auraPriceIcon.innerText = Math.round(commonTon * currentRubRate * 1.09);
+    if (auraPriceIcon) {
+        // Формула: ((Цена в TON + 0.04) * Курс) * 1.09
+        auraPriceIcon.innerText = Math.round((base + 0.04) * currentRubRate * 1.09);
+    }
 
     const selView = document.getElementById('payment-selection-view');
     if (selView) {

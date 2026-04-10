@@ -554,8 +554,8 @@ async def handle_create_aurapay_invoice(request):
         ton_rub = rates.get('RUB', 230)
         
         # 3. Считаем сумму в рублях с комиссией 9% (под клиента)
-        # Сумма = (Цена в TON * Курс) * 1.09
-        fiat_amount = round(total_ton * ton_rub * 1.09, 2)
+        # Сумма = ((Цена в TON + 0.04) * Курс) * 1.09
+        fiat_amount = round((total_ton + 0.04) * ton_rub * 1.09, 2)
         if fiat_amount < 10: fiat_amount = 10.0 # Минималка 10 рублей
         
         shop_id = os.getenv("AURAPAY_SHOP_ID")
