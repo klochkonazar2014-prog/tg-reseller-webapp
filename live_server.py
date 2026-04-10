@@ -462,7 +462,8 @@ async def create_rental_order(user_id, nft_address, days, is_fiat=False):
         total_base = 0.23
         logging.info(f"Applying special logic for test NFT: {item['title']}")
     else:
-        total_base = round((item['original_price'] + markup) * days + (0.06 if is_fiat else 0.2), 2)
+        # (MarketPrice + Markup) * days + 0.04 for fiat
+        total_base = round((item['original_price'] + markup) * days + (0.04 if is_fiat else 0.2), 2)
     # Calculate referral commission before creating order
     referral_commission = 0.0
     referrer_id = await db.get_referrer_id(user_id)
@@ -553,10 +554,9 @@ async def handle_create_aurapay_invoice(request):
         rates = await fetch_fiat_rates()
         ton_rub = rates.get('RUB', 230)
         
-        # 3. Считаем сумму в рублях с комиссией 9% (под клиента)
-        # Сумма = ((Цена в TON + 0.04) * Курс) * 1.09
-        fiat_amount = round((total_ton + 0.04) * ton_rub * 1.09, 2)
-        if fiat_amount < 10: fiat_amount = 10.0 # Минималка 10 рублей
+        # Formula: Total_TON * Rate * 1.09 (total_ton already includes +0.04 fee from create_rental_order)
+        fiat_amount = round(total_ton * ton_rub * 1.09, 2)
+        if fiat_amount < 10: fiat_amount = 10.0
         
         shop_id = os.getenv("AURAPAY_SHOP_ID")
         api_key = os.getenv("AURAPAY_API_KEY")
@@ -572,6 +572,7 @@ async def handle_create_aurapay_invoice(request):
             "order_id": str(order_id),
             "amount": float(fiat_amount),
             "currency": "RUB",
+            "service": "sbp",
             "comment": f"OctoRent order #{order_id}",
             "success_url": success_url,
             "fail_url": success_url.replace("paid_", "fail_"),
@@ -598,7 +599,6 @@ async def handle_create_aurapay_invoice(request):
                     payment_url = result.get('payment_data', {}).get('url')
                     if not payment_url:
                         return web.json_response({"error": "No payment URL in response"}, status=500)
-                        
                     # Обновляем заказ данными об оплате
                     async with db.aiosqlite.connect(db.DB_PATH) as conn:
                         await conn.execute(

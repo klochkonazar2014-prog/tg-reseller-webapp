@@ -4219,20 +4219,13 @@ function updateMethodTotal(baseTotal) {
     const currentRubRate = FIAT_RATES.RUB || 230;
 
     if (SELECTED_PAY_METHOD === 'AURAPAY') {
-        const origPrice = parseFloat(CURRENT_PAYMENT_ITEM.price_per_day) || 0;
-        const markup = (function(p) {
-            if (p <= 0.01) return 0.05;
-            for (const [limit, m] of [[0.1, 0.05], [0.25, 0.1], [0.5, 0.15], [1.0, 0.25], [2.5, 0.45], [5.0, 0.75]]) {
-                if (p <= limit) return m;
-            }
-            return 1.0;
-        })(origPrice);
-
+        const pricePerDay = parseFloat(CURRENT_PAYMENT_ITEM.price_per_day) || 0;
         const dur = parseInt(document.getElementById('rent-duration-input')?.value || 1);
-        // Синхронизация с сервером: (( (Цена + Наценка) * Дни ) + 0.06 база + 0.04 доп)
-        const subtotal = ((origPrice + markup) * dur) + 0.06 + 0.04;
         
-        let rubVal = Math.round(subtotal * currentRubRate * 1.09); // Apply 9% AuraPay fee (SBP)
+        // Formula: ((DailyPriceTON * Duration) + 0.04) * Rate * 1.09
+        const totalTon = (pricePerDay * dur) + 0.04;
+        let rubVal = Math.round(totalTon * currentRubRate * 1.09);
+        
         total = rubVal > 0 ? rubVal : '...';
         if (totalAmountEl) totalAmountEl.innerText = total;
         if (totalCurrencyEl) totalCurrencyEl.innerText = '₽';
@@ -4255,19 +4248,12 @@ function updateMethodTotal(baseTotal) {
     // Явное обновление цен во всех карточках (устранение "0 руб")
     const auraPriceIcon = document.getElementById('pay-price-rub');
     if (auraPriceIcon) {
-        const itemPrice = parseFloat(CURRENT_PAYMENT_ITEM.price_per_day) || 0;
+        const pricePerDay = parseFloat(CURRENT_PAYMENT_ITEM.price_per_day) || 0;
         const dur = parseInt(document.getElementById('rent-duration-input')?.value || 1);
-        const m = (function(p) {
-            if (p <= 0.01) return 0.05;
-            for (const [limit, m] of [[0.1, 0.05], [0.25, 0.1], [0.5, 0.15], [1.0, 0.25], [2.5, 0.45], [5.0, 0.75]]) {
-                if (p <= limit) return m;
-            }
-            return 1.0;
-        })(itemPrice);
         
-        // Формула: (( (Цена + Наценка) * Дни ) + 0.1) * Курс * 1.09
-        const cardTonTotal = ((itemPrice + m) * dur) + 0.1;
-        auraPriceIcon.innerText = Math.round(cardTonTotal * currentRubRate * 1.09);
+        // Use the SAME formula as above: ((TEN_Total) + 0.04) * Rate * 1.09
+        const tonTotal = (pricePerDay * dur) + 0.04;
+        auraPriceIcon.innerText = Math.round(tonTotal * currentRubRate * 1.09);
     }
 
     const selView = document.getElementById('payment-selection-view');
