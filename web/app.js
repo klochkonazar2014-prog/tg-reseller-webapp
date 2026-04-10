@@ -4095,7 +4095,10 @@ function openPaymentModal() {
     const paneCrypto = document.getElementById('pane-crypto');
     if (paneCard) { paneCard.classList.add('active'); }
     if (paneCrypto) { paneCrypto.classList.remove('active'); paneCrypto.style.display = 'none'; }
-    SELECTED_PAY_METHOD = 'CLOUDTIPS';
+    
+    // Default to AuraPay (SBP) and sync logic state immediately
+    SELECTED_PAY_METHOD = 'AURAPAY';
+    selectPayMethod('AURAPAY');
 
     // Refresh fiat rates every time modal opens
     fetchFiatRates().then(() => updateTotalPrice());
