@@ -960,10 +960,43 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
         updateUILanguage();
 
+        // 🚀 IMMEDIATE DEEP LINK CHECK
+        const urlParams = new URLSearchParams(window.location.search);
+        let deepNftAddr = urlParams.get('nft_address');
+        let paidOrderId = urlParams.get('paid_order_id');
+        let failOrderId = urlParams.get('fail_order_id');
+
+        if (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param) {
+            const sp = tg.initDataUnsafe.start_param;
+            if (sp.startsWith('nft_')) deepNftAddr = sp.replace('nft_', '');
+            if (sp.startsWith('paid_')) {
+                paidOrderId = sp.replace('paid_', '');
+                console.log("💰 Detected paidOrderId from start_param:", paidOrderId);
+            }
+            if (sp.startsWith('fail_')) failOrderId = sp.replace('fail_', '');
+        }
+
+        if (paidOrderId) {
+            const overlay = document.getElementById('payment-loading-overlay');
+            if (overlay) {
+                overlay.style.display = 'flex';
+                overlay.style.opacity = '1';
+            }
+            const screen = document.getElementById('loading-screen');
+            if (screen) screen.style.display = 'none';
+            
+            // Start non-blocking polling
+            checkPaymentStatus(paidOrderId);
+        }
+
+        if (failOrderId) {
+            showStatusStrip('error', t('payment_failed_cancelled'));
+        }
+
         // ⏳ Failsafe: Hide loader after 5s no matter what
         setTimeout(() => {
             const screen = document.getElementById('loading-screen');
-            if (screen && screen.style.display !== 'none') {
+            if (screen && screen.style.display !== 'none' && !paidOrderId) {
                 console.warn("Failsafe: Hiding loader after 5s timeout");
                 screen.style.opacity = '0';
                 setTimeout(() => screen.style.display = 'none', 500);
@@ -981,76 +1014,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         // 🚀 NON-BLOCKING: Start loading but don't AWAIT here
         const catalogPromise = loadLiveItems(true);
-
-        const urlParams = new URLSearchParams(window.location.search);
-        let deepNftAddr = urlParams.get('nft_address');
-        let paidOrderId = urlParams.get('paid_order_id');
-        let failOrderId = urlParams.get('fail_order_id');
-
-        if (tg.initDataUnsafe && tg.initDataUnsafe.start_param) {
-            const sp = tg.initDataUnsafe.start_param;
-
-            if (sp.startsWith('nft_')) deepNftAddr = sp.replace('nft_', '');
-            if (sp.startsWith('paid_')) paidOrderId = sp.replace('paid_', '');
-            if (sp.startsWith('fail_')) failOrderId = sp.replace('fail_', '');
-        }
-
-        if (failOrderId) {
-            showStatusStrip('error', t('payment_failed_cancelled'));
-        }
-
-        if (paidOrderId) {
-            console.log("🚀 Returning from payment for order:", paidOrderId);
-            // Show Loading Overlay immediately
-            const overlay = document.getElementById('payment-loading-overlay');
-            if (overlay) overlay.style.display = 'flex';
-
-            (async () => {
-                let attempts = 0;
-                let maxAttempts = 30; // 60 seconds (2s interval)
-                
-                while (attempts < maxAttempts) {
-                    try {
-                        const r = await apiFetch(`${BACKEND_URL}/api/order_status?order_id=${paidOrderId}`);
-                        const d = await r.json();
-                        
-                        if (d && d.status === 'rented') {
-                            // SUCCESS: Purchased on MarketApp
-                            if (overlay) overlay.style.display = 'none';
-                            showStatusStrip('success', t('payment_success_connecting'));
-                            
-                            // Load item and open view
-                            if (d.nft_address) {
-                                const item = (ALL_MARKET_ITEMS || []).find(x => x.nft_address === d.nft_address);
-                                if (item) {
-                                    openProductView(item);
-                                    // Auto-open Connect to Fragment Modal
-                                    setTimeout(() => showCTInstructions(), 800);
-                                }
-                            }
-                            loadProfileData();
-                            return;
-                        } else if (d && d.status === 'paid') {
-                            // Payment confirmed, still buying...
-                            document.getElementById('overlay-title').innerText = t('payment_received');
-                            document.getElementById('overlay-desc').innerText = t('buying_gift_desc');
-                        } else if (d && d.status === 'failed') {
-                            // FAILURE: Server marked as failed
-                            if (overlay) overlay.style.display = 'none';
-                            showStatusStrip('error', t('payment_failed_cancelled'));
-                            return;
-                        }
-                    } catch (e) { console.error("Poll error:", e); }
-                    
-                    attempts++;
-                    await new Promise(r => setTimeout(r, 2000));
-                }
-                
-                // Timeout
-                if (overlay) overlay.style.display = 'none';
-                showStatusStrip('error', t('manual_verify_required'));
-            })();
-        }
 
         if (deepNftAddr) {
             console.log("🚀 Deep link:", deepNftAddr);
@@ -5002,3 +4965,42 @@ function showPostPaymentSuccessUI(orderId) {
 
 // Инициализация: получить актуальные контакты
 getOperatorContacts();
+
+/**
+ * 🔄 Polls backend for order status after payment return
+ */
+async function checkPaymentStatus(orderId) {
+    console.log("🚀 Starting verification for order:", orderId);
+    let attempts = 0;
+    const maxAttempts = 30; // 60 seconds
+
+    const pollInterval = setInterval(async () => {
+        attempts++;
+        try {
+            const resp = await apiFetch(`${BACKEND_URL}/api/order/status?order_id=${orderId}`);
+            const statusData = await resp.json();
+
+            if (statusData.status === 'rented' || statusData.status === 'active') {
+                clearInterval(pollInterval);
+                const overlay = document.getElementById('payment-loading-overlay');
+                if (overlay) {
+                    overlay.style.opacity = '0';
+                    setTimeout(() => overlay.style.display = 'none', 300);
+                }
+
+                showStatusStrip('success', t('payment_received'));
+                // Refresh data
+                loadProfileData();
+                loadLiveItems(true);
+            } else if (attempts >= maxAttempts) {
+                clearInterval(pollInterval);
+                const overlay = document.getElementById('payment-loading-overlay');
+                if (overlay) overlay.style.display = 'none';
+                showStatusStrip('info', t('payment_manual_check'));
+            }
+        } catch (e) {
+            console.error("Polling error:", e);
+        }
+    }, 2000);
+}
+
