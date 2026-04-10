@@ -4703,7 +4703,6 @@ async function handleBotRent(gateway) {
 
 async function handleTonRent() {
     try {
-        // Check wallet connection - correct property is .account not .connected
         if (!tonConnectUI || !tonConnectUI.account) {
             tonConnectUI.openModal();
             showToast(t('connect_wallet_ton'));
@@ -4776,17 +4775,14 @@ async function handleUsdtRent() {
 async function submitTCLinkFromModal(orderId) {
     const input = document.getElementById('modal-tc-link-input');
     const link = input ? input.value.trim() : "";
-    
     if (!link) {
         showToast(t('insert_link_first'));
         return;
     }
-    
     if (!link.startsWith("ton-connect://") && !link.startsWith("https://ton-connect.org")) {
         showToast(t('invalid_link_format'));
         return;
     }
-    
     try {
         showToast(t('saving_link'));
         const resp = await fetch(`${BACKEND_URL}/api/submit_tc_link`, {
@@ -4801,6 +4797,7 @@ async function submitTCLinkFromModal(orderId) {
         if (res.status === 'ok') {
             showToast(t('link_saved_success'));
             closePaymentModal();
+            loadProfileData(); 
             loadLiveItems(true);
         } else {
             showToast(res.error || t('save_error'));
@@ -4819,7 +4816,7 @@ async function handleRubRent() {
             body: JSON.stringify({
                 nft_address: CURRENT_PAYMENT_ITEM.nft_address,
                 days: dur,
-                gateway: 'freekassa',
+                gateway: 'aurapay',
                 currency: 'RUB'
             }),
             headers: { 'Content-Type': 'application/json' }
@@ -4831,6 +4828,7 @@ async function handleRubRent() {
         }
     } catch (e) { console.error(e); }
 }
+
 function toggleHistory() {
     const botUsername = "OctoRent_bot";
     const link = `https://t.me/${botUsername}?start=history`;
@@ -4842,146 +4840,93 @@ function toggleHistory() {
     }
 }
 
-// Map globals
-window.openPaymentModal = openPaymentModal;
-window.closePaymentModal = closePaymentModal;
-window.switchPayTab = switchPayTab;
-window.selectPayMethod = selectPayMethod;
-window.handleContinuePayment = handleContinuePayment;
-window.handleChangeWallet = handleChangeWallet;
-window.showBlockchainFeeDetails = showBlockchainFeeDetails;
-window.closeBlockchainFeeDetails = closeBlockchainFeeDetails;
-window.nextCTStep = nextCTStep;
-window.finalCTOrder = finalCTOrder;
-window.zoomCTImage = zoomCTImage;
-window.closeCTZoom = closeCTZoom;
-window.showInsufficientBalanceModal = showInsufficientBalanceModal;
-window.closeInsufficientBalanceModal = closeInsufficientBalanceModal;
-
-function contactAdmin() {
-    const admin = OPERATOR_CONTACTS.admin || '@nerksqq';
-    const url = 'https://t.me/' + admin.replace('@', '');
-    if (window.Telegram?.WebApp?.openTelegramLink) {
-        window.Telegram.WebApp.openTelegramLink(url);
-    } else {
-        window.open(url, '_blank');
-    }
-    closeInsufficientBalanceModal();
-}
-window.contactAdmin = contactAdmin;
-window.toggleHistory = toggleHistory;
-window.getOperatorContacts = getOperatorContacts;
-window.submitTCLinkFromModal = submitTCLinkFromModal;
-
-function showPaymentLoader() {
-    const overlay = document.getElementById('payment-loading-overlay');
-    if (overlay) overlay.style.display = 'flex';
-}
-
-function hidePaymentLoader() {
-    const overlay = document.getElementById('payment-loading-overlay');
-    if (overlay) overlay.style.display = 'none';
-}
-
-
-
-function showPostPaymentSuccessUI(orderId) {
-    const selView = document.getElementById('payment-selection-view');
-    if (selView) {
-        selView.innerHTML = `
-            <div style="text-align:center; padding: 20px 15px;">
-                <div style="font-size: 40px; margin-bottom: 15px;">✅</div>
-                <h2 style="color: #fff; margin-bottom: 10px; font-size: 1.2rem;">Оплата получена!</h2>
-                <p style="color: #8b9bb4; line-height: 1.4; margin-bottom: 20px; font-size: 0.9rem;">
-                    Аренда успешно оформлена. Теперь подключите актив к Fragment.
-                </p>
-                
-                <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 20px; text-align: left;">
-                    <label style="display: block; color: #fff; font-size: 0.85rem; margin-bottom: 8px;">Ссылка TON Connect с Fragment</label>
-                    <input type="text" id="modal-tc-link-input" placeholder="Вставьте ссылку здесь..." 
-                           style="width: 100%; background: #1a1f26; border: 1px solid #3d4652; color: #fff; padding: 10px; border-radius: 8px; font-size: 0.85rem; outline: none;">
-                    <p style="color: #6a7a8f; font-size: 0.75rem; margin-top: 8px;">
-                        Мы автоматически привяжем этот предмет к вашему профилю.
-                    </p>
-                    <button onclick="submitTCLinkFromModal(${orderId})" class="main-rent-btn" style="width: 100%; margin-top: 10px; padding: 10px; height: auto; min-height: 40px;">Привязать актив</button>
-                </div>
-
-                <button onclick="closePaymentModal(); loadLiveItems(true);" class="main-rent-btn" style="width:100%; background: none; border: 1px solid #3d4652; color: #8b9bb4;">Пропустить и закрыть</button>
-            </div>
-        `;
-    }
-}
-
 // Инициализация: получить актуальные контакты
 getOperatorContacts();
 
-/**
- * 🔄 Polls backend for order status after payment return
- */
+// --- Payment Verification & Success Flow ---
+
+let paymentPollInterval = null;
+
 async function checkPaymentStatus(orderId) {
     if (paymentPollInterval) clearInterval(paymentPollInterval);
-    console.log("Monitoring started for order:", orderId);
+    console.log("🚀 Pre-verifying ownership for order:", orderId);
     
-    const overlay = document.getElementById('payment-loading-overlay');
-    if (overlay) {
-        overlay.style.display = 'flex';
-        overlay.offsetHeight;
-        overlay.style.opacity = '1';
-    }
-    
-    const screen = document.getElementById('loading-screen');
-    if (screen) screen.style.display = 'none';
-
-    let attempts = 0;
-    const maxAttempts = 60; 
-    let nextPollIn = 20;
-
     try {
-        const resp = await apiFetch(`${BACKEND_URL}/api/order_status?order_id=${orderId}`);
-        const data = await resp.json();
-        if (data && data.nft_address) {
+        const initialResp = await apiFetch(`${BACKEND_URL}/api/order_status?order_id=${orderId}`);
+        if (!initialResp.ok) {
+            console.warn("Unauthorized or invalid order access. Staying in catalog.");
+            return; 
+        }
+        
+        const data = await initialResp.json();
+        
+        if (data.status === 'rented' || data.status === 'active') {
+             showConnectFragmentModal(orderId, 'fiat');
+             loadProfileData();
+             loadLiveItems(true);
+             return;
+        }
+
+        const overlay = document.getElementById('payment-loading-overlay');
+        if (overlay) {
+            overlay.style.display = 'flex';
+            overlay.offsetHeight;
+            overlay.style.opacity = '1';
+        }
+        
+        const screen = document.getElementById('loading-screen');
+        if (screen) screen.style.display = 'none';
+
+        if (data.nft_address) {
             const item = (ALL_MARKET_ITEMS || []).find(x => x.nft_address === data.nft_address);
             if (item) openProductView(item);
         }
-    } catch (e) { console.warn("Metadata fetch failed", e); }
 
-    const pollUpdate = setInterval(() => {
-        nextPollIn--;
-        const counter = document.getElementById('polling-count');
-        if (counter) counter.innerText = nextPollIn;
-        if (nextPollIn <= 0) nextPollIn = 10;
-    }, 1000);
+        let attempts = 0;
+        const maxAttempts = 120; // 20 minutes
+        let nextPollIn = 10;
 
-    paymentPollInterval = setInterval(async () => {
-        attempts++;
-        try {
-            const resp = await apiFetch(`${BACKEND_URL}/api/order/status?order_id=${orderId}`);
-            const statusData = await resp.json();
+        const pollUpdate = setInterval(() => {
+            nextPollIn--;
+            const counter = document.getElementById('polling-count');
+            if (counter) counter.innerText = nextPollIn;
+            if (nextPollIn <= 0) nextPollIn = 10;
+        }, 1000);
 
-            if (statusData.status === 'rented' || statusData.status === 'active') {
-                clearInterval(paymentPollInterval);
-                clearInterval(pollUpdate);
-                if (overlay) {
-                    overlay.style.opacity = '0';
-                    setTimeout(() => overlay.style.display = 'none', 400);
+        paymentPollInterval = setInterval(async () => {
+            attempts++;
+            try {
+                const resp = await apiFetch(`${BACKEND_URL}/api/order/status?order_id=${orderId}`);
+                const statusData = await resp.json();
+
+                if (statusData.status === 'rented' || statusData.status === 'active') {
+                    clearInterval(paymentPollInterval);
+                    clearInterval(pollUpdate);
+                    if (overlay) {
+                        overlay.style.opacity = '0';
+                        setTimeout(() => overlay.style.display = 'none', 400);
+                    }
+                    showStatusStrip('success', t('payment_received'));
+                    loadProfileData();
+                    loadLiveItems(true);
+                    setTimeout(() => { showConnectFragmentModal(orderId, 'fiat'); }, 1000);
+                } else if (statusData.status === 'failed') {
+                    clearInterval(paymentPollInterval);
+                    clearInterval(pollUpdate);
+                    if (overlay) overlay.style.display = 'none';
+                    showStatusStrip('error', t('payment_failed_cancelled'));
+                } else if (attempts >= maxAttempts) {
+                    clearInterval(paymentPollInterval);
+                    clearInterval(pollUpdate);
+                    if (overlay) overlay.style.display = 'none';
+                    showStatusStrip('info', t('payment_manual_check'));
                 }
-                showStatusStrip('success', t('payment_received'));
-                loadProfileData();
-                loadLiveItems(true);
-                setTimeout(() => { showConnectFragmentModal(orderId, 'fiat'); }, 1000);
-            } else if (statusData.status === 'failed') {
-                clearInterval(paymentPollInterval);
-                clearInterval(pollUpdate);
-                if (overlay) overlay.style.display = 'none';
-                showStatusStrip('error', t('payment_failed_cancelled'));
-            } else if (attempts >= maxAttempts) {
-                clearInterval(paymentPollInterval);
-                clearInterval(pollUpdate);
-                if (overlay) overlay.style.display = 'none';
-                showStatusStrip('info', t('payment_manual_check'));
-            }
-        } catch (e) { console.error("Polling error:", e); }
-    }, 10000);
+            } catch (e) { console.error("Polling error:", e); }
+        }, 10000);
+    } catch (e) {
+        console.error("Initial check failed:", e);
+        return;
+    }
 }
 
 function cancelPaymentMonitoring() {
@@ -5021,4 +4966,29 @@ function showConnectFragmentModal(orderId, type) {
         `;
     }
 }
+
+window.openPaymentModal = openPaymentModal;
+function hidePaymentLoader() {
+    const overlay = document.getElementById('payment-loading-overlay');
+    if (overlay) overlay.style.display = 'none';
+}
+
+function contactAdmin() {
+    const admin = OPERATOR_CONTACTS.admin || '@nerksqq';
+    const url = 'https://t.me/' + admin.replace('@', '');
+    if (window.Telegram?.WebApp?.openTelegramLink) {
+        window.Telegram.WebApp.openTelegramLink(url);
+    } else {
+        window.open(url, '_blank');
+    }
+    closeInsufficientBalanceModal();
+}
+window.contactAdmin = contactAdmin;
+window.toggleHistory = toggleHistory;
+window.getOperatorContacts = getOperatorContacts;
+window.submitTCLinkFromModal = submitTCLinkFromModal;
+
+
+
+
 
