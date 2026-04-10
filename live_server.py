@@ -588,7 +588,11 @@ async def handle_create_aurapay_invoice(request):
         
         async with aiohttp.ClientSession() as session:
             async with session.post(api_url, json=payload, headers=headers) as resp:
-                result = await resp.json()
+                try:
+                    result = await resp.json()
+                except:
+                    result = {"raw": await resp.text()}
+
                 if resp.status == 200 and result.get('status') == 'success':
                     payment_url = result.get('payment_data', {}).get('url')
                     if not payment_url:
@@ -610,7 +614,8 @@ async def handle_create_aurapay_invoice(request):
                     })
                 else:
                     logging.error(f"AuraPay invoice error: {resp.status} - {result}")
-                    return web.json_response({"error": f"Gateway error: {result.get('message', 'Unknown error')}"}, status=400)
+                    error_msg = result.get('message') or result.get('error') or result.get('raw') or f"Status {resp.status}"
+                    return web.json_response({"error": f"Gateway error: {error_msg}"}, status=400)
                     
     except Exception as e:
         logging.error(f"Error creating AuraPay invoice: {e}")
