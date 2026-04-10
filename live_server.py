@@ -80,6 +80,20 @@ def validate_init_data(init_data: str, bot_token: str):
         logging.error(f"Error validating initData: {e}")
         return None
 
+async def handle_success_redirect(request):
+    """Bridge for AuraPay: standard URL -> Telegram Deep Link"""
+    order_id = request.match_info.get('order_id') or request.query.get("order_id", "0")
+    bot_user = os.getenv('BOT_USERNAME', '@OctoRent_bot').replace('@', '')
+    target = f"https://t.me/{bot_user}/app?startapp=paid_{order_id}"
+    return web.HTTPFound(location=target)
+
+async def handle_fail_redirect(request):
+    """Bridge for AuraPay fallback: standard URL -> Telegram Deep Link"""
+    order_id = request.match_info.get('order_id') or request.query.get("order_id", "0")
+    bot_user = os.getenv('BOT_USERNAME', '@OctoRent_bot').replace('@', '')
+    target = f"https://t.me/{bot_user}/app?startapp=fail_{order_id}"
+    return web.HTTPFound(location=target)
+
 def get_authenticated_user_id(request):
     """
     Extracts and validates user_id from X-TG-Data header.
@@ -564,8 +578,10 @@ async def handle_create_aurapay_invoice(request):
         if not shop_id or not api_key:
             return web.json_response({"error": "AuraPay not configured"}, status=500)
             
-        success_url = f"https://t.me/{os.getenv('BOT_USERNAME', 'OctoRent_bot').replace('@','')}/app?startapp=paid_{order_id}"
-        callback_url = f"{os.getenv('BACKEND_URL', 'https://octorent.duckdns.org')}/api/webhooks/aurapay"
+        base_url = os.getenv('WEB_APP_URL', 'https://octorent.duckdns.org').rstrip('/')
+        success_url = f"{base_url}/success?order_id={order_id}"
+        fail_url = f"{base_url}/fail?order_id={order_id}"
+        callback_url = f"{base_url}/api/webhooks/aurapay"
         
         payload = {
             "shop_id": shop_id,
@@ -575,7 +591,7 @@ async def handle_create_aurapay_invoice(request):
             "service": "sbp",
             "comment": f"OctoRent order #{order_id}",
             "success_url": success_url,
-            "fail_url": success_url.replace("paid_", "fail_"),
+            "fail_url": fail_url,
             "callback_url": callback_url
         }
         
@@ -1947,6 +1963,10 @@ app.add_routes([
     web.post('/api/referral/withdraw', handle_referral_withdraw),
     web.post('/api/referral/prepare_share', handle_prepare_referral_share),
     web.get('/api/nft_details', handle_nft_details),
+    web.get('/success', handle_success_redirect),
+    web.get('/success/{order_id}', handle_success_redirect),
+    web.get('/fail', handle_fail_redirect),
+    web.get('/fail/{order_id}', handle_fail_redirect),
     web.get('/api/user-avatar', handle_user_avatar),
     web.get('/api/rates', handle_get_rates),
     web.post('/api/create_aurapay_invoice', handle_create_aurapay_invoice),

@@ -982,7 +982,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
         if (failOrderId) {
-            showStatusStrip('error', t('payment_failed_cancelled'));
+            handlePaymentFailure(failOrderId);
         }
 
         // ⏳ Failsafe: Hide loader after 5s no matter what
@@ -4929,6 +4929,35 @@ function cancelPaymentMonitoring() {
         setTimeout(() => overlay.style.display = 'none', 300);
     }
     showToast(t('monitoring_cancelled'));
+}
+
+/**
+ * 🛡️ Handles secure redirection to a product after payment failure
+ */
+async function handlePaymentFailure(orderId) {
+    try {
+        const resp = await apiFetch(`${BACKEND_URL}/api/order_status?order_id=${orderId}`);
+        if (!resp.ok) return; // Silent exit if unauthorized or not found
+
+        const data = await resp.json();
+        
+        // Hide initial loader
+        const screen = document.getElementById('loading-screen');
+        if (screen) screen.style.display = 'none';
+
+        // Auto-open the product if we have metadata
+        if (data.nft_address) {
+            const item = (ALL_MARKET_ITEMS || []).find(x => x.nft_address === data.nft_address);
+            if (item) {
+                openProductView(item);
+            }
+        }
+        
+        // Notify the user prominently
+        showStatusStrip('error', t('payment_failed_cancelled'));
+    } catch (e) {
+        console.error("Failed handling payment error link:", e);
+    }
 }
 
 function showConnectFragmentModal(orderId, type) {
