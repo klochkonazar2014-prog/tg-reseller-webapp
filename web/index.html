@@ -1031,33 +1031,30 @@
     <div id="image-zoom-overlay" class="zoom-overlay" style="display: none;" onclick="closeCTZoom()">
         <img id="zoomed-ct-img" src="pictures/cover_fee_warning.png" alt="Zoomed Instruction">
     </div>
-    <!-- Payment Loading Overlay (Status Screen) -->
-    <div id="payment-loading-overlay"
-        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 15, 19, 0.95); z-index: 10010; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); transition: all 0.3s ease;">
+    <!-- Payment Loading Overlay (Premium Processing Screen) -->
+    <div id="payment-loading-overlay" class="payment-processing-overlay">
+        <div class="processing-card">
+            <div class="premium-spinner" style="width: 56px; height: 56px;"></div>
 
-        <!-- Status Content Wrapper (Prevents horizontal/vertical stretching) -->
-        <div
-            style="display: flex; flex-direction: column; align-items: center; gap: 20px; width: 100%; max-width: 320px; text-align: center; padding: 20px;">
-            <div class="premium-spinner" style="width: 50px; height: 50px; border-width: 3px; margin: 0;"></div>
-
-            <div style="margin-top: 10px;">
-                <div id="payment-status-text"
-                    style="color: #fff; font-size: 22px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 6px;">
-                    Ожидаем оплаты...</div>
-                <div id="payment-timer"
-                    style="color: var(--accent-blue); font-family: 'Courier New', monospace; font-size: 26px; font-weight: 900;">
-                    10:00</div>
+            <div class="processing-info">
+                <div id="payment-status-title" class="processing-title" data-i18n="payment_received_title">Оплата получена!</div>
+                <div id="payment-status-desc" class="processing-desc" data-i18n="processing_order_desc">
+                    Обрабатываем ваш заказ, подарок готовится к отправке.
+                </div>
             </div>
 
-            <div style="color: #8b9bb4; font-size: 14px; line-height: 1.5; padding: 0 10px;">
-                Пожалуйста, проведите оплату в открывшемся окне.<br>
-                Проверка статуса через: <span id="polling-count" style="color: #fff; font-weight: 700;">20</span> сек.
+            <div class="processing-status-bar">
+                <span data-i18n="checking_status_in">Проверка статуса через:</span> 
+                <span id="polling-count" style="font-weight: 800; color: var(--accent-blue);">20</span> 
+                <span data-i18n="sec">сек.</span>
             </div>
 
-            <!-- Compact Cancel Button -->
-            <button class="btn-gray" onclick="cancelPayment()"
-                style="margin-top: 30px; height: 44px; width: 100%; border-radius: 12px; font-size: 15px; font-weight: 700; background: rgba(255,255,255,0.08); color: #fff; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">
-                Отменить заказ
+            <p style="color: #6a7a8f; font-size: 12px; margin-top: 5px;" data-i18n="auto_modal_hint">
+                Окно подключения высветится автоматически.
+            </p>
+
+            <button class="overlay-cancel-btn" onclick="cancelPaymentMonitoring()">
+                <span data-i18n="cancel_order_btn">Отменить заказ</span>
             </button>
         </div>
     </div>

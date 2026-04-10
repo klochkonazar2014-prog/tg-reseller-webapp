@@ -4728,34 +4728,10 @@ async function handleTonRent() {
             console.log("Preparing TON transaction:", transaction);
             await tonConnectUI.sendTransaction(transaction);
             
-            // Вместо быстрого закрытия показываем экран успеха внутри модалки
-            const selView = document.getElementById('payment-selection-view');
-            if (selView) {
-                selView.innerHTML = `
-                    <div style="text-align:center; padding: 20px 15px;">
-                        <div style="font-size: 40px; margin-bottom: 15px;">✅</div>
-                        <h2 style="color: #fff; margin-bottom: 10px; font-size: 1.2rem;">${t('transaction_sent')}</h2>
-                        <p style="color: #8b9bb4; line-height: 1.4; margin-bottom: 20px; font-size: 0.9rem;">
-                            ${t('payment_processing_ton')}
-                        </p>
-                        
-                        <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 20px; text-align: left;">
-                            <label style="display: block; color: #fff; font-size: 0.85rem; margin-bottom: 8px;">${t('fragment_tc_link_label')}</label>
-                            <input type="text" id="modal-tc-link-input" placeholder="${t('fragment_tc_link_placeholder')}" 
-                                   style="width: 100%; background: #1a1f26; border: 1px solid #3d4652; color: #fff; padding: 10px; border-radius: 8px; font-size: 0.85rem; outline: none;">
-                            <p style="color: #6a7a8f; font-size: 0.75rem; margin-top: 8px;">
-                                ${t('fragment_tc_link_hint')}
-                            </p>
-                            <button onclick="submitTCLinkFromModal(${res.order_id})" class="main-rent-btn" style="width: 100%; margin-top: 10px; padding: 10px; height: auto; min-height: 40px;">${t('save_auto_connect')}</button>
-                        </div>
-
-                        <button onclick="closePaymentModal(); loadLiveItems(true);" class="main-rent-btn" style="width:100%; background: none; border: 1px solid #3d4652; color: #8b9bb4;">${t('skip_and_close')}</button>
-                    </div>
-                `;
-            } else {
-                closePaymentModal();
-                showToast(t('transaction_sent'));
-            }
+            showConnectFragmentModal(res.order_id, 'ton');
+        } else {
+            showToast(res.error || t('payment_prepare_error'));
+        }
         } else {
             showToast(res.error || t('payment_prepare_error'));
         }
@@ -4791,31 +4767,8 @@ async function handleUsdtRent() {
             }]
         };
         await tonConnectUI.sendTransaction(transaction);
-        
-        const selView = document.getElementById('payment-selection-view');
-        if (selView) {
-            selView.innerHTML = `
-                <div style="text-align:center; padding: 20px 15px;">
-                    <div style="font-size: 40px; margin-bottom: 15px;">✅</div>
-                    <h2 style="color: #fff; margin-bottom: 10px; font-size: 1.2rem;">${t('transaction_sent')}</h2>
-                    <p style="color: #8b9bb4; line-height: 1.4; margin-bottom: 20px; font-size: 0.9rem;">
-                        ${t('payment_processing_usdt')}
-                    </p>
-                    
-                    <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 20px; text-align: left;">
-                        <label style="display: block; color: #fff; font-size: 0.85rem; margin-bottom: 8px;">${t('fragment_tc_link_label')}</label>
-                        <input type="text" id="modal-tc-link-input" placeholder="${t('fragment_tc_link_placeholder')}" 
-                               style="width: 100%; background: #1a1f26; border: 1px solid #3d4652; color: #fff; padding: 10px; border-radius: 8px; font-size: 0.85rem; outline: none;">
-                        <button onclick="submitTCLinkFromModal(${orderRes.order_id})" class="main-rent-btn" style="width: 100%; margin-top: 10px; padding: 10px; height: auto; min-height: 40px;">${t('save_auto_connect')}</button>
-                    </div>
-
-                    <button onclick="closePaymentModal(); loadLiveItems(true);" class="main-rent-btn" style="width:100%; background: none; border: 1px solid #3d4652; color: #8b9bb4;">${t('skip_and_close')}</button>
-                </div>
-            `;
-        } else {
-            closePaymentModal();
-            showToast(t('transaction_sent'));
-        }
+        showConnectFragmentModal(orderRes.order_id, 'usdt');
+    } catch (e) {
     } catch (e) { 
         console.error(e);
         if (e && e.message !== 'Reject request') {
@@ -4970,37 +4923,106 @@ getOperatorContacts();
  * 🔄 Polls backend for order status after payment return
  */
 async function checkPaymentStatus(orderId) {
-    console.log("🚀 Starting verification for order:", orderId);
-    let attempts = 0;
-    const maxAttempts = 30; // 60 seconds
+    if (paymentPollInterval) clearInterval(paymentPollInterval);
+    console.log("Monitoring started for order:", orderId);
+    
+    const overlay = document.getElementById('payment-loading-overlay');
+    if (overlay) {
+        overlay.style.display = 'flex';
+        overlay.offsetHeight;
+        overlay.style.opacity = '1';
+    }
+    
+    const screen = document.getElementById('loading-screen');
+    if (screen) screen.style.display = 'none';
 
-    const pollInterval = setInterval(async () => {
+    let attempts = 0;
+    const maxAttempts = 60; 
+    let nextPollIn = 20;
+
+    try {
+        const resp = await apiFetch(`${BACKEND_URL}/api/order_status?order_id=${orderId}`);
+        const data = await resp.json();
+        if (data && data.nft_address) {
+            const item = (ALL_MARKET_ITEMS || []).find(x => x.nft_address === data.nft_address);
+            if (item) openProductView(item);
+        }
+    } catch (e) { console.warn("Metadata fetch failed", e); }
+
+    const pollUpdate = setInterval(() => {
+        nextPollIn--;
+        const counter = document.getElementById('polling-count');
+        if (counter) counter.innerText = nextPollIn;
+        if (nextPollIn <= 0) nextPollIn = 20;
+    }, 1000);
+
+    paymentPollInterval = setInterval(async () => {
         attempts++;
         try {
             const resp = await apiFetch(`${BACKEND_URL}/api/order/status?order_id=${orderId}`);
             const statusData = await resp.json();
 
             if (statusData.status === 'rented' || statusData.status === 'active') {
-                clearInterval(pollInterval);
-                const overlay = document.getElementById('payment-loading-overlay');
+                clearInterval(paymentPollInterval);
+                clearInterval(pollUpdate);
                 if (overlay) {
                     overlay.style.opacity = '0';
-                    setTimeout(() => overlay.style.display = 'none', 300);
+                    setTimeout(() => overlay.style.display = 'none', 400);
                 }
-
                 showStatusStrip('success', t('payment_received'));
-                // Refresh data
                 loadProfileData();
                 loadLiveItems(true);
+                setTimeout(() => { showConnectFragmentModal(orderId, 'fiat'); }, 1000);
+            } else if (statusData.status === 'failed') {
+                clearInterval(paymentPollInterval);
+                clearInterval(pollUpdate);
+                if (overlay) overlay.style.display = 'none';
+                showStatusStrip('error', t('payment_failed_cancelled'));
             } else if (attempts >= maxAttempts) {
-                clearInterval(pollInterval);
-                const overlay = document.getElementById('payment-loading-overlay');
+                clearInterval(paymentPollInterval);
+                clearInterval(pollUpdate);
                 if (overlay) overlay.style.display = 'none';
                 showStatusStrip('info', t('payment_manual_check'));
             }
-        } catch (e) {
-            console.error("Polling error:", e);
-        }
-    }, 2000);
+        } catch (e) { console.error("Polling error:", e); }
+    }, 20000);
+}
+
+function cancelPaymentMonitoring() {
+    if (paymentPollInterval) clearInterval(paymentPollInterval);
+    const overlay = document.getElementById('payment-loading-overlay');
+    if (overlay) {
+        overlay.style.opacity = '0';
+        setTimeout(() => overlay.style.display = 'none', 300);
+    }
+    showToast(t('monitoring_cancelled'));
+}
+
+function showConnectFragmentModal(orderId, type) {
+    const modal = document.getElementById('payment-modal');
+    const selView = document.getElementById('payment-selection-view');
+    if (modal) {
+        modal.style.display = 'flex';
+        setTimeout(() => modal.classList.add('active'), 10);
+    }
+    if (selView) {
+        selView.innerHTML = `
+            <div style="text-align:center; padding: 25px 20px;">
+                <div style="font-size: 50px; margin-bottom: 20px; animation: bounceIn 0.5s ease;">✅</div>
+                <h2 style="color: #fff; margin-bottom: 15px; font-size: 1.4rem; font-weight: 800;">${t('payment_received')}</h2>
+                <p style="color: #8b9bb4; line-height: 1.5; margin-bottom: 25px; font-size: 0.95rem;">
+                    ${type === 'ton' ? t('payment_processing_ton') : (type === 'usdt' ? t('payment_processing_usdt') : t('processing_order_desc'))}
+                </p>
+                <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 20px; text-align: left; border: 1px solid rgba(255,255,255,0.08);">
+                    <label style="display: block; color: #fff; font-size: 0.85rem; margin-bottom: 8px;">${t('fragment_tc_link_label')}</label>
+                    <input type="text" id="modal-tc-link-input" placeholder="${t('fragment_tc_link_placeholder')}" 
+                           style="width: 100%; background: #1a1f26; border: 1px solid #3d4652; color: #fff; padding: 10px; border-radius: 8px; font-size: 0.85rem; outline: none;">
+                    <p style="color: #6a7a8f; font-size: 0.75rem; margin-top: 8px;">${t('fragment_tc_link_hint')}</p>
+                    <button onclick="submitTCLinkFromModal(${orderId})" class="main-rent-btn" style="width: 100%; margin-top: 15px; padding: 12px; height: auto; min-height: 44px; font-weight: 800;">${t('save_auto_connect')}</button>
+                </div>
+                <button onclick="closePaymentModal(); loadLiveItems(true);" class="main-rent-btn" style="width:100%; background: none; border: 1px solid #3d4652; color: #8b9bb4; font-size: 0.85rem;">${t('skip_and_close')}</button>
+            </div>
+        `;
+    }
 }
 
