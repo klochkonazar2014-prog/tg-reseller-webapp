@@ -564,7 +564,7 @@ async def handle_create_aurapay_invoice(request):
         if not shop_id or not api_key:
             return web.json_response({"error": "AuraPay not configured"}, status=500)
             
-        success_url = f"https://t.me/{os.getenv('BOT_USERNAME', 'OctoRent_bot').replace('@','')}/market?startapp=paid_{order_id}"
+        success_url = f"https://t.me/{os.getenv('BOT_USERNAME', 'OctoRent_bot').replace('@','')}/app?startapp=paid_{order_id}"
         callback_url = f"{os.getenv('BACKEND_URL', 'https://octorent.duckdns.org')}/api/webhooks/aurapay"
         
         payload = {

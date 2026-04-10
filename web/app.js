@@ -989,6 +989,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         if (tg.initDataUnsafe && tg.initDataUnsafe.start_param) {
             const sp = tg.initDataUnsafe.start_param;
+
             if (sp.startsWith('nft_')) deepNftAddr = sp.replace('nft_', '');
             if (sp.startsWith('paid_')) paidOrderId = sp.replace('paid_', '');
             if (sp.startsWith('fail_')) failOrderId = sp.replace('fail_', '');
