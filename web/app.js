@@ -4732,9 +4732,6 @@ async function handleTonRent() {
         } else {
             showToast(res.error || t('payment_prepare_error'));
         }
-        } else {
-            showToast(res.error || t('payment_prepare_error'));
-        }
     } catch (e) {
         console.error(e);
         if (e && e.message !== 'Reject request') {
@@ -4768,7 +4765,6 @@ async function handleUsdtRent() {
         };
         await tonConnectUI.sendTransaction(transaction);
         showConnectFragmentModal(orderRes.order_id, 'usdt');
-    } catch (e) {
     } catch (e) { 
         console.error(e);
         if (e && e.message !== 'Reject request') {
