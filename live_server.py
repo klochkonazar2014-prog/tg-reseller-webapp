@@ -614,7 +614,8 @@ async def handle_create_aurapay_invoice(request):
                     })
                 else:
                     logging.error(f"AuraPay invoice error: {resp.status} - {result}")
-                    error_msg = result.get('message') or result.get('error') or result.get('raw') or f"Status {resp.status}"
+                    # Показываем весь JSON в ошибке для отладки
+                    error_msg = result.get('message') or result.get('error') or json.dumps(result)
                     return web.json_response({"error": f"Gateway error: {error_msg}"}, status=400)
                     
     except Exception as e:
