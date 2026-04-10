@@ -1503,13 +1503,22 @@ async def handle_get_order_status(request):
         if not order_id:
             return web.json_response({"error": "Missing order_id"}, status=400)
             
+        user_id = get_authenticated_user_id(request)
+        if not user_id:
+            return web.json_response({"error": "Unauthorized"}, status=401)
+            
         async with db.aiosqlite.connect(db.DB_PATH) as conn:
             conn.row_factory = db.aiosqlite.Row
-            cur = await conn.execute("SELECT status, nft_address, nft_name, days, tc_link FROM orders WHERE id = ?", (order_id,))
+            cur = await conn.execute("SELECT status, nft_address, nft_name, days, tc_link, user_id FROM orders WHERE id = ?", (order_id,))
             order = await cur.fetchone()
             
             if not order:
                 return web.json_response({"error": "Order not found"}, status=404)
+            
+            # Security Check: Verify ownership
+            if int(order["user_id"]) != int(user_id):
+                logging.warning(f"Unauthorized order status check attempt by user {user_id} for order {order_id} (owner: {order['user_id']})")
+                return web.json_response({"error": "Ownership required"}, status=403)
                 
             return web.json_response({
                 "status": order["status"], 

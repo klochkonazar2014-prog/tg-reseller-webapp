@@ -4949,7 +4949,7 @@ async function checkPaymentStatus(orderId) {
         nextPollIn--;
         const counter = document.getElementById('polling-count');
         if (counter) counter.innerText = nextPollIn;
-        if (nextPollIn <= 0) nextPollIn = 20;
+        if (nextPollIn <= 0) nextPollIn = 10;
     }, 1000);
 
     paymentPollInterval = setInterval(async () => {
@@ -4981,7 +4981,7 @@ async function checkPaymentStatus(orderId) {
                 showStatusStrip('info', t('payment_manual_check'));
             }
         } catch (e) { console.error("Polling error:", e); }
-    }, 20000);
+    }, 10000);
 }
 
 function cancelPaymentMonitoring() {
