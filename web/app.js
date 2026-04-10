@@ -4219,9 +4219,18 @@ function updateMethodTotal(baseTotal) {
     const currentRubRate = FIAT_RATES.RUB || 230;
 
     if (SELECTED_PAY_METHOD === 'AURAPAY') {
-        const dp = parseFloat(CURRENT_PAYMENT_ITEM.price_per_day) || 0;
+        const origPrice = parseFloat(CURRENT_PAYMENT_ITEM.price_per_day) || 0;
+        const markup = (function(p) {
+            if (p <= 0.01) return 0.05;
+            for (const [limit, m] of [[0.1, 0.05], [0.25, 0.1], [0.5, 0.15], [1.0, 0.25], [2.5, 0.45], [5.0, 0.75]]) {
+                if (p <= limit) return m;
+            }
+            return 1.0;
+        })(origPrice);
+
         const dur = parseInt(document.getElementById('rent-duration-input')?.value || 1);
-        const subtotal = (dp * dur) + 0.04; // Add 0.04 TON overhead
+        // Синхронизация с сервером: (( (Цена + Наценка) * Дни ) + 0.06 база + 0.04 доп)
+        const subtotal = ((origPrice + markup) * dur) + 0.06 + 0.04;
         
         let rubVal = Math.round(subtotal * currentRubRate * 1.09); // Apply 9% AuraPay fee (SBP)
         total = rubVal > 0 ? rubVal : '...';
@@ -4246,8 +4255,19 @@ function updateMethodTotal(baseTotal) {
     // Явное обновление цен во всех карточках (устранение "0 руб")
     const auraPriceIcon = document.getElementById('pay-price-rub');
     if (auraPriceIcon) {
-        // Формула: ((Цена в TON + 0.04) * Курс) * 1.09
-        auraPriceIcon.innerText = Math.round((base + 0.04) * currentRubRate * 1.09);
+        const itemPrice = parseFloat(CURRENT_PAYMENT_ITEM.price_per_day) || 0;
+        const dur = parseInt(document.getElementById('rent-duration-input')?.value || 1);
+        const m = (function(p) {
+            if (p <= 0.01) return 0.05;
+            for (const [limit, m] of [[0.1, 0.05], [0.25, 0.1], [0.5, 0.15], [1.0, 0.25], [2.5, 0.45], [5.0, 0.75]]) {
+                if (p <= limit) return m;
+            }
+            return 1.0;
+        })(itemPrice);
+        
+        // Формула: (( (Цена + Наценка) * Дни ) + 0.1) * Курс * 1.09
+        const cardTonTotal = ((itemPrice + m) * dur) + 0.1;
+        auraPriceIcon.innerText = Math.round(cardTonTotal * currentRubRate * 1.09);
     }
 
     const selView = document.getElementById('payment-selection-view');
