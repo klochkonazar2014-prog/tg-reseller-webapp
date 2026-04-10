@@ -593,7 +593,8 @@ async def handle_create_aurapay_invoice(request):
                 except:
                     result = {"raw": await resp.text()}
 
-                if resp.status == 200 and result.get('status') == 'success':
+                # Исправление: AuraPay возвращает статус PENDING при создании, а не success
+                if resp.status == 200 and (result.get('status') == 'PENDING' or 'id' in result):
                     payment_url = result.get('payment_data', {}).get('url')
                     if not payment_url:
                         return web.json_response({"error": "No payment URL in response"}, status=500)
@@ -614,8 +615,7 @@ async def handle_create_aurapay_invoice(request):
                     })
                 else:
                     logging.error(f"AuraPay invoice error: {resp.status} - {result}")
-                    # Показываем весь JSON в ошибке для отладки
-                    error_msg = result.get('message') or result.get('error') or json.dumps(result)
+                    error_msg = result.get('message') or result.get('error') or f"Status {resp.status}"
                     return web.json_response({"error": f"Gateway error: {error_msg}"}, status=400)
                     
     except Exception as e:
