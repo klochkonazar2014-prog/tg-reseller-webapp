@@ -4292,11 +4292,14 @@ async function handleContinuePayment() {
                 })
             });
             const res = await resp.json();
+            console.log("[AuraPay] Server response:", { status: resp.status, data: res });
+
             if (res.status === 'ok' && res.payment_url) {
                 tg.openLink(res.payment_url);
                 closePaymentModal();
                 showToast(t('redirecting_to_fiat'));
-            } else if (res.error === 'insufficient_bot_balance') {
+            } else if (resp.status === 503 || (res.error && String(res.error).includes('insufficient_bot_balance'))) {
+                console.warn("[AuraPay] Insufficient bot balance detected. Showing modal...");
                 hidePaymentLoader();
                 showInsufficientBalanceModal();
             } else {

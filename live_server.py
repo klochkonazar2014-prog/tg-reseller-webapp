@@ -607,6 +607,7 @@ async def handle_create_aurapay_invoice(request):
         
         if bot_balance < item_cost:
             return web.json_response({
+                "status": "error",
                 "error": "insufficient_bot_balance",
                 "required": item_cost,
                 "balance": bot_balance
