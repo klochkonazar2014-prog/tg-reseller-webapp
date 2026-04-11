@@ -80,6 +80,27 @@ def validate_init_data(init_data: str, bot_token: str):
         logging.error(f"Error validating initData: {e}")
         return None
 
+async def get_wallet_balance(address):
+    """Fetch TON balance of the bot's service wallet"""
+    api_key = os.getenv("TONCENTER_API_KEY")
+    # Use Toncenter v2 API
+    url = f"https://toncenter.com/api/v2/getAddressInformation?address={address}"
+    headers = {"X-API-Key": api_key} if api_key else {}
+    
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, headers=headers, timeout=10) as resp:
+                if resp.status == 200:
+                    data = await resp.json()
+                    if data.get('ok'):
+                        # Balance is in nanoton
+                        balance_nano = int(data['result']['balance'])
+                        return balance_nano / 1e9
+        return 0.0
+    except Exception as e:
+        logging.error(f"Error fetching balance for {address}: {e}")
+        return 0.0
+
 async def handle_success_redirect(request):
     """Bridge for AuraPay: standard URL -> Telegram Deep Link"""
     order_id = request.match_info.get('order_id') or request.query.get("order_id", "0")
@@ -577,6 +598,17 @@ async def handle_create_aurapay_invoice(request):
         
         if not shop_id or not api_key:
             return web.json_response({"error": "AuraPay not configured"}, status=500)
+            
+        # --- NEW: Dynamic Bot Wallet Balance Check ---
+        item_cost = (item['original_price'] * days) + 0.2
+        bot_balance = await get_wallet_balance(OWNER_WALLET)
+        logging.info(f"Checking bot balance for payment: {bot_balance} TON (Required: {item_cost})")
+        
+        if bot_balance < item_cost:
+            return web.json_response({
+                "error": "The service is temporarily under technical maintenance. Please try again in 5-10 minutes."
+            }, status=503)
+        # ----------------------------------------------
             
         base_url = os.getenv('WEB_APP_URL', 'https://octorent.duckdns.org').rstrip('/')
         success_url = f"{base_url}/success?order_id={order_id}"
