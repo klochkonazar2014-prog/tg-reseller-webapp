@@ -600,7 +600,8 @@ async def handle_create_aurapay_invoice(request):
             return web.json_response({"error": "AuraPay not configured"}, status=500)
             
         # --- NEW: Dynamic Bot Wallet Balance Check ---
-        item_cost = (item['original_price'] * days) + 0.2
+        item_data = res.get('item', {})
+        item_cost = (item_data.get('original_price', 0) * days) + 0.2
         bot_balance = await get_wallet_balance(OWNER_WALLET)
         logging.info(f"Checking bot balance for payment: {bot_balance} TON (Required: {item_cost})")
         
