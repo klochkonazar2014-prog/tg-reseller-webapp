@@ -5003,7 +5003,9 @@ function hidePaymentLoader() {
 
 function contactAdmin() {
     const admin = OPERATOR_CONTACTS.admin || '@nerksqq';
-    const url = 'https://t.me/' + admin.replace('@', '');
+    const message = encodeURIComponent('Привет! Пополни, пожалуйста, баланс бота, мне не хватает на покупку товара. Спасибо!');
+    const url = 'https://t.me/' + admin.replace('@', '') + '?text=' + message;
+    
     if (window.Telegram?.WebApp?.openTelegramLink) {
         window.Telegram.WebApp.openTelegramLink(url);
     } else {
