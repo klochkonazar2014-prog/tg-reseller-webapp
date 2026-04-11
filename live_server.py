@@ -607,7 +607,9 @@ async def handle_create_aurapay_invoice(request):
         
         if bot_balance < item_cost:
             return web.json_response({
-                "error": "The service is temporarily under technical maintenance. Please try again in 5-10 minutes."
+                "error": "insufficient_bot_balance",
+                "required": item_cost,
+                "balance": bot_balance
             }, status=503)
         # ----------------------------------------------
             

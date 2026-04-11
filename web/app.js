@@ -4296,11 +4296,15 @@ async function handleContinuePayment() {
                 tg.openLink(res.payment_url);
                 closePaymentModal();
                 showToast(t('redirecting_to_fiat'));
+            } else if (res.error === 'insufficient_bot_balance') {
+                hidePaymentLoader();
+                showInsufficientBalanceModal();
             } else {
                 throw new Error(res.error || "Failed to create invoice");
             }
         } catch (e) {
             console.error("AuraPay Error:", e);
+            hidePaymentLoader();
             showToast(t('server_error', { msg: e.message }));
         } finally {
             if (btn) btn.disabled = false;
