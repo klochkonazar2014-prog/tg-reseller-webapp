@@ -1023,6 +1023,21 @@ document.addEventListener("DOMContentLoaded", async () => {
     const container = document.getElementById('items-view');
     if (container) container.innerHTML = '';
 
+    // 🛡️ SNAPSHOT PROTECTION: Hide UI before Telegram takes background screenshot
+    const hideForSnapshot = () => {
+        const lScreen = document.getElementById('loading-screen');
+        if (lScreen) {
+            lScreen.style.transition = 'none'; // Instant
+            lScreen.style.opacity = '1';
+            lScreen.style.display = 'flex';
+        }
+    };
+    
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') hideForSnapshot();
+    });
+    window.addEventListener('pagehide', hideForSnapshot);
+
     try {
         if (window.Telegram && window.Telegram.WebApp) {
             tg = window.Telegram.WebApp;
@@ -1608,7 +1623,7 @@ async function toggleCatalogMode() {
 
 let currentLoadController = null;
 
-async function loadLiveItems(reset = true) {
+async function loadLiveItems(reset = true, isBootstrap = false) {
     const myId = ++GLOBAL_LOAD_ID;
 
     if (reset && currentLoadController) {
@@ -4092,6 +4107,8 @@ async function fetchFiatRates() {
             if (!window.IS_BOOTSTRAPPING && typeof renderCatalog === 'function') renderCatalog();
             if (CURRENT_PAYMENT_ITEM) updateTotalPrice();
             return true;
+        } else {
+            throw new Error("Backend returned JSON but no valid rates found");
         }
     } catch (e) {
         console.error("Fiat rates error from backend, trying fallback. Error:", e);
