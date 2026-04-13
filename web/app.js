@@ -950,6 +950,53 @@ function updateUILanguage() {
     }
 }
 
+/**
+ * 🚀 ORCHESTRATOR: bootstrapApp
+ * Synchronized load of rates + catalog + 7s smart timeout
+ */
+async function bootstrapApp() {
+    console.log("🚀 [Bootstrap] Starting synchronized app load...");
+    const screen = document.getElementById('loading-screen');
+    const statusText = document.getElementById('loader-status-text');
+    
+    // 1. Start 7-second "Sleepy Server" timer
+    const slowServerTimer = setTimeout(() => {
+        if (statusText) {
+            statusText.innerText = "Сервер отвечает дольше чем обычно, подождите еще чуть-чуть";
+            statusText.classList.add('visible');
+        }
+    }, 7000);
+
+    // 2. Start loading sequences
+    try {
+        // We explicitly AWAIT both. No hiding loader until both are done.
+        // fetchFiatRates now returns a promise
+        const ratesPromise = fetchFiatRates();
+        const catalogPromise = loadLiveItems(true, true); // true as second arg = isBootstrap
+
+        await Promise.all([ratesPromise, catalogPromise]);
+        
+        console.log("✅ [Bootstrap] All data ready.");
+    } catch (err) {
+        console.error("❌ [Bootstrap] Critical load error:", err);
+    } finally {
+        // 3. Cleanup & Reveal App
+        clearTimeout(slowServerTimer);
+        
+        if (screen) {
+            screen.style.opacity = '0';
+            setTimeout(() => {
+                screen.style.display = 'none';
+                // Reset status text for future uses if any
+                if (statusText) {
+                    statusText.classList.remove('visible');
+                    statusText.innerText = "";
+                }
+            }, 500);
+        }
+    }
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
     try {
         if (window.Telegram && window.Telegram.WebApp) {
@@ -977,7 +1024,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
         if (paidOrderId) {
-            // Start non-blocking polling (it handles showing the overlay ONLY if authorized)
             checkPaymentStatus(paidOrderId);
         }
 
@@ -985,30 +1031,25 @@ document.addEventListener("DOMContentLoaded", async () => {
             handlePaymentFailure(failOrderId);
         }
 
-        // ⏳ Failsafe: Hide loader after 5s no matter what
+        // ⏳ Failsafe: Hide loader after 20s if something crashed completely
         setTimeout(() => {
             const screen = document.getElementById('loading-screen');
             if (screen && screen.style.display !== 'none' && !paidOrderId) {
-                console.warn("Failsafe: Hiding loader after 5s timeout");
+                console.warn("Failsafe: Emergency hide loader after 20s");
                 screen.style.opacity = '0';
                 setTimeout(() => screen.style.display = 'none', 500);
             }
-        }, 5000);
+        }, 20000);
 
         initTonConnect();
         loadProfileData();
-        // ✅ Await filter data first so ACTIVE_FILTERS state is stable before catalog loads
         await loadFilterData();
 
-        // 💱 Fetch real TON/RUB rate and WAIT for it before rendering catalog
-        // Timeout 1.5s so a slow API doesn't block the whole app startup
-        await Promise.race([fetchFiatRates(), new Promise(r => setTimeout(r, 1500))]);
-
-        // 🚀 NON-BLOCKING: Start loading but don't AWAIT here
-        const catalogPromise = loadLiveItems(true);
+        // 🚀 THE NEW BOOTSTRAP (Replaces old race condition logic)
+        await bootstrapApp();
 
         if (deepNftAddr) {
-            console.log("🚀 Deep link:", deepNftAddr);
+            console.log("🚀 Deep link processing:", deepNftAddr);
             showToast(t('loading_item'));
             const tMap = { 'gift': 0, 'username': 1, 'number': 2 };
 
@@ -1024,8 +1065,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             (async () => {
                 try {
-                    // Quick check local cache (wait max 2s for catalog)
-                    await Promise.race([catalogPromise, new Promise(r => setTimeout(r, 2000))]);
+                    // Quick check local cache
                     const cached = (ALL_MARKET_ITEMS || []).find(x => {
                         const a = String(x.nft_address || '').toLowerCase();
                         const t = deepNftAddr.toLowerCase();
@@ -1073,12 +1113,10 @@ document.addEventListener("DOMContentLoaded", async () => {
             })();
         }
 
-        await catalogPromise; // Ensure catalog is fully loaded for normal browsing
-        // FIX: Add click handler for product-view background
+        // Click handler for product-view background
         const productView = document.getElementById('product-view');
         if (productView) {
             productView.addEventListener('click', function (e) {
-                // Close if clicking on product-view itself OR on elements with overflow-y-scroll
                 if (e.target.id === 'product-view' || e.target.classList.contains('product-view')) {
                     closeProductView();
                 }
@@ -1087,22 +1125,20 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         document.getElementById('search-input').addEventListener('input', debounce((e) => {
             const val = e.target.value.toLowerCase();
-            if (ACTIVE_FILTERS.search === val) return; // Prevent redundant load if value didn't change
+            if (ACTIVE_FILTERS.search === val) return;
             ACTIVE_FILTERS.search = val;
             loadLiveItems(true);
         }, 500));
 
-        // Block Zoom BUT allow scrolling
+        // Block Zoom
         document.addEventListener('touchstart', (e) => {
             if (e.touches.length > 1) e.preventDefault();
         }, { passive: false });
 
-        // Prevent double tap zoom
         let lastTouchEnd = 0;
         document.addEventListener('touchend', (e) => {
             const now = Date.now();
             if (now - lastTouchEnd <= 300) {
-                // Check if target is scrollable or input
                 if (!e.target.closest('.chips-row') && !e.target.closest('input')) {
                     // e.preventDefault();
                 }
@@ -2700,7 +2736,7 @@ async function openProductView(item) {
     // Pricing & Duration
     // price_per_day already includes markup (added by parser.py) - NO extra markup needed
     let rawP = parseFloat(item.price_per_day) || 0;
-    const dailyPrice = rawP > 0 ? Math.round(rawP * (FIAT_RATES.RUB || 230)) : "---";
+    const dailyPrice = (rawP > 0 && FIAT_RATES.RUB > 0) ? Math.round(rawP * FIAT_RATES.RUB) : "---";
     const dailyPriceUsd = (rawP > 0 && GLOBAL_TON_PRICE) ? `~$${(rawP * GLOBAL_TON_PRICE).toFixed(2)}` : (rawP > 0 ? '---' : '');
     const minDays = Math.floor((item.min_duration || 86400) / 86400);
     const maxDays = Math.floor((item.max_duration || 2592000) / 86400);
@@ -3026,7 +3062,7 @@ function updateTotalPrice() {
     const priceSpan = document.getElementById('rent-btn-price');
     if (priceSpan) {
         // dp = price_per_day (already includes markup from parser.py)
-        const dailyPriceRub = Math.round(dp * (FIAT_RATES.RUB || 230));
+        const dailyPriceRub = (dp > 0 && FIAT_RATES.RUB > 0) ? Math.round(dp * FIAT_RATES.RUB) : 0;
         const rubValSubtotal = dailyPriceRub * dur;
         priceSpan.innerText = rubValSubtotal + " ₽";
     }
@@ -3998,6 +4034,7 @@ const FIAT_RATES = { USD: 0, RUB: 0 };
 
 async function fetchFiatRates() {
     try {
+        console.log("[Rates] Fetching current rates...");
         const response = await apiFetch(`${BACKEND_URL}/api/rates`);
         const data = await response.json();
         
@@ -4013,9 +4050,9 @@ async function fetchFiatRates() {
         }
         
         if (rateChanged) {
-            // Re-render catalog to update card prices with the real rate
             if (typeof renderCatalog === 'function') renderCatalog();
             if (CURRENT_PAYMENT_ITEM) updateTotalPrice();
+            return true;
         }
     } catch (e) {
         console.error("Fiat rates error from backend, trying fallback. Error:", e);
@@ -4024,13 +4061,16 @@ async function fetchFiatRates() {
             const fallbackData = await fallbackResponse.json();
             if (fallbackData && fallbackData.rates && fallbackData.rates.TON) {
                 FIAT_RATES.RUB = parseFloat(fallbackData.rates.TON.prices.RUB);
+                FIAT_RATES.USD = parseFloat(fallbackData.rates.TON.prices.USD);
                 if (typeof renderCatalog === 'function') renderCatalog();
                 if (CURRENT_PAYMENT_ITEM) updateTotalPrice();
+                return true;
             }
         } catch (fallbackError) {
             console.error("Fiat rates fallback completely failed:", fallbackError);
         }
     }
+    return false;
 }
 
 
@@ -4172,7 +4212,7 @@ function updateMethodTotal(baseTotal) {
     if (feeWarning) feeWarning.style.display = isCoverFeeChecked ? 'flex' : 'none';
 
     // Подстраховка курса
-    const currentRubRate = FIAT_RATES.RUB || 230;
+    const currentRubRate = FIAT_RATES.RUB || 0;
 
     if (SELECTED_PAY_METHOD === 'AURAPAY') {
         const pricePerDay = parseFloat(CURRENT_PAYMENT_ITEM.price_per_day) || 0;
