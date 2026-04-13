@@ -6,6 +6,7 @@ let isTcModalMandatory = false;
 // Consts
 let tg = null;
 let IS_SHARING_REF = false; // Prevent double clicks on referral share
+window.IS_BOOTSTRAPPING = true; // 🚀 System-wide lock to prevent price glitches on start
 
 const APP_VERSION = "1.2.5-meta-debug";
 console.log("OctoRent Version:", APP_VERSION);
@@ -977,6 +978,8 @@ async function bootstrapApp() {
         await Promise.all([ratesPromise, catalogPromise]);
         
         // 🚀 FINAL RENDER: Now that we have BOTH rates and items, render once
+        window.IS_BOOTSTRAPPING = false; // Unlock rendering
+        
         const container = document.getElementById('items-view');
         if (container) {
             container.innerHTML = ''; // Clear any placeholders
@@ -1730,7 +1733,7 @@ async function loadLiveItems(reset = true) {
                 staleElements.forEach(el => el.remove());
                 
                 // 🚀 SKIP RENDER during bootstrap to avoid showing wrong prices
-                if (!isBootstrap) {
+                if (!window.IS_BOOTSTRAPPING && !isBootstrap) {
                     renderItemsBatch(processed);
                 }
             }
