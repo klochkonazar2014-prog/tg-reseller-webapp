@@ -988,14 +988,16 @@ async function bootstrapApp() {
     } catch (err) {
         console.error("❌ [Bootstrap] Critical load error:", err);
     } finally {
-        // 3. Cleanup & Reveal App
+        // 3. Cleanup & Reveal App 동시에 모든 로더 숨기기
         clearTimeout(slowServerTimer);
+        
+        // Ensure internal loaders are definitely hidden
+        if (document.getElementById('top-loader')) document.getElementById('top-loader').style.display = 'none';
         
         if (screen) {
             screen.style.opacity = '0';
             setTimeout(() => {
                 screen.style.display = 'none';
-                // Reset status text for future uses if any
                 if (statusText) {
                     statusText.classList.remove('visible');
                     statusText.innerText = "";
@@ -1624,7 +1626,7 @@ async function loadLiveItems(reset = true) {
             container.className = 'grid'; 
         }
 
-        if (topLoader) topLoader.style.display = 'block';
+        if (topLoader && !isBootstrap) topLoader.style.display = 'block';
         window.scrollTo({ top: 0, behavior: 'instant' });
     } else {
         if (scrollLoader) scrollLoader.style.display = 'block';
@@ -1738,7 +1740,7 @@ async function loadLiveItems(reset = true) {
             console.error("Server returned OK status but missing items field:", data);
         }
 
-        if (document.getElementById('top-loader')) document.getElementById('top-loader').style.display = 'none';
+        if (!isBootstrap && document.getElementById('top-loader')) document.getElementById('top-loader').style.display = 'none';
         if (document.getElementById('scroll-loader')) document.getElementById('scroll-loader').style.display = 'none';
         hideLoading();
     } catch (e) {
