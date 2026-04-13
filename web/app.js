@@ -1733,8 +1733,8 @@ async function loadLiveItems(reset = true) {
                 const staleElements = view.querySelectorAll('.error-msg, .demo-label');
                 staleElements.forEach(el => el.remove());
                 
-                // 🚀 SKIP RENDER during bootstrap to avoid showing wrong prices
-                if (!window.IS_BOOTSTRAPPING && !isBootstrap) {
+                // 🚀 SKIP RENDER during bootstrap to avoid showing wrong prices or flickering
+                if (!window.IS_BOOTSTRAPPING) {
                     renderItemsBatch(processed);
                 }
             }
@@ -1784,7 +1784,10 @@ async function loadLiveItems(reset = true) {
                     _collection: { name: 'Gifts' }
                 }
             ];
-            renderItemsBatch(demoItems);
+            // 🚀 SKIP DEMO RENDER during bootstrap
+            if (!window.IS_BOOTSTRAPPING) {
+                renderItemsBatch(demoItems);
+            }
         }
 
         if (document.getElementById('top-loader')) document.getElementById('top-loader').style.display = 'none';
@@ -3324,7 +3327,13 @@ function copyNftTitle(name) {
 }
 
 function renderItemsBatch(items) {
+    if (window.IS_BOOTSTRAPPING) {
+        console.log("🚫 [Render] Suppressing render batch during bootstrap core sync.");
+        return;
+    }
     const container = document.getElementById('items-view');
+    if (!container) return;
+    
     items.forEach(item => {
         const card = createItemCard(item);
         if (card) container.appendChild(card);
