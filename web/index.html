@@ -186,7 +186,8 @@
                             style="font-size: 11px; color:#8794a1; font-weight:600; margin-bottom:4px;"
                             data-i18n="price_per_day">Цена в день</div>
                         <div class="pricing-value">
-                            <div id="view-daily-price" style="font-size: 16px; font-weight:700; color:#fff;"><span class="tm-amount">402 ₽</span></div>
+                            <div id="view-daily-price" style="font-size: 16px; font-weight:700; color:#fff;"><span
+                                    class="tm-amount">402 ₽</span></div>
                             <div id="view-daily-price-usd" style="font-size: 11px; color:#8794a1; margin-top:2px;">
                                 ~$349.49</div>
                         </div>
@@ -324,13 +325,16 @@
             </div>
 
             <!-- User Avatar Right -->
-            <div id="header-avatar-right" onclick="switchTab(4)" style="width: 44px; height: 44px; border-radius: 50%; overflow: hidden; cursor: pointer; flex-shrink: 0; border: 1px solid rgba(255, 255, 255, 0.08); background: #1c1c1e;">
-                <img id="header-user-avatar-img" src="https://ui-avatars.com/api/?name=U&background=2c2c2e&color=fff" style="width: 100%; height: 100%; object-fit: cover;">
+            <div id="header-avatar-right" onclick="switchTab(4)"
+                style="width: 44px; height: 44px; border-radius: 50%; overflow: hidden; cursor: pointer; flex-shrink: 0; border: 1px solid rgba(255, 255, 255, 0.08); background: #1c1c1e;">
+                <img id="header-user-avatar-img" src="https://ui-avatars.com/api/?name=U&background=2c2c2e&color=fff"
+                    style="width: 100%; height: 100%; object-fit: cover;">
             </div>
 
 
             <!-- Unified Header Badge (Pill) - TEMPORARILY HIDDEN for AuraPay moderation -->
-            <div id="header-unified-badge" class="header-unified-badge" onclick="handleHeaderBadgeClick()" style="display:none !important;">
+            <div id="header-unified-badge" class="header-unified-badge" onclick="handleHeaderBadgeClick()"
+                style="display:none !important;">
                 <div id="header-wallet-pill" class="header-pill-content" style="display:none;">
                     <span style="font-weight: 800; margin-right: 4px;">₽</span>
                     <span id="header-wallet-address">Wallet</span>
@@ -403,13 +407,15 @@
                 <div class="filter-input-row"
                     style="padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
                     <div class="filter-input-wrapper" style="flex: 1;">
-                        <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); opacity: 0.6; color: #fff; font-weight: 800; font-size: 18px;">₽</span>
+                        <span
+                            style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); opacity: 0.6; color: #fff; font-weight: 800; font-size: 18px;">₽</span>
                         <input type="number" id="filter-price-from" placeholder="От" data-i18n="filter_price_from"
                             style="padding-left: 42px !important;">
                     </div>
                     <div style="color: rgba(255, 255, 255, 0.2); font-weight: 800; font-size: 18px;">—</div>
                     <div class="filter-input-wrapper" style="flex: 1;">
-                        <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); opacity: 0.6; color: #fff; font-weight: 800; font-size: 18px;">₽</span>
+                        <span
+                            style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); opacity: 0.6; color: #fff; font-weight: 800; font-size: 18px;">₽</span>
                         <input type="number" id="filter-price-to" placeholder="До" data-i18n="filter_price_to"
                             style="padding-left: 42px !important;">
                     </div>
@@ -646,7 +652,8 @@
         </div>
 
         <!-- Wallet Connectivity - HIDDEN during AuraPay moderation -->
-        <div id="profile-label-wallet" class="dash-section-title" data-i18n="profile_wallet_title" style="display:none !important;">Wallet</div>
+        <div id="profile-label-wallet" class="dash-section-title" data-i18n="profile_wallet_title"
+            style="display:none !important;">Wallet</div>
         <div id="wallet-btn-container" style="display:none !important; margin-bottom: 24px; padding: 0 16px;">
             <button id="profile-ton-connect-btn" class="blue-btn" onclick="handleProfileWalletClick()">
                 <span style="font-weight: 800; margin-right: 4px;">₽</span>
@@ -678,8 +685,8 @@
 
     <!-- Bottom Nav -->
     <div class="bottom-nav">
-            </div>
-        </div>
+    </div>
+    </div>
     </div>
 
     <!-- Bottom Nav -->
@@ -825,8 +832,10 @@
 
                 <!-- CRYPTO TAB HIDDEN - Card payment shown -->
                 <div class="payment-tabs">
-                    <div class="pay-tab" onclick="switchPayTab('crypto')" data-i18n="pay_crypto" style="display:none !important;">Криптой</div>
-                    <div class="pay-tab active" onclick="switchPayTab('card')" data-i18n="pay_card" style="width: 100%; text-align: left; padding-left: 5px;">Картой</div>
+                    <div class="pay-tab" onclick="switchPayTab('crypto')" data-i18n="pay_crypto"
+                        style="display:none !important;">Криптой</div>
+                    <div class="pay-tab active" onclick="switchPayTab('card')" data-i18n="pay_card"
+                        style="width: 100%; text-align: left; padding-left: 5px;">Картой</div>
                 </div>
 
                 <div style="padding: 0 24px 30px;">
@@ -880,7 +889,8 @@
                         <div id="pay-method-aurapay" class="pay-method-card active"
                             onclick="selectPayMethod('AURAPAY')">
                             <div class="pm-check"></div>
-                            <img src="pictures/sbp_logo.png" style="width: 40px; height: 40px; border-radius: 8px; margin-left: 10px; object-fit: contain; background: #fff; padding: 2px;">
+                            <img src="pictures/sbp_logo.png"
+                                style="width: 40px; height: 40px; border-radius: 8px; margin-left: 10px; object-fit: contain; background: #fff; padding: 2px;">
                             <div class="pm-info">
                                 <div class="pm-header">
                                     <div class="pm-name">СБП</div>
@@ -1038,15 +1048,16 @@
             <div class="premium-spinner" style="width: 56px; height: 56px;"></div>
 
             <div class="processing-info">
-                <div id="payment-status-title" class="processing-title" data-i18n="payment_received_title">Оплата получена!</div>
+                <div id="payment-status-title" class="processing-title" data-i18n="payment_received_title">Оплата
+                    получена!</div>
                 <div id="payment-status-desc" class="processing-desc" data-i18n="processing_order_desc">
                     Обрабатываем ваш заказ, подарок готовится к отправке.
                 </div>
             </div>
 
             <div class="processing-status-bar">
-                <span data-i18n="waiting_response_in">Ожидание ответа через:</span> 
-                <span id="polling-count" style="font-weight: 800; color: var(--accent-blue);">10</span> 
+                <span data-i18n="waiting_response_in">Ожидание ответа через:</span>
+                <span id="polling-count" style="font-weight: 800; color: var(--accent-blue);">10</span>
                 <span data-i18n="sec">сек.</span>
             </div>
 

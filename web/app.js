@@ -976,7 +976,15 @@ async function bootstrapApp() {
 
         await Promise.all([ratesPromise, catalogPromise]);
         
-        console.log("✅ [Bootstrap] All data ready.");
+        // 🚀 FINAL RENDER: Now that we have BOTH rates and items, render once
+        const container = document.getElementById('items-view');
+        if (container) {
+            container.innerHTML = ''; // Clear any placeholders
+            renderItemsBatch(ALL_MARKET_ITEMS);
+        }
+        initFilterLists();
+        
+        console.log("✅ [Bootstrap] All data ready and rendered.");
     } catch (err) {
         console.error("❌ [Bootstrap] Critical load error:", err);
     } finally {
@@ -1719,7 +1727,10 @@ async function loadLiveItems(reset = true) {
                 const staleElements = view.querySelectorAll('.error-msg, .demo-label');
                 staleElements.forEach(el => el.remove());
                 
-                renderItemsBatch(processed);
+                // 🚀 SKIP RENDER during bootstrap to avoid showing wrong prices
+                if (!isBootstrap) {
+                    renderItemsBatch(processed);
+                }
             }
 
             if (reset) initFilterLists();
