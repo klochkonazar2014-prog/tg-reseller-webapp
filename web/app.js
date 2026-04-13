@@ -1605,6 +1605,7 @@ async function loadLiveItems(reset = true) {
     if (IS_LOADING && !reset) return;
 
     const hideLoading = () => {
+        if (window.IS_BOOTSTRAPPING) return; // 🔒 Don't hide splash during bootstrap!
         const screen = document.getElementById('loading-screen');
         if (screen) {
             screen.style.opacity = '0';
