@@ -303,7 +303,17 @@
     </div>
 
     <!-- Premium Loading Screen -->
-    <div id="loading-screen" style="display: flex; opacity: 1;">
+    <div id="loading-screen" style="display: flex; opacity: 1; z-index: 999999 !important;">
+        <script>
+            // 🛡️ EMERGENCY RECOVERY: Force show loader if app was "woken up" from background
+            (function() {
+                var screen = document.getElementById('loading-screen');
+                if (screen) {
+                    screen.style.display = 'flex';
+                    screen.style.opacity = '1';
+                }
+            })();
+        </script>
         <div class="premium-spinner"></div>
         <div class="loader-logo">OCTORENT</div>
         <div id="loader-status-text"></div>

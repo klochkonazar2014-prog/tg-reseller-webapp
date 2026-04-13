@@ -653,12 +653,18 @@ body.tab-market:not(.tab-gifts) .chips-row {
     width: 100%;
     height: 100%;
     background: #000;
-    z-index: 9999;
+    z-index: 999999 !important;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     transition: opacity 0.5s ease;
+}
+
+/* 🛡️ CSS Guard: Hide items whenever the loader is present and not fading out */
+#loading-screen[style*="flex"] ~ #market-container #items-view,
+#loading-screen:not([style*="display: none"]) ~ #market-container #items-view {
+    visibility: hidden !important;
 }
 
 .premium-spinner {

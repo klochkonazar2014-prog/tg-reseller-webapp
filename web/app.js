@@ -1011,6 +1011,16 @@ async function bootstrapApp() {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
+    // 🛡️ CRITICAL: Reset state immediately to prevent flicker on re-opens
+    window.IS_BOOTSTRAPPING = true;
+    const screen = document.getElementById('loading-screen');
+    if (screen) {
+        screen.style.display = 'flex';
+        screen.style.opacity = '1';
+    }
+    const container = document.getElementById('items-view');
+    if (container) container.innerHTML = '';
+
     try {
         if (window.Telegram && window.Telegram.WebApp) {
             tg = window.Telegram.WebApp;
