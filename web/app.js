@@ -968,26 +968,28 @@ async function bootstrapApp() {
         }
     }, 7000);
 
-    // 2. Start loading sequences
+    // 2. Start loading sequences (STRICT SEQUENTIAL ORDER)
     try {
-        // We explicitly AWAIT both. No hiding loader until both are done.
-        // fetchFiatRates now returns a promise
-        const ratesPromise = fetchFiatRates();
-        const catalogPromise = loadLiveItems(true, true); // true as second arg = isBootstrap
-
-        await Promise.all([ratesPromise, catalogPromise]);
+        // 🚀 Phase 1: Rates (Mandatory for correct pricing)
+        console.log("📡 [Bootstrap] Phase 1: Fetching rates...");
+        await fetchFiatRates();
         
-        // 🚀 FINAL RENDER: Now that we have BOTH rates and items, render once
+        // 🚀 Phase 2: Items (Start only after rates are ready)
+        console.log("📡 [Bootstrap] Phase 2: Loading catalog items...");
+        await loadLiveItems(true, true); // true as second arg = isBootstrap
+        
+        // 🚀 Phase 3: Final Render
+        console.log("✅ [Bootstrap] All data synchronized. Unlocking and rendering...");
         window.IS_BOOTSTRAPPING = false; // Unlock rendering
         
         const container = document.getElementById('items-view');
         if (container) {
-            container.innerHTML = ''; // Clear any placeholders
+            container.innerHTML = ''; 
             renderItemsBatch(ALL_MARKET_ITEMS);
         }
         initFilterLists();
         
-        console.log("✅ [Bootstrap] All data ready and rendered.");
+        console.log("✅ [Bootstrap] Final render complete.");
     } catch (err) {
         console.error("❌ [Bootstrap] Critical load error:", err);
     } finally {
@@ -4086,7 +4088,8 @@ async function fetchFiatRates() {
         }
         
         if (rateChanged) {
-            if (typeof renderCatalog === 'function') renderCatalog();
+            // 🛡️ DO NOT auto-render during bootstrap sync
+            if (!window.IS_BOOTSTRAPPING && typeof renderCatalog === 'function') renderCatalog();
             if (CURRENT_PAYMENT_ITEM) updateTotalPrice();
             return true;
         }
@@ -4098,7 +4101,8 @@ async function fetchFiatRates() {
             if (fallbackData && fallbackData.rates && fallbackData.rates.TON) {
                 FIAT_RATES.RUB = parseFloat(fallbackData.rates.TON.prices.RUB);
                 FIAT_RATES.USD = parseFloat(fallbackData.rates.TON.prices.USD);
-                if (typeof renderCatalog === 'function') renderCatalog();
+                // 🛡️ DO NOT auto-render during bootstrap sync
+                if (!window.IS_BOOTSTRAPPING && typeof renderCatalog === 'function') renderCatalog();
                 if (CURRENT_PAYMENT_ITEM) updateTotalPrice();
                 return true;
             }
