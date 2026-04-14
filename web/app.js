@@ -267,8 +267,9 @@ const TRANSLATIONS = {
                     <b style="color: #fff;">🔒 Гарантии</b><br>
                     Все сделки проходят через официальные механизмы Fragment. Мы не имеем доступа к вашим seed-фразам.
                 </div>
-                <div style="margin-top: 20px; text-align: center;">
-                    <a href="https://t.me/Paulie_Gualtiery" style="color: #0088cc; text-decoration: none; font-weight: 700;">👨‍💻 Связаться с поддержкой</a>
+                <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px;">
+                    <a href="legal.html" style="display: block; width: 100%; height: 44px; line-height: 44px; background: rgba(0, 136, 204, 0.1); color: #0088cc; text-decoration: none; font-weight: 700; border-radius: 12px; text-align: center; border: 1px solid rgba(0, 136, 204, 0.2);">📜 Полные правила и оферта</a>
+                    <a href="https://t.me/Paulie_Gualtiery" style="display: block; width: 100%; height: 44px; line-height: 44px; background: #0088cc; color: #fff; text-decoration: none; font-weight: 700; border-radius: 12px; text-align: center;">👨‍💻 Связаться с поддержкой</a>
                 </div>
             </div>
         `,
@@ -585,8 +586,9 @@ const TRANSLATIONS = {
                     <b style="color: #fff;">🔒 Security</b><br>
                     All transactions go through official Fragment mechanisms. We never have access to your seed phrases.
                 </div>
-                <div style="margin-top: 20px; text-align: center;">
-                    <a href="https://t.me/Paulie_Gualtiery" style="color: #0088cc; text-decoration: none; font-weight: 700;">👨‍💻 Contact Support</a>
+                <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px;">
+                    <a href="legal.html" style="display: block; width: 100%; height: 44px; line-height: 44px; background: rgba(0, 136, 204, 0.1); color: #0088cc; text-decoration: none; font-weight: 700; border-radius: 12px; text-align: center; border: 1px solid rgba(0, 136, 204, 0.2);">📜 Full Rules & Offer</a>
+                    <a href="https://t.me/Paulie_Gualtiery" style="display: block; width: 100%; height: 44px; line-height: 44px; background: #0088cc; color: #fff; text-decoration: none; font-weight: 700; border-radius: 12px; text-align: center;">👨‍💻 Contact Support</a>
                 </div>
             </div>
         `,

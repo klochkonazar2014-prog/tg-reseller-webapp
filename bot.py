@@ -1183,7 +1183,8 @@ async def cmd_help(message: Message):
         "После аренды в истории появится кнопка «Подключить к Fragment». Вам нужно будет ввести <code>tc://</code> ссылку из вашего кошелька.\n\n"
         "3. <b>Возвращаются ли средства?</b>\n"
         "Да, 0.14 TON возвращаются автоматически после завершения срока аренды.\n\n"
-        "Если у вас остались вопросы, пишите в поддержку: @Paulie_Gualtiery"
+        "Если у вас остались вопросы, пишите в поддержку: @Paulie_Gualtiery\n\n"
+        "Полный текст правил доступен по кнопке ниже: 👇"
     )
     if lang == 'en':
         help_text = (
@@ -1194,10 +1195,16 @@ async def cmd_help(message: Message):
             "After renting, find your item in 'History' and click 'Connect to Fragment'. You'll need to provide a <code>tc://</code> link from your wallet.\n\n"
             "3. <b>Are funds returned?</b>\n"
             "Yes, ~0.14 TON is automatically refunded after the rental period ends.\n\n"
-            "For more questions, contact support: @Paulie_Gualtiery"
+            "For more questions, contact support: @Paulie_Gualtiery\n\n"
+            "Full terms are available via the button below: 👇"
         )
         
-    await message.answer(help_text, parse_mode="HTML")
+    from bot import WEB_APP_URL
+    await message.answer(
+        help_text, 
+        reply_markup=kb.support_keyboard(lang=lang, web_app_url=WEB_APP_URL),
+        parse_mode="HTML"
+    )
 
 @dp.message(F.text)
 async def text_msg_handler(message: Message):
