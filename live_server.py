@@ -1591,7 +1591,7 @@ async def handle_operator_contacts(request):
     
     admin_uname = await db.get_cache(f"username_{admin_id}") or "@nerksqq"
     coder_uname = await db.get_cache(f"username_{coder_id}") or "@Paulie_Gualtiery"
-    support_uname = "@Octorent_Support_bot"
+    support_uname = "@Paulie_Gualtiery"
     
     return web.json_response({
         "admin": admin_uname,

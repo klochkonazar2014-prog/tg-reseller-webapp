@@ -17,7 +17,7 @@ const FIAT_FEE_MULTIPLIER = 1.05; // +5% commission for bank transfer
 const LAVATOP_MAX_RUB = 50000; // Lava.top practical limit per transaction
 const MANIFEST_URL = BACKEND_URL + "/tonconnect-manifest.json";
 let SELECTED_PAY_METHOD = 'AURAPAY'; // Default to AuraPay (SBP) for fiat payments
-let OPERATOR_CONTACTS = { admin: "@nerksqq", coder: "@Paulie_Gualtiery", support: "@Octorent_Support_bot" };
+let OPERATOR_CONTACTS = { admin: "@nerksqq", coder: "@Paulie_Gualtiery", support: "@Paulie_Gualtiery" };
 
 async function getOperatorContacts() {
     try {
