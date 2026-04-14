@@ -60,7 +60,9 @@ def support_keyboard(lang='ru', web_app_url=None, **kwargs):
     
     keyboard = []
     if web_app_url:
-        keyboard.append([InlineKeyboardButton(text=faq_text, web_app=WebAppInfo(url=web_app_url))])
+        sep = "&" if "?" in web_app_url else "?"
+        faq_url = f"{web_app_url}{sep}action=faq"
+        keyboard.append([InlineKeyboardButton(text=faq_text, web_app=WebAppInfo(url=faq_url))])
         
     keyboard.append([InlineKeyboardButton(text=support_text, url="https://t.me/Paulie_Gualtiery")])
     keyboard.append([InlineKeyboardButton(text=collab_text, url="tg://user?id=7868560541")])

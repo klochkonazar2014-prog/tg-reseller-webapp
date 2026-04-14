@@ -248,6 +248,30 @@ const TRANSLATIONS = {
         server_timeout: "Таймаут сервера",
         server_error: "Ошибка сервера: {msg}",
         loading_item: "Загружаем товар...",
+        help_faq_title: "База знаний и FAQ",
+        help_faq_body: `
+            <div style="font-size: 14px; line-height: 1.6; color: #8b9bb4;">
+                <div style="margin-bottom: 16px;">
+                    <b style="color: #fff;">🐙 Как работает OctoRent?</b><br>
+                    Вы выбираете NFT-номер или подарок, оплачиваете его, и наша система автоматически закрепляет его за вашим кошельком на платформе Fragment.
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <b style="color: #fff;">💰 Способы оплаты</b><br>
+                    Мы принимаем <b>TON</b> и карты РФ через <b>СБП</b>. При оплате картой мы сами выкупаем TON для финализации аренды.
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <b style="color: #fff;">⏳ Срок аренды</b><br>
+                    Вы можете арендовать предмет на срок от 1 до 180 дней. После завершения срока он вернется в общий каталог.
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <b style="color: #fff;">🔒 Гарантии</b><br>
+                    Все сделки проходят через официальные механизмы Fragment. Мы не имеем доступа к вашим seed-фразам.
+                </div>
+                <div style="margin-top: 20px; text-align: center;">
+                    <a href="https://t.me/Paulie_Gualtiery" style="color: #0088cc; text-decoration: none; font-weight: 700;">👨‍💻 Связаться с поддержкой</a>
+                </div>
+            </div>
+        `,
         ready: "Готово",
         item_not_found: "Товар не найден",
         redirecting_to_fiat: "Переходим к оплате...",
@@ -542,6 +566,30 @@ const TRANSLATIONS = {
         server_timeout: "Server timeout",
         server_error: "Server error: {msg}",
         loading_item: "Loading item...",
+        help_faq_title: "Knowledge Base & FAQ",
+        help_faq_body: `
+            <div style="font-size: 14px; line-height: 1.6; color: #8b9bb4;">
+                <div style="margin-bottom: 16px;">
+                    <b style="color: #fff;">🐙 How OctoRent works?</b><br>
+                    Select an NFT number or gift, pay for it, and our system automatically assigns it to your wallet on the Fragment platform.
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <b style="color: #fff;">💰 Payment Methods</b><br>
+                    We accept <b>TON</b> and bank cards. For card payments, we handle the TON conversion for you automatically.
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <b style="color: #fff;">⏳ Rental Duration</b><br>
+                    You can rent an item for 1 to 180 days. Once the term expires, it returns to the general catalog.
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <b style="color: #fff;">🔒 Security</b><br>
+                    All transactions go through official Fragment mechanisms. We never have access to your seed phrases.
+                </div>
+                <div style="margin-top: 20px; text-align: center;">
+                    <a href="https://t.me/Paulie_Gualtiery" style="color: #0088cc; text-decoration: none; font-weight: 700;">👨‍💻 Contact Support</a>
+                </div>
+            </div>
+        `,
         ready: "Ready",
         item_not_found: "Item not found",
         redirecting_to_fiat: "Redirecting to payment...",
@@ -1484,12 +1532,17 @@ function showHelp(amount) {
     const body = document.getElementById('help-body');
     const modal = document.getElementById('help-modal');
 
-    if (title) title.innerText = t('what_is_this');
+    if (title) {
+        if (amount === 'faq') title.innerText = t('help_faq_title');
+        else title.innerText = t('what_is_this');
+    }
     if (body) {
         if (amount === 'fee') {
             body.innerHTML = t('help_fee_body');
         } else if (amount === 'listing') {
             body.innerHTML = t('help_listing_body');
+        } else if (amount === 'faq') {
+            body.innerHTML = t('help_faq_body');
         }
     }
 
@@ -4010,6 +4063,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 openTcModal(parseInt(orderId));
             }
         }, 1200); // Give it a bit more time to settle
+    } else if (action === 'faq') {
+        console.log("📖 DEEP LINK: Opening FAQ");
+        setTimeout(() => {
+            showHelp('faq');
+        }, 1500); // Short delay to let the app initialize
     }
 });
 
