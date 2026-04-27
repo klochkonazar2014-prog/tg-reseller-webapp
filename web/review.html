@@ -109,10 +109,11 @@
         }
 
         .review-item-card {
-            background: var(--card-bg);
+            background: linear-gradient(145deg, #161618, #1c1c1e);
             border-radius: 24px;
             padding: 16px;
-            border: 1px solid rgba(0, 136, 204, 0.15); /* Blue-ish border for our style */
+            border: 1px solid rgba(0, 136, 204, 0.25);
+            box-shadow: 0 4px 20px rgba(0, 136, 204, 0.05);
             display: flex;
             flex-direction: column;
             gap: 12px;
@@ -267,6 +268,50 @@
         let currentFilter = 'all';
         let allReviews = [];
 
+        const SLUG_MAPPING = {
+            'artisanbricks': 'artisanbrick', 'berryboxes': 'berrybox', 'happybday': 'b-daycandle',
+            'bdaycandle': 'b-daycandle', 'thebackyard': 'alphadogs', 'prettyposies': 'prettyposy',
+            'astralshards': 'astralshard', 'poop': 'happybrownie', 'happybrownie': 'happybrownie',
+            'kissedfrog': 'kissedfrog', 'plushpepe': 'plushpepe', 'ducks': 'ducks',
+            'eternalrose': 'eternalrose', 'cloverpin': 'cloverpin', 'whipcupcake': 'whipcupcake',
+            'jellypuppy': 'jellypuppy', 'magicmushroom': 'magicmushroom', 'goldstar': 'goldstar',
+            'khabibspapakha': 'khabibspapakha'
+        };
+
+        function getGiftImageUrl(name) {
+            if (!name) return `https://ui-avatars.com/api/?name=NFT&background=2c2c2e&color=fff&size=48&bold=true&rounded=true`;
+            const match = name.match(/^(.*?)\s*#(\d+)$/);
+            if (!match) return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=2c2c2e&color=fff&size=48&bold=true&rounded=true`;
+
+            const rawName = match[1].trim();
+            const num = match[2];
+            const lookupKey = rawName.toLowerCase().replace(/[^a-z0-9]/g, '');
+            let slug = SLUG_MAPPING[lookupKey] || lookupKey;
+            
+            // For items like "scared cat" -> "scared-cat" if concatenated doesn't work, we'll try hyphenated via onerror,
+            // but Fragment usually uses hyphenated for newer collections, so let's try hyphenated first for non-mapped.
+            if (!SLUG_MAPPING[lookupKey] && rawName.includes(' ')) {
+                slug = rawName.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/[\s-]+/g, '-');
+            }
+
+            return `https://nft.fragment.com/gift/${slug}-${num}.webp`;
+        }
+
+        function handleImgError(img, fallbackName) {
+            if (!img.dataset.failedOnce) {
+                img.dataset.failedOnce = 'true';
+                // Try without hyphens
+                const lookupKey = fallbackName.replace(/#\d+$/, '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+                const num = fallbackName.match(/#(\d+)$/) ? fallbackName.match(/#(\d+)$/)[1] : '';
+                if (num) {
+                    img.src = `https://nft.fragment.com/gift/${lookupKey}-${num}.webp`;
+                    return;
+                }
+            }
+            img.onerror = null;
+            img.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(fallbackName || 'NFT')}&background=2c2c2e&color=fff&size=48&bold=true&rounded=true`;
+        }
+
         function setFilter(filter) {
             currentFilter = filter;
             document.querySelectorAll('.review-chip').forEach(chip => {
@@ -309,7 +354,7 @@
             container.innerHTML = filtered.map((r, i) => `
                 <div class="review-item-card" style="animation-delay: ${i * 50}ms">
                     <div class="review-item-header">
-                        <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(r.nft_name || 'NFT')}&background=2c2c2e&color=fff&size=48&bold=true&rounded=true" class="review-nft-thumb">
+                        <img src="${getGiftImageUrl(r.nft_name)}" onerror="handleImgError(this, '${(r.nft_name || 'GIFT').replace(/'/g, "\\'")}')" class="review-nft-thumb">
                         <div class="review-info">
                             <div class="review-nft-name">${r.nft_name || 'GIFT'}</div>
                             <div class="review-badge ${(r.rating || 5) >= 4 ? 'good' : 'bad'}">
