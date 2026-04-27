@@ -14,7 +14,6 @@
             --text-primary: #ffffff;
             --text-secondary: #8b9bb4;
             --accent-green: #26D07C;
-            --accent-yellow: #FFD700;
         }
 
         * {
@@ -43,6 +42,7 @@
             font-size: 24px;
             font-weight: 900;
             letter-spacing: -0.5px;
+            color: #fff;
         }
 
         /* FILTERS */
@@ -75,10 +75,11 @@
             transition: all 0.2s;
         }
 
+        /* ACTIVE BLUE STYLE */
         .review-chip.active {
-            background: var(--accent-yellow);
-            color: #000;
-            border-color: var(--accent-yellow);
+            background: var(--accent-blue);
+            color: #fff;
+            border-color: var(--accent-blue);
         }
 
         .rev-count {
@@ -87,7 +88,8 @@
         }
 
         .review-chip.active .rev-count {
-            opacity: 0.7;
+            opacity: 0.9;
+            color: #fff;
         }
 
         .rev-count.positive {
@@ -95,7 +97,7 @@
         }
 
         .review-chip.active .rev-count.positive {
-            color: #000;
+            color: #fff;
         }
 
         /* LIST */
@@ -110,7 +112,7 @@
             background: var(--card-bg);
             border-radius: 24px;
             padding: 16px;
-            border: 1px solid rgba(38, 208, 124, 0.2);
+            border: 1px solid rgba(0, 136, 204, 0.15); /* Blue-ish border for our style */
             display: flex;
             flex-direction: column;
             gap: 12px;
@@ -135,6 +137,7 @@
             object-fit: cover;
             background: #2c2c2e;
             flex-shrink: 0;
+            border: 1px solid rgba(255,255,255,0.05);
         }
 
         .review-info {
@@ -274,7 +277,8 @@
 
         async function loadData() {
             try {
-                const res = await fetch('/api/reviews?limit=100&offset=0');
+                // Using relative path for better compatibility with server
+                const res = await fetch('./api/reviews?limit=100&offset=0');
                 const data = await res.json();
                 allReviews = data.reviews || [];
                 
@@ -286,7 +290,7 @@
                 renderReviews();
             } catch (e) {
                 console.error(e);
-                document.getElementById('reviews-list-items').innerHTML = '<div class="empty-state">Ошибка загрузки</div>';
+                document.getElementById('reviews-list-items').innerHTML = '<div class="empty-state">Нет отзывов</div>';
             }
         }
 
