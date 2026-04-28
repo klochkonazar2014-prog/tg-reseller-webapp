@@ -3,17 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>OctoRent — Отзывы</title>
+    <title>OctoRent — Отзывы клиентов</title>
     <script src="https://telegram.org/js/telegram-web-app.js?v=1"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         :root {
             --accent-blue: #0088cc;
+            --accent-blue-glow: rgba(0, 136, 204, 0.5);
             --bg-dark: #000000;
-            --card-bg: #1c1c1e;
+            --card-bg: rgba(25, 25, 27, 0.75);
             --text-primary: #ffffff;
             --text-secondary: #8b9bb4;
             --accent-green: #26D07C;
+            --glass-border: rgba(255, 255, 255, 0.1);
         }
 
         * {
@@ -30,74 +32,66 @@
             -webkit-font-smoothing: antialiased;
             min-height: 100vh;
             overscroll-behavior: none;
-            padding-bottom: 40px;
+            padding-bottom: 50px;
+            background-image: 
+                radial-gradient(circle at 10% 10%, rgba(0, 136, 204, 0.12) 0%, transparent 50%),
+                radial-gradient(circle at 90% 90%, rgba(0, 136, 204, 0.08) 0%, transparent 50%);
+            background-attachment: fixed;
         }
 
         /* HEADER */
         .page-header {
-            padding: 20px 20px 10px;
+            padding: 35px 24px 15px;
         }
 
         .page-header h1 {
-            font-size: 24px;
+            font-size: 32px;
             font-weight: 900;
-            letter-spacing: -0.5px;
-            color: #fff;
+            letter-spacing: -1.2px;
+            background: linear-gradient(180deg, #ffffff 0%, #a2a2a2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         /* FILTERS */
         .review-filters {
             display: flex;
-            gap: 8px;
-            padding: 16px 20px;
+            gap: 10px;
+            padding: 15px 24px 25px;
             overflow-x: auto;
             scrollbar-width: none;
-            -webkit-overflow-scrolling: touch;
         }
 
-        .review-filters::-webkit-scrollbar {
-            display: none;
-        }
+        .review-filters::-webkit-scrollbar { display: none; }
 
         .review-chip {
-            background: #1c1c1e;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            color: #fff;
-            padding: 10px 14px;
-            border-radius: 14px;
-            font-size: 14px;
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            color: var(--text-secondary);
+            padding: 12px 20px;
+            border-radius: 18px;
+            font-size: 15px;
             font-weight: 700;
             white-space: nowrap;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.2s;
+            transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
 
-        /* ACTIVE BLUE STYLE */
         .review-chip.active {
             background: var(--accent-blue);
             color: #fff;
             border-color: var(--accent-blue);
+            box-shadow: 0 8px 20px var(--accent-blue-glow);
+            transform: scale(1.02);
         }
 
         .rev-count {
+            margin-left: 6px;
             opacity: 0.5;
-            font-size: 12px;
-        }
-
-        .review-chip.active .rev-count {
-            opacity: 0.9;
-            color: #fff;
-        }
-
-        .rev-count.positive {
-            color: var(--accent-green);
-        }
-
-        .review-chip.active .rev-count.positive {
-            color: #fff;
+            font-weight: 500;
+            font-size: 13px;
         }
 
         /* LIST */
@@ -105,40 +99,47 @@
             padding: 0 20px;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 20px;
         }
 
         .review-item-card {
-            background: linear-gradient(145deg, #161618, #1c1c1e);
-            border-radius: 24px;
-            padding: 16px;
-            border: 1px solid rgba(0, 136, 204, 0.25);
-            box-shadow: 0 4px 20px rgba(0, 136, 204, 0.05);
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            animation: fadeInUp 0.4s ease both;
+            background: var(--card-bg);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border-radius: 30px;
+            padding: 24px;
+            border: 1px solid var(--glass-border);
+            animation: cardEntrance 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
 
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        @keyframes cardEntrance {
+            from { opacity: 0; transform: translateY(30px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
         }
 
         .review-item-header {
             display: flex;
-            gap: 12px;
-            align-items: flex-start;
+            gap: 16px;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .review-nft-thumb-container {
+            width: 64px;
+            height: 64px;
+            flex-shrink: 0;
+            position: relative;
         }
 
         .review-nft-thumb {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
+            width: 100%;
+            height: 100%;
+            border-radius: 18px;
             object-fit: cover;
-            background: #2c2c2e;
-            flex-shrink: 0;
-            border: 1px solid rgba(255,255,255,0.05);
+            background: #111;
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
         }
 
         .review-info {
@@ -148,10 +149,11 @@
 
         .review-nft-name {
             font-size: 14px;
-            font-weight: 800;
-            color: var(--text-secondary);
+            font-weight: 900;
+            color: var(--accent-blue);
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 1.2px;
+            margin-bottom: 6px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -162,93 +164,102 @@
             align-items: center;
             gap: 4px;
             font-size: 11px;
-            font-weight: 900;
-            padding: 4px 10px;
-            border-radius: 8px;
-            margin-top: 4px;
+            font-weight: 800;
+            padding: 5px 12px;
+            border-radius: 12px;
         }
 
         .review-badge.good {
-            background: rgba(38, 208, 124, 0.1);
+            background: rgba(38, 208, 124, 0.12);
             color: var(--accent-green);
-            border: 1px solid rgba(38, 208, 124, 0.2);
+            border: 1px solid rgba(38, 208, 124, 0.15);
         }
 
         .review-badge.bad {
-            background: rgba(255, 59, 48, 0.1);
+            background: rgba(255, 59, 48, 0.12);
             color: #ff3b30;
-            border: 1px solid rgba(255, 59, 48, 0.2);
+            border: 1px solid rgba(255, 59, 48, 0.15);
         }
 
         .review-content {
             font-size: 18px;
-            font-weight: 800;
-            color: #fff;
-            line-height: 1.3;
-            word-break: break-word;
+            font-weight: 600;
+            color: #ffffff;
+            line-height: 1.5;
+            margin-bottom: 20px;
+            letter-spacing: -0.2px;
         }
 
         .review-item-footer {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-top: 4px;
+            padding-top: 18px;
+            border-top: 1px solid rgba(255,255,255,0.06);
         }
 
         .review-user-id {
             font-size: 13px;
             font-weight: 700;
-            color: #4c4c4e;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .v-check {
+            width: 14px;
+            height: 14px;
+            background: var(--accent-blue);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+            color: #fff;
         }
 
         .review-date {
             font-size: 13px;
             font-weight: 700;
-            color: #4c4c4e;
+            color: rgba(139, 155, 180, 0.5);
         }
 
-        /* LOADERS */
-        .loader-wrap {
-            display: flex;
-            justify-content: center;
-            padding: 40px;
-        }
-
+        /* LOADER */
+        .loader-wrap { display: flex; justify-content: center; padding: 80px; }
         .premium-spinner {
-            width: 32px;
-            height: 32px;
-            border: 3px solid rgba(0, 136, 204, 0.1);
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(0, 136, 204, 0.1);
             border-top-color: var(--accent-blue);
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
         }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
         .empty-state {
             text-align: center;
-            padding: 60px 20px;
+            padding: 120px 40px;
             color: var(--text-secondary);
+            font-weight: 600;
         }
     </style>
 </head>
 <body>
 
     <div class="page-header">
-        <h1>Все отзывы</h1>
+        <h1>Отзывы</h1>
     </div>
 
     <div class="review-filters">
         <button class="review-chip active" onclick="setFilter('all')" id="rev-filter-all">
-            Все отзывы <span class="rev-count" id="rev-count-all">0</span>
+            Все <span class="rev-count" id="rev-count-all">0</span>
         </button>
         <button class="review-chip" onclick="setFilter('positive')" id="rev-filter-positive">
-            Позитивные <span class="rev-count positive" id="rev-count-positive">0 100%</span>
+            Довольны <span class="rev-count" id="rev-count-positive">0</span>
         </button>
         <button class="review-chip" onclick="setFilter('negative')" id="rev-filter-negative">
-            Негативные <span class="rev-count" id="rev-count-negative">—</span>
+            Критика <span class="rev-count" id="rev-count-negative">0</span>
         </button>
     </div>
 
@@ -268,71 +279,65 @@
         let currentFilter = 'all';
         let allReviews = [];
 
-        function getGiftImageUrl(name) {
-            if (!name) return `https://ui-avatars.com/api/?name=NFT&background=2c2c2e&color=fff&size=48&bold=true&rounded=true`;
-            const match = name.match(/^(.*?)\s*#(\d+)$/);
-            if (!match) return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=2c2c2e&color=fff&size=48&bold=true&rounded=true`;
-
-            const rawName = match[1].trim();
-            const lookupKey = rawName.toLowerCase().replace(/[^a-z0-9]/g, '');
-            
-            // Construct local folder slug (usually plural)
-            let folderSlug = lookupKey + 's';
-            if (lookupKey.endsWith('s')) folderSlug = lookupKey;
-            if (lookupKey.endsWith('box')) folderSlug = lookupKey + 'es';
-            if (lookupKey.endsWith('posy')) folderSlug = lookupKey.slice(0, -1) + 'ies';
-            if (lookupKey === 'happybday') folderSlug = 'bdaycandles';
-            
-            // First try local generic thumb (we use absolute path to be safe)
-            return `/file/gifts/${folderSlug}/thumb.webp`;
-        }
-
-        function handleImgError(img, fallbackName) {
-            const numMatch = fallbackName.match(/#(\d+)$/);
-            if (!img.dataset.failedOnce && numMatch) {
-                img.dataset.failedOnce = 'true';
-                
-                const rawName = fallbackName.replace(/#\d+$/, '').trim();
-                const num = numMatch[1];
-                let slug = rawName.toLowerCase().replace(/[^a-z0-9]/g, '');
-                
-                if (rawName.includes(' ')) {
-                    slug = rawName.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/[\s-]+/g, '-');
-                }
-                
-                // Fallback to Fragment
-                img.src = `https://nft.fragment.com/gift/${slug}-${num}.webp`;
-                return;
-            }
-            // Final fallback
-            img.onerror = null;
-            img.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(fallbackName || 'NFT')}&background=2c2c2e&color=fff&size=48&bold=true&rounded=true`;
-        }
-
         function setFilter(filter) {
             currentFilter = filter;
             document.querySelectorAll('.review-chip').forEach(chip => {
                 chip.classList.toggle('active', chip.id === `rev-filter-${filter}`);
             });
             renderReviews();
+            if (tg) tg.HapticFeedback.impactOccurred('medium');
+        }
+
+        function getGiftImageUrl(name) {
+            const numMatch = name?.match(/#(\d+)$/);
+            if (!numMatch) return `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'G')}&background=1c1c1e&color=fff&size=128&bold=true`;
+
+            const rawName = name.replace(/#\d+$/, '').trim();
+            const num = numMatch[1];
+            
+            // Пытаемся сразу сформировать ссылку на Fragment (самое высокое качество)
+            // По умолчанию пробуем дефисную версию (она чаще встречается для коллекций)
+            let slug = rawName.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/[\s-]+/g, '-');
+            return `https://nft.fragment.com/gift/${slug}-${num}.webp`;
+        }
+
+        function handleImgError(img, name) {
+            if (!img.dataset.attempt) {
+                img.dataset.attempt = '1';
+                // Вторая попытка: без дефисов (слитно)
+                const rawName = name.replace(/#\d+$/, '').trim();
+                const num = name.match(/#(\d+)$/)[1];
+                let slug = rawName.toLowerCase().replace(/[^a-z0-9]/g, '');
+                img.src = `https://nft.fragment.com/gift/${slug}-${num}.webp`;
+                return;
+            }
+            if (img.dataset.attempt === '1') {
+                img.dataset.attempt = '2';
+                // Третья попытка: локальная превьюшка
+                const rawName = name.replace(/#\d+$/, '').trim();
+                let folder = rawName.toLowerCase().replace(/[^a-z0-9]/g, '') + 's';
+                img.src = `/file/gifts/${folder}/thumb.webp`;
+                return;
+            }
+            // Финал
+            img.onerror = null;
+            img.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'G')}&background=1c1c1e&color=fff&size=128&bold=true`;
         }
 
         async function loadData() {
             try {
-                // Using relative path for better compatibility with server
                 const res = await fetch('./api/reviews?limit=100&offset=0');
                 const data = await res.json();
                 allReviews = data.reviews || [];
                 
-                const stats = data.stats || {};
-                const total = stats.total || allReviews.length;
-                document.getElementById('rev-count-all').innerText = total;
-                document.getElementById('rev-count-positive').innerText = `${total} 100%`;
+                document.getElementById('rev-count-all').innerText = allReviews.length;
+                document.getElementById('rev-count-positive').innerText = allReviews.filter(r => (r.rating || 5) >= 4).length;
+                document.getElementById('rev-count-negative').innerText = allReviews.filter(r => (r.rating || 5) < 4).length;
                 
                 renderReviews();
             } catch (e) {
                 console.error(e);
-                document.getElementById('reviews-list-items').innerHTML = '<div class="empty-state">Нет отзывов</div>';
+                document.getElementById('reviews-list-items').innerHTML = '<div class="empty-state">Упс! Не удалось загрузить данные</div>';
             }
         }
 
@@ -344,24 +349,29 @@
             else if (currentFilter === 'negative') filtered = allReviews.filter(r => (r.rating || 5) < 4);
 
             if (filtered.length === 0) {
-                container.innerHTML = '<div class="empty-state">Нет отзывов</div>';
+                container.innerHTML = '<div class="empty-state">Пока нет таких отзывов</div>';
                 return;
             }
 
             container.innerHTML = filtered.map((r, i) => `
-                <div class="review-item-card" style="animation-delay: ${i * 50}ms">
+                <div class="review-item-card" style="animation-delay: ${i * 0.08}s">
                     <div class="review-item-header">
-                        <img src="${getGiftImageUrl(r.nft_name)}" onerror="handleImgError(this, '${(r.nft_name || 'GIFT').replace(/'/g, "\\'")}')" class="review-nft-thumb">
+                        <div class="review-nft-thumb-container">
+                            <img src="${getGiftImageUrl(r.nft_name)}" onerror="handleImgError(this, '${(r.nft_name || '').replace(/'/g, "\\'")}')" class="review-nft-thumb">
+                        </div>
                         <div class="review-info">
-                            <div class="review-nft-name">${r.nft_name || 'GIFT'}</div>
+                            <div class="review-nft-name">${r.nft_name || 'Fragment Gift'}</div>
                             <div class="review-badge ${(r.rating || 5) >= 4 ? 'good' : 'bad'}">
-                                ${(r.rating || 5) >= 4 ? '✓ ХОРОШО' : '⚠ ТАК СЕБЕ'}
+                                ${(r.rating || 5) >= 4 ? '✓ Доволен' : '⚠ Есть нюансы'}
                             </div>
                         </div>
                     </div>
                     <div class="review-content">${escapeHtml(r.review_text)}</div>
                     <div class="review-item-footer">
-                        <div class="review-user-id">#${String(r.user_id || '00000').slice(-5)}</div>
+                        <div class="review-user-id">
+                            ID: ${String(r.user_id || '00000').slice(-6)}
+                            <div class="v-check">✓</div>
+                        </div>
                         <div class="review-date">${formatDate(r.created_at)}</div>
                     </div>
                 </div>
@@ -371,7 +381,7 @@
         function formatDate(dateStr) {
             try {
                 const d = new Date(dateStr);
-                const months = ["янв", "фев", "мар", "апр", "май", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
+                const months = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
                 return `${d.getDate()} ${months[d.getMonth()]}`;
             } catch { return "недавно"; }
         }
