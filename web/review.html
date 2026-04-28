@@ -268,46 +268,43 @@
         let currentFilter = 'all';
         let allReviews = [];
 
-        const SLUG_MAPPING = {
-            'artisanbricks': 'artisanbrick', 'berryboxes': 'berrybox', 'happybday': 'b-daycandle',
-            'bdaycandle': 'b-daycandle', 'thebackyard': 'alphadogs', 'prettyposies': 'prettyposy',
-            'astralshards': 'astralshard', 'poop': 'happybrownie', 'happybrownie': 'happybrownie',
-            'kissedfrog': 'kissedfrog', 'plushpepe': 'plushpepe', 'ducks': 'ducks',
-            'eternalrose': 'eternalrose', 'cloverpin': 'cloverpin', 'whipcupcake': 'whipcupcake',
-            'jellypuppy': 'jellypuppy', 'magicmushroom': 'magicmushroom', 'goldstar': 'goldstar',
-            'khabibspapakha': 'khabibspapakha'
-        };
-
         function getGiftImageUrl(name) {
             if (!name) return `https://ui-avatars.com/api/?name=NFT&background=2c2c2e&color=fff&size=48&bold=true&rounded=true`;
             const match = name.match(/^(.*?)\s*#(\d+)$/);
             if (!match) return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=2c2c2e&color=fff&size=48&bold=true&rounded=true`;
 
             const rawName = match[1].trim();
-            const num = match[2];
             const lookupKey = rawName.toLowerCase().replace(/[^a-z0-9]/g, '');
-            let slug = SLUG_MAPPING[lookupKey] || lookupKey;
             
-            // For items like "scared cat" -> "scared-cat" if concatenated doesn't work, we'll try hyphenated via onerror,
-            // but Fragment usually uses hyphenated for newer collections, so let's try hyphenated first for non-mapped.
-            if (!SLUG_MAPPING[lookupKey] && rawName.includes(' ')) {
-                slug = rawName.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/[\s-]+/g, '-');
-            }
-
-            return `https://nft.fragment.com/gift/${slug}-${num}.webp`;
+            // Construct local folder slug (usually plural)
+            let folderSlug = lookupKey + 's';
+            if (lookupKey.endsWith('s')) folderSlug = lookupKey;
+            if (lookupKey.endsWith('box')) folderSlug = lookupKey + 'es';
+            if (lookupKey.endsWith('posy')) folderSlug = lookupKey.slice(0, -1) + 'ies';
+            if (lookupKey === 'happybday') folderSlug = 'bdaycandles';
+            
+            // First try local generic thumb (we use absolute path to be safe)
+            return `/file/gifts/${folderSlug}/thumb.webp`;
         }
 
         function handleImgError(img, fallbackName) {
-            if (!img.dataset.failedOnce) {
+            const numMatch = fallbackName.match(/#(\d+)$/);
+            if (!img.dataset.failedOnce && numMatch) {
                 img.dataset.failedOnce = 'true';
-                // Try without hyphens
-                const lookupKey = fallbackName.replace(/#\d+$/, '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-                const num = fallbackName.match(/#(\d+)$/) ? fallbackName.match(/#(\d+)$/)[1] : '';
-                if (num) {
-                    img.src = `https://nft.fragment.com/gift/${lookupKey}-${num}.webp`;
-                    return;
+                
+                const rawName = fallbackName.replace(/#\d+$/, '').trim();
+                const num = numMatch[1];
+                let slug = rawName.toLowerCase().replace(/[^a-z0-9]/g, '');
+                
+                if (rawName.includes(' ')) {
+                    slug = rawName.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/[\s-]+/g, '-');
                 }
+                
+                // Fallback to Fragment
+                img.src = `https://nft.fragment.com/gift/${slug}-${num}.webp`;
+                return;
             }
+            // Final fallback
             img.onerror = null;
             img.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(fallbackName || 'NFT')}&background=2c2c2e&color=fff&size=48&bold=true&rounded=true`;
         }
