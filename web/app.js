@@ -1813,35 +1813,22 @@ async function loadLiveItems(reset = true, isBootstrap = false) {
     }
     if (IS_LOADING && !reset) return;
 
-    const hideLoading = () => {
-        if (window.IS_BOOTSTRAPPING) return; // 🔒 Don't hide splash during bootstrap!
-        const screen = document.getElementById('loading-screen');
-        if (screen) {
-            screen.style.opacity = '0';
-            setTimeout(() => screen.style.display = 'none', 500);
-        }
-    };
-
-    const topLoader = document.getElementById('top-loader');
-    const scrollLoader = document.getElementById('scroll-loader');
-
     if (reset) {
         GLOBAL_OFFSET = 0;
         HAS_MORE = true;
-        SEEN_ITEM_IDS.clear(); // Reset duplicates tracker
-        ALL_MARKET_ITEMS = []; // 🚀 Clear global items list on reset
+        BATCH_SIZE = 90; // Первая загрузка
+        SEEN_ITEM_IDS.clear(); 
+        ALL_MARKET_ITEMS = []; 
         
-        // 🚀 IMMEDIATE CLEAR: Critical for preventing duplicate/stale catalogs on mobile/slow nets
         const container = document.getElementById('items-view');
-        if (container) {
-            container.innerHTML = '';
-            // Also ensure no residual classes or attributes
-            container.className = 'grid'; 
-        }
+        if (container) container.innerHTML = '';
 
+        const topLoader = document.getElementById('top-loader');
         if (topLoader && !isBootstrap) topLoader.style.display = 'block';
         window.scrollTo({ top: 0, behavior: 'instant' });
     } else {
+        BATCH_SIZE = 30; // Подгрузка при скролле
+        const scrollLoader = document.getElementById('scroll-loader');
         if (scrollLoader) scrollLoader.style.display = 'block';
     }
 
@@ -2026,10 +2013,10 @@ function checkTriggerVisibility() {
     if (!trigger) return;
 
     const rect = trigger.getBoundingClientRect();
-    const isVisible = rect.top < window.innerHeight && rect.bottom >= 0;
+    const isVisible = rect.top < window.innerHeight + 200; // Load when within 200px of bottom
 
     if (isVisible) {
-        console.log("Trigger is still visible after load. Auto-loading next batch...");
+        // console.log("Trigger is visible. Loading next batch...");
         loadLiveItems(false);
     }
 }
