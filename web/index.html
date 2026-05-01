@@ -108,7 +108,7 @@
             background: rgba(28, 28, 30, 0.94);
             backdrop-filter: blur(25px);
             -webkit-backdrop-filter: blur(25px);
-            border: 1px solid rgba(0, 136, 204, 0.4); /* Тонкая синяя обводка */
+            border: 1px solid rgba(0, 136, 204, 0.4);
             border-radius: 18px;
             padding: 10px 14px;
             z-index: 10005;
@@ -160,6 +160,155 @@
             font-size: 10px;
             cursor: pointer;
             flex-shrink: 0;
+        }
+
+        /* Review Flow Modal - Fragment Style */
+        .review-flow-content {
+            background: #0f0f11 !important;
+            border-radius: 32px !important;
+            padding: 24px !important;
+            max-width: 420px !important;
+            width: 90% !important;
+            border: 1px solid rgba(255,255,255,0.08) !important;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.8) !important;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        #review-flow-modal.active .review-flow-content {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+        }
+
+        .review-flow-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .review-step-dots {
+            display: flex;
+            gap: 6px;
+        }
+
+        .step-dot {
+            width: 6px;
+            height: 6px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 50%;
+            transition: all 0.3s;
+        }
+
+        .step-dot.active {
+            width: 20px;
+            border-radius: 4px;
+            background: #0088cc;
+        }
+
+        .review-flow-close {
+            background: rgba(255,255,255,0.05);
+            border: none;
+            color: #fff;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .review-title {
+            font-size: 22px;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .review-subtitle {
+            font-size: 14px;
+            color: #8b9bb4;
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+
+        .rented-gifts-scroll-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 220px;
+            overflow-y: auto;
+            padding-right: 4px;
+            margin-bottom: 20px;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.1) transparent;
+        }
+
+        .rented-gifts-scroll-list::-webkit-scrollbar {
+            display: none;
+        }
+
+        .rented-gift-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .rented-gift-card.selected {
+            background: rgba(0, 136, 204, 0.15);
+            border-color: #0088cc;
+            transform: scale(0.98);
+        }
+
+        .rented-gift-img {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            object-fit: cover;
+        }
+
+        .rented-gift-info {
+            flex: 1;
+        }
+
+        .rented-gift-name {
+            color: #fff;
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .rented-gift-date {
+            color: #6a7a8f;
+            font-size: 11px;
+        }
+
+        .selected-gift-preview {
+            background: rgba(255,255,255,0.03);
+            border-radius: 20px;
+            padding: 16px;
+            margin-top: 10px;
+            animation: fadeInUp 0.4s ease-out;
+            text-align: center;
+            border: 1px dashed rgba(255,255,255,0.1);
+        }
+
+        .review-next-disabled {
+            opacity: 0.5;
+            pointer-events: none;
+            filter: grayscale(1);
         }
 
         #tc-widget-root,
@@ -1173,6 +1322,42 @@
             </div>
         </div>
     </div>
+    <!-- Premium Review Flow Modal (Fragment Style) -->
+    <div id="review-flow-modal" class="generic-modal" style="display: none;">
+        <div class="modal-overlay" onclick="closeReviewFlow()"></div>
+        <div class="modal-content review-flow-content">
+            <div class="review-flow-header">
+                <div class="review-step-dots">
+                    <div class="step-dot active"></div>
+                    <div class="step-dot"></div>
+                    <div class="step-dot"></div>
+                </div>
+                <button class="review-flow-close" onclick="closeReviewFlow()">×</button>
+            </div>
+
+            <div id="review-step-container">
+                <!-- Step 1: Gift Selection -->
+                <div id="review-step-1" class="review-step-pane">
+                    <h2 class="review-title">Выберите подарок</h2>
+                    <p class="review-subtitle">Выберите арендованный предмет, о котором хотите оставить отзыв</p>
+                    
+                    <div id="rented-gifts-list" class="rented-gifts-scroll-list">
+                        <!-- Items injected by JS -->
+                        <div class="loading-spinner-mini"></div>
+                    </div>
+
+                    <div id="selected-gift-preview" class="selected-gift-preview" style="display: none;">
+                        <!-- Selected gift details -->
+                    </div>
+
+                    <button id="review-next-btn" class="main-rent-btn review-next-disabled" onclick="goToReviewStep2()" disabled>
+                        Продолжить
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Bottom Review Toast (Luxury Notification) -->
     <div id="review-toast-bottom" class="review-toast-bottom">
         <div class="review-toast-content">

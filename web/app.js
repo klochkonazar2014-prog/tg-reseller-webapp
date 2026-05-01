@@ -1588,8 +1588,102 @@ window.closeReviewToastBottom = function() {
 
 window.handleReviewToastYes = function() {
     window.closeReviewToastBottom();
-    window.openReviewModal();
+    window.openReviewFlow();
 };
+
+let SELECTED_GIFT_FOR_REVIEW = null;
+
+window.openReviewFlow = function() {
+    const modal = document.getElementById('review-flow-modal');
+    if (modal) {
+        modal.style.display = 'flex';
+        setTimeout(() => modal.classList.add('active'), 10);
+        fetchRentedItemsForReview();
+    }
+};
+
+window.closeReviewFlow = function() {
+    const modal = document.getElementById('review-flow-modal');
+    if (modal) {
+        modal.classList.remove('active');
+        setTimeout(() => modal.style.display = 'none', 300);
+    }
+};
+
+async function fetchRentedItemsForReview() {
+    const listContainer = document.getElementById('rented-gifts-list');
+    if (!listContainer) return;
+    
+    listContainer.innerHTML = '<div class="loading-spinner-mini" style="margin: 20px auto;"></div>';
+    
+    try {
+        const resp = await apiFetch(`${BACKEND_URL}/api/history`);
+        const data = await resp.json();
+        
+        if (data.status === 'ok' && data.history) {
+            // Берем только успешные аренды (активные, завершенные, истекшие)
+            const rentals = data.history.filter(h => h.status === 'active' || h.status === 'completed' || h.status === 'expired');
+            
+            if (rentals.length === 0) {
+                listContainer.innerHTML = '<div style="color: #8b9bb4; text-align: center; padding: 20px; font-size: 13px;">У вас пока нет арендованных подарков.</div>';
+                return;
+            }
+            
+            renderRentedGiftsList(rentals);
+        } else {
+            listContainer.innerHTML = '<div style="color: #ff3b30; text-align: center; padding: 20px; font-size: 13px;">Ошибка загрузки истории.</div>';
+        }
+    } catch (e) {
+        listContainer.innerHTML = '<div style="color: #ff3b30; text-align: center; padding: 20px; font-size: 13px;">Ошибка соединения.</div>';
+    }
+}
+
+function renderRentedGiftsList(items) {
+    const listContainer = document.getElementById('rented-gifts-list');
+    listContainer.innerHTML = '';
+    
+    items.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'rented-gift-card';
+        card.onclick = () => selectGiftForReview(item, card);
+        
+        const imgUrl = item.image || 'pictures/nft_placeholder.png';
+        
+        card.innerHTML = `
+            <img src="${imgUrl}" class="rented-gift-img" onerror="this.src='pictures/nft_placeholder.png'">
+            <div class="rented-gift-info">
+                <div class="rented-gift-name">${item.nft_name || 'NFT Gift'}</div>
+                <div class="rented-gift-date">${new Date(item.created_at).toLocaleDateString()}</div>
+            </div>
+        `;
+        listContainer.appendChild(card);
+    });
+}
+
+function selectGiftForReview(item, cardElement) {
+    document.querySelectorAll('.rented-gift-card').forEach(c => c.classList.remove('selected'));
+    cardElement.classList.add('selected');
+    
+    SELECTED_GIFT_FOR_REVIEW = item;
+    
+    const nextBtn = document.getElementById('review-next-btn');
+    if (nextBtn) {
+        nextBtn.classList.remove('review-next-disabled');
+        nextBtn.disabled = false;
+    }
+    
+    const preview = document.getElementById('selected-gift-preview');
+    if (preview) {
+        preview.style.display = 'block';
+        preview.innerHTML = `
+            <div style="color: #0088cc; font-weight: 800; font-size: 14px; margin-bottom: 5px;">Выбран:</div>
+            <div style="color: #fff; font-size: 16px; font-weight: 700;">${item.nft_name}</div>
+            <div style="color: #8b9bb4; font-size: 12px; margin-top: 4px;">ID заказа: #${item.id}</div>
+        `;
+    }
+    
+    tg.HapticFeedback.impactOccurred('medium');
+}
 
 window.showReviewStrip = function() {
     // Теперь вместо полоски сверху показываем полоску снизу
