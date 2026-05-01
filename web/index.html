@@ -356,10 +356,28 @@
             to { transform: scale(1); opacity: 1; filter: blur(0); }
         }
 
-        .satisfaction-container {
-            display: flex;
-            gap: 12px;
-            margin: 20px 0 30px;
+        .review-step-pane .main-rent-btn {
+            width: calc(100% + 48px) !important;
+            margin-left: -24px !important;
+            margin-right: -24px !important;
+            height: 90px !important;
+            border-radius: 0 !important; /* На всю ширину без скруглений по краям смотрится солиднее */
+            font-size: 25px !important;
+            font-weight: 700 !important;
+            margin-top: 20px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            box-shadow: none !important;
+        }
+        
+        /* Кнопка на первом шаге тоже должна быть такой */
+        #review-next-btn {
+            margin-bottom: -24px !important;
+        }
+        
+        #review-submit-btn, #review-finish-btn {
+            margin-bottom: -24px !important;
         }
 
         .satisfaction-btn {
@@ -1468,7 +1486,7 @@
                         <!-- Items injected by JS -->
                     </div>
 
-                    <button id="review-next-btn" class="main-rent-btn review-next-disabled" style="width: 100%; height: 54px; border-radius: 16px; font-size: 17px; font-weight: 800; margin-top: auto;" onclick="goToReviewStep2()" disabled>
+                    <button id="review-next-btn" class="main-rent-btn review-next-disabled" onclick="goToReviewStep2()" disabled>
                         Продолжить
                     </button>
                 </div>
@@ -1478,7 +1496,7 @@
                     <h2 class="review-title">Ваша оценка</h2>
                     <p class="review-subtitle">Насколько вам понравился этот подарок и наш сервис?</p>
                     
-                    <div class="satisfaction-container">
+                    <div class="satisfaction-container" style="display: flex; gap: 12px; margin: 20px 0 30px;">
                         <div class="satisfaction-btn btn-sad" onclick="setSatisfaction('sad')">
                             <!-- Better Sad Icon -->
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
@@ -1493,14 +1511,14 @@
 
                     <textarea id="review-text-input" class="review-textarea" placeholder="Расскажите подробнее (необязательно)..."></textarea>
 
-                    <button id="review-submit-btn" class="main-rent-btn" style="width: 100% !important; display: block !important; height: 90px !important; border-radius: 20px; font-size: 25px; font-weight: 700; margin-top: 10px; box-shadow: 0 10px 30px rgba(0, 136, 204, 0.3);" onclick="submitReview()">
+                    <button id="review-submit-btn" class="main-rent-btn" onclick="submitReview()">
                         Опубликовать
                     </button>
                 </div>
 
                 <!-- Step 3: Success -->
-                <div id="review-step-3" class="review-step-pane" style="display: none; text-align: center; padding: 20px 0; flex-direction: column; align-items: center;">
-                    <div class="success-icon-container" style="margin-bottom: 20px;">
+                <div id="review-step-3" class="review-step-pane" style="display: none; text-align: center; padding-top: 20px;">
+                    <div class="success-icon-container" style="margin-bottom: 20px; display: flex; justify-content: center;">
                         <svg viewBox="0 0 24 24" fill="none" stroke="#00d488" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width: 100px; height: 100px;">
                             <polyline points="20 6 9 17 4 12"></polyline>
                         </svg>
@@ -1508,7 +1526,7 @@
                     <h2 class="review-title" style="font-size: 26px; margin-bottom: 10px;">Прошло успешно!</h2>
                     <p class="review-subtitle" style="font-size: 16px;">Ваш отзыв опубликован и поможет другим пользователям.</p>
                     
-                    <button class="main-rent-btn" style="width: 100% !important; display: block !important; height: 90px !important; border-radius: 20px; font-size: 25px; font-weight: 700; margin-top: 20px; box-shadow: 0 10px 30px rgba(0, 136, 204, 0.3);" onclick="finishReview()">
+                    <button id="review-finish-btn" class="main-rent-btn" onclick="finishReview()">
                         Завершить
                     </button>
                 </div>

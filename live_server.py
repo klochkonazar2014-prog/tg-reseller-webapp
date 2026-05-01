@@ -271,6 +271,47 @@ async def handle_post_review(request):
         logging.error(f'[Reviews] Post error: {e}')
         return web.json_response({'error': str(e)}, status=500)
 
+async def handle_submit_review(request):
+    try:
+        user_id = await get_authenticated_user_id(request)
+        if not user_id:
+            return web.json_response({'error': 'Unauthorized'}, status=401)
+            
+        data = await request.json()
+        nft_name = data.get('nft_name')
+        rating = data.get('rating', 5)
+        text = data.get('text', '')
+        
+        if not nft_name:
+            return web.json_response({'error': 'Missing nft_name'}, status=400)
+            
+        # Твой ID для обхода проверки
+        ADMIN_ID = 5644074141
+        
+        async with aiosqlite.connect(db.DB_PATH, timeout=30) as conn:
+            conn.row_factory = aiosqlite.Row
+            
+            # Проверка на дубликат (если не админ)
+            if user_id != ADMIN_ID:
+                async with conn.execute(
+                    "SELECT id FROM reviews WHERE user_id = ? AND nft_name = ?", 
+                    (user_id, nft_name)
+                ) as cur:
+                    if await cur.fetchone():
+                        return web.json_response({'error': 'Вы уже оставляли отзыв на этот подарок'}, status=400)
+            
+            # Сохраняем
+            await conn.execute(
+                "INSERT INTO reviews (user_id, nft_name, rating, text, created_at) VALUES (?, ?, ?, ?, datetime('now'))",
+                (user_id, nft_name, rating, text)
+            )
+            await conn.commit()
+            
+        return web.json_response({'ok': True})
+    except Exception as e:
+        logging.error(f"Submit review error: {e}")
+        return web.json_response({'error': str(e)}, status=500)
+
 async def handle_get_rental_history_for_review(request):
     """GET /api/reviews/my_rentals — список прошлых аренд юзера для выбора в отзыве"""
     try:
@@ -2020,6 +2061,7 @@ app.add_routes([
     web.get('/review', handle_review_page),
     web.get('/api/reviews', handle_get_reviews),
     web.post('/api/reviews', handle_post_review),
+    web.post('/api/reviews/submit', handle_submit_review),
     web.get('/api/reviews/my_rentals', handle_get_rental_history_for_review),
 ])
 
