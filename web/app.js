@@ -1573,11 +1573,27 @@ window.showStatusStrip = function(type, text, onClick) {
 
 let CURRENT_REVIEW_RATING = 5;
 
+window.showReviewToastBottom = function() {
+    const toast = document.getElementById('review-toast-bottom');
+    if (toast) {
+        tg.HapticFeedback.notificationOccurred('success');
+        toast.classList.add('active');
+    }
+};
+
+window.closeReviewToastBottom = function() {
+    const toast = document.getElementById('review-toast-bottom');
+    if (toast) toast.classList.remove('active');
+};
+
+window.handleReviewToastYes = function() {
+    window.closeReviewToastBottom();
+    window.openReviewModal();
+};
+
 window.showReviewStrip = function() {
-    tg.HapticFeedback.notificationOccurred('success');
-    window.showStatusStrip('review', t('review_strip'), () => {
-        window.openReviewModal();
-    });
+    // Теперь вместо полоски сверху показываем полоску снизу
+    window.showReviewToastBottom();
 };
 
 window.openReviewModal = function() {
@@ -1813,6 +1829,15 @@ async function loadLiveItems(reset = true, isBootstrap = false) {
     }
     if (IS_LOADING && !reset) return;
 
+    const hideLoading = () => {
+        if (window.IS_BOOTSTRAPPING) return; 
+        const screen = document.getElementById('loading-screen');
+        if (screen) {
+            screen.style.opacity = '0';
+            setTimeout(() => screen.style.display = 'none', 500);
+        }
+    };
+
     if (reset) {
         GLOBAL_OFFSET = 0;
         HAS_MORE = true;
@@ -2006,8 +2031,10 @@ async function loadLiveItems(reset = true, isBootstrap = false) {
  * If it is, and we have more items, it triggers the next load automatically.
  * This prevents the scroll from getting "stuck" if the loaded items didn't fill the screen.
  */
+let LAST_TRIGGER_TIME = 0;
 function checkTriggerVisibility() {
     if (!HAS_MORE || IS_LOADING) return;
+    if (Date.now() - LAST_TRIGGER_TIME < 1000) return; // Не чаще раза в секунду
 
     const trigger = document.getElementById('loader-trigger');
     if (!trigger) return;
@@ -2016,6 +2043,7 @@ function checkTriggerVisibility() {
     const isVisible = rect.top < window.innerHeight + 200; // Load when within 200px of bottom
 
     if (isVisible) {
+        LAST_TRIGGER_TIME = Date.now();
         // console.log("Trigger is visible. Loading next batch...");
         loadLiveItems(false);
     }
@@ -3675,6 +3703,10 @@ function nextTutorialStep() {
             renderTutorialStep();
         } else {
             closeTcModal();
+            // Сценарий: через секунду после закрытия тутора вылетает предложение оставить отзыв
+            setTimeout(() => {
+                if (window.showReviewToastBottom) window.showReviewToastBottom();
+            }, 1000);
         }
     }
 }
