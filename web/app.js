@@ -1637,7 +1637,8 @@ async function fetchRentedItemsForReview() {
         }
     } catch (e) {
         console.error("History fetch error:", e);
-        listContainer.innerHTML = '<div style="color: #ff3b30; text-align: center; padding: 20px; font-size: 14px;">Не удалось загрузить историю аренды. Попробуйте позже.</div>';
+        listContainer.innerHTML = ''; // Очищаем спиннер
+        showToast("Ошибка загрузки истории. Попробуйте позже.");
     }
 }
 
