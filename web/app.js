@@ -1617,58 +1617,49 @@ async function fetchRentedItemsForReview() {
     listContainer.innerHTML = '<div class="loading-spinner-mini" style="margin: 20px auto;"></div>';
     
     try {
-        const resp = await apiFetch(`${BACKEND_URL}/api/history`);
+        console.log("DEBUG: Fetching history for review flow...");
+        const resp = await apiFetch(`${BACKEND_URL}/api/reviews/my_rentals`);
         if (!resp.ok) throw new Error("Server error " + resp.status);
         
         const data = await resp.json();
+        console.log("DEBUG: History data received:", data);
         
-        let rentals = [];
-        if (data && data.history) {
-            // Поддерживаем разные варианты статусов из базы (Success, active, и т.д.)
-            rentals = data.history.filter(h => 
-                ['active', 'completed', 'expired', 'Success', 'success'].includes(h.status.toLowerCase())
-            );
-        }
-
-        if (rentals.length > 0) {
-            renderRentedGiftsList(rentals);
+        if (data && data.rentals && data.rentals.length > 0) {
+            renderRentedGiftsList(data.rentals);
         } else {
-            listContainer.innerHTML = '<div style="color: #8b9bb4; text-align: center; padding: 20px; font-size: 14px;">У вас пока нет арендованных предметов для отзыва.</div>';
+            listContainer.innerHTML = '<div style="color: #8b9bb4; text-align: center; padding: 20px; font-size: 14px;">У вас пока нет завершенных аренд для отзыва.</div>';
         }
     } catch (e) {
         console.error("History fetch error:", e);
-        listContainer.innerHTML = ''; // Очищаем спиннер
-        showToast("Ошибка загрузки истории. Попробуйте позже.");
+        listContainer.innerHTML = '';
+        showToast("Ошибка загрузки истории");
     }
 }
 
-function renderRentedGiftsList(items) {
+function renderRentedGiftsList(names) {
     const listContainer = document.getElementById('rented-gifts-list');
     listContainer.innerHTML = '';
     
-    items.forEach(item => {
+    names.forEach(name => {
         const card = document.createElement('div');
         card.className = 'rented-gift-card';
-        card.onclick = () => selectGiftForReview(item, card);
-        
-        const imgUrl = item.image || 'pictures/nft_placeholder.png';
+        card.onclick = () => selectGiftForReview(name, card);
         
         card.innerHTML = `
-            <img src="${imgUrl}" class="rented-gift-img" onerror="this.src='pictures/nft_placeholder.png'">
             <div class="rented-gift-info">
-                <div class="rented-gift-name">${item.nft_name || 'NFT Gift'}</div>
-                <div class="rented-gift-date">${new Date(item.created_at).toLocaleDateString()}</div>
+                <div class="rented-gift-name">${name}</div>
+                <div class="rented-gift-date">История OctoRent</div>
             </div>
         `;
         listContainer.appendChild(card);
     });
 }
 
-function selectGiftForReview(item, cardElement) {
+function selectGiftForReview(name, cardElement) {
     document.querySelectorAll('.rented-gift-card').forEach(c => c.classList.remove('selected'));
     cardElement.classList.add('selected');
     
-    SELECTED_GIFT_FOR_REVIEW = item;
+    SELECTED_GIFT_FOR_REVIEW = name;
     
     const nextBtn = document.getElementById('review-next-btn');
     if (nextBtn) {
@@ -1680,9 +1671,8 @@ function selectGiftForReview(item, cardElement) {
     if (preview) {
         preview.style.display = 'block';
         preview.innerHTML = `
-            <div style="color: #0088cc; font-weight: 800; font-size: 14px; margin-bottom: 5px;">Выбран:</div>
-            <div style="color: #fff; font-size: 16px; font-weight: 700;">${item.nft_name}</div>
-            <div style="color: #8b9bb4; font-size: 12px; margin-top: 4px;">ID заказа: #${item.id}</div>
+            <div style="color: #0088cc; font-weight: 800; font-size: 14px; margin-bottom: 5px;">Выбран предмет:</div>
+            <div style="color: #fff; font-size: 16px; font-weight: 700;">${name}</div>
         `;
     }
     
