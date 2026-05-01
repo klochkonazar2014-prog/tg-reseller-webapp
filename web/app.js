@@ -1617,29 +1617,27 @@ async function fetchRentedItemsForReview() {
     listContainer.innerHTML = '<div class="loading-spinner-mini" style="margin: 20px auto;"></div>';
     
     try {
-        console.log("DEBUG: Fetching history for review flow...");
         const resp = await apiFetch(`${BACKEND_URL}/api/history`);
-        console.log("DEBUG: History response status:", resp.status);
+        if (!resp.ok) throw new Error("Server error " + resp.status);
         
         const data = await resp.json();
-        console.log("DEBUG: History data:", data);
         
+        let rentals = [];
         if (data && data.history) {
-            // Берем только успешные аренды
-            const rentals = data.history.filter(h => h.status === 'active' || h.status === 'completed' || h.status === 'expired');
-            
-            if (rentals.length === 0) {
-                listContainer.innerHTML = '<div style="color: #8b9bb4; text-align: center; padding: 20px; font-size: 14px;">У вас пока нет арендованных предметов для отзыва.</div>';
-                return;
-            }
-            
+            // Поддерживаем разные варианты статусов из базы (Success, active, и т.д.)
+            rentals = data.history.filter(h => 
+                ['active', 'completed', 'expired', 'Success', 'success'].includes(h.status.toLowerCase())
+            );
+        }
+
+        if (rentals.length > 0) {
             renderRentedGiftsList(rentals);
         } else {
-            listContainer.innerHTML = '<div style="color: #ff3b30; text-align: center; padding: 20px; font-size: 14px;">История пуста или недоступна.</div>';
+            listContainer.innerHTML = '<div style="color: #8b9bb4; text-align: center; padding: 20px; font-size: 14px;">У вас пока нет арендованных предметов для отзыва.</div>';
         }
     } catch (e) {
-        console.error("DEBUG: History fetch error:", e);
-        listContainer.innerHTML = '<div style="color: #ff3b30; text-align: center; padding: 20px; font-size: 14px;">Ошибка соединения с сервером.</div>';
+        console.error("History fetch error:", e);
+        listContainer.innerHTML = '<div style="color: #ff3b30; text-align: center; padding: 20px; font-size: 14px;">Не удалось загрузить историю аренды. Попробуйте позже.</div>';
     }
 }
 
