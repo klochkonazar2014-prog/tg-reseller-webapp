@@ -1749,15 +1749,23 @@ window.submitReview = async function() {
         });
         
         if (resp.ok) {
-            showToast("✅ Отзыв успешно опубликован!");
             tg.HapticFeedback.notificationOccurred('success');
-            setTimeout(() => {
-                closeReviewFlow();
-                // Сброс
-                SELECTED_SATISFACTION = null;
-                document.querySelector('.satisfaction-container')?.classList.remove('has-selection');
-                document.getElementById('review-text-input').value = '';
-            }, 1500);
+            
+            // Переход к Шагу 3 вместо закрытия
+            const step2 = document.getElementById('review-step-2');
+            const step3 = document.getElementById('review-step-3');
+            if (step2 && step3) {
+                step2.style.display = 'none';
+                step3.style.display = 'flex';
+                step3.style.flexDirection = 'column';
+                
+                // Обновляем точки прогресса
+                const dots = document.querySelectorAll('.step-dot');
+                if (dots.length >= 3) {
+                    dots[1].classList.remove('active');
+                    dots[2].classList.add('active');
+                }
+            }
         } else {
             const errData = await resp.json();
             throw new Error(errData.error || "Failed to submit");
@@ -1768,6 +1776,27 @@ window.submitReview = async function() {
         submitBtn.disabled = false;
         submitBtn.innerHTML = 'Опубликовать';
     }
+};
+
+window.finishReview = function() {
+    closeReviewFlow();
+    
+    // Сброс состояний
+    SELECTED_SATISFACTION = null;
+    document.querySelector('.satisfaction-container')?.classList.remove('has-selection');
+    const input = document.getElementById('review-text-input');
+    if (input) input.value = '';
+    
+    // Возвращаем на главную
+    if (window.goHome) {
+        window.goHome();
+    } else {
+        // Если goHome нет, пробуем переключить вкладку на каталог
+        const catalogTab = document.querySelector('[data-tab="catalog"]');
+        if (catalogTab) catalogTab.click();
+    }
+    
+    tg.HapticFeedback.impactOccurred('light');
 };
 
 window.showReviewStrip = function() {
