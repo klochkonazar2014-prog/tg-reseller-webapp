@@ -1154,9 +1154,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         // 🧪 DEV CHECK: Show test review button for you
         const user = tg?.initDataUnsafe?.user;
-        if (user && user.id === 5644074141) {
+        console.log("DEBUG: Current User ID:", user ? user.id : "no user");
+        if (user && String(user.id) === "5644074141") {
             const testBtn = document.getElementById('test-review-item');
-            if (testBtn) testBtn.style.display = 'flex';
+            if (testBtn) {
+                testBtn.style.display = 'flex';
+                console.log("DEBUG: Dev button shown");
+            }
         }
 
         if (urlParams.get('action') === 'test_review') {
@@ -1336,7 +1340,7 @@ function switchTab(index) {
         
         // 🧪 DEV CHECK: Принудительно показываем кнопку теста для тебя в профиле
         const user = tg?.initDataUnsafe?.user;
-        if (user && user.id === 5644074141) {
+        if (user && String(user.id) === "5644074141") {
             const testBtn = document.getElementById('test-review-item');
             if (testBtn) testBtn.style.display = 'flex';
         }
