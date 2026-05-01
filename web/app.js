@@ -1660,7 +1660,6 @@ function selectGiftForReview(name, cardElement) {
     
     SELECTED_GIFT_FOR_REVIEW = name;
     
-    // Сжимаем список до 2-х элементов
     const list = document.getElementById('rented-gifts-list');
     if (list) list.classList.add('compact');
     
@@ -1670,8 +1669,6 @@ function selectGiftForReview(name, cardElement) {
         nextBtn.disabled = false;
     }
     
-    // Генерируем URL картинки фрагмента
-    // Love Candle #1972 -> lovecandle-1972.webp
     const slug = name.toLowerCase().replace(/ /g, '').replace('#', '-');
     const imgUrl = `https://nft.fragment.com/gift/${slug}.webp`;
     
@@ -1684,6 +1681,92 @@ function selectGiftForReview(name, cardElement) {
     }
     
     tg.HapticFeedback.impactOccurred('medium');
+}
+
+function goToReviewStep2() {
+    const step1 = document.getElementById('review-step-1');
+    const step2 = document.getElementById('review-step-2');
+    if (step1 && step2) {
+        step1.style.display = 'none';
+        step2.style.display = 'flex';
+        step2.style.flexDirection = 'column';
+        step2.style.height = '100%';
+        
+        // Обновляем точки прогресса
+        const dots = document.querySelectorAll('.step-dot');
+        if (dots.length >= 2) {
+            dots[0].classList.remove('active');
+            dots[1].classList.add('active');
+        }
+    }
+    tg.HapticFeedback.impactOccurred('light');
+}
+
+let SELECTED_SATISFACTION = null;
+
+function setSatisfaction(type) {
+    SELECTED_SATISFACTION = type;
+    
+    const container = document.querySelector('.satisfaction-container');
+    if (container) container.classList.add('has-selection');
+    
+    document.querySelectorAll('.satisfaction-btn').forEach(btn => {
+        if (btn.classList.contains('btn-' + type)) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+    
+    tg.HapticFeedback.impactOccurred('medium');
+}
+
+async function submitReview() {
+    if (!SELECTED_SATISFACTION) {
+        showToast("Пожалуйста, выберите оценку");
+        return;
+    }
+    
+    const reviewText = document.getElementById('review-text-input').value;
+    const submitBtn = document.getElementById('review-submit-btn');
+    
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<div class="loading-spinner-mini"></div>';
+    
+    try {
+        // Конвертируем happy/sad в рейтинг (например 5 и 1)
+        const ratingValue = (SELECTED_SATISFACTION === 'happy') ? 5 : 1;
+        
+        const payload = {
+            nft_name: SELECTED_GIFT_FOR_REVIEW,
+            rating: ratingValue,
+            text: reviewText
+        };
+        
+        const resp = await apiFetch(`${BACKEND_URL}/api/reviews/submit`, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        });
+        
+        if (resp.ok) {
+            showToast("✅ Отзыв успешно опубликован!");
+            tg.HapticFeedback.notificationOccurred('success');
+            setTimeout(() => {
+                closeReviewFlow();
+                // Сброс состояния для следующего раза
+                SELECTED_SATISFACTION = null;
+                document.querySelector('.satisfaction-container')?.classList.remove('has-selection');
+                document.getElementById('review-text-input').value = '';
+            }, 1500);
+        } else {
+            throw new Error("Failed to submit");
+        }
+    } catch (e) {
+        console.error("Review submit error:", e);
+        showToast("Ошибка при отправке отзыва");
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = 'Опубликовать';
+    }
 }
 
 window.showReviewStrip = function() {
