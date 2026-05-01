@@ -1338,11 +1338,19 @@ function switchTab(index) {
         const headerTitle = document.querySelector('.header h1') || document.querySelector('.logo-text');
         if (headerTitle) headerTitle.innerText = t('profile');
         
-        // 🧪 DEV CHECK: Принудительно показываем кнопку теста для тебя в профиле
+        // 🧪 DEBUG: Покажем твой ID, чтобы понять, что видит скрипт
         const user = tg?.initDataUnsafe?.user;
-        if (user && String(user.id) === "5644074141") {
-            const testBtn = document.getElementById('test-review-item');
-            if (testBtn) testBtn.style.display = 'flex';
+        if (user) {
+            // Раскомментируй строку ниже, если кнопка не появится после пуша
+            // tg.showAlert("Твой ID в приложении: " + user.id); 
+            
+            if (String(user.id) === "5644074141") {
+                const testBtn = document.getElementById('test-review-item');
+                if (testBtn) {
+                    testBtn.style.display = 'flex';
+                    testBtn.style.setProperty('display', 'flex', 'important');
+                }
+            }
         }
 
         if (window.Telegram && window.Telegram.WebApp) {
