@@ -1681,7 +1681,6 @@ function selectGiftForReview(name, cardElement) {
         preview.style.display = 'flex';
         preview.innerHTML = `
             <img src="${imgUrl}" class="preview-nft-img" onerror="this.src='pictures/nft_placeholder.png'">
-            <div style="color: #fff; font-size: 18px; font-weight: 800; margin-top: 15px; position: relative; z-index: 2;">${name}</div>
         `;
     }
     

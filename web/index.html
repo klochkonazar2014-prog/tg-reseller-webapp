@@ -313,47 +313,46 @@
 
         .selected-gift-preview {
             position: relative;
-            background: rgba(255,255,255,0.02);
-            border-radius: 28px;
-            padding: 20px;
-            margin-bottom: 16px;
+            margin-bottom: 10px;
             text-align: center;
-            overflow: hidden;
-            border: 1px solid rgba(255,255,255,0.05);
+            overflow: visible; /* Чтобы свечение выходило за границы */
             display: none;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            flex: 1; /* Занимает всё свободное место */
-            min-height: 150px;
+            flex: 1;
+            min-height: 180px;
         }
 
+        /* Эффект синего фонаря теперь просто на фоне */
         .selected-gift-preview::before {
             content: '';
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 150%;
-            height: 150%;
-            background: radial-gradient(circle, rgba(0, 136, 204, 0.2) 0%, rgba(0, 0, 0, 0) 70%);
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(0, 136, 204, 0.3) 0%, rgba(0, 0, 0, 0) 70%);
             pointer-events: none;
+            z-index: 1;
         }
 
         .preview-nft-img {
             width: auto;
             height: 100%;
-            max-height: 180px;
+            max-height: 200px;
             object-fit: contain;
             position: relative;
             z-index: 2;
-            filter: drop-shadow(0 0 25px rgba(0, 136, 204, 0.3));
+            border-radius: 24px; /* Скругляем сам вебп */
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             animation: nftAppear 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
         }
 
         @keyframes nftAppear {
-            from { transform: scale(0.5) translateY(20px); opacity: 0; filter: blur(10px); }
-            to { transform: scale(1) translateY(0); opacity: 1; filter: blur(0); }
+            from { transform: scale(0.8); opacity: 0; filter: blur(10px); }
+            to { transform: scale(1); opacity: 1; filter: blur(0); }
         }
 
         .review-next-disabled {
