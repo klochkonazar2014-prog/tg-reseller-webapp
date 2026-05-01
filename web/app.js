@@ -1724,11 +1724,17 @@ window.setSatisfaction = function(type) {
 window.submitReview = async function() {
     if (!SELECTED_SATISFACTION) {
         showToast("Пожалуйста, выберите оценку");
+        tg.HapticFeedback.notificationOccurred('error');
         return;
     }
     
-    const reviewText = document.getElementById('review-text-input').value;
+    if (!SELECTED_GIFT_FOR_REVIEW) {
+        showToast("Ошибка: подарок не выбран");
+        return;
+    }
+    
     const submitBtn = document.getElementById('review-submit-btn');
+    const reviewText = document.getElementById('review-text-input').value;
     
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<div class="loading-spinner-mini" style="margin: 0 auto;"></div>';
@@ -1742,37 +1748,45 @@ window.submitReview = async function() {
             text: reviewText
         };
         
-        console.log("DEBUG: Submitting review:", payload);
+        console.log("SENDING REVIEW:", payload);
+        
         const resp = await apiFetch(`${BACKEND_URL}/api/reviews/submit`, {
             method: 'POST',
             body: JSON.stringify(payload)
         });
         
         if (resp.ok) {
+            console.log("REVIEW SUCCESS!");
             tg.HapticFeedback.notificationOccurred('success');
             
-            // Переход к Шагу 3 вместо закрытия
-            const step2 = document.getElementById('review-step-2');
-            const step3 = document.getElementById('review-step-3');
-            if (step2 && step3) {
-                step2.style.display = 'none';
-                step3.style.display = 'flex';
-                step3.style.flexDirection = 'column';
-                
-                // Обновляем точки прогресса
-                const dots = document.querySelectorAll('.step-dot');
-                if (dots.length >= 3) {
-                    dots[1].classList.remove('active');
-                    dots[2].classList.add('active');
-                }
+            // ПЕРЕХОД К ШАГУ 3
+            const s1 = document.getElementById('review-step-1');
+            const s2 = document.getElementById('review-step-2');
+            const s3 = document.getElementById('review-step-3');
+            
+            if (s1) s1.style.display = 'none';
+            if (s2) s2.style.display = 'none';
+            if (s3) {
+                s3.style.display = 'flex';
+                s3.style.flexDirection = 'column';
+                s3.style.alignItems = 'center';
             }
+            
+            // Точки
+            const dots = document.querySelectorAll('.step-dot');
+            dots.forEach((d, i) => {
+                d.classList.remove('active');
+                if (i === 2) d.classList.add('active');
+            });
+            
         } else {
-            const errData = await resp.json();
-            throw new Error(errData.error || "Failed to submit");
+            const err = await resp.json();
+            throw new Error(err.error || "Ошибка сервера");
         }
     } catch (e) {
-        console.error("Review submit error:", e);
-        showToast("Ошибка: " + e.message);
+        console.error("CRITICAL REVIEW ERROR:", e);
+        showToast("Не удалось отправить: " + e.message);
+        tg.HapticFeedback.notificationOccurred('warning');
         submitBtn.disabled = false;
         submitBtn.innerHTML = 'Опубликовать';
     }
