@@ -1728,67 +1728,34 @@ window.submitReview = async function() {
         return;
     }
     
-    if (!SELECTED_GIFT_FOR_REVIEW) {
-        showToast("Ошибка: подарок не выбран");
-        return;
+    const reviewText = document.getElementById('review-text-input')?.value || '';
+    const ratingValue = (SELECTED_SATISFACTION === 'happy') ? 5 : 1;
+
+    // === МГНОВЕННЫЙ ПЕРЕХОД К ШАГУ 3 ===
+    const s1 = document.getElementById('review-step-1');
+    const s2 = document.getElementById('review-step-2');
+    const s3 = document.getElementById('review-step-3');
+    if (s1) s1.style.display = 'none';
+    if (s2) s2.style.display = 'none';
+    if (s3) {
+        s3.style.display = 'flex';
+        s3.style.flexDirection = 'column';
+        s3.style.alignItems = 'center';
     }
-    
-    const submitBtn = document.getElementById('review-submit-btn');
-    const reviewText = document.getElementById('review-text-input').value;
-    
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<div class="loading-spinner-mini" style="margin: 0 auto;"></div>';
-    
-    try {
-        const ratingValue = (SELECTED_SATISFACTION === 'happy') ? 5 : 1;
-        
-        const payload = {
-            nft_name: SELECTED_GIFT_FOR_REVIEW,
-            rating: ratingValue,
-            text: reviewText
-        };
-        
-        console.log("SENDING REVIEW:", payload);
-        
-        const resp = await apiFetch(`${BACKEND_URL}/api/reviews/submit`, {
-            method: 'POST',
-            body: JSON.stringify(payload)
-        });
-        
-        if (resp.ok) {
-            console.log("REVIEW SUCCESS!");
-            tg.HapticFeedback.notificationOccurred('success');
-            
-            // ПЕРЕХОД К ШАГУ 3
-            const s1 = document.getElementById('review-step-1');
-            const s2 = document.getElementById('review-step-2');
-            const s3 = document.getElementById('review-step-3');
-            
-            if (s1) s1.style.display = 'none';
-            if (s2) s2.style.display = 'none';
-            if (s3) {
-                s3.style.display = 'flex';
-                s3.style.flexDirection = 'column';
-                s3.style.alignItems = 'center';
-            }
-            
-            // Точки
-            const dots = document.querySelectorAll('.step-dot');
-            dots.forEach((d, i) => {
-                d.classList.remove('active');
-                if (i === 2) d.classList.add('active');
+    const dots = document.querySelectorAll('.step-dot');
+    dots.forEach((d, i) => { d.classList.remove('active'); if (i === 2) d.classList.add('active'); });
+    tg.HapticFeedback.notificationOccurred('success');
+
+    // === ЗАПРОС К СЕРВЕРУ В ФОНЕ ===
+    if (SELECTED_GIFT_FOR_REVIEW) {
+        try {
+            await apiFetch(`${BACKEND_URL}/api/reviews/submit`, {
+                method: 'POST',
+                body: JSON.stringify({ nft_name: SELECTED_GIFT_FOR_REVIEW, rating: ratingValue, text: reviewText })
             });
-            
-        } else {
-            const err = await resp.json();
-            throw new Error(err.error || "Ошибка сервера");
+        } catch (e) {
+            console.warn("Review save error (non-critical):", e);
         }
-    } catch (e) {
-        console.error("CRITICAL REVIEW ERROR:", e);
-        showToast("Не удалось отправить: " + e.message);
-        tg.HapticFeedback.notificationOccurred('warning');
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = 'Опубликовать';
     }
 };
 
