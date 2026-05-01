@@ -162,26 +162,30 @@
             flex-shrink: 0;
         }
 
-        /* Review Flow Modal - Fragment Style */
+        /* Review Flow Modal - Modern Bottom Sheet Style */
         .review-flow-content {
             background: #0f0f11 !important;
-            border-radius: 32px !important;
+            border-radius: 32px 32px 0 0 !important; /* Скругления только сверху */
             padding: 24px !important;
-            max-width: 420px !important;
-            width: 90% !important;
+            width: 100% !important;
+            max-width: none !important;
+            height: auto !important;
+            max-height: 85vh !important; /* Не на весь экран */
             border: 1px solid rgba(255,255,255,0.08) !important;
-            box-shadow: 0 30px 80px rgba(0,0,0,0.8) !important;
+            border-bottom: none !important;
+            box-shadow: 0 -20px 60px rgba(0,0,0,0.8) !important;
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(0.9);
-            opacity: 0;
-            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            bottom: -100% !important; /* Спрятано внизу */
+            left: 0 !important;
+            transform: none !important;
+            opacity: 1 !important;
+            transition: bottom 0.5s cubic-bezier(0.19, 1, 0.22, 1) !important;
+            display: flex;
+            flex-direction: column;
         }
 
         #review-flow-modal.active .review-flow-content {
-            transform: translate(-50%, -50%) scale(1);
-            opacity: 1;
+            bottom: 0 !important;
         }
 
         .review-flow-header {
@@ -189,6 +193,20 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 24px;
+            padding-top: 4px;
+        }
+        
+        /* Добавим "хваталочку" сверху как в iOS */
+        .review-flow-content::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 4px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 2px;
         }
 
         .review-step-dots {

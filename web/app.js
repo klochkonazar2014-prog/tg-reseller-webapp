@@ -1617,24 +1617,29 @@ async function fetchRentedItemsForReview() {
     listContainer.innerHTML = '<div class="loading-spinner-mini" style="margin: 20px auto;"></div>';
     
     try {
+        console.log("DEBUG: Fetching history for review flow...");
         const resp = await apiFetch(`${BACKEND_URL}/api/history`);
-        const data = await resp.json();
+        console.log("DEBUG: History response status:", resp.status);
         
-        if (data.status === 'ok' && data.history) {
-            // Берем только успешные аренды (активные, завершенные, истекшие)
+        const data = await resp.json();
+        console.log("DEBUG: History data:", data);
+        
+        if (data && data.history) {
+            // Берем только успешные аренды
             const rentals = data.history.filter(h => h.status === 'active' || h.status === 'completed' || h.status === 'expired');
             
             if (rentals.length === 0) {
-                listContainer.innerHTML = '<div style="color: #8b9bb4; text-align: center; padding: 20px; font-size: 13px;">У вас пока нет арендованных подарков.</div>';
+                listContainer.innerHTML = '<div style="color: #8b9bb4; text-align: center; padding: 20px; font-size: 14px;">У вас пока нет арендованных предметов для отзыва.</div>';
                 return;
             }
             
             renderRentedGiftsList(rentals);
         } else {
-            listContainer.innerHTML = '<div style="color: #ff3b30; text-align: center; padding: 20px; font-size: 13px;">Ошибка загрузки истории.</div>';
+            listContainer.innerHTML = '<div style="color: #ff3b30; text-align: center; padding: 20px; font-size: 14px;">История пуста или недоступна.</div>';
         }
     } catch (e) {
-        listContainer.innerHTML = '<div style="color: #ff3b30; text-align: center; padding: 20px; font-size: 13px;">Ошибка соединения.</div>';
+        console.error("DEBUG: History fetch error:", e);
+        listContainer.innerHTML = '<div style="color: #ff3b30; text-align: center; padding: 20px; font-size: 14px;">Ошибка соединения с сервером.</div>';
     }
 }
 
