@@ -356,7 +356,9 @@
             to { transform: scale(1); opacity: 1; filter: blur(0); }
         }
 
-        .review-step-pane .main-rent-btn {
+        /* Большие кнопки ТОЛЬКО на шагах 2 и 3 */
+        #review-step-2 .main-rent-btn,
+        #review-step-3 .main-rent-btn {
             width: 100% !important;
             height: 65px !important;
             border-radius: 16px !important;

@@ -5041,6 +5041,16 @@ function showPaymentSuccess() {
         </div>
     `;
     overlay.style.display = 'flex';
+    
+    // Для не-TON оплат (AuraPay, xRocket) — аренда активна сразу
+    // Для TON — тост появится после прохождения TC тутора
+    const isTonPayment = typeof CURRENT_PAYMENT_METHOD !== 'undefined' && 
+                         (CURRENT_PAYMENT_METHOD === 'TON' || CURRENT_PAYMENT_METHOD === 'XROCKET');
+    if (!isTonPayment) {
+        setTimeout(() => {
+            if (window.showReviewToastBottom) window.showReviewToastBottom();
+        }, 3000);
+    }
 }
 async function handleLavaTopRent() {
     if (!CURRENT_PAYMENT_ITEM) return;
