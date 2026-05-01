@@ -471,7 +471,7 @@ async def profile_details(callback: CallbackQuery):
     
     await callback.message.edit_text(
         text,
-        reply_markup=kb.profile_keyboard(lang=lang, is_dev=is_dev, web_app_url=WEB_APP_URL),
+        reply_markup=kb.profile_keyboard(lang=lang),
         parse_mode="HTML"
     )
 

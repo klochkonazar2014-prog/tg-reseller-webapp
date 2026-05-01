@@ -72,23 +72,18 @@ def support_keyboard(lang='ru', web_app_url=None, **kwargs):
     )])
     return InlineKeyboardMarkup(inline_keyboard=keyboard)
 
-def profile_keyboard(lang='ru', is_dev=False, web_app_url=""):
+def profile_keyboard(lang='ru'):
     back_text = "Назад" if lang == 'ru' else "Back"
     ref_text = "🎁 Рефералы" if lang == 'ru' else "🎁 Referrals"
     
     rows = [
-        [InlineKeyboardButton(text=ref_text, callback_data="referrals")]
+        [InlineKeyboardButton(text=ref_text, callback_data="referrals")],
+        [InlineKeyboardButton(
+            text=back_text, 
+            callback_data="main_menu",
+            icon_custom_emoji_id="5359511310096672647"
+        )]
     ]
-    
-    if is_dev and web_app_url:
-        test_url = f"{web_app_url}?action=test_review"
-        rows.append([InlineKeyboardButton(text="🧪 Тест отзыва в Mini App", web_app=WebAppInfo(url=test_url))])
-        
-    rows.append([InlineKeyboardButton(
-        text=back_text, 
-        callback_data="main_menu",
-        icon_custom_emoji_id="5359511310096672647"
-    )])
     
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
