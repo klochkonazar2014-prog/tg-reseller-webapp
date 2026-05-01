@@ -97,40 +97,41 @@
         }
 
         /* Ensure TonConnect UI is always on top of EVERYTHING */
-        /* Bottom Review Toast Style */
+        /* Bottom Review Toast Style - Compact 13px */
         .review-toast-bottom {
             position: fixed;
-            bottom: -100px; /* Hidden by default */
+            bottom: -100px;
             left: 50%;
             transform: translateX(-50%);
-            width: calc(100% - 32px);
-            max-width: 400px;
-            background: rgba(28, 28, 30, 0.85);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 12px 16px;
+            width: calc(100% - 20px);
+            max-width: 390px;
+            background: rgba(28, 28, 30, 0.92);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 7px 10px;
             z-index: 10005;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.4);
             transition: bottom 0.6s cubic-bezier(0.19, 1, 0.22, 1);
         }
 
         .review-toast-bottom.active {
-            bottom: 85px; /* Above bottom nav */
+            bottom: 82px;
         }
 
         .review-toast-content {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 12px;
+            gap: 6px;
         }
 
         .review-toast-text {
             color: #fff;
             font-size: 13px;
             font-weight: 600;
+            white-space: nowrap;
             flex: 1;
         }
 
@@ -138,19 +139,26 @@
             background: #0088cc;
             color: #fff;
             border: none;
-            padding: 6px 14px;
-            border-radius: 10px;
+            padding: 5px 12px;
+            border-radius: 9px;
             font-size: 12px;
             font-weight: 800;
             cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0, 136, 204, 0.3);
+            flex-shrink: 0;
         }
 
         .review-toast-close {
-            color: rgba(255,255,255,0.4);
-            font-size: 16px;
-            padding: 4px;
+            width: 18px;
+            height: 18px;
+            background: rgba(255,255,255,0.12);
+            color: rgba(255,255,255,0.7);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
             cursor: pointer;
+            flex-shrink: 0;
         }
 
         #tc-widget-root,
