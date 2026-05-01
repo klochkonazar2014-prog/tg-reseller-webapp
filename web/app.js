@@ -1661,18 +1661,27 @@ function selectGiftForReview(name, cardElement) {
     
     SELECTED_GIFT_FOR_REVIEW = name;
     
+    // Сжимаем список до 2-х элементов
+    const list = document.getElementById('rented-gifts-list');
+    if (list) list.classList.add('compact');
+    
     const nextBtn = document.getElementById('review-next-btn');
     if (nextBtn) {
         nextBtn.classList.remove('review-next-disabled');
         nextBtn.disabled = false;
     }
     
+    // Генерируем URL картинки фрагмента
+    // Love Candle #1972 -> lovecandle-1972.webp
+    const slug = name.toLowerCase().replace(/ /g, '').replace('#', '-');
+    const imgUrl = `https://nft.fragment.com/gift/${slug}.webp`;
+    
     const preview = document.getElementById('selected-gift-preview');
     if (preview) {
-        preview.style.display = 'block';
+        preview.style.display = 'flex';
         preview.innerHTML = `
-            <div style="color: #0088cc; font-weight: 800; font-size: 14px; margin-bottom: 5px;">Выбран предмет:</div>
-            <div style="color: #fff; font-size: 16px; font-weight: 700;">${name}</div>
+            <img src="${imgUrl}" class="preview-nft-img" onerror="this.src='pictures/nft_placeholder.png'">
+            <div style="color: #fff; font-size: 18px; font-weight: 800; margin-top: 15px; position: relative; z-index: 2;">${name}</div>
         `;
     }
     

@@ -260,12 +260,17 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
-            max-height: 220px;
+            max-height: 350px;
             overflow-y: auto;
             padding-right: 4px;
             margin-bottom: 20px;
             scrollbar-width: thin;
             scrollbar-color: rgba(255,255,255,0.1) transparent;
+            transition: max-height 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+
+        .rented-gifts-scroll-list.compact {
+            max-height: 145px; /* Высота ровно для 2-х элементов */
         }
 
         .rented-gifts-scroll-list::-webkit-scrollbar {
@@ -290,13 +295,6 @@
             transform: scale(0.98);
         }
 
-        .rented-gift-img {
-            width: 44px;
-            height: 44px;
-            border-radius: 10px;
-            object-fit: cover;
-        }
-
         .rented-gift-info {
             flex: 1;
         }
@@ -314,13 +312,48 @@
         }
 
         .selected-gift-preview {
-            background: rgba(255,255,255,0.03);
-            border-radius: 20px;
-            padding: 16px;
+            position: relative;
+            background: #000;
+            border-radius: 24px;
+            padding: 30px 20px;
             margin-top: 10px;
-            animation: fadeInUp 0.4s ease-out;
+            animation: fadeInUp 0.5s ease-out;
             text-align: center;
-            border: 1px dashed rgba(255,255,255,0.1);
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.05);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 220px;
+            flex: 1;
+        }
+
+        .selected-gift-preview::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 150%;
+            height: 150%;
+            background: radial-gradient(circle, rgba(0, 136, 204, 0.25) 0%, rgba(0, 0, 0, 0) 70%);
+            pointer-events: none;
+        }
+
+        .preview-nft-img {
+            width: 140px;
+            height: 140px;
+            object-fit: contain;
+            position: relative;
+            z-index: 2;
+            filter: drop-shadow(0 0 20px rgba(0, 136, 204, 0.4));
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
         }
 
         .review-next-disabled {
