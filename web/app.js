@@ -1683,7 +1683,7 @@ function selectGiftForReview(name, cardElement) {
     tg.HapticFeedback.impactOccurred('medium');
 }
 
-function goToReviewStep2() {
+window.goToReviewStep2 = function() {
     const step1 = document.getElementById('review-step-1');
     const step2 = document.getElementById('review-step-2');
     if (step1 && step2) {
@@ -1700,11 +1700,11 @@ function goToReviewStep2() {
         }
     }
     tg.HapticFeedback.impactOccurred('light');
-}
+};
 
 let SELECTED_SATISFACTION = null;
 
-function setSatisfaction(type) {
+window.setSatisfaction = function(type) {
     SELECTED_SATISFACTION = type;
     
     const container = document.querySelector('.satisfaction-container');
@@ -1719,9 +1719,9 @@ function setSatisfaction(type) {
     });
     
     tg.HapticFeedback.impactOccurred('medium');
-}
+};
 
-async function submitReview() {
+window.submitReview = async function() {
     if (!SELECTED_SATISFACTION) {
         showToast("Пожалуйста, выберите оценку");
         return;
@@ -1731,10 +1731,9 @@ async function submitReview() {
     const submitBtn = document.getElementById('review-submit-btn');
     
     submitBtn.disabled = true;
-    submitBtn.innerHTML = '<div class="loading-spinner-mini"></div>';
+    submitBtn.innerHTML = '<div class="loading-spinner-mini" style="margin: 0 auto;"></div>';
     
     try {
-        // Конвертируем happy/sad в рейтинг (например 5 и 1)
         const ratingValue = (SELECTED_SATISFACTION === 'happy') ? 5 : 1;
         
         const payload = {
@@ -1743,6 +1742,7 @@ async function submitReview() {
             text: reviewText
         };
         
+        console.log("DEBUG: Submitting review:", payload);
         const resp = await apiFetch(`${BACKEND_URL}/api/reviews/submit`, {
             method: 'POST',
             body: JSON.stringify(payload)
@@ -1753,21 +1753,22 @@ async function submitReview() {
             tg.HapticFeedback.notificationOccurred('success');
             setTimeout(() => {
                 closeReviewFlow();
-                // Сброс состояния для следующего раза
+                // Сброс
                 SELECTED_SATISFACTION = null;
                 document.querySelector('.satisfaction-container')?.classList.remove('has-selection');
                 document.getElementById('review-text-input').value = '';
             }, 1500);
         } else {
-            throw new Error("Failed to submit");
+            const errData = await resp.json();
+            throw new Error(errData.error || "Failed to submit");
         }
     } catch (e) {
         console.error("Review submit error:", e);
-        showToast("Ошибка при отправке отзыва");
+        showToast("Ошибка: " + e.message);
         submitBtn.disabled = false;
         submitBtn.innerHTML = 'Опубликовать';
     }
-}
+};
 
 window.showReviewStrip = function() {
     // Теперь вместо полоски сверху показываем полоску снизу
