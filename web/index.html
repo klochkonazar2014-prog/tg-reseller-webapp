@@ -356,10 +356,12 @@
             to { transform: scale(1); opacity: 1; filter: blur(0); }
         }
 
-        /* Большие кнопки ТОЛЬКО на шагах 2 и 3 */
+        /* Широкие кнопки на шагах 2 и 3 */
         #review-step-2 .main-rent-btn,
         #review-step-3 .main-rent-btn {
-            width: 100% !important;
+            width: calc(100% + 32px) !important;
+            margin-left: -16px !important;
+            margin-right: -16px !important;
             height: 65px !important;
             border-radius: 16px !important;
             font-size: 18px !important;
@@ -368,6 +370,7 @@
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
+            box-shadow: 0 8px 24px rgba(0, 136, 204, 0.25) !important;
         }
 
         .satisfaction-btn {
