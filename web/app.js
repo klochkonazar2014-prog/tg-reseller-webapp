@@ -1648,7 +1648,6 @@ function renderRentedGiftsList(names) {
         card.innerHTML = `
             <div class="rented-gift-info">
                 <div class="rented-gift-name">${name}</div>
-                <div class="rented-gift-date">История OctoRent</div>
             </div>
         `;
         listContainer.appendChild(card);
