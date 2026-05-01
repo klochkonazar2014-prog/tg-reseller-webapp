@@ -1386,7 +1386,6 @@
                     <div class="step-dot"></div>
                     <div class="step-dot"></div>
                 </div>
-                <button class="review-flow-close" onclick="closeReviewFlow()">×</button>
             </div>
 
             <div id="review-step-container">
@@ -1395,16 +1394,14 @@
                     <h2 class="review-title">Выберите подарок</h2>
                     <p class="review-subtitle">Выберите арендованный предмет, о котором хотите оставить отзыв</p>
                     
+                    <!-- Превью теперь ПЕРЕД списком -->
+                    <div id="selected-gift-preview" class="selected-gift-preview" style="display: none;"></div>
+
                     <div id="rented-gifts-list" class="rented-gifts-scroll-list">
                         <!-- Items injected by JS -->
-                        <div class="loading-spinner-mini"></div>
                     </div>
 
-                    <div id="selected-gift-preview" class="selected-gift-preview" style="display: none;">
-                        <!-- Selected gift details -->
-                    </div>
-
-                    <button id="review-next-btn" class="main-rent-btn review-next-disabled" onclick="goToReviewStep2()" disabled>
+                    <button id="review-next-btn" class="main-rent-btn review-next-disabled" style="width: 100%; height: 54px; border-radius: 16px; font-size: 17px; font-weight: 800; margin-top: auto;" onclick="goToReviewStep2()" disabled>
                         Продолжить
                     </button>
                 </div>
