@@ -238,13 +238,17 @@ async def handle_post_review(request):
 
         async with aiosqlite.connect(db.DB_PATH, timeout=30) as conn:
             # Проверяем что у пользователя есть хотя бы один завершённый/активный заказ
-            async with conn.execute(
-                "SELECT COUNT(*) FROM orders WHERE user_id = ? AND status IN ('paid','rented','active','expired')",
-                (user_id,)
-            ) as cur:
-                row = await cur.fetchone()
-                if not row or row[0] == 0:
-                    return web.json_response({'error': 'Отзыв можно оставить только после аренды'}, status=403)
+            # Для разработчика (тебя) делаем исключение для тестов
+            is_dev = (user_id == 5644074141)
+            
+            if not is_dev:
+                async with conn.execute(
+                    "SELECT COUNT(*) FROM orders WHERE user_id = ? AND status IN ('paid','rented','active','expired')",
+                    (user_id,)
+                ) as cur:
+                    row = await cur.fetchone()
+                    if not row or row[0] == 0:
+                        return web.json_response({'error': 'Отзыв можно оставить только после аренды'}, status=403)
 
             # Проверяем что юзер ещё не оставлял слишком много отзывов (спам-защита)
             async with conn.execute(

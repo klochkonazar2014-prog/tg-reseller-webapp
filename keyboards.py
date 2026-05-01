@@ -72,17 +72,25 @@ def support_keyboard(lang='ru', web_app_url=None, **kwargs):
     )])
     return InlineKeyboardMarkup(inline_keyboard=keyboard)
 
-def profile_keyboard(lang='ru'):
+def profile_keyboard(lang='ru', is_dev=False, web_app_url=""):
     back_text = "Назад" if lang == 'ru' else "Back"
     ref_text = "🎁 Рефералы" if lang == 'ru' else "🎁 Referrals"
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text=ref_text, callback_data="referrals")],
-        [InlineKeyboardButton(
-            text=back_text, 
-            callback_data="main_menu",
-            icon_custom_emoji_id="5359511310096672647"
-        )]
-    ])
+    
+    rows = [
+        [InlineKeyboardButton(text=ref_text, callback_data="referrals")]
+    ]
+    
+    if is_dev and web_app_url:
+        test_url = f"{web_app_url}?action=test_review"
+        rows.append([InlineKeyboardButton(text="🧪 Тест отзыва в Mini App", web_app=WebAppInfo(url=test_url))])
+        
+    rows.append([InlineKeyboardButton(
+        text=back_text, 
+        callback_data="main_menu",
+        icon_custom_emoji_id="5359511310096672647"
+    )])
+    
+    return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
 def models_keyboard(models):
@@ -277,5 +285,27 @@ def confirm_review_keyboard(lang='ru'):
         [InlineKeyboardButton(text=publish_text, callback_data="review_publish")],
         [InlineKeyboardButton(text=cancel_text, callback_data="write_review")],
         [InlineKeyboardButton(text=back_text, callback_data="main_menu")]
+    ])
+
+
+def review_satisfaction_keyboard(lang='ru'):
+    """Выбор: доволен или нет"""
+    texts = {
+        'ru': {
+            'good': "✅ Доволен",
+            'bad': "❌ Не доволен",
+            'back': "Назад"
+        },
+        'en': {
+            'good': "✅ Satisfied",
+            'bad': "❌ Not satisfied",
+            'back': "Back"
+        }
+    }
+    t = texts.get(lang, texts['ru'])
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=t['good'], callback_data="review_rate_5"),
+         InlineKeyboardButton(text=t['bad'], callback_data="review_rate_1")],
+        [InlineKeyboardButton(text=t['back'], callback_data="write_review")]
     ])
 

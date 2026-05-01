@@ -436,7 +436,14 @@ const TRANSLATIONS = {
         pay_button: "Оплатить",
         about_network_fee: "О комиссии сети",
         network_fee_desc_default: "Сеть TON взимает небольшую оплату за каждую транзакцию.",
-        max_days_warn: "Максимум {days} дней"
+        max_days_warn: "Максимум {days} дней",
+        review_title: "Оставить отзыв",
+        review_placeholder: "Напишите пару слов о сервисе...",
+        review_submit: "Опубликовать",
+        review_satisfied: "✅ Доволен",
+        review_not_satisfied: "❌ Не доволен",
+        review_success: "Спасибо за отзыв! ✅",
+        review_strip: "Понравилась аренда? Оставьте отзыв! ⭐",
     },
     en: {
         profile_fragment: "Connect Asset to Fragment",
@@ -754,7 +761,14 @@ const TRANSLATIONS = {
         pay_button: "Pay",
         about_network_fee: "About network fee",
         network_fee_desc_default: "The TON network charges a small fee for each transaction.",
-        max_days_warn: "Maximum {days} days"
+        max_days_warn: "Maximum {days} days",
+        review_title: "Leave a Review",
+        review_placeholder: "Write a few words about the service...",
+        review_submit: "Publish",
+        review_satisfied: "✅ Satisfied",
+        review_not_satisfied: "❌ Not satisfied",
+        review_success: "Thanks for the review! ✅",
+        review_strip: "Liked your rent? Leave a review! ⭐",
     }
 };
 
@@ -1138,6 +1152,17 @@ document.addEventListener("DOMContentLoaded", async () => {
         // 🚀 THE NEW BOOTSTRAP (Replaces old race condition logic)
         await bootstrapApp();
 
+        // 🧪 DEV CHECK: Show test review button for you
+        const user = tg?.initDataUnsafe?.user;
+        if (user && user.id === 5644074141) {
+            const testBtn = document.getElementById('test-review-item');
+            if (testBtn) testBtn.style.display = 'flex';
+        }
+
+        if (urlParams.get('action') === 'test_review') {
+            setTimeout(() => window.showReviewStrip(), 2000);
+        }
+
         if (deepNftAddr) {
             console.log("🚀 Deep link processing:", deepNftAddr);
             showToast(t('loading_item'));
@@ -1500,32 +1525,114 @@ async function handleReferralWithdraw() {
 // --- Modal Logic ---
 
 
-window.showStatusStrip = function(type, text) {
+window.showStatusStrip = function(type, text, onClick) {
     const strip = document.getElementById('payment-status-strip');
     const icon = document.getElementById('status-icon');
     const txt = document.getElementById('status-text');
     if (!strip || !txt) return;
 
     strip.className = 'status-strip ' + type;
-    icon.innerText = type === 'success' ? '✅' : '❌';
+    icon.innerText = type === 'success' ? '✅' : (type === 'review' ? '⭐' : '❌');
     txt.innerText = text;
     strip.classList.add('visible');
 
-    setTimeout(() => strip.classList.remove('visible'), 6000);
+    if (onClick) {
+        strip.style.pointerEvents = 'auto';
+        strip.onclick = (e) => {
+            e.stopPropagation();
+            onClick();
+            strip.classList.remove('visible');
+        };
+    } else {
+        strip.style.pointerEvents = 'none';
+        strip.onclick = null;
+    }
+
+    setTimeout(() => strip.classList.remove('visible'), 10000);
 };
 
-window.showStatusStrip = function(type, text) {
-    const strip = document.getElementById('payment-status-strip');
-    const icon = document.getElementById('status-icon');
-    const txt = document.getElementById('status-text');
-    if (!strip || !txt) return;
+let CURRENT_REVIEW_RATING = 5;
 
-    strip.className = 'status-strip ' + type;
-    icon.innerText = type === 'success' ? '✅' : '❌';
-    txt.innerText = text;
-    strip.classList.add('visible');
+window.showReviewStrip = function() {
+    tg.HapticFeedback.notificationOccurred('success');
+    window.showStatusStrip('review', t('review_strip'), () => {
+        window.openReviewModal();
+    });
+};
 
-    setTimeout(() => strip.classList.remove('visible'), 6000);
+window.openReviewModal = function() {
+    const modal = document.getElementById('review-modal');
+    if (modal) {
+        modal.style.display = 'flex';
+        window.setReviewRating(5); // Default to Satisfied
+    }
+};
+
+window.closeReviewModal = function() {
+    const modal = document.getElementById('review-modal');
+    if (modal) modal.style.display = 'none';
+};
+
+window.setReviewRating = function(rating) {
+    CURRENT_REVIEW_RATING = rating;
+    const goodBtn = document.getElementById('rate-good-btn');
+    const badBtn = document.getElementById('rate-bad-btn');
+    if (!goodBtn || !badBtn) return;
+
+    if (rating === 5) {
+        goodBtn.style.background = 'rgba(0, 212, 136, 0.2)';
+        goodBtn.style.border = '2px solid #00d488';
+        badBtn.style.background = 'rgba(255, 255, 255, 0.05)';
+        badBtn.style.border = '2px solid transparent';
+    } else {
+        badBtn.style.background = 'rgba(255, 59, 48, 0.2)';
+        badBtn.style.border = '2px solid #ff3b30';
+        goodBtn.style.background = 'rgba(255, 255, 255, 0.05)';
+        goodBtn.style.border = '2px solid transparent';
+    }
+    tg.HapticFeedback.impactOccurred('light');
+};
+
+window.submitReview = async function() {
+    const textInp = document.getElementById('review-text-input');
+    const text = textInp ? textInp.value.trim() : "";
+    const btn = document.getElementById('submit-review-btn');
+    
+    if (text.length < 5) {
+        showToast("Отзыв слишком короткий");
+        return;
+    }
+
+    if (btn) {
+        btn.disabled = true;
+        btn.innerText = t('processing');
+    }
+
+    try {
+        const resp = await apiFetch(`${BACKEND_URL}/api/reviews`, {
+            method: 'POST',
+            body: JSON.stringify({
+                review_text: text,
+                rating: CURRENT_REVIEW_RATING,
+                nft_name: "Mini App Test"
+            })
+        });
+        const res = await resp.json();
+        if (res.ok) {
+            showToast(t('review_success'));
+            window.closeReviewModal();
+            if (textInp) textInp.value = "";
+        } else {
+            showToast(res.error || "Ошибка");
+        }
+    } catch (e) {
+        showToast("Ошибка соединения");
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerText = t('review_submit');
+        }
+    }
 };
 
 // --- Modal Logic ---
