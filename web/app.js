@@ -1818,47 +1818,7 @@ window.setReviewRating = function(rating) {
     tg.HapticFeedback.impactOccurred('light');
 };
 
-window.submitReview = async function() {
-    const textInp = document.getElementById('review-text-input');
-    const text = textInp ? textInp.value.trim() : "";
-    const btn = document.getElementById('submit-review-btn');
-    
-    if (text.length < 5) {
-        showToast("Отзыв слишком короткий");
-        return;
-    }
 
-    if (btn) {
-        btn.disabled = true;
-        btn.innerText = t('processing');
-    }
-
-    try {
-        const resp = await apiFetch(`${BACKEND_URL}/api/reviews`, {
-            method: 'POST',
-            body: JSON.stringify({
-                review_text: text,
-                rating: CURRENT_REVIEW_RATING,
-                nft_name: "Mini App Test"
-            })
-        });
-        const res = await resp.json();
-        if (res.ok) {
-            showToast(t('review_success'));
-            window.closeReviewModal();
-            if (textInp) textInp.value = "";
-        } else {
-            showToast(res.error || "Ошибка");
-        }
-    } catch (e) {
-        showToast("Ошибка соединения");
-    } finally {
-        if (btn) {
-            btn.disabled = false;
-            btn.innerText = t('review_submit');
-        }
-    }
-};
 
 // --- Modal Logic ---
 function showHelp(amount) {
