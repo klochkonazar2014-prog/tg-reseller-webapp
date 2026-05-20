@@ -106,14 +106,28 @@ async def handle_success_redirect(request):
     """Bridge for AuraPay: standard URL -> Telegram Deep Link"""
     order_id = request.match_info.get('order_id') or request.query.get("order_id", "0")
     bot_user = os.getenv('BOT_USERNAME', '@OctoRent_bot').replace('@', '')
-    target = f"https://t.me/{bot_user}/app?startapp=paid_{order_id}"
+    # Для заказов услуг (Stars/Premium) — перенаправляем просто в чат бота
+    try:
+        if int(order_id) >= 1000000:
+            target = f"https://t.me/{bot_user}"
+        else:
+            target = f"https://t.me/{bot_user}/app?startapp=paid_{order_id}"
+    except (ValueError, TypeError):
+        target = f"https://t.me/{bot_user}/app?startapp=paid_{order_id}"
     return web.HTTPFound(location=target)
 
 async def handle_fail_redirect(request):
     """Bridge for AuraPay fallback: standard URL -> Telegram Deep Link"""
     order_id = request.match_info.get('order_id') or request.query.get("order_id", "0")
     bot_user = os.getenv('BOT_USERNAME', '@OctoRent_bot').replace('@', '')
-    target = f"https://t.me/{bot_user}/app?startapp=fail_{order_id}"
+    # Для заказов услуг (Stars/Premium) — перенаправляем просто в чат бота
+    try:
+        if int(order_id) >= 1000000:
+            target = f"https://t.me/{bot_user}"
+        else:
+            target = f"https://t.me/{bot_user}/app?startapp=fail_{order_id}"
+    except (ValueError, TypeError):
+        target = f"https://t.me/{bot_user}/app?startapp=fail_{order_id}"
     return web.HTTPFound(location=target)
 
 def get_authenticated_user_id(request):
