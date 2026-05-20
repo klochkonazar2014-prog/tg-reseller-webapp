@@ -15,6 +15,7 @@ from dotenv import load_dotenv
 load_dotenv()
 from datetime import datetime, timedelta
 import database as db
+import services_db
 
 USDT_JETTON_ADDRESS = "EQCxE6mUt_9S9clpu7R_6m09wYz3X0mR3GvK7N88m8_L3A1f"
 MARKET_URL = "https://api.marketapp.ws/v1"
@@ -617,11 +618,84 @@ async def handle_create_aurapay_invoice(request):
     """Генерация ссылки на оплату AuraPay (СБП)"""
     try:
         data = await request.json()
-        nft_address = data.get('nft_address')
-        days = int(data.get('days', 1))
+        order_id = data.get('order_id')
         
         user_id = get_authenticated_user_id(request)
         if not user_id: return web.json_response({"error": "Unauthorized"}, status=401)
+        
+        # --- Ветка для услуг (Stars / Premium) ---
+        if order_id and int(order_id) >= 1000000:
+            order_id = int(order_id)
+            order = await services_db.get_service_order(order_id)
+            if not order:
+                return web.json_response({"error": f"Service order #{order_id} not found"}, status=404)
+                
+            fiat_amount = float(order['price_rub'])
+            if fiat_amount < 10: fiat_amount = 10.0
+            
+            shop_id = os.getenv("AURAPAY_SHOP_ID")
+            api_key = os.getenv("AURAPAY_API_KEY")
+            if not shop_id or not api_key:
+                return web.json_response({"error": "AuraPay not configured"}, status=500)
+                
+            base_url = os.getenv('WEB_APP_URL', 'https://octorent.duckdns.org').rstrip('/')
+            success_url = f"{base_url}/success?order_id={order_id}"
+            fail_url = f"{base_url}/fail?order_id={order_id}"
+            callback_url = f"{base_url}/api/webhooks/aurapay"
+            
+            payload = {
+                "shop_id": shop_id,
+                "order_id": str(order_id),
+                "amount": float(fiat_amount),
+                "currency": "RUB",
+                "service": "sbp",
+                "comment": f"OctoRent service order #{order_id}",
+                "success_url": success_url,
+                "fail_url": fail_url,
+                "callback_url": callback_url
+            }
+            
+            api_url = "https://app.aurapay.tech/invoice/create"
+            headers = {
+                "X-ApiKey": api_key,
+                "X-ShopId": shop_id,
+                "Content-Type": "application/json"
+            }
+            
+            async with aiohttp.ClientSession() as session:
+                async with session.post(api_url, json=payload, headers=headers) as resp:
+                    try:
+                        result = await resp.json()
+                    except:
+                        result = {"raw": await resp.text()}
+                        
+                    if resp.status == 200 and (result.get('status') == 'PENDING' or 'id' in result):
+                        payment_url = result.get('payment_data', {}).get('url')
+                        if not payment_url:
+                            return web.json_response({"error": "No payment URL in response"}, status=500)
+                            
+                        # Обновляем статус заказа услуг
+                        await services_db.update_service_order_status(
+                            order_id, 
+                            'pending_payment', 
+                            tx_hash=str(result.get('id', '')), 
+                            payment_method='aurapay'
+                        )
+                        
+                        return web.json_response({
+                            "status": "ok", 
+                            "order_id": order_id, 
+                            "payment_url": payment_url, 
+                            "fiat_amount": fiat_amount
+                        })
+                    else:
+                        logging.error(f"AuraPay invoice error for service order: {resp.status} - {result}")
+                        error_msg = result.get('message') or result.get('error') or f"Status {resp.status}"
+                        return web.json_response({"error": f"Gateway error: {error_msg}"}, status=400)
+        # --- Конец ветки для услуг ---
+
+        nft_address = data.get('nft_address')
+        days = int(data.get('days', 1))
         
         # 1. Создаем заказ в БД
         res, err = await create_rental_order(user_id, nft_address, days, is_fiat=True)
@@ -770,6 +844,23 @@ async def handle_aurapay_webhook(request):
             return web.Response(text="Missing order_id", status=400)
             
         order_id = int(order_id_raw)
+        
+        # --- Ветка для услуг (Stars / Premium) ---
+        if order_id >= 1000000:
+            if status == 'success':
+                logging.info(f"✅ Service order {order_id} paid via AuraPay")
+                await services_db.process_successful_service_payment(
+                    order_id=order_id,
+                    tx_hash=str(data.get("id", "")),
+                    payment_method='aurapay'
+                )
+            elif status in ('rejected', 'failed', 'expired', 'canceled'):
+                logging.warning(f"❌ AuraPay service order {order_id} failed with status: {status}")
+                await services_db.update_service_order_status(order_id, "failed")
+            else:
+                logging.info(f"⚠️ AuraPay service order {order_id} status: {status}")
+            return web.Response(text="OK")
+        # --- Конец ветки для услуг ---
         
         if status == 'success':
             logging.info(f"✅ Order {order_id} paid via AuraPay")

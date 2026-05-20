@@ -5,3 +5,4 @@ aiohttp>=3.9.0
 pytoniq>=0.1.0
 cloudscraper>=1.2.0
 tonutils>=0.1.0
+fragment-api-py[async]

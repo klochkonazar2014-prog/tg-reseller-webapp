@@ -17,6 +17,10 @@ from aiogram.types import (
 
 import database as db
 import keyboards as kb
+import services_db
+
+# { user_id: {'step': 'select_product'|'input_recipient'|'input_stars_amount'|'select_period', 'product': 'premium'|'stars', 'recipient': 'self'|str, 'amount': int} }
+_stars_premium_state: dict = {}
 
 import sys
 if sys.platform == "win32":
@@ -170,6 +174,108 @@ import aiosqlite
 
 # { user_id: {'step': 'select_nft'|'select_rate'|'input_text'|'confirm', 'nft_name': str, 'rating': int, 'review_text': str} }
 _review_state: dict = {}
+
+async def fetch_fiat_rates():
+    """Получает курсы TON к USD и RUB"""
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get('https://tonapi.io/v2/rates?tokens=ton&currencies=usd,rub') as resp:
+                data = await resp.json()
+                rates = data.get('rates', {}).get('TON', {}).get('prices', {})
+                return {
+                    'USD': rates.get('USD', 2.5),
+                    'RUB': rates.get('RUB', 230)
+                }
+    except Exception as e:
+        logging.error(f"Error fetching rates: {e}")
+        return {'USD': 2.5, 'RUB': 230}
+
+async def process_service_order_checkout(message_or_callback_msg, user_id, state, lang):
+    """Генерация заказа на услуги, расчет цен и вывод клавиатуры оплаты"""
+    product = state['product']
+    recipient = state['recipient']
+    amount = state['amount']
+    
+    # 1. Считаем цену в USD
+    if product == 'stars':
+        price_usd = amount * 0.022
+        service_name_ru = f"🌟 Telegram Stars ({amount} шт.)"
+        service_name_en = f"🌟 Telegram Stars ({amount} pcs.)"
+    else:
+        # Premium
+        prices = {3: 9.99, 6: 17.99, 12: 28.99}
+        price_usd = prices.get(amount, 9.99)
+        service_name_ru = f"⭐ Telegram Premium на {amount} мес."
+        service_name_en = f"⭐ Telegram Premium for {amount} months"
+        
+    # 2. Получаем актуальный курс
+    rates = await fetch_fiat_rates()
+    ton_usd = rates.get('USD', 2.5)
+    ton_rub = rates.get('RUB', 230)
+    
+    # Переводим в TON и RUB
+    price_ton = round(price_usd / ton_usd, 2)
+    # Формула перевода USD в RUB через кросс-курс TON
+    price_rub = int(price_usd * (ton_rub / ton_usd))
+    if price_rub < 10:
+        price_rub = 10
+        
+    # 3. Сохраняем заказ в services.db
+    order_id = await services_db.create_service_order(
+        user_id=user_id,
+        service_type=product,
+        target_user=recipient,
+        amount=amount,
+        price_ton=price_ton,
+        price_rub=price_rub,
+        payment_method='pending'
+    )
+    
+    # 4. Формируем красивое сообщение подтверждения
+    recipient_display = "Вы сами" if recipient == 'self' else recipient
+    if lang == 'en':
+        recipient_display = "Yourself" if recipient == 'self' else recipient
+        
+    text = (
+        f"🧾 <b>Детали заказа #{order_id}</b>\n"
+        f"━━━━━━━━━━━━━━━━━━━━\n"
+        f"📦 <b>Услуга:</b> {service_name_ru if lang == 'ru' else service_name_en}\n"
+        f"👤 <b>Получатель:</b> {recipient_display}\n"
+        f"💵 <b>Сумма к оплате:</b>\n"
+        f"└ <code>{price_rub} RUB</code> (через СБП)\n"
+        f"└ <code>{price_ton} TON</code> (криптовалютой)\n"
+        f"━━━━━━━━━━━━━━━━━━━━\n"
+        f"👉 Выберите удобный способ оплаты ниже. После успешной оплаты услуга будет отправлена получателю в течение нескольких минут."
+    ) if lang == 'ru' else (
+        f"🧾 <b>Order Details #{order_id}</b>\n"
+        f"━━━━━━━━━━━━━━━━━━━━\n"
+        f"📦 <b>Service:</b> {service_name_en}\n"
+        f"👤 <b>Recipient:</b> {recipient_display}\n"
+        f"💵 <b>Total to pay:</b>\n"
+        f"└ <code>{price_rub} RUB</code> (via SBP)\n"
+        f"└ <code>{price_ton} TON</code> (crypto)\n"
+        f"━━━━━━━━━━━━━━━━━━━━\n"
+        f"👉 Select your preferred payment method below. Once paid, the service will be delivered to the recipient within minutes."
+    )
+    
+    # Сбрасываем стейт
+    _stars_premium_state.pop(user_id, None)
+    
+    # Выводим инвойс
+    keyboard = kb.payment_selection_keyboard(
+        lang=lang,
+        order_id=order_id,
+        ton_price=price_ton,
+        rub_price=price_rub,
+        backend_url=WEB_APP_URL,
+        owner_wallet=OWNER_WALLET
+    )
+    
+    if isinstance(message_or_callback_msg, Message):
+        await message_or_callback_msg.answer(text, reply_markup=keyboard, parse_mode="HTML")
+    else:
+        # callback_query.message
+        await message_or_callback_msg.edit_text(text, reply_markup=keyboard, parse_mode="HTML")
 
 @dp.message(Command("del_review"))
 async def del_review_cmd(message: Message):
@@ -422,6 +528,230 @@ async def back_to_main_menu(callback: CallbackQuery):
         reply_markup=kb.main_menu(WEB_APP_URL, callback.from_user.id == ADMIN_ID, lang=lang),
         parse_mode="HTML"
     )
+
+@dp.callback_query(F.data == "buy_services")
+async def buy_services_handler(callback: CallbackQuery):
+    user_id = callback.from_user.id
+    lang = await db.get_user_language(user_id)
+    
+    text = (
+        "<b>Где вы хотите продолжить покупку?</b>\n\n"
+        "Вы можете совершить покупку через удобное мини-приложение OctoRent или прямо здесь, в Telegram-боте."
+    ) if lang == 'ru' else (
+        "<b>Where would you like to continue?</b>\n\n"
+        "You can make your purchase using the sleek OctoRent Mini App or directly here in the Telegram Bot."
+    )
+    
+    await callback.message.edit_text(
+        text,
+        reply_markup=kb.buy_location_keyboard(lang=lang, web_app_url=WEB_APP_URL),
+        parse_mode="HTML"
+    )
+    await callback.answer()
+
+@dp.callback_query(F.data == "buy_in_bot")
+async def buy_in_bot_handler(callback: CallbackQuery):
+    user_id = callback.from_user.id
+    lang = await db.get_user_language(user_id)
+    
+    # Сбрасываем / инициализируем стейт
+    _stars_premium_state[user_id] = {
+        'step': 'select_product',
+        'product': None,
+        'recipient': None,
+        'amount': None
+    }
+    
+    text = (
+        "⭐️ <b>Выбор услуги</b>\n\n"
+        "Что вы хотите приобрести?\n"
+        "• <b>Telegram Premium</b> — подписка себе или в подарок другу.\n"
+        "• <b>Telegram Stars</b> — внутренняя валюта Telegram для оплаты цифровых товаров и поддержки авторов."
+    ) if lang == 'ru' else (
+        "⭐️ <b>Select Service</b>\n\n"
+        "What would you like to purchase?\n"
+        "• <b>Telegram Premium</b> — subscription for yourself or as a gift.\n"
+        "• <b>Telegram Stars</b> — Telegram's internal currency to pay for digital goods and support creators."
+    )
+    
+    await callback.message.edit_text(
+        text,
+        reply_markup=kb.buy_product_keyboard(lang=lang),
+        parse_mode="HTML"
+    )
+    await callback.answer()
+
+@dp.callback_query(F.data.in_(["buy_premium", "buy_stars"]))
+async def select_product_handler(callback: CallbackQuery):
+    user_id = callback.from_user.id
+    lang = await db.get_user_language(user_id)
+    
+    state = _stars_premium_state.get(user_id)
+    if not state:
+        await callback.answer("Сессия истекла. Попробуйте еще раз." if lang == 'ru' else "Session expired. Please try again.", show_alert=True)
+        return
+        
+    product = "premium" if callback.data == "buy_premium" else "stars"
+    state['product'] = product
+    state['step'] = 'input_recipient'
+    
+    text = (
+        "👤 <b>Выберите получателя</b>\n\n"
+        "Кому вы хотите приобрести подписку?" if product == "premium" else "Кому вы хотите приобрести Telegram Stars?"
+    ) if lang == 'ru' else (
+        "👤 <b>Select Recipient</b>\n\n"
+        "Who is this subscription for?" if product == "premium" else "Who is this Telegram Stars purchase for?"
+    )
+    
+    if lang == 'ru':
+        text += "\n\n<i>Нажмите кнопку «Себе» или отправьте юзернейм получателя (например, @username) сообщением.</i>"
+    else:
+        text += "\n\n<i>Press 'For Myself' or type the recipient's username (e.g., @username) as a reply.</i>"
+        
+    await callback.message.edit_text(
+        text,
+        reply_markup=kb.recipient_selection_keyboard(lang=lang),
+        parse_mode="HTML"
+    )
+    await callback.answer()
+
+@dp.callback_query(F.data == "recipient_self")
+async def recipient_self_handler(callback: CallbackQuery):
+    user_id = callback.from_user.id
+    lang = await db.get_user_language(user_id)
+    
+    state = _stars_premium_state.get(user_id)
+    if not state:
+        await callback.answer("Сессия истекла." if lang == 'ru' else "Session expired.", show_alert=True)
+        return
+        
+    state['recipient'] = 'self'
+    
+    if state['product'] == 'premium':
+        state['step'] = 'select_period'
+        text = (
+            "📅 <b>Выберите период подписки Telegram Premium</b>\n\n"
+            "Доступные периоды:"
+        ) if lang == 'ru' else (
+            "📅 <b>Select Telegram Premium Period</b>\n\n"
+            "Available periods:"
+        )
+        await callback.message.edit_text(
+            text,
+            reply_markup=kb.premium_period_keyboard(lang=lang),
+            parse_mode="HTML"
+        )
+    else:
+        state['step'] = 'input_stars_amount'
+        text = (
+            "🌟 <b>Количество Telegram Stars</b>\n\n"
+            "Введите количество звезд, которое хотите приобрести (минимум <b>50</b> штук):\n\n"
+            "<i>Отправьте целое число сообщением.</i>"
+        ) if lang == 'ru' else (
+            "🌟 <b>Telegram Stars Amount</b>\n\n"
+            "Enter the amount of Stars you want to purchase (minimum <b>50</b>):\n\n"
+            "<i>Send a whole number as a message.</i>"
+        )
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="Назад" if lang == 'ru' else "Back", callback_data="buy_stars")]
+        ])
+        await callback.message.edit_text(text, reply_markup=keyboard, parse_mode="HTML")
+        
+    await callback.answer()
+
+@dp.callback_query(F.data.startswith("premium_period_"))
+async def premium_period_handler(callback: CallbackQuery):
+    user_id = callback.from_user.id
+    lang = await db.get_user_language(user_id)
+    
+    state = _stars_premium_state.get(user_id)
+    if not state:
+        await callback.answer("Сессия истекла." if lang == 'ru' else "Session expired.", show_alert=True)
+        return
+        
+    months = int(callback.data.split("_")[-1])
+    state['amount'] = months
+    
+    await process_service_order_checkout(callback.message, user_id, state, lang)
+    await callback.answer()
+
+@dp.callback_query(F.data == "back_to_recipient")
+async def back_to_recipient_handler(callback: CallbackQuery):
+    user_id = callback.from_user.id
+    lang = await db.get_user_language(user_id)
+    
+    state = _stars_premium_state.get(user_id)
+    if not state:
+        await callback.answer()
+        return
+        
+    state['step'] = 'input_recipient'
+    product = state['product']
+    
+    text = (
+        "👤 <b>Выберите получателя</b>\n\n"
+        "Кому вы хотите приобрести подписку?" if product == "premium" else "Кому вы хотите приобрести Telegram Stars?"
+    ) if lang == 'ru' else (
+        "👤 <b>Select Recipient</b>\n\n"
+        "Who is this subscription for?" if product == "premium" else "Who is this Telegram Stars purchase for?"
+    )
+    
+    if lang == 'ru':
+        text += "\n\n<i>Нажмите кнопку «Себе» или отправьте юзернейм получателя (например, @username) сообщением.</i>"
+    else:
+        text += "\n\n<i>Press 'For Myself' or type the recipient's username (e.g., @username) as a reply.</i>"
+        
+    await callback.message.edit_text(
+        text,
+        reply_markup=kb.recipient_selection_keyboard(lang=lang),
+        parse_mode="HTML"
+    )
+    await callback.answer()
+
+@dp.callback_query(F.data.startswith("pay_manual_ton_"))
+async def pay_manual_ton_handler(callback: CallbackQuery):
+    user_id = callback.from_user.id
+    lang = await db.get_user_language(user_id)
+    
+    try:
+        order_id = int(callback.data.split("_")[-1])
+    except:
+        await callback.answer("Ошибка заказа." if lang == 'ru' else "Order error.", show_alert=True)
+        return
+        
+    import services_db
+    order = await services_db.get_service_order(order_id)
+    if not order:
+        await callback.answer("Заказ не найден." if lang == 'ru' else "Order not found.", show_alert=True)
+        return
+        
+    price_ton = order['price_ton']
+    memo = f"service:{order_id}"
+    
+    text = (
+        f"💎 <b>Оплата через TON (Реквизиты перевода)</b>\n\n"
+        f"Для ручной оплаты отправьте точную сумму со своего кошелька:\n\n"
+        f"👤 <b>Адрес получателя:</b>\n"
+        f"<code>{OWNER_WALLET}</code>\n\n"
+        f"💰 <b>Сумма перевода:</b> <code>{price_ton} TON</code>\n"
+        f"💬 <b>Комментарий (MEMO):</b> <code>{memo}</code>\n\n"
+        f"⚠️ <b>ВАЖНО:</b> Обязательно укажите комментарий <code>{memo}</code> при отправке! Иначе платежная система не сможет распознать ваш платеж автоматически."
+    ) if lang == 'ru' else (
+        f"💎 <b>Pay via TON (Transfer details)</b>\n\n"
+        f"To pay manually, send the exact amount from your wallet:\n\n"
+        f"👤 <b>Recipient Address:</b>\n"
+        f"<code>{OWNER_WALLET}</code>\n\n"
+        f"💰 <b>Amount:</b> <code>{price_ton} TON</code>\n"
+        f"💬 <b>Comment (MEMO):</b> <code>{memo}</code>\n\n"
+        f"⚠️ <b>IMPORTANT:</b> You MUST include the comment <code>{memo}</code> with your transfer! Otherwise, our system will not be able to verify your payment automatically."
+    )
+    
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🏠 Главное меню" if lang == 'ru' else "🏠 Main Menu", callback_data="main_menu")]
+    ])
+    
+    await callback.message.edit_text(text, reply_markup=keyboard, parse_mode="HTML")
+    await callback.answer()
 
 @dp.callback_query(F.data == "rent_gifts")
 async def info_rent_gifts(callback: CallbackQuery):
@@ -857,10 +1187,85 @@ async def review_publish_handler(callback: CallbackQuery):
 
 @dp.message(F.text & ~F.text.startswith('/'))
 async def handle_text_message(message: Message):
-    """Перехватывает текстовые сообщения — используется для ввода текста отзыва"""
+    """Перехватывает текстовые сообщения — используется для ввода текста отзыва и покупки услуг"""
     user_id = message.from_user.id
-    state = _review_state.get(user_id)
+    
+    # 1. Проверяем состояние покупки услуг (Stars & Premium)
+    service_state = _stars_premium_state.get(user_id)
+    if service_state:
+        lang = await db.get_user_language(user_id)
+        step = service_state.get('step')
+        
+        if step == 'input_recipient':
+            raw_text = message.text.strip()
+            if not raw_text.startswith('@') and (not raw_text.isalnum() or len(raw_text) < 3):
+                await message.answer(
+                    "❌ <b>Неверный формат юзернейма.</b>\n"
+                    "Юзернейм должен начинаться с @ и быть не короче 3 символов (например, @durov)." if lang == 'ru' else
+                    "❌ <b>Invalid username format.</b>\n"
+                    "The username must start with @ and be at least 3 characters long (e.g., @durov)."
+                )
+                return
+                
+            username = raw_text if raw_text.startswith('@') else f"@{raw_text}"
+            service_state['recipient'] = username
+            
+            if service_state['product'] == 'premium':
+                service_state['step'] = 'select_period'
+                text = (
+                    f"Получатель: <b>{username}</b>\n\n"
+                    "📅 <b>Выберите период подписки Telegram Premium</b>:"
+                ) if lang == 'ru' else (
+                    f"Recipient: <b>{username}</b>\n\n"
+                    "📅 <b>Select Telegram Premium Period</b>:"
+                )
+                await message.answer(
+                    text,
+                    reply_markup=kb.premium_period_keyboard(lang=lang),
+                    parse_mode="HTML"
+                )
+            else:
+                service_state['step'] = 'input_stars_amount'
+                text = (
+                    f"Получатель: <b>{username}</b>\n\n"
+                    "🌟 <b>Количество Telegram Stars</b>\n"
+                    "Введите количество звезд, которое хотите приобрести (минимум <b>50</b> штук):\n\n"
+                    "<i>Отправьте целое число сообщением.</i>"
+                ) if lang == 'ru' else (
+                    f"Recipient: <b>{username}</b>\n\n"
+                    "🌟 <b>Telegram Stars Amount</b>\n"
+                    "Enter the amount of Stars you want to purchase (minimum <b>50</b>):\n\n"
+                    "<i>Send a whole number as a message.</i>"
+                )
+                keyboard = InlineKeyboardMarkup(inline_keyboard=[
+                    [InlineKeyboardButton(text="Назад" if lang == 'ru' else "Back", callback_data="buy_stars")]
+                ])
+                await message.answer(text, reply_markup=keyboard, parse_mode="HTML")
+            return
+            
+        elif step == 'input_stars_amount':
+            raw_text = message.text.strip()
+            if not raw_text.isdigit():
+                await message.answer(
+                    "❌ <b>Пожалуйста, введите целое число.</b>" if lang == 'ru' else
+                    "❌ <b>Please enter a whole number.</b>"
+                )
+                return
+                
+            amount = int(raw_text)
+            if amount < 50:
+                await message.answer(
+                    "❌ <b>Минимальный заказ — 50 звезд.</b> Пожалуйста, введите число от 50 и выше." if lang == 'ru' else
+                    "❌ <b>Minimum order is 50 stars.</b> Please enter a number starting from 50."
+                )
+                return
+                
+            service_state['amount'] = amount
+            await process_service_order_checkout(message, user_id, service_state, lang)
+            return
 
+    # 2. Существующий стейт отзыва
+    state = _review_state.get(user_id)
     if not state or state.get('step') != 'input_text':
         return  # Не наш контекст — игнорируем
 
@@ -1356,6 +1761,7 @@ async def check_expirations():
 
 async def main():
     await db.init_db()
+    await services_db.init_db()
     print("LIVE-BOT ЗАПУЩЕН! Реальное время активно.")
     
     # Запускаем фоновые задачи

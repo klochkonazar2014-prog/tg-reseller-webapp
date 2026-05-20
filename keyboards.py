@@ -32,6 +32,7 @@ def main_menu(web_app_url, is_admin=False, lang='ru'):
     
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text=t['market'], web_app=WebAppInfo(url=web_app_url), style="primary")],
+        [InlineKeyboardButton(text="⭐ Купить Звезды / TG Premium" if lang == 'ru' else "⭐ Buy Stars / TG Premium", callback_data="buy_services")],
         [InlineKeyboardButton(text=t['profile'], callback_data="profile"), 
          InlineKeyboardButton(text=t['history'], callback_data="history")],
         [InlineKeyboardButton(text=t['info'], callback_data="info"),
@@ -303,4 +304,70 @@ def review_satisfaction_keyboard(lang='ru'):
          InlineKeyboardButton(text=t['bad'], callback_data="review_rate_1")],
         [InlineKeyboardButton(text=t['back'], callback_data="write_review")]
     ])
+
+
+def buy_location_keyboard(lang='ru', web_app_url=""):
+    """Клавиатура выбора места покупки (Mini App или Бот)"""
+    # Формируем URL для веб-приложения звезд/премиума
+    sep = "&" if "?" in web_app_url else "?"
+    stars_app_url = f"{web_app_url.rstrip('/')}/stars"
+    
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="📱 В мини-приложении" if lang == 'ru' else "📱 In Mini App", web_app=WebAppInfo(url=stars_app_url))],
+        [InlineKeyboardButton(text="🤖 В Telegram-боте" if lang == 'ru' else "🤖 In Telegram Bot", callback_data="buy_in_bot")],
+        [InlineKeyboardButton(text="Назад" if lang == 'ru' else "Back", callback_data="main_menu", icon_custom_emoji_id="5359511310096672647")]
+    ])
+
+def buy_product_keyboard(lang='ru'):
+    """Клавиатура выбора продукта (Premium или Stars)"""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="⭐ Telegram Premium", callback_data="buy_premium")],
+        [InlineKeyboardButton(text="🌟 Telegram Stars", callback_data="buy_stars")],
+        [InlineKeyboardButton(text="Назад" if lang == 'ru' else "Back", callback_data="buy_services", icon_custom_emoji_id="5359511310096672647")]
+    ])
+
+def recipient_selection_keyboard(lang='ru'):
+    """Клавиатура выбора получателя"""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="👤 Себе" if lang == 'ru' else "👤 For Myself", callback_data="recipient_self")],
+        [InlineKeyboardButton(text="Назад" if lang == 'ru' else "Back", callback_data="buy_in_bot", icon_custom_emoji_id="5359511310096672647")]
+    ])
+
+def premium_period_keyboard(lang='ru'):
+    """Клавиатура выбора периода подписки Premium"""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="📅 3 месяца" if lang == 'ru' else "📅 3 months", callback_data="premium_period_3")],
+        [InlineKeyboardButton(text="📅 6 месяцев" if lang == 'ru' else "📅 6 months", callback_data="premium_period_6")],
+        [InlineKeyboardButton(text="📅 12 месяцев" if lang == 'ru' else "📅 12 months", callback_data="premium_period_12")],
+        [InlineKeyboardButton(text="Назад" if lang == 'ru' else "Back", callback_data="back_to_recipient", icon_custom_emoji_id="5359511310096672647")]
+    ])
+
+def payment_selection_keyboard(lang='ru', order_id=None, ton_price=None, rub_price=None, backend_url=None, owner_wallet=None):
+    """Клавиатура выбора способа оплаты (СБП / TON)"""
+    keyboard = []
+    
+    # 1. Кнопка AuraPay (СБП) в виде WebApp для оплаты внутри Telegram
+    if backend_url and order_id:
+        fiat_url = f"{backend_url.rstrip('/')}/api/services/pay_fiat?order_id={order_id}"
+        sbp_text = f"💳 Оплатить {rub_price} RUB (СБП)" if lang == 'ru' else f"💳 Pay {rub_price} RUB (SBP)"
+        keyboard.append([InlineKeyboardButton(text=sbp_text, web_app=WebAppInfo(url=fiat_url))])
+        
+    # 2. Кнопка Tonkeeper Deep Link для оплаты TON в 1 клик
+    if owner_wallet and order_id and ton_price:
+        amount_nano = int(ton_price * 1e9)
+        comment_text = f"service:{order_id}"
+        # URL схема Tonkeeper для мгновенной транзакции
+        tonkeeper_url = f"https://app.tonkeeper.com/transfer/{owner_wallet}?amount={amount_nano}&text={comment_text}"
+        ton_text = f"💎 Оплатить {ton_price} TON (Tonkeeper)" if lang == 'ru' else f"💎 Pay {ton_price} TON (Tonkeeper)"
+        keyboard.append([InlineKeyboardButton(text=ton_text, url=tonkeeper_url)])
+        
+    # 3. Кнопка ручного перевода (показывает реквизиты)
+    manual_text = "💎 TON (Реквизиты перевода)" if lang == 'ru' else "💎 TON (Transfer details)"
+    keyboard.append([InlineKeyboardButton(text=manual_text, callback_data=f"pay_manual_ton_{order_id}")])
+    
+    # 4. Назад
+    keyboard.append([InlineKeyboardButton(text="Назад" if lang == 'ru' else "Back", callback_data="buy_in_bot", icon_custom_emoji_id="5359511310096672647")])
+    
+    return InlineKeyboardMarkup(inline_keyboard=keyboard)
+
 
