@@ -198,13 +198,13 @@ async def process_service_order_checkout(message_or_callback_msg, user_id, state
     
     # 1. Считаем цену в USD
     if product == 'stars':
-        base_price_usd = amount * 0.022
+        base_price_usd = amount * 0.015
         service_name_ru = f"🌟 Telegram Stars ({amount} шт.)"
         service_name_en = f"🌟 Telegram Stars ({amount} pcs.)"
     else:
         # Premium
-        prices = {3: 9.99, 6: 17.99, 12: 28.99}
-        base_price_usd = prices.get(amount, 9.99)
+        prices = {3: 15.00, 6: 22.50, 12: 37.50}
+        base_price_usd = prices.get(amount, 15.00)
         service_name_ru = f"⭐ Telegram Premium на {amount} мес."
         service_name_en = f"⭐ Telegram Premium for {amount} months"
         
