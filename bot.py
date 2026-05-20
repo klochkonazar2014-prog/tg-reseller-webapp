@@ -246,14 +246,28 @@ async def process_service_order_checkout(message_or_callback_msg, user_id, state
     base_ton = base_price_usd / ton_usd
     bot_balance = await get_wallet_balance(OWNER_WALLET)
     if bot_balance < base_ton:
-        error_text = "❌ <b>На кошельке бота недостаточно средств. Пожалуйста, напишите администратору @nerksqq с просьбой пополнить баланс бота.</b>"
+        import urllib.parse
+        text_ru = "Здравствуйте! Пополните, пожалуйста, баланс бота."
+        text_en = "Hello! Please refill the bot's wallet balance."
+        
+        error_text = f"❌ <b>На кошельке бота недостаточно средств. Пожалуйста, напишите <a href=\"tg://user?id=7868560541\">администратору</a> с просьбой пополнить баланс бота.</b>"
+        btn_text = "Написать"
+        msg_text = text_ru
+        
         if lang == 'en':
-            error_text = "❌ <b>The bot's wallet has insufficient funds. Please contact @nerksqq to request a refill.</b>"
+            error_text = f"❌ <b>The bot's wallet has insufficient funds. Please contact the <a href=\"tg://user?id=7868560541\">administrator</a> to request a refill.</b>"
+            btn_text = "Write to Admin"
+            msg_text = text_en
+            
+        url_text = urllib.parse.quote(msg_text)
+        kb_admin = InlineKeyboardMarkup(inline_keyboard=[[
+            InlineKeyboardButton(text=btn_text, url=f"https://t.me/nerksqq?text={url_text}")
+        ]])
             
         if hasattr(message_or_callback_msg, 'message'):
-            await message_or_callback_msg.message.answer(error_text, parse_mode="HTML")
+            await message_or_callback_msg.message.answer(error_text, reply_markup=kb_admin, parse_mode="HTML")
         else:
-            await message_or_callback_msg.answer(error_text, parse_mode="HTML")
+            await message_or_callback_msg.answer(error_text, reply_markup=kb_admin, parse_mode="HTML")
         return
         
     # 3. Сохраняем заказ в services.db
