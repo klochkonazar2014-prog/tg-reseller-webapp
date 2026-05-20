@@ -198,15 +198,18 @@ async def process_service_order_checkout(message_or_callback_msg, user_id, state
     
     # 1. Считаем цену в USD
     if product == 'stars':
-        price_usd = amount * 0.022
+        base_price_usd = amount * 0.022
         service_name_ru = f"🌟 Telegram Stars ({amount} шт.)"
         service_name_en = f"🌟 Telegram Stars ({amount} pcs.)"
     else:
         # Premium
         prices = {3: 9.99, 6: 17.99, 12: 28.99}
-        price_usd = prices.get(amount, 9.99)
+        base_price_usd = prices.get(amount, 9.99)
         service_name_ru = f"⭐ Telegram Premium на {amount} мес."
         service_name_en = f"⭐ Telegram Premium for {amount} months"
+        
+    # Применяем наценку 15% (9% агрегатору, 6% чистая прибыль)
+    price_usd = base_price_usd * 1.15
         
     # 2. Получаем актуальный курс
     rates = await fetch_fiat_rates()

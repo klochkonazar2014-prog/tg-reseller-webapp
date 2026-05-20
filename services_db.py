@@ -234,6 +234,15 @@ async def process_successful_service_payment(order_id: int, tx_hash: str, paymen
     
     pay_method_title = "СБП (AuraPay)" if payment_method == 'aurapay' else "TON (Tonkeeper)"
 
+    # Расчет комиссии и чистой прибыли (наценка 15% = 9% агрегатору + 6% нам от базовой цены)
+    base_rub = price_rub / 1.15
+    aggregator_rub = round(base_rub * 0.09, 2)
+    our_profit_rub = round(base_rub * 0.06, 2)
+
+    base_ton = price_ton / 1.15
+    aggregator_ton = round(base_ton * 0.09, 4)
+    our_profit_ton = round(base_ton * 0.06, 4)
+
     admin_msg = (
         f"🔔 <b>[Услуги] Получена оплата {pay_method_title}!</b>\n\n"
         f"📦 <b>Заказ:</b> #<code>{order_id}</code>\n"
@@ -242,6 +251,9 @@ async def process_successful_service_payment(order_id: int, tx_hash: str, paymen
         f"🎁 <b>Кому:</b> <code>{recipient_ru}</code>\n"
         f"📊 <b>Объем:</b> <code>{amount_text_ru}</code>\n"
         f"💰 <b>Сумма:</b> <code>{price_ton} TON</code> (~{price_rub} RUB)\n"
+        f"├ <i>Наценка 15%: {round(price_ton - base_ton, 4)} TON (~{round(price_rub - base_rub, 2)} RUB)</i>\n"
+        f"├ <i>Агрегатор (9%): {aggregator_ton} TON (~{aggregator_rub} RUB)</i>\n"
+        f"└ <b>Чистая прибыль (6%): {our_profit_ton} TON (~{our_profit_rub} RUB)</b>\n"
     )
     
     if tx_hash:
