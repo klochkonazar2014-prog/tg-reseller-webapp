@@ -793,6 +793,83 @@ async def handle_create_aurapay_invoice(request):
         logging.error(f"Error creating AuraPay invoice: {e}")
         return web.json_response({"error": str(e)}, status=500)
 
+async def handle_services_pay_fiat(request):
+    """GET-эндпоинт для перенаправления пользователя на оплату СБП (AuraPay) по ID заказа услуг"""
+    try:
+        order_id_str = request.query.get('order_id')
+        if not order_id_str:
+            return web.Response(text="Missing order_id", status=400)
+            
+        try:
+            order_id = int(order_id_str)
+        except ValueError:
+            return web.Response(text="Invalid order_id format", status=400)
+            
+        order = await services_db.get_service_order(order_id)
+        if not order:
+            return web.Response(text=f"Service order #{order_id} not found", status=404)
+            
+        fiat_amount = float(order['price_rub'])
+        if fiat_amount < 10: fiat_amount = 10.0
+        
+        shop_id = os.getenv("AURAPAY_SHOP_ID")
+        api_key = os.getenv("AURAPAY_API_KEY")
+        if not shop_id or not api_key:
+            return web.Response(text="AuraPay not configured on server", status=500)
+            
+        base_url = os.getenv('WEB_APP_URL', 'https://octorent.duckdns.org').rstrip('/')
+        success_url = f"{base_url}/success?order_id={order_id}"
+        fail_url = f"{base_url}/fail?order_id={order_id}"
+        callback_url = f"{base_url}/api/webhooks/aurapay"
+        
+        payload = {
+            "shop_id": shop_id,
+            "order_id": str(order_id),
+            "amount": float(fiat_amount),
+            "currency": "RUB",
+            "service": "sbp",
+            "comment": f"OctoRent service order #{order_id}",
+            "success_url": success_url,
+            "fail_url": fail_url,
+            "callback_url": callback_url
+        }
+        
+        api_url = "https://app.aurapay.tech/invoice/create"
+        headers = {
+            "X-ApiKey": api_key,
+            "X-ShopId": shop_id,
+            "Content-Type": "application/json"
+        }
+        
+        async with aiohttp.ClientSession() as session:
+            async with session.post(api_url, json=payload, headers=headers) as resp:
+                try:
+                    result = await resp.json()
+                except:
+                    result = {"raw": await resp.text()}
+                    
+                if resp.status == 200 and (result.get('status') == 'PENDING' or 'id' in result):
+                    payment_url = result.get('payment_data', {}).get('url')
+                    if not payment_url:
+                        return web.Response(text="No payment URL in AuraPay response", status=500)
+                        
+                    # Обновляем статус заказа услуг
+                    await services_db.update_service_order_status(
+                        order_id, 
+                        'pending_payment', 
+                        tx_hash=str(result.get('id', '')), 
+                        payment_method='aurapay'
+                    )
+                    
+                    # Делаем HTTP-редирект на платежную страницу AuraPay
+                    return web.HTTPFound(payment_url)
+                else:
+                    logging.error(f"AuraPay invoice creation failed: status={resp.status}, response={result}")
+                    return web.Response(text=f"AuraPay invoice creation failed: {result.get('message', 'Unknown error')}", status=500)
+    except Exception as e:
+        logging.error(f"Error handling services_pay_fiat: {e}")
+        return web.Response(text=f"Internal server error: {e}", status=500)
+
 async def update_cloudtips_page_text(title: str):
     """Обновляет текст на странице оплаты CloudTips через API."""
     ct_id = os.getenv("CLOUDTIPS_ID", "")
@@ -2141,6 +2218,7 @@ app.add_routes([
     web.get('/fail/{order_id}', handle_fail_redirect),
     web.get('/api/user-avatar', handle_user_avatar),
     web.get('/api/rates', handle_get_rates),
+    web.get('/api/services/pay_fiat', handle_services_pay_fiat),
     web.post('/api/create_aurapay_invoice', handle_create_aurapay_invoice),
     web.post('/api/create_bot_invoice', handle_create_bot_invoice),
     web.get('/api/get_usdt_payload', handle_get_usdt_payload),

@@ -243,7 +243,7 @@ async def process_service_order_checkout(message_or_callback_msg, user_id, state
         f"👤 <b>Получатель:</b> {recipient_display}\n"
         f"💵 <b>Сумма к оплате:</b>\n"
         f"└ <code>{price_rub} RUB</code> (через СБП)\n"
-        f"└ <code>{price_ton} TON</code> (криптовалютой)\n"
+        # f"└ <code>{price_ton} TON</code> (криптовалютой)\n" # Временно отключено
         f"━━━━━━━━━━━━━━━━━━━━\n"
         f"👉 Выберите удобный способ оплаты ниже. После успешной оплаты услуга будет отправлена получателю в течение нескольких минут."
     ) if lang == 'ru' else (
@@ -253,7 +253,7 @@ async def process_service_order_checkout(message_or_callback_msg, user_id, state
         f"👤 <b>Recipient:</b> {recipient_display}\n"
         f"💵 <b>Total to pay:</b>\n"
         f"└ <code>{price_rub} RUB</code> (via SBP)\n"
-        f"└ <code>{price_ton} TON</code> (crypto)\n"
+        # f"└ <code>{price_ton} TON</code> (crypto)\n" # Temporarily disabled
         f"━━━━━━━━━━━━━━━━━━━━\n"
         f"👉 Select your preferred payment method below. Once paid, the service will be delivered to the recipient within minutes."
     )
@@ -1248,7 +1248,8 @@ async def handle_text_message(message: Message):
             if not raw_text.isdigit():
                 await message.answer(
                     "❌ <b>Пожалуйста, введите целое число.</b>" if lang == 'ru' else
-                    "❌ <b>Please enter a whole number.</b>"
+                    "❌ <b>Please enter a whole number.</b>",
+                    parse_mode="HTML"
                 )
                 return
                 
@@ -1256,7 +1257,8 @@ async def handle_text_message(message: Message):
             if amount < 50:
                 await message.answer(
                     "❌ <b>Минимальный заказ — 50 звезд.</b> Пожалуйста, введите число от 50 и выше." if lang == 'ru' else
-                    "❌ <b>Minimum order is 50 stars.</b> Please enter a number starting from 50."
+                    "❌ <b>Minimum order is 50 stars.</b> Please enter a number starting from 50.",
+                    parse_mode="HTML"
                 )
                 return
                 

@@ -346,24 +346,24 @@ def payment_selection_keyboard(lang='ru', order_id=None, ton_price=None, rub_pri
     """Клавиатура выбора способа оплаты (СБП / TON)"""
     keyboard = []
     
-    # 1. Кнопка AuraPay (СБП) в виде WebApp для оплаты внутри Telegram
+    # 1. Кнопка AuraPay (СБП) в виде обычной ссылки (так как в WebApp блокируются deeplink переходы СБП)
     if backend_url and order_id:
         fiat_url = f"{backend_url.rstrip('/')}/api/services/pay_fiat?order_id={order_id}"
         sbp_text = f"💳 Оплатить {rub_price} RUB (СБП)" if lang == 'ru' else f"💳 Pay {rub_price} RUB (SBP)"
-        keyboard.append([InlineKeyboardButton(text=sbp_text, web_app=WebAppInfo(url=fiat_url))])
+        keyboard.append([InlineKeyboardButton(text=sbp_text, url=fiat_url)])
         
-    # 2. Кнопка Tonkeeper Deep Link для оплаты TON в 1 клик
-    if owner_wallet and order_id and ton_price:
-        amount_nano = int(ton_price * 1e9)
-        comment_text = f"service:{order_id}"
-        # URL схема Tonkeeper для мгновенной транзакции
-        tonkeeper_url = f"https://app.tonkeeper.com/transfer/{owner_wallet}?amount={amount_nano}&text={comment_text}"
-        ton_text = f"💎 Оплатить {ton_price} TON (Tonkeeper)" if lang == 'ru' else f"💎 Pay {ton_price} TON (Tonkeeper)"
-        keyboard.append([InlineKeyboardButton(text=ton_text, url=tonkeeper_url)])
+    # 2. Кнопка Tonkeeper Deep Link для оплаты TON в 1 клик (Временно отключено по требованию AuraPay, закомментировано)
+    # if owner_wallet and order_id and ton_price:
+    #     amount_nano = int(ton_price * 1e9)
+    #     comment_text = f"service:{order_id}"
+    #     # URL схема Tonkeeper для мгновенной транзакции
+    #     tonkeeper_url = f"https://app.tonkeeper.com/transfer/{owner_wallet}?amount={amount_nano}&text={comment_text}"
+    #     ton_text = f"💎 Оплатить {ton_price} TON (Tonkeeper)" if lang == 'ru' else f"💎 Pay {ton_price} TON (Tonkeeper)"
+    #     keyboard.append([InlineKeyboardButton(text=ton_text, url=tonkeeper_url)])
         
-    # 3. Кнопка ручного перевода (показывает реквизиты)
-    manual_text = "💎 TON (Реквизиты перевода)" if lang == 'ru' else "💎 TON (Transfer details)"
-    keyboard.append([InlineKeyboardButton(text=manual_text, callback_data=f"pay_manual_ton_{order_id}")])
+    # 3. Кнопка ручного перевода (Временно отключено по требованию AuraPay, закомментировано)
+    # manual_text = "💎 TON (Реквизиты перевода)" if lang == 'ru' else "💎 TON (Transfer details)"
+    # keyboard.append([InlineKeyboardButton(text=manual_text, callback_data=f"pay_manual_ton_{order_id}")])
     
     # 4. Назад
     keyboard.append([InlineKeyboardButton(text="Назад" if lang == 'ru' else "Back", callback_data="buy_in_bot", icon_custom_emoji_id="5359511310096672647")])
