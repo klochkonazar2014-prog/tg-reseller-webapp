@@ -190,6 +190,25 @@ async def fetch_fiat_rates():
         logging.error(f"Error fetching rates: {e}")
         return {'USD': 2.5, 'RUB': 230}
 
+async def get_wallet_balance(address):
+    """Fetch TON balance of the bot's service wallet"""
+    api_key = os.getenv("TONCENTER_API_KEY")
+    url = f"https://toncenter.com/api/v2/getAddressInformation?address={address}"
+    headers = {"X-API-Key": api_key} if api_key else {}
+    
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, headers=headers, timeout=10) as resp:
+                if resp.status == 200:
+                    data = await resp.json()
+                    if data.get('ok'):
+                        balance_nano = int(data['result']['balance'])
+                        return balance_nano / 1e9
+        return 0.0
+    except Exception as e:
+        logging.error(f"Error fetching balance for {address}: {e}")
+        return 0.0
+
 async def process_service_order_checkout(message_or_callback_msg, user_id, state, lang):
     """Генерация заказа на услуги, расчет цен и вывод клавиатуры оплаты"""
     product = state['product']
@@ -222,6 +241,20 @@ async def process_service_order_checkout(message_or_callback_msg, user_id, state
     price_rub = int(price_usd * (ton_rub / ton_usd))
     if price_rub < 10:
         price_rub = 10
+        
+    # Проверяем баланс кошелька бота перед созданием заказа (хватает ли на себестоимость)
+    base_ton = base_price_usd / ton_usd
+    bot_balance = await get_wallet_balance(OWNER_WALLET)
+    if bot_balance < base_ton:
+        error_text = "❌ <b>На кошельке бота недостаточно средств. Пожалуйста, напишите администратору @nerksqq с просьбой пополнить баланс бота.</b>"
+        if lang == 'en':
+            error_text = "❌ <b>The bot's wallet has insufficient funds. Please contact @nerksqq to request a refill.</b>"
+            
+        if hasattr(message_or_callback_msg, 'message'):
+            await message_or_callback_msg.message.answer(error_text, parse_mode="HTML")
+        else:
+            await message_or_callback_msg.answer(error_text, parse_mode="HTML")
+        return
         
     # 3. Сохраняем заказ в services.db
     order_id = await services_db.create_service_order(
